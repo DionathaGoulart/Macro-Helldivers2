@@ -1,0 +1,186 @@
+const { app, BrowserWindow, globalShortcut, ipcMain, Tray, Menu } = require('electron')
+const path = require('path')
+const fs = require('fs')
+const { autoUpdater } = require('electron-updater')
+
+// Configurações Globais
+let win
+let tray
+let isQuitting = false
+let isRecordingState = false
+let currentSlots = [null, null, null, null]
+let isGameFocused = true
+let nut = null // Carregamento tardio (Lazy)
+
+const isDev = !!process.env.VITE_DEV_SERVER_URL
+
+// Motor de Macro (Carregamento Seguro)
+function loadMacroEngine() {
+  try {
+    if (nut) return nut
+    // Carregamos os módulos nativos apenas quando necessário
+    const nutjs = require('@nut-tree-fork/nut-js')
+    const { runStratagem } = require('../macro/stratagemRunner.js')
+    nut = { ...nutjs, runStratagem }
+    console.log('Motor de macro carregado com sucesso.')
+    return nut
+  } catch (e) {
+    console.error('Falha crítica ao carregar motor nativo:', e)
+    return null
+  }
+}
+
+const DEFAULT_SETTINGS = {
+  shortcuts: ['F1', 'F2', 'F3', 'F4'],
+  modifierKey: 'LeftControl',
+  useArrows: false
+}
+
+function getSettingsPath() {
+  const userDataPath = app.getPath('userData')
+  const settingsDir = path.join(userDataPath, 'Helldivers Macro')
+  if (!fs.existsSync(settingsDir)) fs.mkdirSync(settingsDir, { recursive: true })
+  return path.join(settingsDir, 'settings.json')
+}
+
+function saveSettings(settings) {
+  fs.writeFileSync(getSettingsPath(), JSON.stringify(settings, null, 2))
+}
+
+function loadSettings() {
+  const p = getSettingsPath()
+  if (fs.existsSync(p)) {
+    try { return JSON.parse(fs.readFileSync(p, 'utf8')) } catch (e) { return DEFAULT_SETTINGS }
+  }
+  return DEFAULT_SETTINGS
+}
+
+let currentSettings = loadSettings()
+
+// Polling de Foco (Seguro)
+setInterval(async () => {
+  const engine = loadMacroEngine()
+  if (!engine || !engine.getActiveWindow) return
+
+  try {
+    const activeWindow = await engine.getActiveWindow()
+    if (!activeWindow) return
+    
+    const title = await activeWindow.title()
+    if (!title) return
+
+    const isFocused = title.includes('HELLDIVERS™ 2')
+    if (isFocused !== isGameFocused) {
+      isGameFocused = isFocused
+      if (win && !win.isDestroyed()) {
+        win.webContents.send('game-focus-changed', isGameFocused)
+      }
+    }
+  } catch (e) {
+    // Falha silenciosa para evitar crash de memória no Windows
+  }
+}, 1500)
+
+async function handleShortcutTrigger(index) {
+  if (isRecordingState || !isGameFocused) return
+  const engine = loadMacroEngine()
+  if (!engine) return
+
+  const stratagem = currentSlots[index]
+  if (stratagem && stratagem.codex) {
+    if (win && !win.isDestroyed()) win.webContents.send('macro-triggered', index)
+    try {
+      await engine.runStratagem(stratagem.codex, currentSettings.modifierKey, currentSettings.useArrows)
+    } catch (e) {
+      console.error('Erro ao executar macro:', e)
+    }
+  }
+}
+
+function registerMacros() {
+  if (isRecordingState) return
+  globalShortcut.unregisterAll()
+  currentSettings.shortcuts.forEach((key, index) => {
+    if (!key) return
+    try {
+      globalShortcut.register(key, () => handleShortcutTrigger(index))
+      globalShortcut.register(`Shift+${key}`, () => handleShortcutTrigger(index))
+    } catch (e) {}
+  })
+}
+
+function createTray() {
+  if (tray) return
+  const iconPath = app.isPackaged
+    ? path.join(__dirname, '../dist/stratagems/Orbital_Precision_Strike_Stratagem_Icon.png')
+    : path.join(__dirname, '../public/stratagems/Orbital_Precision_Strike_Stratagem_Icon.png')
+  
+  try {
+    tray = new Tray(iconPath)
+    const contextMenu = Menu.buildFromTemplate([
+      { label: 'Abrir Macro Helldivers 2', click: () => win.show() },
+      { type: 'separator' },
+      { label: 'Sair', click: () => { isQuitting = true; app.quit() }}
+    ])
+    tray.setToolTip('Macro Helldivers 2')
+    tray.setContextMenu(contextMenu)
+    tray.on('click', () => win.show())
+  } catch (e) {
+    console.error('Erro ao criar Tray:', e)
+  }
+}
+
+function createWindow() {
+  win = new BrowserWindow({
+    width: 820,
+    height: 640,
+    title: "Macro Helldivers 2",
+    icon: path.join(__dirname, '../public/icon.png'),
+    webPreferences: {
+      preload: path.join(__dirname, 'preload.js'),
+      nodeIntegration: false,
+      contextIsolation: true,
+    },
+    autoHideMenuBar: true,
+  })
+
+  if (isDev) win.loadURL(process.env.VITE_DEV_SERVER_URL)
+  else win.loadFile(path.join(__dirname, '../dist/index.html'))
+
+  win.on('close', (event) => {
+    if (!isQuitting) {
+      event.preventDefault()
+      win.hide()
+      return false
+    }
+  })
+}
+
+app.whenReady().then(() => {
+  createWindow()
+  createTray()
+  registerMacros()
+  
+  // Update seguro após o boot
+  setTimeout(() => {
+    autoUpdater.checkForUpdatesAndNotify().catch(() => {})
+  }, 5000)
+})
+
+app.on('window-all-closed', () => {
+  if (process.platform !== 'darwin' && isQuitting) app.quit()
+})
+
+ipcMain.on('update-slots', (event, slots) => { currentSlots = slots })
+ipcMain.handle('get-settings', () => currentSettings)
+ipcMain.on('save-settings', (event, settings) => {
+  currentSettings = settings
+  saveSettings(settings)
+  if (!isRecordingState) registerMacros()
+})
+ipcMain.handle('set-recording-mode', (event, isRecording) => {
+  isRecordingState = isRecording
+  if (isRecording) globalShortcut.unregisterAll()
+  else registerMacros()
+  return true
+})
