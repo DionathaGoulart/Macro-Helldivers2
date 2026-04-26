@@ -317,40 +317,51 @@ function App() {
                 Estratagemas de Apoio Fixo
               </h2>
               <div className="grid grid-cols-3 gap-5">
-                {[
-                  { nome: 'Reinforce', imagem: '/Reinforce_Stratagem_Icon.png', codex: ['UP', 'DOWN', 'RIGHT', 'LEFT', 'UP'] },
-                  { nome: 'Resupply', imagem: '/Resupply_Stratagem_Icon.png', codex: ['DOWN', 'DOWN', 'UP', 'RIGHT'] },
-                  { nome: 'Eagle Rearm', imagem: '/Eagle_Rearm_Stratagem_Icon.png', codex: ['UP', 'UP', 'LEFT', 'UP', 'RIGHT'] }
-                ].map((strat, i) => (
-                  <div key={i} className="bg-slate-950/60 p-6 rounded-2xl border border-slate-800/80 flex flex-col items-center gap-5 transition-all hover:border-green-500/30 group">
-                    <img src={strat.imagem} alt={strat.nome} className="w-16 h-16 object-contain drop-shadow-2xl group-hover:scale-110 transition-transform duration-300" />
+                {fixedSupportStrats.map((strat, i) => (
+                  <div key={i} className="flex flex-col gap-4">
+                    {/* The 1:1 Card Visual */}
+                    <div className="group relative aspect-square rounded-2xl border-2 border-slate-800/50 bg-slate-900/40 overflow-hidden transition-all hover:border-yellow-500/50">
+                      {/* Stratagem Icon */}
+                      <img 
+                        src={strat.imagem} 
+                        alt={strat.nome} 
+                        className="w-full h-full object-cover opacity-80 group-hover:scale-110 group-hover:opacity-100 transition-all duration-500" 
+                      />
 
-                    <div className="text-center w-full space-y-3">
-                      <div className="text-[12px] font-black uppercase tracking-widest text-slate-200">{strat.nome}</div>
+                      {/* HUD Overlay: Name (Top) */}
+                      <div className="absolute inset-x-0 top-0 bg-gradient-to-b from-slate-950 via-slate-950/70 to-transparent p-4 pb-10 flex justify-center z-10">
+                        <span className="text-[11px] font-black text-slate-100 uppercase tracking-widest text-center leading-none">
+                          {strat.nome}
+                        </span>
+                      </div>
 
-                      <div className={`flex justify-center ${strat.codex.length > 6 ? 'gap-1' : 'gap-2'} py-1`}>
-                        {strat.codex.map((dir, idx) => (
-                          <ArrowIcon 
-                            key={idx} 
-                            direction={dir} 
-                            size={strat.codex.length > 6 ? 13 : 16} 
-                            className="drop-shadow-lg" 
-                          />
-                        ))}
+                      {/* HUD Overlay: Codex (Bottom) */}
+                      <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-slate-950 via-slate-950/90 to-transparent p-5 pt-12 flex justify-center z-10">
+                        <div className={`flex justify-center ${strat.codex.length > 6 ? 'gap-1' : 'gap-2'}`}>
+                          {strat.codex.map((dir, idx) => (
+                            <ArrowIcon 
+                              key={idx} 
+                              direction={dir} 
+                              size={strat.codex.length > 6 ? 13 : 16} 
+                              className="text-yellow-500 drop-shadow-lg" 
+                            />
+                          ))}
+                        </div>
                       </div>
                     </div>
 
+                    {/* Shortcut Button */}
                     <button
                       onClick={async () => {
                         await window.api.invoke('set-recording-mode', true)
                         setCapturingSlot(`support-${i}`)
                       }}
-                      className={`w-full py-3 rounded-xl font-black text-[10px] tracking-widest border-2 transition-all ${capturingSlot === `support-${i}`
-                        ? 'bg-yellow-500/10 border-yellow-500 text-yellow-400 animate-pulse-hd'
-                        : 'bg-slate-900 border-slate-800 text-slate-400 hover:border-yellow-500/50 hover:text-yellow-500'
+                      className={`w-full py-4 rounded-xl font-black text-[11px] tracking-[0.2em] uppercase border-2 transition-all ${capturingSlot === `support-${i}`
+                        ? 'bg-yellow-500/10 border-yellow-500 text-yellow-400 animate-pulse-hd shadow-[0_0_20px_rgba(251,191,36,0.2)]'
+                        : 'bg-slate-950 border-slate-800 text-slate-500 hover:border-slate-600 hover:text-slate-300'
                         }`}
                     >
-                      {capturingSlot === `support-${i}` ? 'AGUARDANDO...' : (settings.supportShortcuts?.[i] || 'VINCULAR')}
+                      {capturingSlot === `support-${i}` ? 'AGUARDANDO TECLA...' : (settings.supportShortcuts?.[i] || 'VINCULAR ATALHO')}
                     </button>
                   </div>
                 ))}
