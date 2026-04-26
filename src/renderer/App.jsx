@@ -143,8 +143,8 @@ function App() {
     <div className="h-screen flex flex-col bg-slate-950 text-slate-200">
       
       {/* HEADER: TABS */}
-      <header className="shrink-0 bg-slate-950 border-b border-slate-900 z-50">
-        <div className="w-full flex justify-center border-b border-white/5">
+      <header className="shrink-0 bg-slate-950/50 backdrop-blur-2xl border-b border-white/5 z-50">
+        <div className="w-full flex justify-center">
           {/* Navigation Tabs */}
           <nav className="flex h-full">
             <button 
@@ -169,13 +169,18 @@ function App() {
       <main className="flex-1 overflow-y-auto scrollbar-hd pt-4 pb-24">
         
         {activeTab === 'macro' && (
-          <div className="max-w-none mx-auto px-6 space-y-6">
-            <div className="flex items-center justify-center gap-4 py-2 opacity-60">
-              <div className="h-[1px] flex-1 bg-gradient-to-r from-transparent to-slate-800"></div>
-              <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">
-                Selecionar Estratagemas para o Slot {settings.shortcuts[activeSlot]}
-              </span>
-              <div className="h-[1px] flex-1 bg-gradient-to-l from-transparent to-slate-800"></div>
+          <div className="max-w-none mx-auto px-10 space-y-8">
+            <div className="flex items-center justify-center gap-6 py-6 opacity-40">
+              <div className="h-[1px] flex-1 bg-gradient-to-r from-transparent via-slate-700 to-transparent"></div>
+              <div className="flex flex-col items-center">
+                <span className="text-[9px] font-black uppercase tracking-[0.4em] text-yellow-500/80 mb-1">
+                  Tactical Deployment Protocol
+                </span>
+                <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400">
+                  Slot {settings.shortcuts[activeSlot]} // Ready for Input
+                </span>
+              </div>
+              <div className="h-[1px] flex-1 bg-gradient-to-r from-transparent via-slate-700 to-transparent"></div>
             </div>
 
             {sortedTags.map((tag) => (
@@ -349,8 +354,8 @@ function App() {
 
       {/* FOOTER: SLOTS BAR (FIXED) */}
       {activeTab === 'macro' && (
-        <footer className="shrink-0 fixed bottom-0 left-0 right-0 bg-slate-950/80 backdrop-blur-xl border-t border-slate-900 p-4 pb-6 z-[100]">
-          <div className="max-w-5xl mx-auto flex flex-col items-center gap-4">
+        <footer className="shrink-0 fixed bottom-0 left-0 right-0 glass border-t border-white/5 p-6 pb-8 z-[100] shadow-[0_-20px_50px_-10px_rgba(0,0,0,0.5)]">
+          <div className="max-w-5xl mx-auto flex flex-col items-center gap-6">
             <div className="flex justify-center gap-4 flex-wrap">
               {slots.map((slot, index) => (
                 <div key={index} className="flex-shrink-0">
