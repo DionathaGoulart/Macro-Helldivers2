@@ -104,6 +104,7 @@
 }
 
 @keyframes noise {
+  will-change: transform;
   0% { transform: translate(0,0) }
   10% { transform: translate(-5%,-5%) }
   20% { transform: translate(-10%,5%) }
@@ -115,11 +116,4 @@
   80% { transform: translate(-15%,0) }
   90% { transform: translate(10%,5%) }
   100% { transform: translate(5%,0) }
-}
-
-.glass {
-  background: rgba(15, 23, 42, 0.4);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.05);
 }

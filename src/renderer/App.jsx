@@ -131,22 +131,27 @@ function App() {
     }
   }, [capturingSlot, handleKeyCapture])
 
-  const stratagemsByTag = {}
-  stratagemsData.forEach(strat => {
-    const tag = (strat.tag && strat.tag.length > 0) ? strat.tag[0] : 'Outros'
-    if (!stratagemsByTag[tag]) stratagemsByTag[tag] = []
-    stratagemsByTag[tag].push(strat)
-  })
+  const stratagemsByTag = useMemo(() => {
+    const grouped = {}
+    stratagemsData.forEach(strat => {
+      const tag = (strat.tag && strat.tag.length > 0) ? strat.tag[0] : 'Outros'
+      if (!grouped[tag]) grouped[tag] = []
+      grouped[tag].push(strat)
+    })
+    return grouped
+  }, [])
 
-  const sortedTags = Object.keys(stratagemsByTag).sort((a, b) => {
-    const order = ['Offensive', 'Supply', 'Defensive']
-    const indexA = order.indexOf(a), indexB = order.indexOf(b)
-    if (indexA !== -1 && indexB !== -1) return indexA - indexB
-    return indexA !== -1 ? -1 : indexB !== -1 ? 1 : a.localeCompare(b)
-  })
+  const sortedTags = useMemo(() => {
+    return Object.keys(stratagemsByTag).sort((a, b) => {
+      const order = ['Offensive', 'Supply', 'Defensive']
+      const indexA = order.indexOf(a), indexB = order.indexOf(b)
+      if (indexA !== -1 && indexB !== -1) return indexA - indexB
+      return indexA !== -1 ? -1 : indexB !== -1 ? 1 : a.localeCompare(b)
+    })
+  }, [stratagemsByTag])
 
   return (
-    <div className="h-screen flex flex-col bg-slate-950 text-slate-200">
+    <div className="h-screen flex flex-col bg-slate-950 text-slate-200 overflow-hidden relative selection:bg-yellow-500/30">
 
       {/* HEADER: TABS */}
       <header className="shrink-0 bg-slate-950/40 backdrop-blur-2xl border-b border-white/5 z-50 relative">

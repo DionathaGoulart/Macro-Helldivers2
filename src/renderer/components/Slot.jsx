@@ -2,14 +2,14 @@ import { useState, useEffect } from 'react'
 import { ArrowUp, ArrowDown, ArrowLeft, ArrowRight } from 'lucide-react'
 
 export const ArrowIcon = ({ direction, className = "", size = 16 }) => {
-  const iconProps = { size, className: `text-yellow-500/90 ${className}` }
-  switch (direction.toUpperCase()) {
-    case 'UP': return <ArrowUp {...iconProps} />
-    case 'DOWN': return <ArrowDown {...iconProps} />
-    case 'LEFT': return <ArrowLeft {...iconProps} />
-    case 'RIGHT': return <ArrowRight {...iconProps} />
-    default: return null
+  const icons = {
+    UP: ArrowUp,
+    DOWN: ArrowDown,
+    LEFT: ArrowLeft,
+    RIGHT: ArrowRight
   }
+  const Icon = icons[direction.toUpperCase()]
+  return Icon ? <Icon size={size} className={`text-yellow-500/90 ${className}`} /> : null
 }
 
 export default function Slot({ index, selectedStratagem, isActive, onSelectSlot, shortcut }) {
@@ -17,13 +17,15 @@ export default function Slot({ index, selectedStratagem, isActive, onSelectSlot,
 
   useEffect(() => {
     if (window.api) {
-      const handleTrigger = (triggeredIndex) => {
+      const removeListener = window.api.onMacroTriggered((triggeredIndex) => {
         if (triggeredIndex === index) {
           setActiveVisual(true)
           setTimeout(() => setActiveVisual(false), 500)
         }
+      })
+      return () => {
+        if (removeListener) removeListener()
       }
-      window.api.onMacroTriggered(handleTrigger)
     }
   }, [index])
 
