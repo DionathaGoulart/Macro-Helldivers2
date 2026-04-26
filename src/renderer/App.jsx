@@ -24,6 +24,7 @@ function App() {
 
   const [settings, setSettings] = useState({
     shortcuts: ['F1', 'F2', 'F3', 'F4'],
+    supportShortcuts: [null, null, null],
     modifierKey: 'LeftControl',
     useArrows: false
   })
@@ -47,7 +48,7 @@ function App() {
         const parsed = JSON.parse(savedSettings)
         setSettings(parsed)
         if (window.api) window.api.saveSettings(parsed)
-      } catch(e) {
+      } catch (e) {
         console.error('Failed to parse saved settings', e)
       }
     } else {
@@ -68,10 +69,10 @@ function App() {
     const newSlots = [...slots]
     newSlots[activeSlot] = stratagem
     setSlots(newSlots)
-    
+
     localStorage.setItem('helldivers-macro-slots', JSON.stringify(newSlots))
     if (window.api) window.api.updateSlots(newSlots)
-    
+
     if (activeSlot < 3) {
       setActiveSlot(activeSlot + 1)
     }
@@ -88,6 +89,12 @@ function App() {
     const newShortcuts = [...settings.shortcuts]
     newShortcuts[index] = value
     handleSettingChange('shortcuts', newShortcuts)
+  }
+
+  const handleSupportShortcutChange = (index, value) => {
+    const newShortcuts = [...settings.supportShortcuts]
+    newShortcuts[index] = value
+    handleSettingChange('supportShortcuts', newShortcuts)
   }
 
   // Key capture logic
@@ -111,19 +118,22 @@ function App() {
 
     if (typeof capturingSlot === 'number') {
       handleShortcutChange(capturingSlot, mapped)
+    } else if (capturingSlot && capturingSlot.startsWith('support-')) {
+      const index = parseInt(capturingSlot.split('-')[1])
+      handleSupportShortcutChange(index, mapped)
     }
     setCapturingSlot(null)
     window.api.invoke('set-recording-mode', false)
   }, [capturingSlot])
 
   useEffect(() => {
-    if (typeof capturingSlot === 'number') {
+    if (capturingSlot !== null) {
       const keyHandler = (e) => {
-        if (e.key === 'Escape') { 
+        if (e.key === 'Escape') {
           e.preventDefault()
           setCapturingSlot(null)
           window.api.invoke('set-recording-mode', false)
-          return 
+          return
         }
         handleKeyCapture(e)
         window.api.invoke('set-recording-mode', false)
@@ -158,18 +168,18 @@ function App() {
 
   return (
     <div className="h-screen flex flex-col bg-slate-900 overflow-hidden">
-      
+
       {/* HEADER */}
       <header className="pt-2 pb-0 text-center shrink-0 border-b border-slate-800">
         {/* TABS */}
         <div className="flex justify-center gap-4">
-          <button 
+          <button
             onClick={() => setActiveTab('macro')}
             className={`px-6 py-3 rounded-t-lg font-bold text-sm transition-colors border-b-2 ${activeTab === 'macro' ? 'bg-slate-800/80 text-yellow-400 border-yellow-500' : 'text-slate-500 border-transparent hover:bg-slate-800/50 hover:text-slate-300'}`}
           >
             Configurar Macros
           </button>
-          <button 
+          <button
             onClick={() => setActiveTab('settings')}
             className={`px-6 py-3 rounded-t-lg font-bold text-sm transition-colors border-b-2 ${activeTab === 'settings' ? 'bg-slate-800/80 text-yellow-400 border-yellow-500' : 'text-slate-500 border-transparent hover:bg-slate-800/50 hover:text-slate-300'}`}
           >
@@ -180,7 +190,7 @@ function App() {
 
       {/* CENTER: CONTEÚDO DA ABA */}
       <main className="flex-1 overflow-y-auto px-8 pb-4 scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-transparent">
-        
+
         {activeTab === 'macro' && (
           <div className="max-w-4xl mx-auto space-y-8 mt-6">
             <div className="text-center mb-4">
@@ -195,7 +205,7 @@ function App() {
                   <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
                   {tag}
                 </h2>
-                
+
                 <div className="grid grid-cols-4 gap-3">
                   {stratagemsByTag[tag].map((strat, idx) => {
                     const isEquipped = slots.some(s => s && s.id === strat.id)
@@ -208,8 +218,8 @@ function App() {
                         key={idx}
                         onClick={() => !disabled && handleAssignStratagem(strat)}
                         className={`flex flex-col items-center p-3 transition-all rounded-lg text-center gap-2 border 
-                          ${disabled 
-                            ? 'bg-slate-900 border-slate-800 opacity-40 cursor-not-allowed' 
+                          ${disabled
+                            ? 'bg-slate-900 border-slate-800 opacity-40 cursor-not-allowed'
                             : 'bg-slate-800 hover:bg-slate-700 border-slate-600 hover:border-yellow-500/50 cursor-pointer'}`}
                       >
                         <img src={`${strat.imagem}`} alt={strat.nome} className="w-10 h-10 object-contain drop-shadow-md" />
@@ -242,11 +252,10 @@ function App() {
                         await window.api.invoke('set-recording-mode', true)
                         setCapturingSlot(i)
                       }}
-                      className={`px-4 py-3 rounded-lg font-mono text-sm font-bold tracking-widest border-2 transition-all text-center ${
-                        capturingSlot === i
+                      className={`px-4 py-3 rounded-lg font-mono text-sm font-bold tracking-widest border-2 transition-all text-center ${capturingSlot === i
                           ? 'bg-yellow-500/20 border-yellow-400 text-yellow-300 animate-pulse'
                           : 'bg-slate-900 border-slate-600 text-slate-200 hover:border-yellow-500/60 hover:bg-slate-800'
-                      }`}
+                        }`}
                     >
                       {capturingSlot === i ? '🎯 Pressione uma tecla...' : settings.shortcuts[i]}
                     </button>
@@ -275,11 +284,10 @@ function App() {
                     <button
                       key={btn.id}
                       onClick={() => handleSettingChange('modifierKey', btn.id)}
-                      className={`px-6 py-3 rounded-lg border transition-all font-bold ${
-                        settings.modifierKey === btn.id
+                      className={`px-6 py-3 rounded-lg border transition-all font-bold ${settings.modifierKey === btn.id
                           ? 'bg-yellow-500 border-yellow-400 text-slate-900 shadow-lg shadow-yellow-500/20'
                           : 'bg-slate-900 border-slate-700 text-slate-400 hover:border-slate-500 hover:bg-slate-800'
-                      }`}
+                        }`}
                     >
                       {btn.label}
                     </button>
@@ -300,11 +308,11 @@ function App() {
                     <span className="text-[10px] text-slate-500">O padrão WASD pode interferir no movimento.</span>
                   </div>
                   <label className="relative inline-flex items-center cursor-pointer">
-                    <input 
-                      type="checkbox" 
-                      checked={settings.useArrows} 
+                    <input
+                      type="checkbox"
+                      checked={settings.useArrows}
                       onChange={(e) => handleSettingChange('useArrows', e.target.checked)}
-                      className="sr-only peer" 
+                      className="sr-only peer"
                     />
                     <div className="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-yellow-500"></div>
                   </label>
@@ -319,20 +327,36 @@ function App() {
               </h2>
               <div className="grid grid-cols-1 gap-3">
                 {[
-                  { nome: 'Reinforce', imagem: 'Reinforce_Stratagem_Icon.svg', codex: ['UP', 'DOWN', 'RIGHT', 'LEFT', 'UP'] },
-                  { nome: 'Resupply', imagem: 'Resupply_Stratagem_Icon.svg', codex: ['DOWN', 'DOWN', 'UP', 'RIGHT'] },
-                  { nome: 'Eagle Rearm', imagem: 'Eagle_Rearm_Stratagem_Icon.svg', codex: ['UP', 'UP', 'LEFT', 'UP', 'RIGHT'] }
+                  { nome: 'Reinforce', imagem: 'Reinforce_Stratagem_Icon.png', codex: ['UP', 'DOWN', 'RIGHT', 'LEFT', 'UP'] },
+                  { nome: 'Resupply', imagem: 'Resupply_Stratagem_Icon.png', codex: ['DOWN', 'DOWN', 'UP', 'RIGHT'] },
+                  { nome: 'Eagle Rearm', imagem: 'Eagle_Rearm_Stratagem_Icon.png', codex: ['UP', 'UP', 'LEFT', 'UP', 'RIGHT'] }
                 ].map((strat, i) => (
-                  <div key={i} className="flex items-center justify-between bg-slate-900/60 p-3 rounded-lg border border-slate-700/50 hover:border-slate-600 transition-colors">
+                  <div key={i} className="flex items-center justify-between bg-slate-900/60 p-3 rounded-lg border border-slate-700/50 hover:border-slate-600 transition-all group">
                     <div className="flex items-center gap-3">
-                      <img src={strat.imagem} alt={strat.nome} className="w-8 h-8 object-contain drop-shadow-md" />
-                      <span className="text-sm font-bold text-slate-200">{strat.nome}</span>
+                      <img src={strat.imagem} alt={strat.nome} className="w-8 h-8 object-contain drop-shadow-md group-hover:scale-110 transition-transform" />
+                      <div className="flex flex-col">
+                        <span className="text-sm font-bold text-slate-200">{strat.nome}</span>
+                        <div className="flex gap-1 mt-0.5">
+                          {strat.codex.map((dir, idx) => (
+                            <ArrowIcon key={idx} direction={dir} className="scale-50 origin-left" />
+                          ))}
+                        </div>
+                      </div>
                     </div>
-                    <div className="flex gap-1">
-                      {strat.codex.map((dir, idx) => (
-                        <ArrowIcon key={idx} direction={dir} className="scale-75" />
-                      ))}
-                    </div>
+                    
+                    <button
+                      onClick={async () => {
+                        await window.api.invoke('set-recording-mode', true)
+                        setCapturingSlot(`support-${i}`)
+                      }}
+                      className={`min-w-[100px] px-3 py-2 rounded border-2 font-mono text-[10px] font-bold transition-all ${
+                        capturingSlot === `support-${i}`
+                          ? 'bg-yellow-500/20 border-yellow-400 text-yellow-300 animate-pulse'
+                          : 'bg-slate-800 border-slate-600 text-slate-400 hover:border-yellow-500/50 hover:text-slate-200'
+                      }`}
+                    >
+                      {capturingSlot === `support-${i}` ? 'AGUARDANDO...' : (settings.supportShortcuts[i] || 'NENHUMA')}
+                    </button>
                   </div>
                 ))}
               </div>
@@ -366,8 +390,8 @@ function App() {
         <footer className="shrink-0 bg-slate-900 border-t border-slate-800 p-3 pb-2 shadow-[0_-10px_40px_rgba(0,0,0,0.5)]">
           <div className="flex justify-center gap-4">
             {slots.map((slot, index) => (
-              <Slot 
-                key={index} 
+              <Slot
+                key={index}
                 index={index}
                 selectedStratagem={slot}
                 isActive={activeSlot === index}

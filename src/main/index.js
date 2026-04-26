@@ -30,8 +30,15 @@ function loadMacroEngine() {
   }
 }
 
+const SUPPORT_CODEXES = [
+  ['Up', 'Down', 'Right', 'Left', 'Up'],     // Reinforce
+  ['Down', 'Down', 'Up', 'Right'],           // Resupply
+  ['Up', 'Up', 'Left', 'Up', 'Right']        // Eagle Rearm
+]
+
 const DEFAULT_SETTINGS = {
   shortcuts: ['F1', 'F2', 'F3', 'F4'],
+  supportShortcuts: [null, null, null],
   modifierKey: 'LeftControl',
   useArrows: false
 }
@@ -97,9 +104,27 @@ async function handleShortcutTrigger(index) {
   }
 }
 
+async function handleSupportTrigger(index) {
+  if (isRecordingState || !isGameFocused) return
+  const engine = loadMacroEngine()
+  if (!engine) return
+
+  const codex = SUPPORT_CODEXES[index]
+  if (codex) {
+    if (win && !win.isDestroyed()) win.webContents.send('support-macro-triggered', index)
+    try {
+      await engine.runStratagem(codex, currentSettings.modifierKey, currentSettings.useArrows)
+    } catch (e) {
+      console.error('Erro ao executar macro de suporte:', e)
+    }
+  }
+}
+
 function registerMacros() {
   if (isRecordingState) return
   globalShortcut.unregisterAll()
+  
+  // Slots normais
   currentSettings.shortcuts.forEach((key, index) => {
     if (!key) return
     try {
@@ -107,6 +132,17 @@ function registerMacros() {
       globalShortcut.register(`Shift+${key}`, () => handleShortcutTrigger(index))
     } catch (e) {}
   })
+
+  // Slots de suporte
+  if (currentSettings.supportShortcuts) {
+    currentSettings.supportShortcuts.forEach((key, index) => {
+      if (!key) return
+      try {
+        globalShortcut.register(key, () => handleSupportTrigger(index))
+        globalShortcut.register(`Shift+${key}`, () => handleSupportTrigger(index))
+      } catch (e) {}
+    })
+  }
 }
 
 function createTray() {
