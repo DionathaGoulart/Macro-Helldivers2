@@ -37,6 +37,14 @@ function App() {
     useArrows: false,
     language: 'pt'
   })
+  const [updateStatus, setUpdateStatus] = useState({ status: 'idle', percent: 0 })
+  const [isBooting, setIsBooting] = useState(true)
+
+  useEffect(() => {
+    // Sequência de boot dura 4 segundos
+    const timer = setTimeout(() => setIsBooting(false), 4500)
+    return () => clearTimeout(timer)
+  }, [])
 
   useEffect(() => {
     const savedSlots = localStorage.getItem('helldivers-macro-slots')
@@ -57,6 +65,20 @@ function App() {
       } catch (e) { console.error(e) }
     } else {
       if (window.api) window.api.saveSettings(settings)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (window.api && window.api.onUpdateStatus) {
+      window.api.onUpdateStatus((info) => {
+        setUpdateStatus(info)
+      })
+    }
+    if (window.api && window.api.onGameFocusChanged) {
+      window.api.onGameFocusChanged((focused) => {
+        // Você pode adicionar um estado de foco aqui se quiser mostrar um aviso
+        console.log('Game focus:', focused)
+      })
     }
   }, [])
 
@@ -155,8 +177,57 @@ function App() {
   }, [stratagemsByTag])
 
   return (
-    <div className="h-screen flex flex-col bg-slate-950 text-slate-200 relative selection:bg-cyan-500/30">
+    <div className="h-screen flex flex-col bg-slate-950 text-slate-200 relative selection:bg-cyan-500/30 overflow-hidden">
+      
+      {/* BOOT INTRO SEQUENCE */}
+      {isBooting && (
+        <div className="fixed inset-0 z-[5000] bg-slate-950 flex flex-col items-center justify-center font-mono overflow-hidden">
+          {/* CRT Scanline Effect */}
+          <div className="absolute inset-0 pointer-events-none bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.25)_50%),linear-gradient(90deg,rgba(255,0,0,0.06),rgba(0,255,0,0.02),rgba(0,0,255,0.06))] z-50 bg-[length:100%_4px,3px_100%] opacity-30"></div>
+          
+          <div className="relative z-10 w-full max-w-lg px-12 space-y-8" style={{ animation: 'fadeIn 1s ease-out 3.5s reverse forwards' }}>
+            {/* Logo Part */}
+            <div className="flex flex-col items-center space-y-4 opacity-0 intro-zoom-in" style={{ animationDelay: '0.3s' }}>
+              <div className="relative">
+                <div className="w-20 h-20 border-4 border-yellow-500 rounded-full flex items-center justify-center">
+                  <span className="text-3xl font-black text-yellow-500 tracking-tighter">HD</span>
+                </div>
+                <div className="absolute inset-0 border-4 border-cyan-500 rounded-full animate-ping opacity-20"></div>
+              </div>
+              <h1 className="text-yellow-500 text-xs font-black tracking-[0.5em] uppercase">
+                Macro Helldivers 2
+              </h1>
+            </div>
 
+            {/* Terminal Lines */}
+            <div className="space-y-2 text-[10px] uppercase tracking-widest text-cyan-500/70">
+              <p className="opacity-0 intro-slide-left" style={{ animationDelay: '1s' }}>
+                &gt; {t.settings.bootLink} [OK]
+              </p>
+              <p className="opacity-0 intro-slide-left" style={{ animationDelay: '1.5s' }}>
+                <span className="text-yellow-500/70">&gt; {t.settings.bootProtocols} [OK]</span>
+              </p>
+              <p className="opacity-0 intro-slide-left" style={{ animationDelay: '2s' }}>
+                &gt; {t.settings.bootIdentity} [VERIFIED]
+              </p>
+              <p className="opacity-0 intro-slide-left" style={{ animationDelay: '2.5s' }}>
+                <span className="text-white">&gt; {t.settings.bootReady}</span>
+              </p>
+            </div>
+
+            {/* Progress Bar (Fake) */}
+            <div className="w-full h-1 bg-slate-900 rounded-full overflow-hidden opacity-0 intro-fade-in" style={{ animationDelay: '0.8s' }}>
+              <div className="h-full bg-yellow-500 shadow-[0_0_15px_rgba(234,179,8,0.5)] animate-boot-progress"></div>
+            </div>
+          </div>
+
+          {/* Vignette */}
+          <div className="absolute inset-0 pointer-events-none shadow-[inset_0_0_150px_rgba(0,0,0,0.8)]"></div>
+        </div>
+      )}
+
+      <div className={`h-full flex flex-col transition-all duration-1000 ${isBooting ? 'scale-110 blur-xl opacity-0' : 'scale-100 blur-0 opacity-100 animate-entrance'}`}>
+      
       {/* HEADER: TABS */}
       <header className="shrink-0 bg-slate-950/40 backdrop-blur-2xl border-b border-white/5 z-50 relative">
         {/* HUD Decorations */}
@@ -206,7 +277,9 @@ function App() {
                 <section key={tag} className={`hd-card p-5 border-l-4 border-l-slate-700 ${borderClass} transition-all [content-visibility:auto]`}>
                   <h2 className="flex items-center gap-3 text-xs font-black uppercase tracking-widest text-slate-400 mb-5">
                     <div className={`w-2 h-2 rounded-full border ${indicatorClass}`}></div>
-                    {tag}
+                    {tag === 'Offensive' ? t.settings.tagOffensive : 
+                     tag === 'Supply' ? t.settings.tagSupply : 
+                     tag === 'Defensive' ? t.settings.tagDefensive : tag}
                   </h2>
 
                 <div className="grid grid-cols-4 gap-3">
@@ -445,10 +518,29 @@ function App() {
             <div className="w-full h-[1px] bg-gradient-to-r from-transparent via-slate-800 to-transparent opacity-50"></div>
             
             <div className="py-6 px-6 flex items-center justify-between">
-              <span className="text-[9px] font-black tracking-[0.4em] uppercase text-slate-600">{t.settings.version} v0.2.0</span>
+              <span className="text-[9px] font-black tracking-[0.4em] uppercase text-slate-600">{settings.language === 'pt' ? 'Versão' : 'Version'} v0.2.0</span>
               <div className="flex items-center gap-2.5">
-                <div className="w-1 h-1 rounded-full bg-yellow-500 shadow-[0_0_8px_rgba(251,191,36,0.8)] animate-pulse"></div>
-                <span className="text-[9px] font-black uppercase text-slate-500 tracking-[0.2em]">{t.settings.updated}</span>
+                {updateStatus.status === 'ready' ? (
+                  <button 
+                    onClick={() => window.api.invoke('install-update')}
+                    className="flex items-center gap-2 px-3 py-1 bg-yellow-500 rounded-lg text-[9px] font-black uppercase text-slate-950 animate-pulse-hd shadow-[0_0_15px_rgba(234,179,8,0.4)]"
+                  >
+                    <div className="w-1.5 h-1.5 rounded-full bg-slate-950"></div>
+                    {t.settings.updateReady}
+                  </button>
+                ) : (
+                  <>
+                    <div className={`w-1 h-1 rounded-full ${updateStatus.status === 'error' ? 'bg-red-500' : 'bg-yellow-500'} shadow-[0_0_8px_rgba(251,191,36,0.8)] animate-pulse`}></div>
+                    <span className="text-[9px] font-black uppercase text-slate-500 tracking-[0.2em]">
+                      {updateStatus.status === 'checking' && t.settings.updateChecking}
+                      {updateStatus.status === 'available' && t.settings.updateAvailable}
+                      {updateStatus.status === 'downloading' && `${t.settings.updateDownloading} ${Math.round(updateStatus.percent)}%`}
+                      {updateStatus.status === 'up-to-date' && t.settings.updateUpToDate}
+                      {updateStatus.status === 'error' && t.settings.updateError}
+                      {(!updateStatus.status || updateStatus.status === 'idle') && t.settings.updated}
+                    </span>
+                  </>
+                )}
               </div>
             </div>
           </footer>
@@ -477,6 +569,54 @@ function App() {
         </footer>
       )}
 
+      {/* UPDATE NOTIFICATION MODAL */}
+      {updateStatus.status === 'ready' && (
+        <div className="fixed inset-0 z-[2000] flex items-center justify-center p-6 bg-slate-950/80 backdrop-blur-md animate-in fade-in duration-300">
+          <div className="w-full max-w-md bg-slate-900 border-2 border-yellow-500/50 rounded-3xl p-8 shadow-[0_0_50px_rgba(0,0,0,0.5)] relative overflow-hidden">
+            {/* Background Glow */}
+            <div className="absolute -top-24 -right-24 w-48 h-48 bg-yellow-500/10 blur-[60px] rounded-full"></div>
+            
+            <div className="relative space-y-6">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 bg-yellow-500/20 rounded-2xl flex items-center justify-center border border-yellow-500/30">
+                  <div className="w-3 h-3 bg-yellow-500 rounded-full animate-pulse"></div>
+                </div>
+                <div>
+                  <h3 className="text-lg font-black uppercase tracking-widest text-yellow-500">
+                    {settings.language === 'pt' ? 'Atualização Disponível' : 'Update Available'}
+                  </h3>
+                  <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">
+                    v{updateStatus.version}
+                  </p>
+                </div>
+              </div>
+
+              <p className="text-sm text-slate-300 leading-relaxed font-medium">
+                {settings.language === 'pt' 
+                  ? 'Uma nova versão foi baixada e está pronta para ser instalada. Deseja reiniciar o programa agora para aplicar as mudanças?' 
+                  : 'A new version has been downloaded and is ready to install. Would you like to restart the program now to apply changes?'}
+              </p>
+
+              <div className="flex gap-3 pt-2">
+                <button
+                  onClick={() => window.api.invoke('install-update')}
+                  className="flex-1 px-6 py-4 bg-yellow-500 hover:bg-yellow-400 text-slate-950 rounded-2xl font-black uppercase tracking-widest text-xs transition-all shadow-[0_10px_20px_rgba(234,179,8,0.2)] hover:scale-[1.02] active:scale-95"
+                >
+                  {settings.language === 'pt' ? 'Reiniciar Agora' : 'Restart Now'}
+                </button>
+                <button
+                  onClick={() => setUpdateStatus(prev => ({ ...prev, status: 'idle' }))}
+                  className="px-6 py-4 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-2xl font-black uppercase tracking-widest text-xs transition-all border border-white/5"
+                >
+                  {settings.language === 'pt' ? 'Depois' : 'Later'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      </div>
     </div>
   )
 }
