@@ -360,9 +360,6 @@ function App() {
                   </div>
                 ))}
               </div>
-              <p className="text-[10px] text-slate-500 mt-4">
-                Estes códigos são fixos e não podem ser alterados.
-              </p>
             </div>
 
             <div className="bg-slate-800/40 p-6 rounded-xl border border-slate-700/50">
