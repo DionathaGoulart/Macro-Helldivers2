@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
+import { Shield, Settings as SettingsIcon, Cpu, Zap, Radio } from 'lucide-react'
 import Slot, { ArrowIcon } from './components/Slot'
 import stratagemsData from './data/stratagems.json'
 
@@ -143,19 +144,46 @@ function App() {
       
       {/* HEADER: TABS */}
       <header className="shrink-0 bg-slate-950 border-b border-slate-900 z-50">
-        <div className="w-full flex justify-center">
-          <button 
-            onClick={() => setActiveTab('macro')}
-            className={`hd-tab-button ${activeTab === 'macro' ? 'hd-tab-active' : 'hd-tab-inactive'}`}
-          >
-            Configurar Macros
-          </button>
-          <button 
-            onClick={() => setActiveTab('settings')}
-            className={`hd-tab-button ${activeTab === 'settings' ? 'hd-tab-active' : 'hd-tab-inactive'}`}
-          >
-            Configurações
-          </button>
+        <div className="w-full flex items-center px-8 border-b border-white/5">
+          {/* Logo/Brand Area */}
+          <div className="flex items-center gap-3 mr-auto py-4">
+            <div className="w-10 h-10 bg-yellow-500 rounded flex items-center justify-center shadow-[0_0_15px_rgba(251,191,36,0.3)]">
+              <Shield className="text-slate-950 w-6 h-6 stroke-[2.5]" />
+            </div>
+            <div className="flex flex-col">
+              <span className="text-xs font-black uppercase tracking-tighter text-yellow-500 leading-none">Super Earth</span>
+              <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500 leading-none mt-1">Macro Command</span>
+            </div>
+          </div>
+
+          {/* Navigation Tabs */}
+          <nav className="flex h-full">
+            <button 
+              onClick={() => setActiveTab('macro')}
+              className={`hd-tab-button flex items-center gap-2 group ${activeTab === 'macro' ? 'hd-tab-active' : 'hd-tab-inactive'}`}
+            >
+              <Cpu className={`w-4 h-4 transition-transform ${activeTab === 'macro' ? 'scale-110' : 'group-hover:scale-110'}`} />
+              <span>Configurar Macros</span>
+            </button>
+            <button 
+              onClick={() => setActiveTab('settings')}
+              className={`hd-tab-button flex items-center gap-2 group ${activeTab === 'settings' ? 'hd-tab-active' : 'hd-tab-inactive'}`}
+            >
+              <SettingsIcon className={`w-4 h-4 transition-transform ${activeTab === 'settings' ? 'scale-110 rotate-90' : 'group-hover:rotate-45'}`} />
+              <span>Configurações</span>
+            </button>
+          </nav>
+
+          {/* Status Indicator */}
+          <div className="ml-auto flex items-center gap-4 py-4 pl-8">
+            <div className="flex flex-col items-end">
+              <span className="text-[8px] font-black uppercase text-slate-600 tracking-widest">Link Status</span>
+              <div className="flex items-center gap-2 mt-1">
+                <span className="text-[9px] font-bold text-green-500 uppercase tracking-tighter">Online</span>
+                <div className="w-1.5 h-1.5 bg-green-500 rounded-full shadow-[0_0_8px_rgba(34,197,94,0.6)] animate-pulse"></div>
+              </div>
+            </div>
+          </div>
         </div>
       </header>
 
