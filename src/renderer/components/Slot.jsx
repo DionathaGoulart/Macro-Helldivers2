@@ -41,9 +41,9 @@ export default function Slot({ index, selectedStratagem, isActive, onSelectSlot,
       {selectedStratagem ? (
         <div className="absolute inset-0 w-full h-full">
           {/* Full-bleed background image */}
-          <img
-            src={`${selectedStratagem.imagem}`}
-            alt={selectedStratagem.nome}
+          <img 
+            src={`${selectedStratagem.imagem}`} 
+            alt={selectedStratagem.nome} 
             className={`w-full h-full object-contain p-2 opacity-80 transition-transform duration-300 ${activeVisual ? 'scale-110' : 'scale-100'}`}
           />
           {/* Overlay for better readability of indicators */}
