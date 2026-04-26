@@ -16,6 +16,13 @@ const keyMap = {
   'Numpad6': 'Numpad6', 'Numpad7': 'Numpad7', 'Numpad8': 'Numpad8', 'Numpad9': 'Numpad9',
 }
 
+// Estratagemas de Apoio Fixo que não mudam
+const fixedSupportStrats = [
+  { nome: 'Reinforce', imagem: '/Reinforce_Stratagem_Icon.png', codex: ['UP', 'DOWN', 'RIGHT', 'LEFT', 'UP'] },
+  { nome: 'Resupply', imagem: '/Resupply_Stratagem_Icon.png', codex: ['DOWN', 'DOWN', 'UP', 'RIGHT'] },
+  { nome: 'Eagle Rearm', imagem: '/Eagle_Rearm_Stratagem_Icon.png', codex: ['UP', 'UP', 'LEFT', 'UP', 'RIGHT'] }
+]
+
 function App() {
   const [activeTab, setActiveTab] = useState('macro')
   const [slots, setSlots] = useState([null, null, null, null])
