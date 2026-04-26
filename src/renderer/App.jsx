@@ -220,9 +220,9 @@ function App() {
 
                         {/* HUD Overlay: Codex (Bottom) */}
                         <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-slate-950 via-slate-950/90 to-transparent p-4 pt-12 flex justify-center z-10">
-                          <div className="flex gap-1.5 bg-black/60 px-2.5 py-1.5 rounded-lg border border-white/10 backdrop-blur-md shadow-2xl">
+                          <div className="flex gap-1.5">
                             {strat.codex.map((dir, i) => (
-                              <ArrowIcon key={i} direction={dir} size={16} className="text-yellow-500" />
+                              <ArrowIcon key={i} direction={dir} size={16} className="text-yellow-500 drop-shadow-lg" />
                             ))}
                           </div>
                         </div>
@@ -323,8 +323,8 @@ function App() {
                     <div className="text-center w-full space-y-3">
                       <div className="text-[12px] font-black uppercase tracking-widest text-slate-200">{strat.nome}</div>
 
-                      <div className="flex justify-center gap-1.5 bg-slate-900/80 py-2 rounded-lg border border-slate-800 shadow-inner">
-                        {strat.codex.map((dir, idx) => <ArrowIcon key={idx} direction={dir} size={12} />)}
+                      <div className="flex justify-center gap-2 py-1">
+                        {strat.codex.map((dir, idx) => <ArrowIcon key={idx} direction={dir} size={16} className="drop-shadow-lg" />)}
                       </div>
                     </div>
 
