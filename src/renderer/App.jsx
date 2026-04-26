@@ -518,7 +518,7 @@ function App() {
             <div className="w-full h-[1px] bg-gradient-to-r from-transparent via-slate-800 to-transparent opacity-50"></div>
             
             <div className="py-6 px-6 flex items-center justify-between">
-              <span className="text-[9px] font-black tracking-[0.4em] uppercase text-slate-600">{settings.language === 'pt' ? 'Versão' : 'Version'} v0.2.0</span>
+              <span className="text-[9px] font-black tracking-[0.4em] uppercase text-slate-600">{t.settings.version} v0.2.1</span>
               <div className="flex items-center gap-2.5">
                 {updateStatus.status === 'ready' ? (
                   <button 
