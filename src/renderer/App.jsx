@@ -294,7 +294,9 @@ function App() {
                         <button
                           key={key}
                           onClick={() => handleSettingChange('modifierKey', key)}
-                          className={`py-2 rounded-md text-[10px] font-black uppercase transition-all border ${settings.modifierKey === key ? 'bg-yellow-500 border-yellow-600 text-slate-950' : 'bg-slate-950 border-slate-800 text-slate-400 hover:border-slate-600'
+                          className={`py-3 rounded-xl text-[10px] font-black uppercase transition-all border-2 ${settings.modifierKey === key 
+                            ? 'bg-yellow-500 border-yellow-600 text-slate-950 shadow-[0_0_15px_rgba(234,179,8,0.3)]' 
+                            : 'bg-slate-900 border-slate-800 text-slate-400 hover:border-slate-600'
                             }`}
                         >
                           {key === 'LeftControl' ? 'CTRL' : key === 'LeftAlt' ? 'ALT' : key}
@@ -363,12 +365,12 @@ function App() {
                         await window.api.invoke('set-recording-mode', true)
                         setCapturingSlot(`support-${i}`)
                       }}
-                      className={`w-full py-4 rounded-xl font-black text-[11px] tracking-[0.2em] uppercase border-2 transition-all ${capturingSlot === `support-${i}`
-                        ? 'bg-yellow-500/10 border-yellow-500 text-yellow-400 animate-pulse-hd shadow-[0_0_20px_rgba(251,191,36,0.2)]'
-                        : 'bg-slate-950 border-slate-800 text-slate-500 hover:border-slate-600 hover:text-slate-300'
+                      className={`w-full py-3.5 rounded-xl font-black text-xs tracking-widest border-2 transition-all ${capturingSlot === `support-${i}`
+                        ? 'bg-yellow-500/10 border-yellow-500 text-yellow-400 animate-pulse-hd'
+                        : 'bg-slate-900 border-slate-800 text-slate-300 hover:border-yellow-500/50 hover:text-white'
                         }`}
                     >
-                      {capturingSlot === `support-${i}` ? 'AGUARDANDO TECLA...' : (settings.supportShortcuts?.[i] || 'VINCULAR ATALHO')}
+                      {capturingSlot === `support-${i}` ? 'ESCUTANDO...' : (settings.supportShortcuts?.[i] || 'VINCULAR')}
                     </button>
                   </div>
                 ))}
