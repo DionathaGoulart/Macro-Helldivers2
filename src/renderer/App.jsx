@@ -227,14 +227,6 @@ function App() {
                           </div>
                         </div>
 
-                        {/* Status Indicator */}
-                        {isEquipped && (
-                          <div className="absolute top-3 right-3 z-20">
-                            <div className="bg-yellow-500 text-slate-950 text-[7px] font-black px-1.5 py-0.5 rounded-sm uppercase tracking-tighter shadow-xl">
-                              ATIVO
-                            </div>
-                          </div>
-                        )}
                       </button>
                     )
                   })}
