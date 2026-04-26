@@ -296,7 +296,7 @@ function App() {
                           onClick={() => handleSettingChange('modifierKey', key)}
                           className={`py-3 rounded-xl text-[10px] font-black uppercase transition-all border-2 ${settings.modifierKey === key 
                             ? 'bg-yellow-500 border-yellow-600 text-slate-950 shadow-[0_0_15px_rgba(234,179,8,0.3)]' 
-                            : 'bg-slate-900 border-slate-800 text-slate-400 hover:border-slate-600'
+                            : 'bg-slate-900 border-slate-800 text-slate-400 hover:border-yellow-500/50 hover:text-white'
                             }`}
                         >
                           {key === 'LeftControl' ? 'CTRL' : key === 'LeftAlt' ? 'ALT' : key}
