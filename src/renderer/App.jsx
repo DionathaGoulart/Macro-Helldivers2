@@ -17,10 +17,10 @@ const keyMap = {
 }
 
 function App() {
-  const [activeTab, setActiveTab] = useState('macro') // 'macro' ou 'settings'
+  const [activeTab, setActiveTab] = useState('macro')
   const [slots, setSlots] = useState([null, null, null, null])
   const [activeSlot, setActiveSlot] = useState(0)
-  const [capturingSlot, setCapturingSlot] = useState(null) // null | 0-3 | 'modifier'
+  const [capturingSlot, setCapturingSlot] = useState(null)
 
   const [settings, setSettings] = useState({
     shortcuts: ['F1', 'F2', 'F3', 'F4'],
@@ -29,7 +29,6 @@ function App() {
     useArrows: false
   })
 
-  // Load from localStorage on mount
   useEffect(() => {
     const savedSlots = localStorage.getItem('helldivers-macro-slots')
     if (savedSlots) {
@@ -37,9 +36,7 @@ function App() {
         const parsed = JSON.parse(savedSlots)
         setSlots(parsed)
         if (window.api) window.api.updateSlots(parsed)
-      } catch (e) {
-        console.error('Failed to parse saved slots', e)
-      }
+      } catch (e) { console.error(e) }
     }
 
     const savedSettings = localStorage.getItem('helldivers-macro-settings')
@@ -48,9 +45,7 @@ function App() {
         const parsed = JSON.parse(savedSettings)
         setSettings(prev => ({ ...prev, ...parsed }))
         if (window.api) window.api.saveSettings({ ...settings, ...parsed })
-      } catch (e) {
-        console.error('Failed to parse saved settings', e)
-      }
+      } catch (e) { console.error(e) }
     } else {
       if (window.api) window.api.saveSettings(settings)
     }
@@ -69,13 +64,9 @@ function App() {
     const newSlots = [...slots]
     newSlots[activeSlot] = stratagem
     setSlots(newSlots)
-
     localStorage.setItem('helldivers-macro-slots', JSON.stringify(newSlots))
     if (window.api) window.api.updateSlots(newSlots)
-
-    if (activeSlot < 3) {
-      setActiveSlot(activeSlot + 1)
-    }
+    if (activeSlot < 3) setActiveSlot(activeSlot + 1)
   }
 
   const handleSettingChange = (key, value) => {
@@ -97,17 +88,9 @@ function App() {
     handleSettingChange('supportShortcuts', newShortcuts)
   }
 
-  // Key capture logic
-  const startCapture = (target) => {
-    setCapturingSlot(target)
-  }
-
   const handleKeyCapture = useCallback((e) => {
     if (capturingSlot === null) return
     e.preventDefault()
-    e.stopPropagation()
-
-    // Ignorar teclas de modificação puras (capturamos na tecla real)
     if (['Control', 'Shift', 'Alt', 'Meta'].includes(e.key)) return
     if (e.key === 'Escape') { setCapturingSlot(null); return }
 
@@ -116,15 +99,14 @@ function App() {
     else if (key.startsWith('Digit')) key = key.replace('Digit', '')
     const mapped = keyMap[e.key] || keyMap[key] || key
 
-    if (typeof capturingSlot === 'number') {
-      handleShortcutChange(capturingSlot, mapped)
-    } else if (typeof capturingSlot === 'string' && capturingSlot.startsWith('support-')) {
+    if (typeof capturingSlot === 'number') handleShortcutChange(capturingSlot, mapped)
+    else if (typeof capturingSlot === 'string' && capturingSlot.startsWith('support-')) {
       const index = parseInt(capturingSlot.split('-')[1])
       handleSupportShortcutChange(index, mapped)
     }
     setCapturingSlot(null)
     window.api.invoke('set-recording-mode', false)
-  }, [capturingSlot])
+  }, [capturingSlot, settings])
 
   useEffect(() => {
     if (capturingSlot !== null) {
@@ -136,15 +118,12 @@ function App() {
           return
         }
         handleKeyCapture(e)
-        window.api.invoke('set-recording-mode', false)
       }
-
       window.addEventListener('keydown', keyHandler, true)
       return () => window.removeEventListener('keydown', keyHandler, true)
     }
   }, [capturingSlot, handleKeyCapture])
 
-  // Agrupar Stratagems por Tag
   const stratagemsByTag = {}
   stratagemsData.forEach(strat => {
     const tag = (strat.tag && strat.tag.length > 0) ? strat.tag[0] : 'Outros'
@@ -152,62 +131,56 @@ function App() {
     stratagemsByTag[tag].push(strat)
   })
 
-  const orderedTags = ['Offensive', 'Supply', 'Defensive']
   const sortedTags = Object.keys(stratagemsByTag).sort((a, b) => {
-    const indexA = orderedTags.indexOf(a)
-    const indexB = orderedTags.indexOf(b)
+    const order = ['Offensive', 'Supply', 'Defensive']
+    const indexA = order.indexOf(a), indexB = order.indexOf(b)
     if (indexA !== -1 && indexB !== -1) return indexA - indexB
-    if (indexA !== -1) return -1
-    if (indexB !== -1) return 1
-    return a.localeCompare(b)
-  })
-
-  Object.values(stratagemsByTag).forEach(strats => {
-    strats.sort((a, b) => a.id - b.id)
+    return indexA !== -1 ? -1 : indexB !== -1 ? 1 : a.localeCompare(b)
   })
 
   return (
-    <div className="h-screen flex flex-col bg-slate-900 overflow-hidden">
-
-      {/* HEADER */}
-      <header className="pt-2 pb-0 text-center shrink-0 border-b border-slate-800">
-        {/* TABS */}
-        <div className="flex justify-center gap-4">
-          <button
+    <div className="h-screen flex flex-col bg-slate-950 text-slate-200">
+      
+      {/* HEADER: TABS */}
+      <header className="shrink-0 bg-slate-950 border-b border-slate-900 z-50">
+        <div className="max-w-5xl mx-auto flex justify-center">
+          <button 
             onClick={() => setActiveTab('macro')}
-            className={`px-6 py-3 rounded-t-lg font-bold text-sm transition-colors border-b-2 ${activeTab === 'macro' ? 'bg-slate-800/80 text-yellow-400 border-yellow-500' : 'text-slate-500 border-transparent hover:bg-slate-800/50 hover:text-slate-300'}`}
+            className={`hd-tab-button ${activeTab === 'macro' ? 'hd-tab-active' : 'hd-tab-inactive'}`}
           >
             Configurar Macros
           </button>
-          <button
+          <button 
             onClick={() => setActiveTab('settings')}
-            className={`px-6 py-3 rounded-t-lg font-bold text-sm transition-colors border-b-2 ${activeTab === 'settings' ? 'bg-slate-800/80 text-yellow-400 border-yellow-500' : 'text-slate-500 border-transparent hover:bg-slate-800/50 hover:text-slate-300'}`}
+            className={`hd-tab-button ${activeTab === 'settings' ? 'hd-tab-active' : 'hd-tab-inactive'}`}
           >
             Configurações
           </button>
         </div>
       </header>
 
-      {/* CENTER: CONTEÚDO DA ABA */}
-      <main className="flex-1 overflow-y-auto px-8 pb-4 scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-transparent">
-
+      {/* MAIN CONTENT AREA */}
+      <main className="flex-1 overflow-y-auto scrollbar-hd pt-4 pb-24">
+        
         {activeTab === 'macro' && (
-          <div className="max-w-4xl mx-auto space-y-8 mt-6">
-            <div className="text-center mb-4">
-              <span className="bg-slate-800 text-yellow-400 text-xs px-3 py-1 rounded-full border border-yellow-500/30">
-                Selecione um Stratagem abaixo para equipar no Slot {settings.shortcuts[activeSlot] || `F${activeSlot + 1}`}
+          <div className="max-w-5xl mx-auto px-6 space-y-6">
+            <div className="flex items-center justify-center gap-4 py-2 opacity-60">
+              <div className="h-[1px] flex-1 bg-gradient-to-r from-transparent to-slate-800"></div>
+              <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">
+                Selecionar Estratagemas para o Slot {settings.shortcuts[activeSlot]}
               </span>
+              <div className="h-[1px] flex-1 bg-gradient-to-l from-transparent to-slate-800"></div>
             </div>
 
             {sortedTags.map((tag) => (
-              <div key={tag} className="bg-slate-800/30 p-4 rounded-xl border border-slate-700/50">
-                <h2 className="text-lg font-bold text-slate-300 uppercase tracking-wider mb-4 flex items-center gap-2">
-                  <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
+              <section key={tag} className="hd-card p-5 border-l-4 border-l-slate-700 hover:border-l-yellow-500/50 transition-all">
+                <h2 className="flex items-center gap-3 text-xs font-black uppercase tracking-widest text-slate-400 mb-5">
+                  <div className="hd-indicator"></div>
                   {tag}
                 </h2>
-
-                <div className="grid grid-cols-4 gap-3">
-                  {stratagemsByTag[tag].map((strat, idx) => {
+                
+                <div className="grid grid-cols-5 gap-3">
+                  {stratagemsByTag[tag].map((strat) => {
                     const isEquipped = slots.some(s => s && s.id === strat.id)
                     const isMecha = strat.tag && strat.tag.includes('Mecha')
                     const hasOtherMecha = slots.some((s, i) => i !== activeSlot && s && s.tag && s.tag.includes('Mecha'))
@@ -215,169 +188,143 @@ function App() {
 
                     return (
                       <button
-                        key={idx}
+                        key={strat.id}
                         onClick={() => !disabled && handleAssignStratagem(strat)}
-                        className={`flex flex-col items-center p-3 transition-all rounded-lg text-center gap-2 border 
-                          ${disabled
-                            ? 'bg-slate-900 border-slate-800 opacity-40 cursor-not-allowed'
-                            : 'bg-slate-800 hover:bg-slate-700 border-slate-600 hover:border-yellow-500/50 cursor-pointer'}`}
+                        className={`group relative flex flex-col items-center p-3 rounded-xl border-2 transition-all gap-2
+                          ${disabled 
+                            ? 'bg-slate-950/50 border-slate-900 opacity-20 cursor-not-allowed' 
+                            : 'bg-slate-900/40 border-slate-800/50 hover:bg-slate-800/60 hover:border-yellow-500/40 hover:-translate-y-1'}`}
                       >
-                        <img src={`${strat.imagem}`} alt={strat.nome} className="w-10 h-10 object-contain drop-shadow-md" />
-                        <span className="text-xs font-semibold text-slate-300 leading-tight">{strat.nome}</span>
-                        <div className="flex gap-1 mt-auto bg-slate-900/60 px-1.5 py-1 rounded shadow-inner">
-                          {strat.codex.map((dir, i) => <ArrowIcon key={i} direction={dir} size={14} />)}
+                        <img src={strat.imagem} alt={strat.nome} className="w-10 h-10 object-contain drop-shadow-xl group-hover:scale-110 transition-transform" />
+                        <span className="text-[10px] font-bold text-slate-300 leading-tight h-8 flex items-center justify-center">{strat.nome}</span>
+                        <div className="flex gap-0.5 mt-auto bg-slate-950/60 p-1 rounded-sm border border-slate-800/50">
+                          {strat.codex.map((dir, i) => <ArrowIcon key={i} direction={dir} size={10} />)}
                         </div>
+                        {isEquipped && (
+                          <div className="absolute inset-0 bg-yellow-500/10 rounded-xl border border-yellow-500/20 flex items-center justify-center">
+                            <span className="bg-yellow-500 text-slate-950 text-[8px] font-black px-1.5 py-0.5 rounded-sm uppercase">Equipado</span>
+                          </div>
+                        )}
                       </button>
                     )
                   })}
                 </div>
-              </div>
+              </section>
             ))}
           </div>
         )}
 
         {activeTab === 'settings' && (
-          <div className="max-w-2xl mx-auto space-y-6 mt-8">
-            <div className="bg-slate-800/40 p-6 rounded-xl border border-slate-700/50">
-              <h2 className="text-xl font-bold text-yellow-500 mb-6 border-b border-slate-700/50 pb-3 flex items-center gap-2">
-                <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
-                Teclas de Atalho
-              </h2>
-              <div className="grid grid-cols-2 gap-6">
-                {[0, 1, 2, 3].map(i => (
-                  <div key={i} className="flex flex-col gap-2">
-                    <label className="text-sm font-semibold text-slate-300">Slot {i + 1}</label>
-                    <button
-                      onClick={async () => {
-                        await window.api.invoke('set-recording-mode', true)
-                        setCapturingSlot(i)
-                      }}
-                      className={`px-4 py-3 rounded-lg font-mono text-sm font-bold tracking-widest border-2 transition-all text-center ${capturingSlot === i
-                          ? 'bg-yellow-500/20 border-yellow-400 text-yellow-300 animate-pulse'
-                          : 'bg-slate-900 border-slate-600 text-slate-200 hover:border-yellow-500/60 hover:bg-slate-800'
+          <div className="max-w-3xl mx-auto px-6 space-y-6 pt-4">
+            
+            {/* ShortCuts Grid */}
+            <div className="grid grid-cols-2 gap-6">
+              {/* ATALHOS PRINCIPAIS */}
+              <div className="hd-card p-6 border-t-2 border-t-yellow-500/20">
+                <h2 className="hd-card-header text-sm">
+                  <div className="hd-indicator"></div>
+                  Atalhos de Combate
+                </h2>
+                <div className="grid grid-cols-2 gap-4">
+                  {[0, 1, 2, 3].map(i => (
+                    <div key={i} className="space-y-2">
+                      <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Slot {i + 1}</label>
+                      <button
+                        onClick={async () => {
+                          await window.api.invoke('set-recording-mode', true)
+                          setCapturingSlot(i)
+                        }}
+                        className={`w-full py-3 rounded-lg font-black text-xs tracking-tighter border-2 transition-all ${
+                          capturingSlot === i ? 'bg-yellow-500/10 border-yellow-500 text-yellow-400 animate-pulse-hd' : 'bg-slate-950 border-slate-800 text-slate-300 hover:border-slate-600'
                         }`}
-                    >
-                      {capturingSlot === i ? '🎯 Pressione uma tecla...' : settings.shortcuts[i]}
-                    </button>
-                  </div>
-                ))}
-              </div>
-              <p className="text-xs text-slate-500 mt-5">
-                Clique num slot e pressione a tecla desejada. <kbd className="bg-slate-900 px-1.5 py-0.5 rounded border border-slate-600 text-[10px]">Esc</kbd> cancela.
-              </p>
-            </div>
-
-            <div className="bg-slate-800/40 p-6 rounded-xl border border-slate-700/50">
-              <h2 className="text-xl font-bold text-yellow-500 mb-6 border-b border-slate-700/50 pb-3 flex items-center gap-2">
-                <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
-                Jogo
-              </h2>
-              <div className="flex flex-col gap-3">
-                <label className="text-sm font-semibold text-slate-300">Tecla de Menu (Estratagemas)</label>
-                <div className="flex flex-wrap gap-2">
-                  {[
-                    { id: 'LeftControl', label: 'Ctrl' },
-                    { id: 'LeftAlt', label: 'Alt' },
-                    { id: 'Equal', label: '=' },
-                    { id: 'Minus', label: '-' }
-                  ].map((btn) => (
-                    <button
-                      key={btn.id}
-                      onClick={() => handleSettingChange('modifierKey', btn.id)}
-                      className={`px-6 py-3 rounded-lg border transition-all font-bold ${settings.modifierKey === btn.id
-                          ? 'bg-yellow-500 border-yellow-400 text-slate-900 shadow-lg shadow-yellow-500/20'
-                          : 'bg-slate-900 border-slate-700 text-slate-400 hover:border-slate-500 hover:bg-slate-800'
-                        }`}
-                    >
-                      {btn.label}
-                    </button>
+                      >
+                        {capturingSlot === i ? 'ESCUTANDO...' : settings.shortcuts[i]}
+                      </button>
+                    </div>
                   ))}
                 </div>
-                <p className="text-xs text-slate-500 mt-1">
-                  Selecione a tecla que você usa no jogo para abrir o menu de estratagemas.
-                </p>
               </div>
 
-              <div className="flex flex-col gap-4 mt-6 pt-6 border-t border-slate-700/50">
-                <div className="flex items-center justify-between">
-                  <div className="flex flex-col gap-1">
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm font-semibold text-slate-200">Usar Setas para as Estratagemas</span>
-                      <span className="bg-yellow-500/20 text-yellow-500 text-[9px] font-bold px-1.5 py-0.5 rounded border border-yellow-500/30 uppercase tracking-wider">Recomendado</span>
+              {/* JOGO / MODIFICADORES */}
+              <div className="hd-card p-6 border-t-2 border-t-slate-700">
+                <h2 className="hd-card-header text-sm">
+                  <div className="hd-indicator bg-slate-500 shadow-none"></div>
+                  Parâmetros de Missão
+                </h2>
+                <div className="space-y-6">
+                  <div className="space-y-3">
+                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Tecla do Menu In-Game</label>
+                    <div className="grid grid-cols-2 gap-2">
+                      {['LeftControl', 'LeftAlt', 'Equal', 'Minus'].map((key) => (
+                        <button
+                          key={key}
+                          onClick={() => handleSettingChange('modifierKey', key)}
+                          className={`py-2 rounded-md text-[10px] font-black uppercase transition-all border ${
+                            settings.modifierKey === key ? 'bg-yellow-500 border-yellow-600 text-slate-950' : 'bg-slate-950 border-slate-800 text-slate-400 hover:border-slate-600'
+                          }`}
+                        >
+                          {key === 'LeftControl' ? 'CTRL' : key === 'LeftAlt' ? 'ALT' : key}
+                        </button>
+                      ))}
                     </div>
-                    <span className="text-[10px] text-slate-500">O padrão WASD pode interferir no movimento.</span>
                   </div>
-                  <label className="relative inline-flex items-center cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={settings.useArrows}
-                      onChange={(e) => handleSettingChange('useArrows', e.target.checked)}
-                      className="sr-only peer"
-                    />
-                    <div className="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-yellow-500"></div>
-                  </label>
+
+                  <div className="flex items-center justify-between p-3 bg-slate-950 rounded-lg border border-slate-800">
+                    <div className="flex flex-col">
+                      <span className="text-[10px] font-black uppercase text-slate-300">Modo de Digitação</span>
+                      <span className="text-[9px] text-slate-500 uppercase">{settings.useArrows ? 'Setas (Seguro)' : 'WASD (Movimento)'}</span>
+                    </div>
+                    <label className="relative inline-flex items-center cursor-pointer">
+                      <input type="checkbox" checked={settings.useArrows} onChange={(e) => handleSettingChange('useArrows', e.target.checked)} className="sr-only peer" />
+                      <div className="w-9 h-5 bg-slate-800 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[4px] after:left-[4px] after:bg-slate-400 after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-yellow-500 peer-checked:after:bg-slate-950"></div>
+                    </label>
+                  </div>
                 </div>
               </div>
             </div>
 
-            <div className="bg-slate-800/40 p-6 rounded-xl border border-slate-700/50">
-              <h2 className="text-xl font-bold text-yellow-500 mb-6 border-b border-slate-700/50 pb-3 flex items-center gap-2">
-                <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
-                Estratagemas de Suporte
+            {/* ESTRATAGEMAS DE SUPORTE */}
+            <div className="hd-card p-6">
+              <h2 className="hd-card-header text-sm">
+                <div className="hd-indicator bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.4)]"></div>
+                Estratagemas de Apoio Fixo
               </h2>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-3 gap-4">
                 {[
                   { nome: 'Reinforce', imagem: '/Reinforce_Stratagem_Icon.png', codex: ['UP', 'DOWN', 'RIGHT', 'LEFT', 'UP'] },
                   { nome: 'Resupply', imagem: '/Resupply_Stratagem_Icon.png', codex: ['DOWN', 'DOWN', 'UP', 'RIGHT'] },
                   { nome: 'Eagle Rearm', imagem: '/Eagle_Rearm_Stratagem_Icon.png', codex: ['UP', 'UP', 'LEFT', 'UP', 'RIGHT'] }
                 ].map((strat, i) => (
-                  <div key={i} className="flex flex-col bg-slate-900/60 p-4 rounded-lg border border-slate-700/50 hover:border-slate-600 transition-all group gap-3">
+                  <div key={i} className="bg-slate-950/60 p-4 rounded-xl border border-slate-800/80 space-y-3">
                     <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <img src={strat.imagem} alt={strat.nome} className="w-8 h-8 object-contain drop-shadow-md group-hover:scale-110 transition-transform" />
-                        <span className="text-sm font-bold text-slate-200">{strat.nome}</span>
-                      </div>
-                      <div className="flex gap-1">
-                        {strat.codex.map((dir, idx) => (
-                          <ArrowIcon key={idx} direction={dir} size={14} />
-                        ))}
+                      <img src={strat.imagem} alt={strat.nome} className="w-8 h-8 object-contain" />
+                      <div className="flex gap-0.5">
+                        {strat.codex.map((dir, idx) => <ArrowIcon key={idx} direction={dir} size={10} />)}
                       </div>
                     </div>
-                    
+                    <div className="text-[10px] font-black uppercase text-slate-400">{strat.nome}</div>
                     <button
                       onClick={async () => {
                         await window.api.invoke('set-recording-mode', true)
                         setCapturingSlot(`support-${i}`)
                       }}
-                      className={`w-full px-3 py-3 rounded-lg border-2 font-mono text-xs font-bold tracking-wider transition-all ${
-                        capturingSlot === `support-${i}`
-                          ? 'bg-yellow-500/20 border-yellow-400 text-yellow-300 animate-pulse'
-                          : 'bg-slate-800 border-slate-600 text-slate-200 hover:border-yellow-500/60 hover:bg-slate-900'
+                      className={`w-full py-2 rounded-md font-black text-[10px] border transition-all ${
+                        capturingSlot === `support-${i}` ? 'bg-yellow-500/10 border-yellow-500 text-yellow-400 animate-pulse-hd' : 'bg-slate-900 border-slate-800 text-slate-400 hover:border-slate-700'
                       }`}
                     >
-                      {capturingSlot === `support-${i}` ? '🎯 Pressione...' : (settings.supportShortcuts && settings.supportShortcuts[i]) || 'NENHUMA'}
+                      {capturingSlot === `support-${i}` ? 'AGUARDANDO...' : (settings.supportShortcuts?.[i] || 'VINCULAR TECLA')}
                     </button>
                   </div>
                 ))}
               </div>
-              <p className="text-xs text-slate-500 mt-5">
-                Clique num slot e pressione a tecla desejada. <kbd className="bg-slate-900 px-1.5 py-0.5 rounded border border-slate-600 text-[10px]">Esc</kbd> cancela.
-              </p>
             </div>
 
-            <div className="bg-slate-800/40 p-6 rounded-xl border border-slate-700/50">
-              <h2 className="text-xl font-bold text-yellow-500 mb-6 border-b border-slate-700/50 pb-3 flex items-center gap-2">
-                <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
-                Atualização
-              </h2>
-              <div className="flex items-center justify-between">
-                <div className="flex flex-col gap-1">
-                  <span className="text-sm font-semibold text-slate-200">Versão v0.1.0</span>
-                </div>
-                <div className="flex items-center gap-2 bg-green-500/10 border border-green-500/20 px-3 py-1.5 rounded-lg">
-                  <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                  <span className="text-[10px] font-bold text-green-500 uppercase tracking-widest">Atualizado</span>
-                </div>
+            {/* INFO FOOTER */}
+            <div className="flex items-center justify-between opacity-40 px-2">
+              <span className="text-[9px] font-black tracking-widest uppercase">Versão v0.1.0 // Super Earth Command</span>
+              <div className="flex items-center gap-2">
+                <div className="w-1.5 h-1.5 rounded-full bg-green-500"></div>
+                <span className="text-[9px] font-black uppercase">Sistema Operacional</span>
               </div>
             </div>
           </div>
@@ -385,24 +332,26 @@ function App() {
 
       </main>
 
-      {/* BOTTOM: 4 SLOTS LADO A LADO */}
+      {/* FOOTER: SLOTS BAR (FIXED) */}
       {activeTab === 'macro' && (
-        <footer className="shrink-0 bg-slate-900 border-t border-slate-800 p-3 pb-2 shadow-[0_-10px_40px_rgba(0,0,0,0.5)]">
-          <div className="flex justify-center gap-4">
-            {slots.map((slot, index) => (
-              <Slot
-                key={index}
-                index={index}
-                selectedStratagem={slot}
-                isActive={activeSlot === index}
-                onSelectSlot={setActiveSlot}
-                shortcut={settings.shortcuts[index]}
-              />
-            ))}
+        <footer className="shrink-0 fixed bottom-0 left-0 right-0 bg-slate-950/80 backdrop-blur-xl border-t border-slate-900 p-4 pb-6 z-[100]">
+          <div className="max-w-5xl mx-auto flex flex-col items-center gap-4">
+            <div className="flex justify-center gap-4">
+              {slots.map((slot, index) => (
+                <Slot 
+                  key={index} 
+                  index={index}
+                  selectedStratagem={slot}
+                  isActive={activeSlot === index}
+                  onSelectSlot={setActiveSlot}
+                  shortcut={settings.shortcuts[index]}
+                />
+              ))}
+            </div>
+            <div className="text-[9px] font-black uppercase tracking-[0.3em] text-slate-500">
+              Pronto para a Liberdade
+            </div>
           </div>
-          <p className="text-center mt-2 text-[10px] text-slate-500">
-            Aperte <strong className="text-yellow-500">{settings.shortcuts.join(', ')}</strong> para ativar os slots.
-          </p>
         </footer>
       )}
 
