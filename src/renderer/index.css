@@ -5,43 +5,48 @@
 @layer base {
   :root {
     --hd-yellow: #fbbf24;
-    --hd-bg: #11141a;
-    --hd-card: #1c212b;
-    --hd-border: #2d3646;
+    --hd-navy: #0f172a;
+    --hd-navy-light: #1e293b;
+    --hd-accent: #38bdf8;
   }
 
   body {
-    @apply bg-[#11141a] text-slate-100 antialiased select-none overflow-hidden;
+    @apply bg-[#0f172a] text-slate-100 antialiased select-none overflow-hidden;
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
   }
 }
 
 @layer components {
-  /* High Visibility Card */
-  .hd-card {
-    @apply bg-[#1c212b] border border-[#2d3646] rounded-xl shadow-2xl;
-  }
-  
-  .hd-card-header {
-    @apply text-xs font-black uppercase tracking-[0.2em] text-yellow-500 mb-6 flex items-center gap-3 border-b border-slate-800/50 pb-4;
+  /* Vertical Indicator Card */
+  .hd-category-section {
+    @apply bg-slate-900/40 border border-slate-800/60 rounded-r-xl border-l-4 transition-all duration-300;
   }
 
-  /* Spacious Navbar */
+  .hd-offensive { @apply border-l-red-500; }
+  .hd-supply { @apply border-l-blue-500; }
+  .hd-defensive { @apply border-l-green-500; }
+  .hd-default { @apply border-l-yellow-500; }
+
+  .hd-card-header {
+    @apply text-xs font-black uppercase tracking-[0.2em] mb-6 flex items-center gap-3;
+  }
+
+  /* Modern Navbar */
   .hd-navbar {
-    @apply bg-[#161a21] border-b border-[#2d3646] px-10 py-2;
+    @apply bg-slate-950/80 border-b border-slate-800 backdrop-blur-xl px-8 py-1;
   }
 
   .hd-nav-link {
-    @apply relative px-10 py-6 text-[12px] font-black uppercase tracking-[0.15em] transition-all duration-200;
+    @apply relative px-8 py-5 text-[11px] font-black uppercase tracking-[0.2em] transition-all duration-300;
   }
 
   .hd-nav-link::after {
     content: '';
-    @apply absolute bottom-0 left-0 w-full h-0 bg-yellow-500 transition-all duration-200;
+    @apply absolute bottom-0 left-0 w-full h-0 bg-yellow-500 transition-all duration-300;
   }
 
   .hd-nav-active {
-    @apply text-yellow-500 bg-yellow-500/5;
+    @apply text-yellow-400 bg-yellow-400/5;
   }
 
   .hd-nav-active::after {
@@ -49,39 +54,30 @@
   }
 
   .hd-nav-inactive {
-    @apply text-slate-400 hover:text-white hover:bg-white/5;
+    @apply text-slate-500 hover:text-slate-300 hover:bg-slate-900/40;
   }
 
   /* Interaction Elements */
   .hd-btn-record {
-    @apply bg-[#0d1015] border border-slate-700 text-slate-200 font-black uppercase tracking-widest text-[10px] px-4 py-3 rounded-lg transition-all
-           hover:border-yellow-500 hover:text-yellow-400 active:scale-95;
+    @apply bg-slate-950 border border-slate-800 text-slate-300 font-black uppercase tracking-widest text-[10px] px-4 py-3 rounded-lg transition-all
+           hover:border-yellow-500/50 hover:text-yellow-400 active:scale-95;
   }
 
   .hd-btn-recording {
-    @apply bg-yellow-500/20 border-yellow-500 text-yellow-500 animate-pulse;
+    @apply bg-yellow-500/10 border-yellow-500 text-yellow-500 animate-pulse;
   }
 
   .hd-indicator {
-    @apply w-2 h-2 rounded-full bg-yellow-500 shadow-[0_0_12px_rgba(251,191,36,0.6)];
+    @apply w-1.5 h-1.5 rounded-full bg-yellow-500 shadow-[0_0_8px_rgba(251,191,36,0.5)];
   }
 
   .scrollbar-hd::-webkit-scrollbar {
-    width: 6px;
+    width: 4px;
   }
   .scrollbar-hd::-webkit-scrollbar-track {
-    @apply bg-slate-900/50;
+    @apply bg-transparent;
   }
   .scrollbar-hd::-webkit-scrollbar-thumb {
-    @apply bg-slate-700 rounded-full hover:bg-yellow-500/40;
+    @apply bg-slate-800 rounded-full hover:bg-slate-700;
   }
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; transform: scale(0.98); }
-  to { opacity: 1; transform: scale(1); }
-}
-
-.animate-fade-in {
-  animation: fadeIn 0.2s ease-out forwards;
 }
