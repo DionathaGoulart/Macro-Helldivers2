@@ -3,7 +3,7 @@
   "productName": "Macro Helldivers 2",
   "description": "Ferramenta de macros otimizada para Helldivers 2",
   "author": "DionathaGoulart",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "private": true,
   "main": "dist-electron/index.js",
   "scripts": {
