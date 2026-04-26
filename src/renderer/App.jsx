@@ -244,40 +244,24 @@ function App() {
                   Atalhos de Combate
                 </h2>
                 <div className="grid grid-cols-2 gap-4">
-                  {[0, 1, 2, 3].map(i => {
-                    const equipped = slots[i]
-                    return (
-                      <div key={i} className="bg-slate-950/60 p-5 rounded-2xl border border-slate-800/80 flex flex-col items-center gap-4 transition-all hover:border-yellow-500/30 group">
-                        <div className="flex flex-col items-center gap-3">
-                          <div className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Atalho {i + 1}</div>
-                          {equipped ? (
-                            <div className="flex flex-col items-center gap-2">
-                              <img src={equipped.imagem} alt={equipped.nome} className="w-12 h-12 object-contain drop-shadow-xl group-hover:scale-110 transition-transform duration-300" />
-                              <div className="text-[10px] font-black text-slate-300 uppercase tracking-tighter text-center">{equipped.nome}</div>
-                            </div>
-                          ) : (
-                            <div className="w-12 h-12 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-center shadow-inner group-hover:border-yellow-500/20 transition-colors">
-                              <span className="text-xl font-black text-slate-700 group-hover:text-yellow-500/30 transition-colors">{i + 1}</span>
-                            </div>
-                          )}
-                        </div>
-
-                        <button
-                          onClick={async () => {
-                            await window.api.invoke('set-recording-mode', true)
-                            setCapturingSlot(i)
-                          }}
-                          className={`w-full py-3 rounded-xl font-black text-[11px] tracking-[0.1em] border-2 transition-all ${
-                            capturingSlot === i 
-                              ? 'bg-yellow-500/10 border-yellow-500 text-yellow-400 animate-pulse-hd' 
-                              : 'bg-slate-900 border-slate-800 text-slate-400 hover:border-yellow-500 hover:text-slate-200 hover:shadow-[0_0_15px_rgba(251,191,36,0.1)]'
-                          }`}
-                        >
-                          {capturingSlot === i ? 'ESCUTANDO...' : settings.shortcuts[i]}
-                        </button>
-                      </div>
-                    )
-                  })}
+                  {[0, 1, 2, 3].map(i => (
+                    <div key={i} className="bg-slate-950/60 p-5 rounded-2xl border border-slate-800/80 flex flex-col gap-3 transition-all hover:border-yellow-500/20">
+                      <div className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Atalho {i + 1}</div>
+                      <button
+                        onClick={async () => {
+                          await window.api.invoke('set-recording-mode', true)
+                          setCapturingSlot(i)
+                        }}
+                        className={`w-full py-3.5 rounded-xl font-black text-xs tracking-widest border-2 transition-all ${
+                          capturingSlot === i 
+                            ? 'bg-yellow-500/10 border-yellow-500 text-yellow-400 animate-pulse-hd' 
+                            : 'bg-slate-900 border-slate-800 text-slate-300 hover:border-yellow-500/50 hover:text-white'
+                        }`}
+                      >
+                        {capturingSlot === i ? 'ESCUTANDO...' : settings.shortcuts[i]}
+                      </button>
+                    </div>
+                  ))}
                 </div>
               </div>
 
