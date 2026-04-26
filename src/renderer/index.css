@@ -1,21 +1,23 @@
 @import "tailwindcss";
 
 @theme {
-  --color-helldiver-yellow: #fbbf24;
-  --color-helldiver-yellow-dim: rgba(251, 191, 36, 0.1);
-  --color-industrial-slate: #0f172a;
-  --color-industrial-border: rgba(51, 65, 85, 0.4);
-  --color-military-accent: #1e293b;
-  --terminal-glow: rgba(251, 191, 36, 0.15);
+  --color-hd-primary: #22d3ee;
+  --color-hd-primary-dim: rgba(34, 211, 238, 0.1);
+  --color-hd-yellow: #fbbf24;
+  --color-hd-yellow-dim: rgba(251, 191, 36, 0.1);
+  --color-hd-bg-deep: #020617;
+  --color-hd-border: rgba(34, 211, 238, 0.15);
+  --color-hd-accent: #38bdf8;
+  --terminal-glow: rgba(34, 211, 238, 0.2);
 }
 
 @layer base {
   body {
-    @apply bg-slate-950 text-slate-200 antialiased select-none overflow-hidden h-screen;
+    @apply bg-[var(--color-hd-bg-deep)] text-slate-200 antialiased select-none overflow-hidden h-screen;
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
     background-image: 
-      radial-gradient(circle at 50% 0%, rgba(30, 41, 59, 0.5) 0%, transparent 70%),
-      radial-gradient(circle at 0% 100%, rgba(15, 23, 42, 0.8) 0%, transparent 50%);
+      radial-gradient(circle at 50% 0%, rgba(34, 211, 238, 0.08) 0%, transparent 70%),
+      radial-gradient(circle at 0% 100%, rgba(2, 6, 23, 0.8) 0%, transparent 50%);
   }
 
   body::before {
@@ -28,7 +30,7 @@
     z-index: 9999;
     background-size: 100% 4px, 3px 100%;
     pointer-events: none;
-    opacity: 0.3;
+    opacity: 0.2;
   }
 
   body::after {
@@ -37,7 +39,7 @@
     top: -150%; left: -150%;
     width: 300%; height: 300%;
     background-image: url('https://grainy-gradients.vercel.app/noise.svg');
-    opacity: 0.04;
+    opacity: 0.03;
     pointer-events: none;
     z-index: 9998;
     animation: noise 8s steps(10) infinite;
@@ -51,8 +53,8 @@
   }
 
   .hd-card-header {
-    @apply text-sm font-black uppercase tracking-[0.25em] text-yellow-500/90 mb-6 
-           border-b border-slate-800/50 pb-4 flex items-center gap-3;
+    @apply text-sm font-black uppercase tracking-[0.25em] text-[var(--color-hd-primary)] mb-6 
+           border-b border-white/5 pb-4 flex items-center gap-3;
     text-shadow: 0 0 10px var(--terminal-glow);
   }
 
@@ -61,13 +63,24 @@
   }
 
   .hd-tab-active {
-    @apply text-yellow-500 bg-yellow-500/[0.02];
+    @apply text-[var(--color-hd-primary)] bg-[var(--color-hd-primary-dim)];
+    text-shadow: 0 0 10px rgba(34, 211, 238, 0.4);
+  }
+
+  .hd-tab-active-yellow {
+    @apply text-[var(--color-hd-yellow)] bg-[var(--color-hd-yellow-dim)];
     text-shadow: 0 0 10px rgba(251, 191, 36, 0.4);
+    position: relative;
   }
 
   .hd-tab-active::before {
     content: "";
-    @apply absolute top-0 left-0 right-0 h-[3px] bg-yellow-500 shadow-[0_0_15px_rgba(251,191,36,0.8)];
+    @apply absolute top-0 left-0 right-0 h-[3px] bg-[var(--color-hd-primary)] shadow-[0_0_15px_rgba(34,211,238,0.8)];
+  }
+
+  .hd-tab-active-yellow::before {
+    content: "";
+    @apply absolute top-0 left-0 right-0 h-[3px] bg-[var(--color-hd-yellow)] shadow-[0_0_15px_rgba(251,191,36,0.8)];
   }
 
   .hd-tab-inactive {
@@ -84,12 +97,12 @@
   }
 
   .hd-btn-primary {
-    @apply bg-yellow-500 text-slate-950 font-black uppercase tracking-widest text-[10px] px-8 py-4 rounded-xl 
-           hover:bg-yellow-400 active:scale-95 transition-all shadow-xl shadow-yellow-500/10 border-b-4 border-yellow-600;
+    @apply bg-[var(--color-hd-primary)] text-slate-950 font-black uppercase tracking-widest text-[10px] px-8 py-4 rounded-xl 
+           hover:bg-cyan-400 active:scale-95 transition-all shadow-xl shadow-cyan-500/10 border-b-4 border-cyan-600;
   }
 
   .hd-indicator {
-    @apply w-2 h-2 rounded-full bg-yellow-500 shadow-[0_0_12px_rgba(251,191,36,0.8)] border border-yellow-400/50;
+    @apply w-2 h-2 rounded-full bg-[var(--color-hd-primary)] shadow-[0_0_12px_rgba(34,211,238,0.8)] border border-cyan-400/50;
   }
 
   .scrollbar-hd::-webkit-scrollbar {
@@ -99,7 +112,7 @@
     @apply bg-transparent;
   }
   .scrollbar-hd::-webkit-scrollbar-thumb {
-    @apply bg-slate-800/80 rounded-full border-2 border-slate-950 hover:bg-yellow-500/50 transition-colors;
+    @apply bg-slate-800/80 rounded-full border-2 border-slate-950 hover:bg-[var(--color-hd-primary)]/50 transition-colors;
   }
 }
 
