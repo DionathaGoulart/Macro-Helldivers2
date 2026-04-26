@@ -143,7 +143,7 @@ function App() {
       
       {/* HEADER: TABS */}
       <header className="shrink-0 bg-slate-950 border-b border-slate-900 z-50">
-        <div className="max-w-5xl mx-auto flex justify-center">
+        <div className="w-full flex justify-center">
           <button 
             onClick={() => setActiveTab('macro')}
             className={`hd-tab-button ${activeTab === 'macro' ? 'hd-tab-active' : 'hd-tab-inactive'}`}
@@ -218,7 +218,7 @@ function App() {
           <div className="max-w-3xl mx-auto px-6 space-y-6 pt-4">
             
             {/* ShortCuts Grid */}
-            <div className="grid grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* ATALHOS PRINCIPAIS */}
               <div className="hd-card p-6 border-t-2 border-t-yellow-500/20">
                 <h2 className="hd-card-header text-sm">
@@ -336,16 +336,17 @@ function App() {
       {activeTab === 'macro' && (
         <footer className="shrink-0 fixed bottom-0 left-0 right-0 bg-slate-950/80 backdrop-blur-xl border-t border-slate-900 p-4 pb-6 z-[100]">
           <div className="max-w-5xl mx-auto flex flex-col items-center gap-4">
-            <div className="flex justify-center gap-4">
+            <div className="flex justify-center gap-4 flex-wrap">
               {slots.map((slot, index) => (
-                <Slot 
-                  key={index} 
-                  index={index}
-                  selectedStratagem={slot}
-                  isActive={activeSlot === index}
-                  onSelectSlot={setActiveSlot}
-                  shortcut={settings.shortcuts[index]}
-                />
+                <div key={index} className="flex-shrink-0">
+                  <Slot 
+                    index={index}
+                    selectedStratagem={slot}
+                    isActive={activeSlot === index}
+                    onSelectSlot={setActiveSlot}
+                    shortcut={settings.shortcuts[index]}
+                  />
+                </div>
               ))}
             </div>
             <div className="text-[9px] font-black uppercase tracking-[0.3em] text-slate-500">
