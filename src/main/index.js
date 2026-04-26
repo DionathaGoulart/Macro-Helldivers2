@@ -111,6 +111,13 @@ setInterval(async () => {
     
     if (isFocused !== isGameFocused) {
       isGameFocused = isFocused
+      
+      if (isGameFocused) {
+        registerMacros()
+      } else {
+        globalShortcut.unregisterAll()
+      }
+
       if (win && !win.isDestroyed()) {
         win.webContents.send('game-focus-changed', isGameFocused)
       }
@@ -122,10 +129,10 @@ setInterval(async () => {
       if (win && !win.isDestroyed()) win.webContents.send('game-focus-changed', false)
     }
   }
-}, 1500)
+}, 500)
 
 async function handleShortcutTrigger(index) {
-  if (isRecordingState || !isGameFocused) return
+  if (isRecordingState) return
   const engine = loadMacroEngine()
   if (!engine) return
 
@@ -141,7 +148,7 @@ async function handleShortcutTrigger(index) {
 }
 
 async function handleSupportTrigger(index) {
-  if (isRecordingState || !isGameFocused) return
+  if (isRecordingState) return
   const engine = loadMacroEngine()
   if (!engine) return
 
@@ -157,7 +164,7 @@ async function handleSupportTrigger(index) {
 }
 
 function registerMacros() {
-  if (isRecordingState) return
+  if (isRecordingState || !isGameFocused) return
   globalShortcut.unregisterAll()
   
   // Slots normais
@@ -235,7 +242,6 @@ function createWindow() {
 app.whenReady().then(() => {
   createWindow()
   createTray()
-  registerMacros()
 })
 
 // Gerenciamento de Atualizações
