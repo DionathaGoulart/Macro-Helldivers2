@@ -445,7 +445,7 @@ function App() {
             <div className="w-full h-[1px] bg-gradient-to-r from-transparent via-slate-800 to-transparent opacity-50"></div>
             
             <div className="py-6 px-6 flex items-center justify-between">
-              <span className="text-[9px] font-black tracking-[0.4em] uppercase text-slate-600">{t.settings.version} v0.1.0</span>
+              <span className="text-[9px] font-black tracking-[0.4em] uppercase text-slate-600">{t.settings.version} v0.2.0</span>
               <div className="flex items-center gap-2.5">
                 <div className="w-1 h-1 rounded-full bg-yellow-500 shadow-[0_0_8px_rgba(251,191,36,0.8)] animate-pulse"></div>
                 <span className="text-[9px] font-black uppercase text-slate-500 tracking-[0.2em]">{t.settings.updated}</span>
