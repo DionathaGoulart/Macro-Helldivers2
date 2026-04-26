@@ -233,7 +233,7 @@ function App() {
         )}
 
         {activeTab === 'settings' && (
-          <div className="max-w-3xl mx-auto px-6 space-y-6 pt-4">
+          <div className="max-w-5xl mx-auto px-6 space-y-8 pt-6 pb-24">
 
             {/* ShortCuts Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -311,17 +311,15 @@ function App() {
                   { nome: 'Resupply', imagem: '/Resupply_Stratagem_Icon.png', codex: ['DOWN', 'DOWN', 'UP', 'RIGHT'] },
                   { nome: 'Eagle Rearm', imagem: '/Eagle_Rearm_Stratagem_Icon.png', codex: ['UP', 'UP', 'LEFT', 'UP', 'RIGHT'] }
                 ].map((strat, i) => (
-                  <div key={i} className="bg-slate-950/60 p-5 rounded-2xl border border-slate-800/80 flex flex-col items-center gap-4 transition-all hover:border-green-500/30 group">
-                    <div className="relative">
-                      <img src={strat.imagem} alt={strat.nome} className="w-14 h-14 object-contain drop-shadow-2xl group-hover:scale-110 transition-transform duration-300" />
-                      <div className="absolute -bottom-1 -right-1 flex gap-0.5 bg-slate-900 p-1 rounded-md border border-slate-700 shadow-xl">
-                        {strat.codex.map((dir, idx) => <ArrowIcon key={idx} direction={dir} size={8} />)}
-                      </div>
-                    </div>
+                  <div key={i} className="bg-slate-950/60 p-6 rounded-2xl border border-slate-800/80 flex flex-col items-center gap-5 transition-all hover:border-green-500/30 group">
+                    <img src={strat.imagem} alt={strat.nome} className="w-16 h-16 object-contain drop-shadow-2xl group-hover:scale-110 transition-transform duration-300" />
                     
-                    <div className="text-center">
-                      <div className="text-[11px] font-black uppercase tracking-tighter text-slate-200 mb-1">{strat.nome}</div>
-                      <div className="text-[8px] font-bold text-slate-500 uppercase tracking-widest">Apoio Tático</div>
+                    <div className="text-center w-full space-y-3">
+                      <div className="text-[12px] font-black uppercase tracking-widest text-slate-200">{strat.nome}</div>
+                      
+                      <div className="flex justify-center gap-1.5 bg-slate-900/80 py-2 rounded-lg border border-slate-800 shadow-inner">
+                        {strat.codex.map((dir, idx) => <ArrowIcon key={idx} direction={dir} size={12} />)}
+                      </div>
                     </div>
 
                     <button
