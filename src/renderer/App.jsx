@@ -325,22 +325,22 @@ function App() {
                 <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
                 Estratagemas de Suporte
               </h2>
-              <div className="grid grid-cols-1 gap-3">
+              <div className="grid grid-cols-2 gap-4">
                 {[
                   { nome: 'Reinforce', imagem: '/Reinforce_Stratagem_Icon.png', codex: ['UP', 'DOWN', 'RIGHT', 'LEFT', 'UP'] },
                   { nome: 'Resupply', imagem: '/Resupply_Stratagem_Icon.png', codex: ['DOWN', 'DOWN', 'UP', 'RIGHT'] },
                   { nome: 'Eagle Rearm', imagem: '/Eagle_Rearm_Stratagem_Icon.png', codex: ['UP', 'UP', 'LEFT', 'UP', 'RIGHT'] }
                 ].map((strat, i) => (
-                  <div key={i} className="flex items-center justify-between bg-slate-900/60 p-3 rounded-lg border border-slate-700/50 hover:border-slate-600 transition-all group">
-                    <div className="flex items-center gap-3">
-                      <img src={strat.imagem} alt={strat.nome} className="w-8 h-8 object-contain drop-shadow-md group-hover:scale-110 transition-transform" />
-                      <div className="flex flex-col">
+                  <div key={i} className="flex flex-col bg-slate-900/60 p-4 rounded-lg border border-slate-700/50 hover:border-slate-600 transition-all group gap-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <img src={strat.imagem} alt={strat.nome} className="w-8 h-8 object-contain drop-shadow-md group-hover:scale-110 transition-transform" />
                         <span className="text-sm font-bold text-slate-200">{strat.nome}</span>
-                        <div className="flex gap-1 mt-0.5">
-                          {strat.codex.map((dir, idx) => (
-                            <ArrowIcon key={idx} direction={dir} className="scale-50 origin-left" />
-                          ))}
-                        </div>
+                      </div>
+                      <div className="flex gap-0.5">
+                        {strat.codex.map((dir, idx) => (
+                          <ArrowIcon key={idx} direction={dir} className="scale-[0.6] origin-right" />
+                        ))}
                       </div>
                     </div>
                     
@@ -349,13 +349,13 @@ function App() {
                         await window.api.invoke('set-recording-mode', true)
                         setCapturingSlot(`support-${i}`)
                       }}
-                      className={`min-w-[100px] px-3 py-2 rounded border-2 font-mono text-[10px] font-bold transition-all ${
+                      className={`w-full px-3 py-3 rounded-lg border-2 font-mono text-xs font-bold tracking-wider transition-all ${
                         capturingSlot === `support-${i}`
                           ? 'bg-yellow-500/20 border-yellow-400 text-yellow-300 animate-pulse'
-                          : 'bg-slate-800 border-slate-600 text-slate-400 hover:border-yellow-500/50 hover:text-slate-200'
+                          : 'bg-slate-800 border-slate-600 text-slate-200 hover:border-yellow-500/60 hover:bg-slate-900'
                       }`}
                     >
-                      {capturingSlot === `support-${i}` ? 'AGUARDANDO...' : ((settings.supportShortcuts && settings.supportShortcuts[i]) || 'NENHUMA')}
+                      {capturingSlot === `support-${i}` ? '🎯 Pressione...' : (settings.supportShortcuts && settings.supportShortcuts[i]) || 'NENHUMA'}
                     </button>
                   </div>
                 ))}
