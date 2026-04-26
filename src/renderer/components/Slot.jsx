@@ -44,7 +44,7 @@ export default function Slot({ index, selectedStratagem, isActive, onSelectSlot,
           <img
             src={`${selectedStratagem.imagem}`}
             alt={selectedStratagem.nome}
-            className={`w-full h-full object-cover opacity-80 transition-transform duration-300 ${activeVisual ? 'scale-110' : 'scale-100'}`}
+            className={`w-full h-full object-contain p-2 opacity-80 transition-transform duration-300 ${activeVisual ? 'scale-110' : 'scale-100'}`}
           />
           {/* Overlay for better readability of indicators */}
           <div className="absolute inset-x-0 top-0 h-10 bg-gradient-to-b from-slate-950/60 to-transparent"></div>

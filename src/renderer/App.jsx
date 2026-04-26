@@ -208,7 +208,7 @@ function App() {
                         <img 
                           src={strat.imagem} 
                           alt={strat.nome} 
-                          className="w-full h-full object-cover opacity-70 group-hover:scale-110 group-hover:opacity-100 transition-all duration-500" 
+                          className="w-full h-full object-contain p-6 opacity-70 group-hover:scale-110 group-hover:opacity-100 transition-all duration-500" 
                         />
 
                         {/* HUD Overlay: Name (Top) */}
