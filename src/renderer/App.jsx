@@ -305,16 +305,25 @@ function App() {
                     </div>
                   </div>
 
-                  <div className="flex items-center justify-between p-3 bg-slate-950 rounded-lg border border-slate-800">
-                    <div className="flex flex-col">
-                      <span className="text-[10px] font-black uppercase text-slate-300">Modo Setas</span>
-                      <span className="text-[9px] text-slate-500 uppercase">{settings.useArrows ? 'Usar setas no lugar do WASD (Recomendado)' : 'Usar WASD (Trava o movimento)'}</span>
+                  <button 
+                    onClick={() => handleSettingChange('useArrows', !settings.useArrows)}
+                    className={`w-full p-4 rounded-xl border-2 transition-all flex items-center justify-between group ${settings.useArrows 
+                      ? 'bg-yellow-500/5 border-yellow-500/50' 
+                      : 'bg-slate-950/40 border-slate-800 hover:border-slate-600'
+                    }`}
+                  >
+                    <div className="flex flex-col items-start gap-1">
+                      <span className={`text-[10px] font-black uppercase tracking-widest ${settings.useArrows ? 'text-yellow-500' : 'text-slate-400'}`}>Modo Setas</span>
+                      <span className="text-[9px] text-slate-500 uppercase text-left leading-tight">
+                        {settings.useArrows 
+                          ? 'Setas ativas (Recomendado para movimento)' 
+                          : 'WASD ativo (Pode travar o personagem)'}
+                      </span>
                     </div>
-                    <label className="relative inline-flex items-center cursor-pointer">
-                      <input type="checkbox" checked={settings.useArrows} onChange={(e) => handleSettingChange('useArrows', e.target.checked)} className="sr-only peer" />
-                      <div className="w-9 h-5 bg-slate-800 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[4px] after:left-[4px] after:bg-slate-400 after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-yellow-500 peer-checked:after:bg-slate-950"></div>
-                    </label>
-                  </div>
+                    <div className={`w-10 h-5 rounded-full border-2 transition-all flex items-center px-1 ${settings.useArrows ? 'border-yellow-500 bg-yellow-500/20' : 'border-slate-700 bg-slate-900'}`}>
+                      <div className={`w-2 h-2 rounded-full transition-all ${settings.useArrows ? 'translate-x-5 bg-yellow-500 shadow-[0_0_8px_rgba(234,179,8,0.8)]' : 'bg-slate-600'}`}></div>
+                    </div>
+                  </button>
                 </div>
               </div>
             </div>
@@ -382,11 +391,16 @@ function App() {
 
         {/* SETTINGS FOOTER: VERSION INFO (FIXED) */}
         {activeTab === 'settings' && (
-          <footer className="shrink-0 fixed bottom-6 left-1/2 -translate-x-1/2 w-[90%] max-w-5xl py-3 px-6 z-50 flex items-center justify-between">
-            <span className="text-[9px] font-black tracking-[0.3em] uppercase text-slate-500">Versão v0.1.0</span>
-            <div className="flex items-center gap-2">
-              <div className="w-1.5 h-1.5 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]"></div>
-              <span className="text-[9px] font-black uppercase text-slate-400 tracking-widest">Protocolo Atualizado</span>
+          <footer className="shrink-0 fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-5xl z-50">
+            {/* Styled Divider Line */}
+            <div className="w-full h-[1px] bg-gradient-to-r from-transparent via-slate-800 to-transparent opacity-50"></div>
+            
+            <div className="py-6 px-6 flex items-center justify-between">
+              <span className="text-[9px] font-black tracking-[0.4em] uppercase text-slate-600">Versão v0.1.0</span>
+              <div className="flex items-center gap-2.5">
+                <div className="w-1 h-1 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.8)] animate-pulse"></div>
+                <span className="text-[9px] font-black uppercase text-slate-500 tracking-[0.2em]">Atualizado</span>
+              </div>
             </div>
           </footer>
         )}
