@@ -199,28 +199,37 @@ function App() {
                       <button
                         key={strat.id}
                         onClick={() => !disabled && handleAssignStratagem(strat)}
-                        className={`group relative flex flex-col items-center p-4 rounded-2xl border-2 transition-all gap-3
-                          ${disabled
-                            ? 'bg-slate-950/50 border-slate-900 opacity-20 cursor-not-allowed'
-                            : 'bg-slate-900/40 border-slate-800/50 hover:bg-slate-800/60 hover:border-yellow-500/50 hover:-translate-y-2 hover:shadow-[0_10px_30px_-10px_rgba(251,191,36,0.15)]'}`}
+                        className={`group relative aspect-square rounded-2xl border-2 transition-all overflow-hidden
+                          ${disabled 
+                            ? 'bg-slate-950/50 border-slate-900 opacity-20 cursor-not-allowed' 
+                            : 'bg-slate-900/40 border-slate-800/50 hover:border-yellow-500/50 hover:shadow-[0_0_30px_rgba(251,191,36,0.15)]'}`}
                       >
-                        <img src={strat.imagem} alt={strat.nome} className="w-16 h-16 object-contain drop-shadow-2xl group-hover:scale-110 transition-transform duration-300" />
+                        {/* Stratagem Icon - Full bleed */}
+                        <img 
+                          src={strat.imagem} 
+                          alt={strat.nome} 
+                          className="w-full h-full object-cover opacity-70 group-hover:scale-110 group-hover:opacity-100 transition-all duration-500" 
+                        />
 
-                        <div className="flex flex-col items-center gap-2 w-full">
-                          <span className="text-[11px] font-black text-slate-200 uppercase tracking-tight text-center leading-tight h-7 flex items-center">
+                        {/* HUD Overlay: Name & Codex */}
+                        <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-slate-950 via-slate-950/90 to-transparent p-3 pt-10 flex flex-col items-center gap-1.5">
+                          <span className="text-[10px] font-black text-slate-100 uppercase tracking-tighter text-center leading-none">
                             {strat.nome}
                           </span>
-
-                          <div className="flex gap-1 bg-slate-950/80 px-2 py-1.5 rounded-lg border border-slate-800/60 shadow-inner group-hover:border-yellow-500/30 transition-colors">
+                          
+                          <div className="flex gap-1 bg-black/40 px-2 py-1 rounded-md border border-white/5 backdrop-blur-md">
                             {strat.codex.map((dir, i) => (
-                              <ArrowIcon key={i} direction={dir} size={12} className="group-hover:text-yellow-400" />
+                              <ArrowIcon key={i} direction={dir} size={11} className="text-yellow-500" />
                             ))}
                           </div>
                         </div>
 
+                        {/* Status Indicator */}
                         {isEquipped && (
-                          <div className="absolute inset-0 bg-yellow-500/5 rounded-2xl border border-yellow-500/30 flex items-start justify-end p-2 pointer-events-none">
-                            <span className="bg-yellow-500 text-slate-950 text-[7px] font-black px-1.5 py-0.5 rounded-sm uppercase tracking-tighter shadow-sm">ATIVO</span>
+                          <div className="absolute top-3 right-3 z-20">
+                            <div className="bg-yellow-500 text-slate-950 text-[7px] font-black px-1.5 py-0.5 rounded-sm uppercase tracking-tighter shadow-xl">
+                              ATIVO
+                            </div>
                           </div>
                         )}
                       </button>
