@@ -247,17 +247,17 @@ function App() {
                   {[0, 1, 2, 3].map(i => {
                     const equipped = slots[i]
                     return (
-                      <div key={i} className="bg-slate-950/60 p-4 rounded-2xl border border-slate-800/80 flex flex-col items-center gap-4 transition-all hover:border-yellow-500/30 group">
+                      <div key={i} className="bg-slate-950/60 p-5 rounded-2xl border border-slate-800/80 flex flex-col items-center gap-4 transition-all hover:border-yellow-500/30 group">
                         <div className="flex flex-col items-center gap-3">
-                          <div className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Slot {i + 1}</div>
+                          <div className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Atalho {i + 1}</div>
                           {equipped ? (
                             <div className="flex flex-col items-center gap-2">
-                              <img src={equipped.imagem} alt={equipped.nome} className="w-10 h-10 object-contain drop-shadow-xl group-hover:scale-110 transition-transform duration-300" />
-                              <div className="text-[9px] font-bold text-slate-400 uppercase tracking-tight text-center">{equipped.nome}</div>
+                              <img src={equipped.imagem} alt={equipped.nome} className="w-12 h-12 object-contain drop-shadow-xl group-hover:scale-110 transition-transform duration-300" />
+                              <div className="text-[10px] font-black text-slate-300 uppercase tracking-tighter text-center">{equipped.nome}</div>
                             </div>
                           ) : (
-                            <div className="w-10 h-10 border-2 border-dashed border-slate-800 rounded-lg flex items-center justify-center">
-                              <span className="text-[8px] font-black text-slate-700 uppercase">Vazio</span>
+                            <div className="w-12 h-12 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-center shadow-inner group-hover:border-yellow-500/20 transition-colors">
+                              <span className="text-xl font-black text-slate-700 group-hover:text-yellow-500/30 transition-colors">{i + 1}</span>
                             </div>
                           )}
                         </div>
@@ -267,13 +267,13 @@ function App() {
                             await window.api.invoke('set-recording-mode', true)
                             setCapturingSlot(i)
                           }}
-                          className={`w-full py-2.5 rounded-xl font-black text-[10px] tracking-widest border-2 transition-all ${
+                          className={`w-full py-3 rounded-xl font-black text-[11px] tracking-[0.1em] border-2 transition-all ${
                             capturingSlot === i 
                               ? 'bg-yellow-500/10 border-yellow-500 text-yellow-400 animate-pulse-hd' 
-                              : 'bg-slate-900 border-slate-800 text-slate-300 hover:border-yellow-500/50 hover:text-yellow-400'
+                              : 'bg-slate-900 border-slate-800 text-slate-400 hover:border-yellow-500 hover:text-slate-200 hover:shadow-[0_0_15px_rgba(251,191,36,0.1)]'
                           }`}
                         >
-                          {capturingSlot === i ? 'AGUARDANDO...' : settings.shortcuts[i]}
+                          {capturingSlot === i ? 'ESCUTANDO...' : settings.shortcuts[i]}
                         </button>
                       </div>
                     )
