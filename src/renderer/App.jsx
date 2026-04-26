@@ -315,6 +315,35 @@ function App() {
             <div className="bg-slate-800/40 p-6 rounded-xl border border-slate-700/50">
               <h2 className="text-xl font-bold text-yellow-500 mb-6 border-b border-slate-700/50 pb-3 flex items-center gap-2">
                 <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
+                Estratagemas de Suporte
+              </h2>
+              <div className="grid grid-cols-1 gap-3">
+                {[
+                  { nome: 'Reinforce', imagem: 'Reinforce_Stratagem_Icon.svg', codex: ['UP', 'DOWN', 'RIGHT', 'LEFT', 'UP'] },
+                  { nome: 'Resupply', imagem: 'Resupply_Stratagem_Icon.svg', codex: ['DOWN', 'DOWN', 'UP', 'RIGHT'] },
+                  { nome: 'Eagle Rearm', imagem: 'Eagle_Rearm_Stratagem_Icon.svg', codex: ['UP', 'UP', 'LEFT', 'UP', 'RIGHT'] }
+                ].map((strat, i) => (
+                  <div key={i} className="flex items-center justify-between bg-slate-900/60 p-3 rounded-lg border border-slate-700/50 hover:border-slate-600 transition-colors">
+                    <div className="flex items-center gap-3">
+                      <img src={strat.imagem} alt={strat.nome} className="w-8 h-8 object-contain drop-shadow-md" />
+                      <span className="text-sm font-bold text-slate-200">{strat.nome}</span>
+                    </div>
+                    <div className="flex gap-1">
+                      {strat.codex.map((dir, idx) => (
+                        <ArrowIcon key={idx} direction={dir} className="scale-75" />
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <p className="text-[10px] text-slate-500 mt-4">
+                Estes códigos são fixos e não podem ser alterados.
+              </p>
+            </div>
+
+            <div className="bg-slate-800/40 p-6 rounded-xl border border-slate-700/50">
+              <h2 className="text-xl font-bold text-yellow-500 mb-6 border-b border-slate-700/50 pb-3 flex items-center gap-2">
+                <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
                 Atualização
               </h2>
               <div className="flex items-center justify-between">
