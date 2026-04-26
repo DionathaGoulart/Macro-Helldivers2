@@ -211,12 +211,15 @@ function App() {
                           className="w-full h-full object-cover opacity-70 group-hover:scale-110 group-hover:opacity-100 transition-all duration-500" 
                         />
 
-                        {/* HUD Overlay: Name & Codex */}
-                        <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-slate-950 via-slate-950/90 to-transparent p-3 pt-10 flex flex-col items-center gap-1.5">
+                        {/* HUD Overlay: Name (Top) */}
+                        <div className="absolute inset-x-0 top-0 bg-gradient-to-b from-slate-950 via-slate-950/70 to-transparent p-3 pb-8 flex justify-center z-10">
                           <span className="text-[10px] font-black text-slate-100 uppercase tracking-tighter text-center leading-none">
                             {strat.nome}
                           </span>
-                          
+                        </div>
+
+                        {/* HUD Overlay: Codex (Bottom) */}
+                        <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-slate-950 via-slate-950/80 to-transparent p-3 pt-10 flex justify-center z-10">
                           <div className="flex gap-1 bg-black/40 px-2 py-1 rounded-md border border-white/5 backdrop-blur-md">
                             {strat.codex.map((dir, i) => (
                               <ArrowIcon key={i} direction={dir} size={11} className="text-yellow-500" />
