@@ -46,8 +46,8 @@ function App() {
     if (savedSettings) {
       try {
         const parsed = JSON.parse(savedSettings)
-        setSettings(parsed)
-        if (window.api) window.api.saveSettings(parsed)
+        setSettings(prev => ({ ...prev, ...parsed }))
+        if (window.api) window.api.saveSettings({ ...settings, ...parsed })
       } catch (e) {
         console.error('Failed to parse saved settings', e)
       }
@@ -118,7 +118,7 @@ function App() {
 
     if (typeof capturingSlot === 'number') {
       handleShortcutChange(capturingSlot, mapped)
-    } else if (capturingSlot && capturingSlot.startsWith('support-')) {
+    } else if (typeof capturingSlot === 'string' && capturingSlot.startsWith('support-')) {
       const index = parseInt(capturingSlot.split('-')[1])
       handleSupportShortcutChange(index, mapped)
     }
@@ -327,9 +327,9 @@ function App() {
               </h2>
               <div className="grid grid-cols-1 gap-3">
                 {[
-                  { nome: 'Reinforce', imagem: 'Reinforce_Stratagem_Icon.png', codex: ['UP', 'DOWN', 'RIGHT', 'LEFT', 'UP'] },
-                  { nome: 'Resupply', imagem: 'Resupply_Stratagem_Icon.png', codex: ['DOWN', 'DOWN', 'UP', 'RIGHT'] },
-                  { nome: 'Eagle Rearm', imagem: 'Eagle_Rearm_Stratagem_Icon.png', codex: ['UP', 'UP', 'LEFT', 'UP', 'RIGHT'] }
+                  { nome: 'Reinforce', imagem: '/Reinforce_Stratagem_Icon.png', codex: ['UP', 'DOWN', 'RIGHT', 'LEFT', 'UP'] },
+                  { nome: 'Resupply', imagem: '/Resupply_Stratagem_Icon.png', codex: ['DOWN', 'DOWN', 'UP', 'RIGHT'] },
+                  { nome: 'Eagle Rearm', imagem: '/Eagle_Rearm_Stratagem_Icon.png', codex: ['UP', 'UP', 'LEFT', 'UP', 'RIGHT'] }
                 ].map((strat, i) => (
                   <div key={i} className="flex items-center justify-between bg-slate-900/60 p-3 rounded-lg border border-slate-700/50 hover:border-slate-600 transition-all group">
                     <div className="flex items-center gap-3">
@@ -355,7 +355,7 @@ function App() {
                           : 'bg-slate-800 border-slate-600 text-slate-400 hover:border-yellow-500/50 hover:text-slate-200'
                       }`}
                     >
-                      {capturingSlot === `support-${i}` ? 'AGUARDANDO...' : (settings.supportShortcuts[i] || 'NENHUMA')}
+                      {capturingSlot === `support-${i}` ? 'AGUARDANDO...' : ((settings.supportShortcuts && settings.supportShortcuts[i]) || 'NENHUMA')}
                     </button>
                   </div>
                 ))}

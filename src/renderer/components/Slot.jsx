@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react'
 import { ArrowUp, ArrowDown, ArrowLeft, ArrowRight } from 'lucide-react'
 
-export const ArrowIcon = ({ direction }) => {
+export const ArrowIcon = ({ direction, className = "" }) => {
+  const iconProps = { size: 12, className: `text-yellow-400 ${className}` }
   switch(direction.toUpperCase()) {
-    case 'UP': return <ArrowUp size={12} className="text-yellow-400" />
-    case 'DOWN': return <ArrowDown size={12} className="text-yellow-400" />
-    case 'LEFT': return <ArrowLeft size={12} className="text-yellow-400" />
-    case 'RIGHT': return <ArrowRight size={12} className="text-yellow-400" />
+    case 'UP': return <ArrowUp {...iconProps} />
+    case 'DOWN': return <ArrowDown {...iconProps} />
+    case 'LEFT': return <ArrowLeft {...iconProps} />
+    case 'RIGHT': return <ArrowRight {...iconProps} />
     default: return null
   }
 }
