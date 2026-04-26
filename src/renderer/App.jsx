@@ -106,21 +106,12 @@ function App() {
     stratagemsByTag[tag].push(strat)
   })
 
-  const getTagClass = (tag) => {
-    switch(tag) {
-      case 'Offensive': return 'hd-offensive'
-      case 'Supply': return 'hd-supply'
-      case 'Defensive': return 'hd-defensive'
-      default: return 'hd-default'
-    }
-  }
-
   return (
     <div className="h-screen flex flex-col bg-[#0f172a] text-slate-100">
       
       <nav className="hd-navbar shrink-0 flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <div className="w-8 h-8 bg-yellow-500 rounded flex items-center justify-center shadow-lg shadow-yellow-500/20">
+          <div className="w-8 h-8 bg-yellow-500 rounded flex items-center justify-center">
             <span className="text-slate-950 font-black text-lg italic">H</span>
           </div>
           <span className="text-xs font-black uppercase tracking-[0.3em] text-white">Super Earth Macro</span>
@@ -131,7 +122,7 @@ function App() {
             onClick={() => setActiveTab('macro')}
             className={`hd-nav-link ${activeTab === 'macro' ? 'hd-nav-active' : 'hd-nav-inactive'}`}
           >
-            Estratagemas
+            Configurar Macros
           </button>
           <button 
             onClick={() => setActiveTab('settings')}
@@ -147,10 +138,10 @@ function App() {
         {activeTab === 'macro' && (
           <div className="max-w-5xl mx-auto space-y-8">
             {['Offensive', 'Supply', 'Defensive'].map((tag) => stratagemsByTag[tag] && (
-              <section key={tag} className={`hd-category-section p-6 ${getTagClass(tag)}`}>
-                <h2 className="hd-card-header">
+              <section key={tag} className="hd-section p-6">
+                <h2 className="flex items-center gap-3 text-xs font-black uppercase tracking-widest text-slate-400 mb-6">
                   <div className="hd-indicator"></div>
-                  Mobilização: {tag}
+                  {tag}
                 </h2>
                 
                 <div className="grid grid-cols-4 gap-4">
@@ -162,17 +153,21 @@ function App() {
                       <button
                         key={strat.id}
                         onClick={() => !disabled && handleAssignStratagem(strat)}
-                        className={`group relative flex flex-col items-center p-4 rounded-lg border-2 transition-all gap-3
+                        className={`group relative flex flex-col items-center p-4 rounded-xl border-2 transition-all gap-3
                           ${disabled 
                             ? 'bg-slate-950/20 border-slate-900 opacity-20 cursor-not-allowed' 
-                            : 'bg-slate-950/40 border-slate-800/60 hover:bg-slate-900/60 hover:border-yellow-500/50 hover:-translate-y-1'}`}
+                            : 'bg-slate-900/40 border-slate-800/60 hover:bg-slate-800/60 hover:border-yellow-500/40 hover:-translate-y-1'}`}
                       >
                         <img src={strat.imagem} alt={strat.nome} className="w-10 h-10 object-contain drop-shadow-xl group-hover:scale-110 transition-transform" />
-                        <span className="text-[10px] font-black uppercase text-slate-300 leading-tight text-center h-4">{strat.nome}</span>
+                        <span className="text-[10px] font-bold text-slate-300 leading-tight text-center h-4 flex items-center">{strat.nome}</span>
                         <div className="flex gap-1 bg-black/40 p-1.5 rounded-sm border border-slate-800/50">
                           {strat.codex.map((dir, i) => <ArrowIcon key={i} direction={dir} size={10} />)}
                         </div>
-                        {isEquipped && <div className="absolute top-2 right-2 w-2 h-2 rounded-full bg-yellow-500 shadow-sm"></div>}
+                        {isEquipped && (
+                          <div className="absolute inset-0 bg-yellow-500/5 rounded-xl flex items-center justify-center">
+                            <div className="w-1.5 h-1.5 rounded-full bg-yellow-500 shadow-[0_0_8px_rgba(251,191,36,0.5)]"></div>
+                          </div>
+                        )}
                       </button>
                     )
                   })}
@@ -185,9 +180,11 @@ function App() {
         {activeTab === 'settings' && (
           <div className="max-w-4xl mx-auto space-y-8">
             <div className="grid grid-cols-2 gap-8">
-              {/* SLOTS */}
-              <div className="hd-category-section p-8 hd-default">
-                <h2 className="hd-card-header">Atalhos de Ativação</h2>
+              <div className="hd-section p-8">
+                <h2 className="flex items-center gap-3 text-xs font-black uppercase tracking-widest text-slate-400 mb-6">
+                  <div className="hd-indicator"></div>
+                  Atalhos de Ativação
+                </h2>
                 <div className="grid grid-cols-2 gap-4">
                   {[0, 1, 2, 3].map(i => (
                     <div key={i} className="space-y-2">
@@ -197,20 +194,22 @@ function App() {
                           await window.api.invoke('set-recording-mode', true)
                           setCapturingSlot(i)
                         }}
-                        className={`w-full py-4 rounded font-black text-xs border-2 transition-all ${
-                          capturingSlot === i ? 'hd-btn-recording' : 'bg-slate-950/40 border-slate-800 text-slate-300 hover:border-slate-700'
+                        className={`w-full py-4 rounded-lg font-black text-xs border-2 transition-all ${
+                          capturingSlot === i ? 'hd-btn-recording' : 'bg-slate-950 border-slate-800 text-slate-300 hover:border-slate-700'
                         }`}
                       >
-                        {capturingSlot === i ? '???' : settings.shortcuts[i]}
+                        {capturingSlot === i ? '...' : settings.shortcuts[i]}
                       </button>
                     </div>
                   ))}
                 </div>
               </div>
 
-              {/* OPCOES */}
-              <div className="hd-category-section p-8 border-l-slate-600">
-                <h2 className="hd-card-header">Preferências de Sistema</h2>
+              <div className="hd-section p-8">
+                <h2 className="flex items-center gap-3 text-xs font-black uppercase tracking-widest text-slate-400 mb-6">
+                  <div className="hd-indicator"></div>
+                  Preferências
+                </h2>
                 <div className="space-y-6">
                   <div className="space-y-3">
                     <label className="text-[9px] font-black text-slate-500 uppercase">Tecla Modificadora</label>
@@ -219,8 +218,8 @@ function App() {
                         <button
                           key={key}
                           onClick={() => handleSettingChange('modifierKey', key)}
-                          className={`py-3 rounded text-[10px] font-black uppercase transition-all border ${
-                            settings.modifierKey === key ? 'bg-yellow-500 border-yellow-600 text-slate-950' : 'bg-slate-950/40 border-slate-800 text-slate-400 hover:border-slate-700'
+                          className={`py-3 rounded-lg text-[10px] font-black uppercase transition-all border ${
+                            settings.modifierKey === key ? 'bg-yellow-500 border-yellow-600 text-slate-950' : 'bg-slate-950 border-slate-800 text-slate-400 hover:border-slate-700'
                           }`}
                         >
                           {key === 'LeftControl' ? 'CTRL' : key === 'LeftAlt' ? 'ALT' : key}
@@ -228,8 +227,8 @@ function App() {
                       ))}
                     </div>
                   </div>
-                  <div className="flex items-center justify-between p-4 bg-slate-950/40 rounded border border-slate-800">
-                    <span className="text-[10px] font-black uppercase text-slate-400">Modo de Digitação (Setas)</span>
+                  <div className="flex items-center justify-between p-4 bg-slate-950 rounded-xl border border-slate-800">
+                    <span className="text-[10px] font-black uppercase text-slate-400">Digitação Segura (Setas)</span>
                     <label className="relative inline-flex items-center cursor-pointer">
                       <input type="checkbox" checked={settings.useArrows} onChange={(e) => handleSettingChange('useArrows', e.target.checked)} className="sr-only peer" />
                       <div className="w-10 h-5 bg-slate-800 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[4px] after:left-[4px] after:bg-slate-500 after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-yellow-500 peer-checked:after:bg-slate-950"></div>
@@ -239,16 +238,18 @@ function App() {
               </div>
             </div>
 
-            {/* SUPORTE */}
-            <div className="hd-category-section p-8 hd-supply">
-              <h2 className="hd-card-header">Estratagemas de Apoio Fixo</h2>
+            <div className="hd-section p-8">
+              <h2 className="flex items-center gap-3 text-xs font-black uppercase tracking-widest text-slate-400 mb-6">
+                <div className="hd-indicator"></div>
+                Estratagemas de Suporte
+              </h2>
               <div className="grid grid-cols-3 gap-6">
                 {[
                   { nome: 'Reinforce', imagem: '/Reinforce_Stratagem_Icon.png', codex: ['UP', 'DOWN', 'RIGHT', 'LEFT', 'UP'] },
-                  { nome: 'Resupply', imagem: '/Reinforce_Stratagem_Icon.png', codex: ['DOWN', 'DOWN', 'UP', 'RIGHT'] },
+                  { nome: 'Resupply', imagem: '/Resupply_Stratagem_Icon.png', codex: ['DOWN', 'DOWN', 'UP', 'RIGHT'] },
                   { nome: 'Eagle Rearm', imagem: '/Eagle_Rearm_Stratagem_Icon.png', codex: ['UP', 'UP', 'LEFT', 'UP', 'RIGHT'] }
                 ].map((strat, i) => (
-                  <div key={i} className="bg-slate-950/40 p-5 rounded border border-slate-800 space-y-4">
+                  <div key={i} className="bg-slate-950/40 p-5 rounded-xl border border-slate-800 space-y-4">
                     <div className="flex items-center justify-between">
                       <img src={strat.imagem} alt={strat.nome} className="w-9 h-9 object-contain" />
                       <div className="flex gap-1">
@@ -261,8 +262,8 @@ function App() {
                         await window.api.invoke('set-recording-mode', true)
                         setCapturingSlot(`support-${i}`)
                       }}
-                      className={`w-full py-3 rounded font-black text-[10px] border-2 transition-all ${
-                        capturingSlot === `support-${i}` ? 'hd-btn-recording' : 'bg-slate-900/60 border-slate-800 text-slate-500 hover:border-slate-700'
+                      className={`w-full py-3 rounded-lg font-black text-[10px] border-2 transition-all ${
+                        capturingSlot === `support-${i}` ? 'hd-btn-recording' : 'bg-slate-900 border-slate-800 text-slate-500 hover:border-slate-700'
                       }`}
                     >
                       {capturingSlot === `support-${i}` ? '...' : (settings.supportShortcuts?.[i] || 'VINCULAR')}
@@ -270,7 +271,6 @@ function App() {
                   </div>
                 ))}
               </div>
-              <p className="text-[9px] text-slate-600 mt-6 text-center uppercase tracking-widest">Pressione uma tecla para gravar // ESC para cancelar</p>
             </div>
           </div>
         )}
@@ -279,7 +279,7 @@ function App() {
 
       {/* FOOTER */}
       {activeTab === 'macro' && (
-        <footer className="shrink-0 fixed bottom-0 left-0 right-0 bg-slate-950 border-t border-slate-800 p-8 backdrop-blur-xl z-[100] shadow-[0_-15px_40px_rgba(0,0,0,0.5)]">
+        <footer className="shrink-0 fixed bottom-0 left-0 right-0 bg-slate-950/90 border-t border-slate-900 p-8 backdrop-blur-xl z-[100] shadow-[0_-20px_50px_rgba(0,0,0,0.5)]">
           <div className="max-w-5xl mx-auto flex justify-center gap-8">
             {slots.map((slot, index) => (
               <Slot 

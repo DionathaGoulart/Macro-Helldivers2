@@ -5,9 +5,8 @@
 @layer base {
   :root {
     --hd-yellow: #fbbf24;
-    --hd-navy: #0f172a;
-    --hd-navy-light: #1e293b;
-    --hd-accent: #38bdf8;
+    --hd-slate: #0f172a;
+    --hd-border: #1e293b;
   }
 
   body {
@@ -18,22 +17,17 @@
 
 @layer components {
   /* Vertical Indicator Card */
-  .hd-category-section {
-    @apply bg-slate-900/40 border border-slate-800/60 rounded-r-xl border-l-4 transition-all duration-300;
+  .hd-section {
+    @apply bg-slate-900/40 border border-slate-800/60 rounded-xl border-l-4 border-l-slate-700 hover:border-l-yellow-500/50 transition-all duration-300;
   }
 
-  .hd-offensive { @apply border-l-red-500; }
-  .hd-supply { @apply border-l-blue-500; }
-  .hd-defensive { @apply border-l-green-500; }
-  .hd-default { @apply border-l-yellow-500; }
-
-  .hd-card-header {
-    @apply text-xs font-black uppercase tracking-[0.2em] mb-6 flex items-center gap-3;
+  .hd-indicator {
+    @apply w-2 h-2 rounded-full bg-yellow-500 shadow-[0_0_8px_rgba(251,191,36,0.6)];
   }
 
   /* Modern Navbar */
   .hd-navbar {
-    @apply bg-slate-950/80 border-b border-slate-800 backdrop-blur-xl px-8 py-1;
+    @apply bg-slate-950/90 border-b border-slate-900 backdrop-blur-xl px-10;
   }
 
   .hd-nav-link {
@@ -42,33 +36,28 @@
 
   .hd-nav-link::after {
     content: '';
-    @apply absolute bottom-0 left-0 w-full h-0 bg-yellow-500 transition-all duration-300;
+    @apply absolute bottom-0 left-0 w-full h-0 bg-yellow-500 transition-all duration-300 opacity-0;
   }
 
   .hd-nav-active {
-    @apply text-yellow-400 bg-yellow-400/5;
+    @apply text-yellow-500 bg-yellow-500/5;
   }
 
   .hd-nav-active::after {
-    @apply h-1;
+    @apply h-[2px] opacity-100;
   }
 
   .hd-nav-inactive {
-    @apply text-slate-500 hover:text-slate-300 hover:bg-slate-900/40;
+    @apply text-slate-500 hover:text-slate-300 hover:bg-slate-900/50;
   }
 
-  /* Interaction Elements */
   .hd-btn-record {
-    @apply bg-slate-950 border border-slate-800 text-slate-300 font-black uppercase tracking-widest text-[10px] px-4 py-3 rounded-lg transition-all
-           hover:border-yellow-500/50 hover:text-yellow-400 active:scale-95;
+    @apply bg-slate-950 border border-slate-800 text-slate-400 font-black uppercase tracking-widest text-[9px] px-3 py-2 rounded-lg transition-all
+           hover:border-yellow-500/40 hover:text-yellow-400;
   }
 
   .hd-btn-recording {
     @apply bg-yellow-500/10 border-yellow-500 text-yellow-500 animate-pulse;
-  }
-
-  .hd-indicator {
-    @apply w-1.5 h-1.5 rounded-full bg-yellow-500 shadow-[0_0_8px_rgba(251,191,36,0.5)];
   }
 
   .scrollbar-hd::-webkit-scrollbar {
