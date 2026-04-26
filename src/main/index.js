@@ -9,7 +9,7 @@ let tray
 let isQuitting = false
 let isRecordingState = false
 let currentSlots = [null, null, null, null]
-let isGameFocused = true
+let isGameFocused = false
 let nut = null // Carregamento tardio (Lazy)
 
 const isDev = !!process.env.VITE_DEV_SERVER_URL
@@ -87,12 +87,28 @@ setInterval(async () => {
 
   try {
     const activeWindow = await engine.getActiveWindow()
-    if (!activeWindow) return
+    if (!activeWindow) {
+      if (isGameFocused) {
+        isGameFocused = false
+        if (win && !win.isDestroyed()) win.webContents.send('game-focus-changed', false)
+      }
+      return
+    }
     
-    const title = await activeWindow.title()
-    if (!title) return
+    // Suporte a propriedade ou função para compatibilidade com diferentes versões do nut-js
+    const title = typeof activeWindow.title === 'function' ? await activeWindow.title() : await activeWindow.title
+    
+    if (!title) {
+      if (isGameFocused) {
+        isGameFocused = false
+        if (win && !win.isDestroyed()) win.webContents.send('game-focus-changed', false)
+      }
+      return
+    }
 
-    const isFocused = title.includes('HELLDIVERS™ 2')
+    // Busca mais flexível pelo título do jogo
+    const isFocused = title.toUpperCase().includes('HELLDIVERS')
+    
     if (isFocused !== isGameFocused) {
       isGameFocused = isFocused
       if (win && !win.isDestroyed()) {
@@ -100,7 +116,11 @@ setInterval(async () => {
       }
     }
   } catch (e) {
-    // Falha silenciosa para evitar crash de memória no Windows
+    // Se der erro, por segurança desativamos para não disparar macro em apps errados
+    if (isGameFocused) {
+      isGameFocused = false
+      if (win && !win.isDestroyed()) win.webContents.send('game-focus-changed', false)
+    }
   }
 }, 1500)
 
