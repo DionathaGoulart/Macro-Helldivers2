@@ -373,7 +373,6 @@ function App() {
                   </div>
                 ))}
               </div>
-              </div>
             </div>
 
             {/* INFO FOOTER */}
