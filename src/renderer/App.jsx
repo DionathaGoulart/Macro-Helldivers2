@@ -375,15 +375,18 @@ function App() {
               </div>
             </div>
 
-            {/* INFO FOOTER */}
-            <div className="flex items-center justify-between opacity-40 px-2">
-              <span className="text-[9px] font-black tracking-widest uppercase">Versão v0.1.0</span>
-              <div className="flex items-center gap-2">
-                <div className="w-1.5 h-1.5 rounded-full bg-green-500"></div>
-                <span className="text-[9px] font-black uppercase">Atualizado</span>
-              </div>
-            </div>
           </div>
+        )}
+
+        {/* SETTINGS FOOTER: VERSION INFO (FIXED) */}
+        {activeTab === 'settings' && (
+          <footer className="shrink-0 fixed bottom-6 left-1/2 -translate-x-1/2 w-[90%] max-w-5xl bg-slate-950/40 backdrop-blur-xl border border-white/5 py-3 px-6 rounded-2xl z-50 flex items-center justify-between shadow-2xl">
+            <span className="text-[9px] font-black tracking-[0.3em] uppercase text-slate-500">Versão v0.1.0</span>
+            <div className="flex items-center gap-2">
+              <div className="w-1.5 h-1.5 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]"></div>
+              <span className="text-[9px] font-black uppercase text-slate-400 tracking-widest">Protocolo Atualizado</span>
+            </div>
+          </footer>
         )}
 
       </main>
