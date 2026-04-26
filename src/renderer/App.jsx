@@ -360,6 +360,9 @@ function App() {
                   </div>
                 ))}
               </div>
+              <p className="text-xs text-slate-500 mt-5">
+                Clique num slot e pressione a tecla desejada. <kbd className="bg-slate-900 px-1.5 py-0.5 rounded border border-slate-600 text-[10px]">Esc</kbd> cancela.
+              </p>
             </div>
 
             <div className="bg-slate-800/40 p-6 rounded-xl border border-slate-700/50">
