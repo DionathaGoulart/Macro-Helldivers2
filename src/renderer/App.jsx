@@ -200,15 +200,15 @@ function App() {
                         key={strat.id}
                         onClick={() => !disabled && handleAssignStratagem(strat)}
                         className={`group relative aspect-square rounded-2xl border-2 transition-all overflow-hidden
-                          ${disabled 
-                            ? 'bg-slate-950/50 border-slate-900 opacity-20 cursor-not-allowed' 
+                          ${disabled
+                            ? 'bg-slate-950/50 border-slate-900 opacity-20 cursor-not-allowed'
                             : 'bg-slate-900/40 border-slate-800/50 hover:border-yellow-500/50 hover:shadow-[0_0_30px_rgba(251,191,36,0.15)]'}`}
                       >
                         {/* Stratagem Icon - Full bleed */}
                         <img 
                           src={strat.imagem} 
                           alt={strat.nome} 
-                          className="w-full h-full object-contain p-6 opacity-70 group-hover:scale-110 group-hover:opacity-100 transition-all duration-500" 
+                          className="w-full h-full object-contain p-2 opacity-70 group-hover:scale-110 group-hover:opacity-100 transition-all duration-500" 
                         />
 
                         {/* HUD Overlay: Name (Top) */}
@@ -257,8 +257,8 @@ function App() {
                           setCapturingSlot(i)
                         }}
                         className={`w-full py-3.5 rounded-xl font-black text-xs tracking-widest border-2 transition-all ${capturingSlot === i
-                            ? 'bg-yellow-500/10 border-yellow-500 text-yellow-400 animate-pulse-hd'
-                            : 'bg-slate-900 border-slate-800 text-slate-300 hover:border-yellow-500/50 hover:text-white'
+                          ? 'bg-yellow-500/10 border-yellow-500 text-yellow-400 animate-pulse-hd'
+                          : 'bg-slate-900 border-slate-800 text-slate-300 hover:border-yellow-500/50 hover:text-white'
                           }`}
                       >
                         {capturingSlot === i ? 'ESCUTANDO...' : settings.shortcuts[i]}
@@ -334,8 +334,8 @@ function App() {
                         setCapturingSlot(`support-${i}`)
                       }}
                       className={`w-full py-3 rounded-xl font-black text-[10px] tracking-widest border-2 transition-all ${capturingSlot === `support-${i}`
-                          ? 'bg-yellow-500/10 border-yellow-500 text-yellow-400 animate-pulse-hd'
-                          : 'bg-slate-900 border-slate-800 text-slate-400 hover:border-yellow-500/50 hover:text-yellow-500'
+                        ? 'bg-yellow-500/10 border-yellow-500 text-yellow-400 animate-pulse-hd'
+                        : 'bg-slate-900 border-slate-800 text-slate-400 hover:border-yellow-500/50 hover:text-yellow-500'
                         }`}
                     >
                       {capturingSlot === `support-${i}` ? 'AGUARDANDO...' : (settings.supportShortcuts?.[i] || 'VINCULAR')}
