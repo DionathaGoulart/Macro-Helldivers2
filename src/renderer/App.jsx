@@ -190,19 +190,28 @@ function App() {
                       <button
                         key={strat.id}
                         onClick={() => !disabled && handleAssignStratagem(strat)}
-                        className={`group relative flex flex-col items-center p-3 rounded-xl border-2 transition-all gap-2
+                        className={`group relative flex flex-col items-center p-4 rounded-2xl border-2 transition-all gap-3
                           ${disabled 
                             ? 'bg-slate-950/50 border-slate-900 opacity-20 cursor-not-allowed' 
-                            : 'bg-slate-900/40 border-slate-800/50 hover:bg-slate-800/60 hover:border-yellow-500/40 hover:-translate-y-1'}`}
+                            : 'bg-slate-900/40 border-slate-800/50 hover:bg-slate-800/60 hover:border-yellow-500/50 hover:-translate-y-2 hover:shadow-[0_10px_30px_-10px_rgba(251,191,36,0.15)]'}`}
                       >
-                        <img src={strat.imagem} alt={strat.nome} className="w-10 h-10 object-contain drop-shadow-xl group-hover:scale-110 transition-transform" />
-                        <span className="text-[10px] font-bold text-slate-300 leading-tight h-8 flex items-center justify-center">{strat.nome}</span>
-                        <div className="flex gap-0.5 mt-auto bg-slate-950/60 p-1 rounded-sm border border-slate-800/50">
-                          {strat.codex.map((dir, i) => <ArrowIcon key={i} direction={dir} size={10} />)}
+                        <img src={strat.imagem} alt={strat.nome} className="w-16 h-16 object-contain drop-shadow-2xl group-hover:scale-110 transition-transform duration-300" />
+                        
+                        <div className="flex flex-col items-center gap-2 w-full">
+                          <span className="text-[11px] font-black text-slate-200 uppercase tracking-tight text-center leading-tight h-7 flex items-center">
+                            {strat.nome}
+                          </span>
+                          
+                          <div className="flex gap-1 bg-slate-950/80 px-2 py-1.5 rounded-lg border border-slate-800/60 shadow-inner group-hover:border-yellow-500/30 transition-colors">
+                            {strat.codex.map((dir, i) => (
+                              <ArrowIcon key={i} direction={dir} size={12} className="group-hover:text-yellow-400" />
+                            ))}
+                          </div>
                         </div>
+
                         {isEquipped && (
-                          <div className="absolute inset-0 bg-yellow-500/10 rounded-xl border border-yellow-500/20 flex items-center justify-center">
-                            <span className="bg-yellow-500 text-slate-950 text-[8px] font-black px-1.5 py-0.5 rounded-sm uppercase">Equipado</span>
+                          <div className="absolute inset-0 bg-yellow-500/5 rounded-2xl border border-yellow-500/30 flex items-start justify-end p-2 pointer-events-none">
+                            <span className="bg-yellow-500 text-slate-950 text-[7px] font-black px-1.5 py-0.5 rounded-sm uppercase tracking-tighter shadow-sm">ATIVO</span>
                           </div>
                         )}
                       </button>
