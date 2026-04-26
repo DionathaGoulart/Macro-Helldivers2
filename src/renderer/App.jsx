@@ -300,38 +300,49 @@ function App() {
             </div>
 
             {/* ESTRATAGEMAS DE SUPORTE */}
-            <div className="hd-card p-6">
+            <div className="hd-card p-6 border-t-2 border-t-green-500/20">
               <h2 className="hd-card-header text-sm">
-                <div className="hd-indicator bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.4)]"></div>
+                <div className="hd-indicator bg-green-500 shadow-[0_0_12px_rgba(34,197,94,0.5)]"></div>
                 Estratagemas de Apoio Fixo
               </h2>
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-3 gap-5">
                 {[
                   { nome: 'Reinforce', imagem: '/Reinforce_Stratagem_Icon.png', codex: ['UP', 'DOWN', 'RIGHT', 'LEFT', 'UP'] },
                   { nome: 'Resupply', imagem: '/Resupply_Stratagem_Icon.png', codex: ['DOWN', 'DOWN', 'UP', 'RIGHT'] },
                   { nome: 'Eagle Rearm', imagem: '/Eagle_Rearm_Stratagem_Icon.png', codex: ['UP', 'UP', 'LEFT', 'UP', 'RIGHT'] }
                 ].map((strat, i) => (
-                  <div key={i} className="bg-slate-950/60 p-4 rounded-xl border border-slate-800/80 space-y-3">
-                    <div className="flex items-center justify-between">
-                      <img src={strat.imagem} alt={strat.nome} className="w-8 h-8 object-contain" />
-                      <div className="flex gap-0.5">
-                        {strat.codex.map((dir, idx) => <ArrowIcon key={idx} direction={dir} size={10} />)}
+                  <div key={i} className="bg-slate-950/60 p-5 rounded-2xl border border-slate-800/80 flex flex-col items-center gap-4 transition-all hover:border-green-500/30 group">
+                    <div className="relative">
+                      <img src={strat.imagem} alt={strat.nome} className="w-14 h-14 object-contain drop-shadow-2xl group-hover:scale-110 transition-transform duration-300" />
+                      <div className="absolute -bottom-1 -right-1 flex gap-0.5 bg-slate-900 p-1 rounded-md border border-slate-700 shadow-xl">
+                        {strat.codex.map((dir, idx) => <ArrowIcon key={idx} direction={dir} size={8} />)}
                       </div>
                     </div>
-                    <div className="text-[10px] font-black uppercase text-slate-400">{strat.nome}</div>
+                    
+                    <div className="text-center">
+                      <div className="text-[11px] font-black uppercase tracking-tighter text-slate-200 mb-1">{strat.nome}</div>
+                      <div className="text-[8px] font-bold text-slate-500 uppercase tracking-widest">Apoio Tático</div>
+                    </div>
+
                     <button
                       onClick={async () => {
                         await window.api.invoke('set-recording-mode', true)
                         setCapturingSlot(`support-${i}`)
                       }}
-                      className={`w-full py-2 rounded-md font-black text-[10px] border transition-all ${capturingSlot === `support-${i}` ? 'bg-yellow-500/10 border-yellow-500 text-yellow-400 animate-pulse-hd' : 'bg-slate-900 border-slate-800 text-slate-400 hover:border-slate-700'
-                        }`}
+                      className={`w-full py-3 rounded-xl font-black text-[10px] tracking-widest border-2 transition-all ${
+                        capturingSlot === `support-${i}` 
+                          ? 'bg-yellow-500/10 border-yellow-500 text-yellow-400 animate-pulse-hd' 
+                          : 'bg-slate-900 border-slate-800 text-slate-400 hover:border-yellow-500/50 hover:text-yellow-500'
+                      }`}
                     >
-                      {capturingSlot === `support-${i}` ? 'AGUARDANDO...' : (settings.supportShortcuts?.[i] || 'VINCULAR TECLA')}
+                      {capturingSlot === `support-${i}` ? 'AGUARDANDO...' : (settings.supportShortcuts?.[i] || 'VINCULAR')}
                     </button>
                   </div>
                 ))}
               </div>
+              <p className="text-[9px] text-slate-500 mt-6 uppercase tracking-[0.2em] text-center opacity-50">
+                Protocolo de Emergência // Atribuição de Tecla Rápida
+              </p>
             </div>
 
             {/* INFO FOOTER */}
