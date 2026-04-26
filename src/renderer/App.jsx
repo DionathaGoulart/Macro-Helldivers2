@@ -363,9 +363,9 @@ function App() {
 
       {/* FOOTER: SLOTS BAR (FIXED) */}
       {activeTab === 'macro' && (
-        <footer className="shrink-0 fixed bottom-0 left-0 right-0 bg-slate-950/80 backdrop-blur-xl border-t border-slate-900 p-4 pb-6 z-[100]">
-          <div className="max-w-5xl mx-auto flex flex-col items-center gap-4">
-            <div className="flex justify-center gap-4 flex-wrap">
+        <footer className="shrink-0 fixed bottom-6 left-1/2 -translate-x-1/2 w-fit bg-slate-950/60 backdrop-blur-2xl border border-white/5 p-4 rounded-3xl z-[100] shadow-[0_20px_50px_-10px_rgba(0,0,0,0.8)]">
+          <div className="flex flex-col items-center gap-3">
+            <div className="flex justify-center gap-4">
               {slots.map((slot, index) => (
                 <div key={index} className="flex-shrink-0">
                   <Slot
