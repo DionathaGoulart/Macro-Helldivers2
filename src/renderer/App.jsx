@@ -284,11 +284,11 @@ function App() {
               <div className="hd-card p-6 border-t-2 border-t-slate-700">
                 <h2 className="hd-card-header text-sm">
                   <div className="hd-indicator bg-slate-500 shadow-none"></div>
-                  Parâmetros de Missão
+                  Configuração de Controles
                 </h2>
                 <div className="space-y-6">
                   <div className="space-y-3">
-                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Tecla do Menu In-Game</label>
+                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Tecla de Estratégias In-Game</label>
                     <div className="grid grid-cols-2 gap-2">
                       {['LeftControl', 'LeftAlt', 'Equal', 'Minus'].map((key) => (
                         <button
@@ -305,8 +305,8 @@ function App() {
 
                   <div className="flex items-center justify-between p-3 bg-slate-950 rounded-lg border border-slate-800">
                     <div className="flex flex-col">
-                      <span className="text-[10px] font-black uppercase text-slate-300">Modo de Digitação</span>
-                      <span className="text-[9px] text-slate-500 uppercase">{settings.useArrows ? 'Setas (Seguro)' : 'WASD (Movimento)'}</span>
+                      <span className="text-[10px] font-black uppercase text-slate-300">Modo Setas</span>
+                      <span className="text-[9px] text-slate-500 uppercase">{settings.useArrows ? 'Usar setas no lugar do WASD (Recomendado)' : 'Usar WASD (Trava o movimento)'}</span>
                     </div>
                     <label className="relative inline-flex items-center cursor-pointer">
                       <input type="checkbox" checked={settings.useArrows} onChange={(e) => handleSettingChange('useArrows', e.target.checked)} className="sr-only peer" />
@@ -373,17 +373,15 @@ function App() {
                   </div>
                 ))}
               </div>
-              <p className="text-[9px] text-slate-500 mt-6 uppercase tracking-[0.2em] text-center opacity-50">
-                Protocolo de Emergência // Atribuição de Tecla Rápida
-              </p>
+              </div>
             </div>
 
             {/* INFO FOOTER */}
             <div className="flex items-center justify-between opacity-40 px-2">
-              <span className="text-[9px] font-black tracking-widest uppercase">Versão v0.1.0 // Super Earth Command</span>
+              <span className="text-[9px] font-black tracking-widest uppercase">Versão v0.1.0</span>
               <div className="flex items-center gap-2">
                 <div className="w-1.5 h-1.5 rounded-full bg-green-500"></div>
-                <span className="text-[9px] font-black uppercase">Sistema Operacional</span>
+                <span className="text-[9px] font-black uppercase">Atualizado</span>
               </div>
             </div>
           </div>
