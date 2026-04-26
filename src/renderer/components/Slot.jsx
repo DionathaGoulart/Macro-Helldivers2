@@ -47,12 +47,7 @@ export default function Slot({ index, selectedStratagem, isActive, onSelectSlot,
             className={`w-full h-full object-cover opacity-80 transition-transform duration-300 ${activeVisual ? 'scale-110' : 'scale-100'}`}
           />
           {/* Overlay for better readability of indicators */}
-          <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-slate-950/40"></div>
-
-          {/* Codex Overlay (Bottom) */}
-          <div className="absolute bottom-1 left-0 right-0 flex justify-center gap-0.5 scale-[0.65] z-20">
-            {selectedStratagem.codex.map((dir, i) => <ArrowIcon key={i} direction={dir} size={10} />)}
-          </div>
+          <div className="absolute inset-x-0 top-0 h-10 bg-gradient-to-b from-slate-950/60 to-transparent"></div>
         </div>
       ) : (
         <div className="flex flex-col items-center gap-1 opacity-20">
