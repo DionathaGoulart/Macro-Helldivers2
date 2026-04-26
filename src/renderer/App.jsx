@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import Slot, { ArrowIcon } from './components/Slot'
 import stratagemsData from './data/stratagems.json'
 
