@@ -30,7 +30,7 @@ export default function Slot({ index, selectedStratagem, isActive, onSelectSlot,
   return (
     <button 
       onClick={() => onSelectSlot(index)}
-      className={`relative w-16 h-16 border-2 flex flex-col items-center justify-center gap-1 rounded-xl transition-all duration-300
+      className={`relative w-16 h-16 border-2 flex flex-col items-center justify-center transition-all duration-300
         ${activeVisual 
           ? 'bg-yellow-500/40 border-yellow-400 scale-105 shadow-[0_0_20px_rgba(251,191,36,0.3)]' 
           : isActive 
@@ -38,34 +38,34 @@ export default function Slot({ index, selectedStratagem, isActive, onSelectSlot,
             : 'bg-slate-900/40 border-slate-800 hover:border-slate-600 hover:bg-slate-800/50'}
       `}
     >
-      {/* Shortcut Indicator */}
-      <div className={`absolute -top-2 px-1.5 py-0.5 rounded border text-[9px] font-black tracking-tighter transition-colors
-        ${isActive ? 'bg-yellow-500 border-yellow-600 text-slate-950' : 'bg-slate-950 border-slate-700 text-slate-500'}
+      {/* Shortcut Indicator - Forced to top */}
+      <div className={`absolute -top-2 left-1/2 -translate-x-1/2 px-1.5 py-0.5 rounded border text-[9px] font-black tracking-tighter transition-colors z-20
+        ${isActive ? 'bg-yellow-500 border-yellow-600 text-slate-950 shadow-[0_2px_10px_rgba(251,191,36,0.4)]' : 'bg-slate-950 border-slate-700 text-slate-500'}
       `}>
         {shortcut || `F${index + 1}`}
       </div>
 
       {selectedStratagem ? (
-        <div className="flex flex-col items-center gap-1">
+        <div className="flex flex-col items-center gap-1 mt-1">
           <img 
             src={`${selectedStratagem.imagem}`} 
             alt={selectedStratagem.nome} 
-            className={`w-7 h-7 object-contain transition-transform duration-300 ${activeVisual ? 'scale-110' : 'scale-100'}`}
+            className={`w-6 h-6 object-contain transition-transform duration-300 ${activeVisual ? 'scale-110' : 'scale-100'}`}
           />
-          <div className="flex gap-0.5 px-1 py-0.5 rounded-sm bg-slate-950/40 border border-slate-800/50 scale-[0.7]">
-            {selectedStratagem.codex.map((dir, i) => <ArrowIcon key={i} direction={dir} size={12} />)}
+          <div className="flex gap-0.5 px-1 py-0.5 rounded-sm bg-slate-950/40 border border-slate-800/50 scale-[0.65]">
+            {selectedStratagem.codex.map((dir, i) => <ArrowIcon key={i} direction={dir} size={10} />)}
           </div>
         </div>
       ) : (
         <div className="flex flex-col items-center gap-1 opacity-20">
-          <div className="w-6 h-6 border-2 border-dashed border-slate-500 rounded-md" />
-          <span className="text-[8px] font-bold uppercase tracking-widest">Open</span>
+          <div className="w-5 h-5 border-2 border-dashed border-slate-500 rounded-md" />
+          <span className="text-[7px] font-black uppercase tracking-[0.2em]">Open</span>
         </div>
       )}
 
       {/* Active Line Indicator */}
       {isActive && (
-        <div className="absolute -bottom-1 w-8 h-1 bg-yellow-500 rounded-full" />
+        <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-6 h-0.5 bg-yellow-500 rounded-full" />
       )}
     </button>
   )
