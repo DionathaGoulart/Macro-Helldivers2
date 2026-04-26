@@ -3,7 +3,7 @@ import { ArrowUp, ArrowDown, ArrowLeft, ArrowRight } from 'lucide-react'
 
 export const ArrowIcon = ({ direction, className = "", size = 16 }) => {
   const iconProps = { size, className: `text-yellow-500/90 ${className}` }
-  switch(direction.toUpperCase()) {
+  switch (direction.toUpperCase()) {
     case 'UP': return <ArrowUp {...iconProps} />
     case 'DOWN': return <ArrowDown {...iconProps} />
     case 'LEFT': return <ArrowLeft {...iconProps} />
@@ -28,27 +28,27 @@ export default function Slot({ index, selectedStratagem, isActive, onSelectSlot,
   }, [index])
 
   return (
-    <button 
+    <button
       onClick={() => onSelectSlot(index)}
       className={`relative w-16 h-16 border-2 flex flex-col items-center justify-center transition-all duration-300 overflow-hidden rounded-xl
-        ${activeVisual 
-          ? 'bg-yellow-500/40 border-yellow-400 scale-105 shadow-[0_0_20px_rgba(251,191,36,0.3)]' 
-          : isActive 
-            ? 'bg-slate-800/80 border-yellow-500 shadow-[0_0_15px_rgba(251,191,36,0.15)] scale-105 z-10' 
+        ${activeVisual
+          ? 'bg-yellow-500/40 border-yellow-400 scale-105 shadow-[0_0_20px_rgba(251,191,36,0.3)]'
+          : isActive
+            ? 'bg-slate-800/80 border-yellow-500 shadow-[0_0_15px_rgba(251,191,36,0.15)] scale-105 z-10'
             : 'bg-slate-900/40 border-slate-800 hover:border-slate-600 hover:bg-slate-800/50'}
       `}
     >
       {selectedStratagem ? (
         <div className="absolute inset-0 w-full h-full">
           {/* Full-bleed background image */}
-          <img 
-            src={`${selectedStratagem.imagem}`} 
-            alt={selectedStratagem.nome} 
+          <img
+            src={`${selectedStratagem.imagem}`}
+            alt={selectedStratagem.nome}
             className={`w-full h-full object-cover opacity-80 transition-transform duration-300 ${activeVisual ? 'scale-110' : 'scale-100'}`}
           />
           {/* Overlay for better readability of indicators */}
           <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-slate-950/40"></div>
-          
+
           {/* Codex Overlay (Bottom) */}
           <div className="absolute bottom-1 left-0 right-0 flex justify-center gap-0.5 scale-[0.65] z-20">
             {selectedStratagem.codex.map((dir, i) => <ArrowIcon key={i} direction={dir} size={10} />)}

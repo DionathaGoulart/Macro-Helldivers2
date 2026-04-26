@@ -146,7 +146,7 @@ function App() {
         {/* HUD Decorations */}
         <div className="absolute top-0 left-0 w-8 h-8 border-t border-l border-yellow-500/20 pointer-events-none"></div>
         <div className="absolute top-0 right-0 w-8 h-8 border-t border-r border-yellow-500/20 pointer-events-none"></div>
-        
+
         <div className="w-full flex justify-center">
           <nav className="flex items-center">
             <div className="w-[1px] h-6 bg-slate-800 self-center"></div>
@@ -252,11 +252,10 @@ function App() {
                           await window.api.invoke('set-recording-mode', true)
                           setCapturingSlot(i)
                         }}
-                        className={`w-full py-3.5 rounded-xl font-black text-xs tracking-widest border-2 transition-all ${
-                          capturingSlot === i 
-                            ? 'bg-yellow-500/10 border-yellow-500 text-yellow-400 animate-pulse-hd' 
+                        className={`w-full py-3.5 rounded-xl font-black text-xs tracking-widest border-2 transition-all ${capturingSlot === i
+                            ? 'bg-yellow-500/10 border-yellow-500 text-yellow-400 animate-pulse-hd'
                             : 'bg-slate-900 border-slate-800 text-slate-300 hover:border-yellow-500/50 hover:text-white'
-                        }`}
+                          }`}
                       >
                         {capturingSlot === i ? 'ESCUTANDO...' : settings.shortcuts[i]}
                       </button>
@@ -316,10 +315,10 @@ function App() {
                 ].map((strat, i) => (
                   <div key={i} className="bg-slate-950/60 p-6 rounded-2xl border border-slate-800/80 flex flex-col items-center gap-5 transition-all hover:border-green-500/30 group">
                     <img src={strat.imagem} alt={strat.nome} className="w-16 h-16 object-contain drop-shadow-2xl group-hover:scale-110 transition-transform duration-300" />
-                    
+
                     <div className="text-center w-full space-y-3">
                       <div className="text-[12px] font-black uppercase tracking-widest text-slate-200">{strat.nome}</div>
-                      
+
                       <div className="flex justify-center gap-1.5 bg-slate-900/80 py-2 rounded-lg border border-slate-800 shadow-inner">
                         {strat.codex.map((dir, idx) => <ArrowIcon key={idx} direction={dir} size={12} />)}
                       </div>
@@ -330,11 +329,10 @@ function App() {
                         await window.api.invoke('set-recording-mode', true)
                         setCapturingSlot(`support-${i}`)
                       }}
-                      className={`w-full py-3 rounded-xl font-black text-[10px] tracking-widest border-2 transition-all ${
-                        capturingSlot === `support-${i}` 
-                          ? 'bg-yellow-500/10 border-yellow-500 text-yellow-400 animate-pulse-hd' 
+                      className={`w-full py-3 rounded-xl font-black text-[10px] tracking-widest border-2 transition-all ${capturingSlot === `support-${i}`
+                          ? 'bg-yellow-500/10 border-yellow-500 text-yellow-400 animate-pulse-hd'
                           : 'bg-slate-900 border-slate-800 text-slate-400 hover:border-yellow-500/50 hover:text-yellow-500'
-                      }`}
+                        }`}
                     >
                       {capturingSlot === `support-${i}` ? 'AGUARDANDO...' : (settings.supportShortcuts?.[i] || 'VINCULAR')}
                     </button>
