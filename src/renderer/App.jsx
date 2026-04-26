@@ -163,7 +163,7 @@ function App() {
       <main className="flex-1 overflow-y-auto scrollbar-hd pt-4 pb-24">
         
         {activeTab === 'macro' && (
-          <div className="max-w-5xl mx-auto px-6 space-y-6">
+          <div className="max-w-none mx-auto px-6 space-y-6">
             <div className="flex items-center justify-center gap-4 py-2 opacity-60">
               <div className="h-[1px] flex-1 bg-gradient-to-r from-transparent to-slate-800"></div>
               <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">
@@ -348,9 +348,6 @@ function App() {
                   />
                 </div>
               ))}
-            </div>
-            <div className="text-[9px] font-black uppercase tracking-[0.3em] text-slate-500">
-              Pronto para a Liberdade
             </div>
           </div>
         </footer>
