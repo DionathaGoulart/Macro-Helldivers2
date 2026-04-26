@@ -27,7 +27,8 @@
     "win": {
       "target": "nsis",
       "icon": "public/icon.png",
-      "requestedExecutionLevel": "requireAdministrator"
+      "requestedExecutionLevel": "requireAdministrator",
+      "artifactName": "Macro-Helldivers-2-Setup-${version}.${ext}"
     },
     "nsis": {
       "oneClick": false,
