@@ -14,6 +14,22 @@ let nut = null // Carregamento tardio (Lazy)
 
 const isDev = !!process.env.VITE_DEV_SERVER_URL
 
+// SINGLE INSTANCE LOCK
+const gotTheLock = app.requestSingleInstanceLock()
+
+if (!gotTheLock) {
+  app.quit()
+} else {
+  app.on('second-instance', (event, commandLine, workingDirectory) => {
+    // Alguém tentou abrir uma segunda instância, focamos e restauramos nossa janela.
+    if (win) {
+      if (win.isMinimized()) win.restore()
+      win.show()
+      win.focus()
+    }
+  })
+}
+
 // Motor de Macro (Carregamento Seguro)
 function loadMacroEngine() {
   try {
@@ -183,6 +199,10 @@ function createWindow() {
   if (isDev) win.loadURL(process.env.VITE_DEV_SERVER_URL)
   else win.loadFile(path.join(__dirname, '../dist/index.html'))
 
+  win.webContents.on('did-finish-load', () => {
+    autoUpdater.checkForUpdatesAndNotify().catch(() => {})
+  })
+
   win.on('close', (event) => {
     if (!isQuitting) {
       event.preventDefault()
@@ -196,11 +216,48 @@ app.whenReady().then(() => {
   createWindow()
   createTray()
   registerMacros()
-  
-  // Update seguro após o boot
-  setTimeout(() => {
-    autoUpdater.checkForUpdatesAndNotify().catch(() => {})
-  }, 5000)
+})
+
+// Gerenciamento de Atualizações
+autoUpdater.autoDownload = true
+
+function sendStatusToWindow(status, extra = {}) {
+  if (win && !win.isDestroyed()) {
+    win.webContents.send('update-status', { status, ...extra })
+  }
+}
+
+autoUpdater.on('checking-for-update', () => {
+  console.log('Verificando atualizações...')
+  sendStatusToWindow('checking')
+})
+
+autoUpdater.on('update-available', (info) => {
+  console.log('Atualização disponível:', info.version)
+  sendStatusToWindow('available', { version: info.version })
+})
+
+autoUpdater.on('update-not-available', () => {
+  console.log('Nenhuma atualização disponível.')
+  sendStatusToWindow('up-to-date')
+})
+
+autoUpdater.on('download-progress', (progress) => {
+  sendStatusToWindow('downloading', { percent: progress.percent })
+})
+
+autoUpdater.on('update-downloaded', (info) => {
+  console.log('Atualização baixada.')
+  sendStatusToWindow('ready', { version: info.version })
+})
+
+autoUpdater.on('error', (err) => {
+  console.error('Erro no Auto-Updater:', err)
+  sendStatusToWindow('error', { message: err.message })
+})
+
+ipcMain.handle('install-update', () => {
+  autoUpdater.quitAndInstall()
 })
 
 app.on('window-all-closed', () => {

@@ -5,8 +5,13 @@ contextBridge.exposeInMainWorld('api', {
   send: (channel, data) => ipcRenderer.send(channel, data),
   invoke: (channel, ...args) => ipcRenderer.invoke(channel, ...args),
   
-  // Funções específicas que o App.jsx espera
+  // Funções de Escuta (Main -> Renderer)
+  onUpdateStatus: (callback) => ipcRenderer.on('update-status', (event, info) => callback(info)),
+  onGameFocusChanged: (callback) => ipcRenderer.on('game-focus-changed', (event, focused) => callback(focused)),
+  onMacroTriggered: (callback) => ipcRenderer.on('macro-triggered', (event, index) => callback(index)),
+  onSupportMacroTriggered: (callback) => ipcRenderer.on('support-macro-triggered', (event, index) => callback(index)),
+
+  // Funções de Envio (Renderer -> Main)
   updateSlots: (slots) => ipcRenderer.send('update-slots', slots),
-  saveSettings: (settings) => ipcRenderer.send('save-settings', settings),
-  onMacroTriggered: (callback) => ipcRenderer.on('macro-triggered', (event, index) => callback(index))
+  saveSettings: (settings) => ipcRenderer.send('save-settings', settings)
 })
