@@ -1,5 +1,4 @@
 import { useState, useEffect, useCallback } from 'react'
-import { Shield, Settings as SettingsIcon, Cpu, Zap, Radio } from 'lucide-react'
 import Slot, { ArrowIcon } from './components/Slot'
 import stratagemsData from './data/stratagems.json'
 
@@ -141,46 +140,45 @@ function App() {
 
   return (
     <div className="h-screen flex flex-col bg-slate-950 text-slate-200">
-      
+
       {/* HEADER: TABS */}
-      <header className="shrink-0 bg-slate-950/50 backdrop-blur-2xl border-b border-white/5 z-50">
+      <header className="shrink-0 bg-slate-950/40 backdrop-blur-2xl border-b border-white/5 z-50 relative">
+        {/* HUD Decorations */}
+        <div className="absolute top-0 left-0 w-8 h-8 border-t border-l border-yellow-500/20 pointer-events-none"></div>
+        <div className="absolute top-0 right-0 w-8 h-8 border-t border-r border-yellow-500/20 pointer-events-none"></div>
+        
         <div className="w-full flex justify-center">
-          {/* Navigation Tabs */}
-          <nav className="flex h-full">
-            <button 
+          <nav className="flex items-center">
+            <div className="w-[1px] h-6 bg-slate-800 self-center"></div>
+            <button
               onClick={() => setActiveTab('macro')}
-              className={`hd-tab-button flex items-center gap-2 group ${activeTab === 'macro' ? 'hd-tab-active' : 'hd-tab-inactive'}`}
+              className={`hd-tab-button ${activeTab === 'macro' ? 'hd-tab-active' : 'hd-tab-inactive'}`}
             >
-              <Cpu className={`w-4 h-4 transition-transform ${activeTab === 'macro' ? 'scale-110' : 'group-hover:scale-110'}`} />
-              <span>Configurar Macros</span>
+              Configurar Macros
             </button>
-            <button 
+            <div className="w-[1px] h-6 bg-slate-800 self-center"></div>
+            <button
               onClick={() => setActiveTab('settings')}
-              className={`hd-tab-button flex items-center gap-2 group ${activeTab === 'settings' ? 'hd-tab-active' : 'hd-tab-inactive'}`}
+              className={`hd-tab-button ${activeTab === 'settings' ? 'hd-tab-active' : 'hd-tab-inactive'}`}
             >
-              <SettingsIcon className={`w-4 h-4 transition-transform ${activeTab === 'settings' ? 'scale-110 rotate-90' : 'group-hover:rotate-45'}`} />
-              <span>Configurações</span>
+              Configurações
             </button>
+            <div className="w-[1px] h-6 bg-slate-800 self-center"></div>
           </nav>
         </div>
       </header>
 
       {/* MAIN CONTENT AREA */}
       <main className="flex-1 overflow-y-auto scrollbar-hd pt-4 pb-24">
-        
+
         {activeTab === 'macro' && (
-          <div className="max-w-none mx-auto px-10 space-y-8">
-            <div className="flex items-center justify-center gap-6 py-6 opacity-40">
-              <div className="h-[1px] flex-1 bg-gradient-to-r from-transparent via-slate-700 to-transparent"></div>
-              <div className="flex flex-col items-center">
-                <span className="text-[9px] font-black uppercase tracking-[0.4em] text-yellow-500/80 mb-1">
-                  Tactical Deployment Protocol
-                </span>
-                <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400">
-                  Slot {settings.shortcuts[activeSlot]} // Ready for Input
-                </span>
-              </div>
-              <div className="h-[1px] flex-1 bg-gradient-to-r from-transparent via-slate-700 to-transparent"></div>
+          <div className="max-w-none mx-auto px-6 space-y-6">
+            <div className="flex items-center justify-center gap-4 py-2 opacity-60">
+              <div className="h-[1px] flex-1 bg-gradient-to-r from-transparent to-slate-800"></div>
+              <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">
+                Selecionar Estratagemas para o Slot {settings.shortcuts[activeSlot]}
+              </span>
+              <div className="h-[1px] flex-1 bg-gradient-to-l from-transparent to-slate-800"></div>
             </div>
 
             {sortedTags.map((tag) => (
@@ -189,7 +187,7 @@ function App() {
                   <div className="hd-indicator"></div>
                   {tag}
                 </h2>
-                
+
                 <div className="grid grid-cols-4 gap-3">
                   {stratagemsByTag[tag].map((strat) => {
                     const isEquipped = slots.some(s => s && s.id === strat.id)
@@ -202,17 +200,17 @@ function App() {
                         key={strat.id}
                         onClick={() => !disabled && handleAssignStratagem(strat)}
                         className={`group relative flex flex-col items-center p-4 rounded-2xl border-2 transition-all gap-3
-                          ${disabled 
-                            ? 'bg-slate-950/50 border-slate-900 opacity-20 cursor-not-allowed' 
+                          ${disabled
+                            ? 'bg-slate-950/50 border-slate-900 opacity-20 cursor-not-allowed'
                             : 'bg-slate-900/40 border-slate-800/50 hover:bg-slate-800/60 hover:border-yellow-500/50 hover:-translate-y-2 hover:shadow-[0_10px_30px_-10px_rgba(251,191,36,0.15)]'}`}
                       >
                         <img src={strat.imagem} alt={strat.nome} className="w-16 h-16 object-contain drop-shadow-2xl group-hover:scale-110 transition-transform duration-300" />
-                        
+
                         <div className="flex flex-col items-center gap-2 w-full">
                           <span className="text-[11px] font-black text-slate-200 uppercase tracking-tight text-center leading-tight h-7 flex items-center">
                             {strat.nome}
                           </span>
-                          
+
                           <div className="flex gap-1 bg-slate-950/80 px-2 py-1.5 rounded-lg border border-slate-800/60 shadow-inner group-hover:border-yellow-500/30 transition-colors">
                             {strat.codex.map((dir, i) => (
                               <ArrowIcon key={i} direction={dir} size={12} className="group-hover:text-yellow-400" />
@@ -236,7 +234,7 @@ function App() {
 
         {activeTab === 'settings' && (
           <div className="max-w-3xl mx-auto px-6 space-y-6 pt-4">
-            
+
             {/* ShortCuts Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* ATALHOS PRINCIPAIS */}
@@ -254,9 +252,8 @@ function App() {
                           await window.api.invoke('set-recording-mode', true)
                           setCapturingSlot(i)
                         }}
-                        className={`w-full py-3 rounded-lg font-black text-xs tracking-tighter border-2 transition-all ${
-                          capturingSlot === i ? 'bg-yellow-500/10 border-yellow-500 text-yellow-400 animate-pulse-hd' : 'bg-slate-950 border-slate-800 text-slate-300 hover:border-slate-600'
-                        }`}
+                        className={`w-full py-3 rounded-lg font-black text-xs tracking-tighter border-2 transition-all ${capturingSlot === i ? 'bg-yellow-500/10 border-yellow-500 text-yellow-400 animate-pulse-hd' : 'bg-slate-950 border-slate-800 text-slate-300 hover:border-slate-600'
+                          }`}
                       >
                         {capturingSlot === i ? 'ESCUTANDO...' : settings.shortcuts[i]}
                       </button>
@@ -279,9 +276,8 @@ function App() {
                         <button
                           key={key}
                           onClick={() => handleSettingChange('modifierKey', key)}
-                          className={`py-2 rounded-md text-[10px] font-black uppercase transition-all border ${
-                            settings.modifierKey === key ? 'bg-yellow-500 border-yellow-600 text-slate-950' : 'bg-slate-950 border-slate-800 text-slate-400 hover:border-slate-600'
-                          }`}
+                          className={`py-2 rounded-md text-[10px] font-black uppercase transition-all border ${settings.modifierKey === key ? 'bg-yellow-500 border-yellow-600 text-slate-950' : 'bg-slate-950 border-slate-800 text-slate-400 hover:border-slate-600'
+                            }`}
                         >
                           {key === 'LeftControl' ? 'CTRL' : key === 'LeftAlt' ? 'ALT' : key}
                         </button>
@@ -328,9 +324,8 @@ function App() {
                         await window.api.invoke('set-recording-mode', true)
                         setCapturingSlot(`support-${i}`)
                       }}
-                      className={`w-full py-2 rounded-md font-black text-[10px] border transition-all ${
-                        capturingSlot === `support-${i}` ? 'bg-yellow-500/10 border-yellow-500 text-yellow-400 animate-pulse-hd' : 'bg-slate-900 border-slate-800 text-slate-400 hover:border-slate-700'
-                      }`}
+                      className={`w-full py-2 rounded-md font-black text-[10px] border transition-all ${capturingSlot === `support-${i}` ? 'bg-yellow-500/10 border-yellow-500 text-yellow-400 animate-pulse-hd' : 'bg-slate-900 border-slate-800 text-slate-400 hover:border-slate-700'
+                        }`}
                     >
                       {capturingSlot === `support-${i}` ? 'AGUARDANDO...' : (settings.supportShortcuts?.[i] || 'VINCULAR TECLA')}
                     </button>
@@ -354,12 +349,12 @@ function App() {
 
       {/* FOOTER: SLOTS BAR (FIXED) */}
       {activeTab === 'macro' && (
-        <footer className="shrink-0 fixed bottom-0 left-0 right-0 glass border-t border-white/5 p-6 pb-8 z-[100] shadow-[0_-20px_50px_-10px_rgba(0,0,0,0.5)]">
-          <div className="max-w-5xl mx-auto flex flex-col items-center gap-6">
+        <footer className="shrink-0 fixed bottom-0 left-0 right-0 bg-slate-950/80 backdrop-blur-xl border-t border-slate-900 p-4 pb-6 z-[100]">
+          <div className="max-w-5xl mx-auto flex flex-col items-center gap-4">
             <div className="flex justify-center gap-4 flex-wrap">
               {slots.map((slot, index) => (
                 <div key={index} className="flex-shrink-0">
-                  <Slot 
+                  <Slot
                     index={index}
                     selectedStratagem={slot}
                     isActive={activeSlot === index}
