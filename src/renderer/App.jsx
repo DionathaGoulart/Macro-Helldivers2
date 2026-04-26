@@ -224,8 +224,8 @@ function App() {
                       >
                         <img src={`${strat.imagem}`} alt={strat.nome} className="w-10 h-10 object-contain drop-shadow-md" />
                         <span className="text-xs font-semibold text-slate-300 leading-tight">{strat.nome}</span>
-                        <div className="flex gap-0.5 mt-auto bg-slate-900/60 px-1 py-0.5 rounded">
-                          {strat.codex.map((dir, i) => <ArrowIcon key={i} direction={dir} />)}
+                        <div className="flex gap-1 mt-auto bg-slate-900/60 px-1.5 py-1 rounded shadow-inner">
+                          {strat.codex.map((dir, i) => <ArrowIcon key={i} direction={dir} size={14} />)}
                         </div>
                       </button>
                     )
@@ -337,9 +337,9 @@ function App() {
                         <img src={strat.imagem} alt={strat.nome} className="w-8 h-8 object-contain drop-shadow-md group-hover:scale-110 transition-transform" />
                         <span className="text-sm font-bold text-slate-200">{strat.nome}</span>
                       </div>
-                      <div className="flex gap-0.5">
+                      <div className="flex gap-1">
                         {strat.codex.map((dir, idx) => (
-                          <ArrowIcon key={idx} direction={dir} className="scale-[0.6] origin-right" />
+                          <ArrowIcon key={idx} direction={dir} size={14} />
                         ))}
                       </div>
                     </div>
