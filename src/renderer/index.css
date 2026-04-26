@@ -4,71 +4,95 @@
 
 @layer base {
   :root {
-    --helldiver-yellow: #fbbf24;
-    --helldiver-yellow-dim: rgba(251, 191, 36, 0.1);
-    --industrial-slate: #0f172a;
-    --industrial-border: rgba(51, 65, 85, 0.5);
-    --military-accent: #334155;
+    --hd-yellow: #fbbf24;
+    --hd-bg: #05070a;
+    --hd-steel: #0f172a;
+    --hd-border: #1e293b;
+    --hd-panel: rgba(15, 23, 42, 0.8);
   }
 
   body {
-    @apply bg-slate-950 text-slate-200 antialiased select-none overflow-hidden;
+    @apply bg-[#05070a] text-slate-200 antialiased select-none overflow-hidden;
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
   }
 }
 
 @layer components {
+  /* Tactical Card */
   .hd-card {
-    @apply bg-slate-900/40 border border-slate-800/60 rounded-xl backdrop-blur-md;
+    @apply bg-slate-900/20 border border-slate-800/40 rounded-lg backdrop-blur-xl relative overflow-hidden;
+  }
+  
+  .hd-card::before {
+    content: '';
+    @apply absolute top-0 left-0 w-1 h-full bg-slate-800 transition-colors duration-300;
+  }
+  
+  .hd-card:hover::before {
+    @apply bg-yellow-500/50;
   }
 
   .hd-card-header {
-    @apply text-xl font-black uppercase tracking-tighter text-yellow-500 mb-6 border-b border-slate-800/50 pb-3 flex items-center gap-3;
+    @apply text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 mb-4 flex items-center gap-3;
   }
 
-  .hd-tab-button {
-    @apply px-8 py-4 font-black uppercase tracking-widest text-xs transition-all duration-300 border-b-2;
+  /* Tactical Navbar */
+  .hd-navbar {
+    @apply bg-slate-950/90 border-b border-slate-900 backdrop-blur-2xl px-6;
   }
 
-  .hd-tab-active {
-    @apply bg-yellow-500/5 text-yellow-400 border-yellow-500 shadow-[inset_0_-10px_20px_-10px_rgba(251,191,36,0.1)];
+  .hd-nav-link {
+    @apply relative px-8 py-5 text-[11px] font-black uppercase tracking-[0.2em] transition-all duration-300;
   }
 
-  .hd-tab-inactive {
-    @apply text-slate-500 border-transparent hover:text-slate-300 hover:bg-slate-900/50;
+  .hd-nav-link::after {
+    content: '';
+    @apply absolute bottom-0 left-0 w-full h-0 bg-yellow-500 transition-all duration-300 opacity-0;
   }
 
-  .hd-btn-primary {
-    @apply bg-yellow-500 text-slate-950 font-black uppercase tracking-widest text-xs px-6 py-3 rounded-lg 
-           hover:bg-yellow-400 active:scale-95 transition-all shadow-lg shadow-yellow-500/10;
+  .hd-nav-active {
+    @apply text-yellow-500 bg-yellow-500/5;
   }
 
-  .hd-btn-secondary {
-    @apply bg-slate-900 border border-slate-700 text-slate-300 font-bold uppercase tracking-widest text-[10px] px-4 py-2 rounded-lg
-           hover:border-yellow-500/50 hover:text-yellow-400 transition-all;
+  .hd-nav-active::after {
+    @apply h-[2px] opacity-100;
+  }
+
+  .hd-nav-inactive {
+    @apply text-slate-500 hover:text-slate-300;
+  }
+
+  /* Buttons */
+  .hd-btn-record {
+    @apply bg-slate-950 border border-slate-800 text-slate-400 font-black uppercase tracking-widest text-[9px] px-3 py-2 rounded transition-all
+           hover:border-yellow-500/40 hover:text-yellow-400 active:scale-95;
+  }
+
+  .hd-btn-recording {
+    @apply bg-yellow-500/10 border-yellow-500 text-yellow-500 animate-pulse;
   }
 
   .hd-indicator {
-    @apply w-2 h-2 rounded-full bg-yellow-500 shadow-[0_0_8px_rgba(251,191,36,0.6)];
+    @apply w-1.5 h-1.5 rounded-full bg-yellow-500 shadow-[0_0_10px_rgba(251,191,36,0.4)];
   }
 
-  /* Custom Scrollbar */
   .scrollbar-hd::-webkit-scrollbar {
-    width: 4px;
+    width: 3px;
   }
   .scrollbar-hd::-webkit-scrollbar-track {
     @apply bg-transparent;
   }
   .scrollbar-hd::-webkit-scrollbar-thumb {
-    @apply bg-slate-800 rounded-full hover:bg-slate-700 transition-colors;
+    @apply bg-slate-800 rounded-full hover:bg-yellow-500/20 transition-colors;
   }
 }
 
 /* Animations */
-@keyframes pulse-yellow {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.5; }
+@keyframes slide-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
 }
-.animate-pulse-hd {
-  animation: pulse-yellow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+
+.animate-slide-in {
+  animation: slide-in 0.4s ease-out forwards;
 }
