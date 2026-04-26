@@ -1,10 +1,74 @@
-@import "tailwindcss";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-body {
-  margin: 0;
-  padding: 0;
-  background-color: #0f172a;
-  color: #f8fafc;
-  font-family: system-ui, -apple-system, sans-serif;
-  user-select: none;
+@layer base {
+  :root {
+    --helldiver-yellow: #fbbf24;
+    --helldiver-yellow-dim: rgba(251, 191, 36, 0.1);
+    --industrial-slate: #0f172a;
+    --industrial-border: rgba(51, 65, 85, 0.5);
+    --military-accent: #334155;
+  }
+
+  body {
+    @apply bg-slate-950 text-slate-200 antialiased select-none overflow-hidden;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  }
+}
+
+@layer components {
+  .hd-card {
+    @apply bg-slate-900/40 border border-slate-800/60 rounded-xl backdrop-blur-md;
+  }
+
+  .hd-card-header {
+    @apply text-xl font-black uppercase tracking-tighter text-yellow-500 mb-6 border-b border-slate-800/50 pb-3 flex items-center gap-3;
+  }
+
+  .hd-tab-button {
+    @apply px-8 py-4 font-black uppercase tracking-widest text-xs transition-all duration-300 border-b-2;
+  }
+
+  .hd-tab-active {
+    @apply bg-yellow-500/5 text-yellow-400 border-yellow-500 shadow-[inset_0_-10px_20px_-10px_rgba(251,191,36,0.1)];
+  }
+
+  .hd-tab-inactive {
+    @apply text-slate-500 border-transparent hover:text-slate-300 hover:bg-slate-900/50;
+  }
+
+  .hd-btn-primary {
+    @apply bg-yellow-500 text-slate-950 font-black uppercase tracking-widest text-xs px-6 py-3 rounded-lg 
+           hover:bg-yellow-400 active:scale-95 transition-all shadow-lg shadow-yellow-500/10;
+  }
+
+  .hd-btn-secondary {
+    @apply bg-slate-900 border border-slate-700 text-slate-300 font-bold uppercase tracking-widest text-[10px] px-4 py-2 rounded-lg
+           hover:border-yellow-500/50 hover:text-yellow-400 transition-all;
+  }
+
+  .hd-indicator {
+    @apply w-2 h-2 rounded-full bg-yellow-500 shadow-[0_0_8px_rgba(251,191,36,0.6)];
+  }
+
+  /* Custom Scrollbar */
+  .scrollbar-hd::-webkit-scrollbar {
+    width: 4px;
+  }
+  .scrollbar-hd::-webkit-scrollbar-track {
+    @apply bg-transparent;
+  }
+  .scrollbar-hd::-webkit-scrollbar-thumb {
+    @apply bg-slate-800 rounded-full hover:bg-slate-700 transition-colors;
+  }
+}
+
+/* Animations */
+@keyframes pulse-yellow {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+.animate-pulse-hd {
+  animation: pulse-yellow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }

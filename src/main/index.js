@@ -148,8 +148,8 @@ function registerMacros() {
 function createTray() {
   if (tray) return
   const iconPath = app.isPackaged
-    ? path.join(__dirname, '../dist/stratagems/Orbital_Precision_Strike_Stratagem_Icon.png')
-    : path.join(__dirname, '../public/stratagems/Orbital_Precision_Strike_Stratagem_Icon.png')
+    ? path.join(__dirname, '../dist/icon.png')
+    : path.join(__dirname, '../public/icon.png')
   
   try {
     tray = new Tray(iconPath)
