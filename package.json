@@ -3,7 +3,7 @@
   "productName": "Macro Helldivers 2",
   "description": "Ferramenta de macros otimizada para Helldivers 2",
   "author": "DionathaGoulart",
-  "version": "0.2.1",
+  "version": "0.2.0",
   "private": true,
   "main": "dist-electron/index.js",
   "scripts": {
@@ -27,8 +27,7 @@
     "win": {
       "target": "nsis",
       "icon": "public/icon.png",
-      "requestedExecutionLevel": "requireAdministrator",
-      "artifactName": "Macro-Helldivers-2-Setup-${version}.${ext}"
+      "requestedExecutionLevel": "requireAdministrator"
     },
     "nsis": {
       "oneClick": false,
@@ -61,14 +60,17 @@
     "autoprefixer": "^10.5.0",
     "concurrently": "^9.2.1",
     "cross-env": "^10.1.0",
-    "electron": "31.0.0",
+    "electron": "^41.3.0",
     "electron-builder": "^26.8.1",
     "esbuild": "^0.28.0",
     "eslint": "^10.2.1",
-    "postcss": "^8.5.10",
+    "postcss": "^8.5.12",
     "tailwindcss": "^4.2.4",
     "vite": "^8.0.10",
     "vite-plugin-electron": "^0.29.1",
     "vite-plugin-electron-renderer": "^0.14.6"
+  },
+  "overrides": {
+    "file-type": "12.4.2"
   }
 }
