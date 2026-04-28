@@ -1,4 +1,4 @@
-# 🛡️ Macro Helldivers 2 - v0.1.0
+# 🛡️ Macro Helldivers 2
 
 Uma ferramenta de alto desempenho, minimalista e segura para automatizar o acionamento de Estratagemas no Helldivers 2.
 
@@ -31,13 +31,6 @@ O app possui um sistema integrado de **Auto-Update**.
 1. Sempre que você abre o app, ele consulta o repositório no GitHub para ver se existe uma versão mais recente que a sua.
 2. Se houver, ele baixa a atualização em segundo plano.
 3. Na próxima vez que você abrir o app, ele instalará a nova versão automaticamente.
-
-### Como lançar uma nova versão (Para o Desenvolvedor):
-1. Altere a versão no `package.json` (ex: de `0.1.0` para `0.1.1`).
-2. Rode o comando de build: `npm run build`.
-3. Vá ao GitHub e crie uma **Nova Release** com a mesma tag da versão (ex: `v0.1.1`).
-4. Faça o upload do arquivo `.exe` gerado na pasta `release`.
-5. O sistema de auto-update detectará essa nova release e avisará os usuários.
 
 ---
 
