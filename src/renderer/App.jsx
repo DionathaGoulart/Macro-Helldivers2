@@ -35,10 +35,14 @@ function App() {
     supportShortcuts: [null, null, null],
     modifierKey: 'LeftControl',
     useArrows: false,
-    language: 'pt'
+    language: 'pt',
+    enableOverlay: true,
+    alwaysShowSlots: false
   })
   const [updateStatus, setUpdateStatus] = useState({ status: 'idle', percent: 0 })
-  const [isBooting, setIsBooting] = useState(true)
+  const [isBooting, setIsBooting] = useState(window.location.hash !== '#overlay')
+  const [isMinimal, setIsMinimal] = useState(window.location.hash === '#overlay')
+  const isOverlay = window.location.hash === '#overlay'
 
   useEffect(() => {
     // Sequência de boot dura 4 segundos
@@ -76,9 +80,19 @@ function App() {
     }
     if (window.api && window.api.onGameFocusChanged) {
       window.api.onGameFocusChanged((focused) => {
-        // Você pode adicionar um estado de foco aqui se quiser mostrar um aviso
         console.log('Game focus:', focused)
       })
+    }
+    if (window.api && window.api.onToggleMinimalMode) {
+      window.api.onToggleMinimalMode((minimal) => {
+        setIsMinimal(minimal)
+      })
+    }
+    if (window.api && window.api.onSyncSlots) {
+      window.api.onSyncSlots((newSlots) => setSlots(newSlots))
+    }
+    if (window.api && window.api.onSyncSettings) {
+      window.api.onSyncSettings((newSettings) => setSettings(prev => ({ ...prev, ...newSettings })))
     }
   }, [])
 
@@ -99,6 +113,15 @@ function App() {
     if (window.api) window.api.updateSlots(newSlots)
     if (activeSlot < 3) setActiveSlot(activeSlot + 1)
   }
+
+  useEffect(() => {
+    if (isOverlay) {
+      document.title = "HD2_OVERLAY"
+      document.body.classList.add('is-overlay')
+    } else {
+      document.body.classList.remove('is-overlay')
+    }
+  }, [isOverlay])
 
   const handleSettingChange = (key, value) => {
     const newSettings = { ...settings, [key]: value }
@@ -176,12 +199,20 @@ function App() {
     })
   }, [stratagemsByTag])
 
+
+
   return (
-    <div className="h-screen flex flex-col bg-slate-950 text-slate-200 relative selection:bg-cyan-500/30 overflow-hidden">
+    <div className={`h-screen flex flex-col ${
+      isMinimal 
+        ? 'bg-transparent text-slate-200 overflow-hidden' 
+        : isOverlay
+          ? 'bg-slate-950/20 backdrop-blur-[2px] text-slate-200 relative selection:bg-cyan-500/30 overflow-hidden items-center justify-center'
+          : 'bg-slate-950 text-slate-200 relative selection:bg-cyan-500/30 overflow-hidden'
+    }`}>
       
       {/* BOOT INTRO SEQUENCE */}
-      {isBooting && (
-        <div className="fixed inset-0 z-[5000] bg-slate-950 flex flex-col items-center justify-center font-mono overflow-hidden">
+      {!isMinimal && isBooting && (
+        <div className="absolute inset-0 z-[5000] bg-slate-950/95 flex flex-col items-center justify-center font-mono overflow-hidden rounded-2xl">
           {/* CRT Scanline Effect */}
           <div className="absolute inset-0 pointer-events-none bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.25)_50%),linear-gradient(90deg,rgba(255,0,0,0.06),rgba(0,255,0,0.02),rgba(0,0,255,0.06))] z-50 bg-[length:100%_4px,3px_100%] opacity-30"></div>
           
@@ -226,15 +257,30 @@ function App() {
         </div>
       )}
 
-      <div className={`h-full flex flex-col transition-all duration-1000 ${isBooting ? 'scale-110 blur-xl opacity-0' : 'scale-100 blur-0 opacity-100 animate-entrance'}`}>
+      <div className={`flex flex-col ${
+        !isMinimal && isBooting ? 'scale-110 blur-xl opacity-0' : 'scale-100 blur-0 opacity-100'
+      } ${
+        isOverlay && !isMinimal ? 'w-[820px] h-[640px] bg-slate-950/70 rounded-3xl border border-white/10 shadow-[0_0_50px_rgba(0,0,0,0.4)] overflow-hidden relative m-auto backdrop-blur-md' : 'h-full'
+      }`}>
       
       {/* HEADER: TABS */}
+      {!isMinimal && (
       <header className="shrink-0 bg-slate-950/40 backdrop-blur-2xl border-b border-white/5 z-50 relative">
         {/* HUD Decorations */}
-        <div className="absolute top-0 left-0 w-8 h-8 border-t border-l border-cyan-500/20 pointer-events-none"></div>
+        <div className="absolute top-0 left-0 w-8 h-8 border-t border-l border-cyan-500/20 pointer-events-none rounded-tl-2xl"></div>
         <div className="absolute top-0 right-0 w-8 h-8 border-t border-r border-cyan-500/20 pointer-events-none"></div>
 
-        <div className="w-full flex justify-center">
+        {isOverlay && (
+          <button 
+            onClick={() => window.api?.hideOverlay?.()} 
+            className="absolute top-2 right-3 text-slate-500 hover:text-red-500 transition-colors p-2 z-[60] rounded-lg hover:bg-white/5"
+            title="Fechar Overlay (Ctrl + H)"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+          </button>
+        )}
+
+        <div className="w-full flex justify-center py-2">
           <nav className="flex items-center">
             <div className="w-[1px] h-6 bg-slate-800 self-center"></div>
             <button
@@ -254,12 +300,14 @@ function App() {
           </nav>
         </div>
       </header>
+      )}
 
       {/* MAIN CONTENT AREA */}
-      <main className="flex-1 overflow-y-auto scrollbar-hd pt-4 pb-24">
+      {!isMinimal && (
+      <main className="flex-1 overflow-y-auto scrollbar-hd relative flex flex-col">
 
         {activeTab === 'macro' && (
-          <div className="max-w-none mx-auto px-6 space-y-6">
+          <div className="max-w-none mx-auto px-6 space-y-6 pb-32">
             <div className="flex items-center justify-center gap-4 py-2 opacity-60">
               <div className="h-[1px] flex-1 bg-gradient-to-r from-transparent to-slate-800"></div>
               <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">
@@ -274,7 +322,7 @@ function App() {
               const indicatorClass = sectionColor === 'red' ? 'bg-red-500 shadow-[0_0_12px_rgba(239,68,68,0.8)] border-red-400/50' : sectionColor === 'green' ? 'bg-green-500 shadow-[0_0_12px_rgba(34,197,94,0.8)] border-green-400/50' : 'bg-cyan-500 shadow-[0_0_12px_rgba(34,211,238,0.8)] border-cyan-400/50'
 
               return (
-                <section key={tag} className={`hd-card p-5 border-l-4 border-l-slate-700 ${borderClass} transition-all [content-visibility:auto]`}>
+                <section key={tag} className={`hd-card p-5 border-l-4 border-l-slate-700 ${borderClass} [content-visibility:auto]`}>
                   <h2 className="flex items-center gap-3 text-xs font-black uppercase tracking-widest text-slate-400 mb-5">
                     <div className={`w-2 h-2 rounded-full border ${indicatorClass}`}></div>
                     {tag === 'Offensive' ? t.settings.tagOffensive : 
@@ -300,7 +348,7 @@ function App() {
                       <button
                         key={strat.id}
                         onClick={() => !disabled && handleAssignStratagem(strat)}
-                        className={`group relative aspect-square rounded-2xl border-2 transition-all overflow-hidden
+                        className={`group relative aspect-square rounded-2xl border-2 overflow-hidden
                           ${disabled
                             ? 'bg-slate-950/50 border-slate-900 opacity-20 cursor-not-allowed'
                             : `bg-slate-900/40 border-slate-800/50 ${hoverClasses}`}`}
@@ -358,14 +406,14 @@ function App() {
                 </h2>
                 <div className="grid grid-cols-2 gap-4">
                   {[0, 1, 2, 3].map(i => (
-                    <div key={i} className="bg-slate-950/60 p-5 rounded-2xl border border-slate-800/80 flex flex-col gap-3 transition-all hover:border-yellow-500/20">
+                    <div key={i} className="bg-slate-950/60 p-5 rounded-2xl border border-slate-800/80 flex flex-col gap-3 hover:border-yellow-500/20">
                       <div className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">{t.settings.shortcutLabel} {i + 1}</div>
                       <button
                         onClick={async () => {
                           await window.api.invoke('set-recording-mode', true)
                           setCapturingSlot(i)
                         }}
-                        className={`w-full py-3.5 rounded-xl font-black text-xs tracking-widest border-2 transition-all ${capturingSlot === i
+                        className={`w-full py-3.5 rounded-xl font-black text-xs tracking-widest border-2 ${capturingSlot === i
                           ? 'bg-yellow-500/10 border-yellow-500 text-yellow-400 animate-pulse-hd'
                           : 'bg-slate-900 border-slate-800 text-slate-300 hover:border-yellow-500/50 hover:text-white hover:bg-yellow-500/5'
                           }`}
@@ -391,7 +439,7 @@ function App() {
                         <button
                           key={key}
                           onClick={() => handleSettingChange('modifierKey', key)}
-                          className={`py-3 rounded-xl text-[10px] font-black uppercase transition-all border-2 ${settings.modifierKey === key 
+                          className={`py-3 rounded-xl text-[10px] font-black uppercase border-2 ${settings.modifierKey === key 
                             ? 'bg-yellow-500 border-yellow-600 text-slate-950 shadow-[0_0_15px_rgba(234,179,8,0.3)]' 
                             : 'bg-slate-900 border-slate-800 text-slate-400 hover:border-yellow-500/50 hover:text-white hover:bg-yellow-500/5'
                             }`}
@@ -404,7 +452,7 @@ function App() {
 
                   <button 
                     onClick={() => handleSettingChange('useArrows', !settings.useArrows)}
-                    className={`w-full p-4 rounded-xl border-2 transition-all flex items-center justify-between group ${settings.useArrows 
+                    className={`w-full p-4 rounded-xl border-2 flex items-center justify-between group ${settings.useArrows 
                       ? 'bg-yellow-500/5 border-yellow-500/50' 
                       : 'bg-slate-950/40 border-slate-800 hover:border-yellow-500/30'
                     }`}
@@ -417,8 +465,56 @@ function App() {
                           : t.settings.wasdActive}
                       </span>
                     </div>
-                    <div className={`w-10 h-5 rounded-full border-2 transition-all flex items-center px-1 ${settings.useArrows ? 'border-yellow-500 bg-yellow-500/20' : 'border-slate-700 bg-slate-900'}`}>
-                      <div className={`w-2 h-2 rounded-full transition-all ${settings.useArrows ? 'translate-x-5 bg-yellow-500 shadow-[0_0_8px_rgba(234,179,8,0.8)]' : 'bg-slate-600'}`}></div>
+                    <div className={`w-10 h-5 rounded-full border-2 flex items-center px-1 ${settings.useArrows ? 'border-yellow-500 bg-yellow-500/20' : 'border-slate-700 bg-slate-900'}`}>
+                      <div className={`w-2 h-2 rounded-full ${settings.useArrows ? 'translate-x-5 bg-yellow-500 shadow-[0_0_8px_rgba(234,179,8,0.8)]' : 'bg-slate-600'}`}></div>
+                    </div>
+                  </button>
+
+                  <button 
+                    onClick={() => {
+                      const newValue = settings.enableOverlay === false ? true : false;
+                      handleSettingChange('enableOverlay', newValue);
+                      window.api?.invoke?.('set-recording-mode', false); // Trigger re-register
+                    }}
+                    className={`w-full p-4 rounded-xl border-2 flex items-center justify-between group ${settings.enableOverlay !== false 
+                      ? 'bg-yellow-500/5 border-yellow-500/50' 
+                      : 'bg-slate-950/40 border-slate-800 hover:border-yellow-500/30'
+                    }`}
+                  >
+                    <div className="flex flex-col items-start gap-1">
+                      <span className={`text-[10px] font-black uppercase tracking-widest ${settings.enableOverlay !== false ? 'text-yellow-500' : 'text-slate-400'}`}>
+                        {settings.language === 'pt' ? 'Atalho do Overlay' : 'Overlay Shortcut'}
+                      </span>
+                      <span className="text-[9px] text-slate-500 uppercase text-left leading-tight">
+                        {settings.enableOverlay !== false 
+                          ? (settings.language === 'pt' ? 'Overlay Ativado (Ctrl + H)' : 'Overlay Active (Ctrl + H)')
+                          : (settings.language === 'pt' ? 'Overlay Desativado' : 'Overlay Disabled')}
+                      </span>
+                    </div>
+                    <div className={`w-10 h-5 rounded-full border-2 flex items-center px-1 ${settings.enableOverlay !== false ? 'border-yellow-500 bg-yellow-500/20' : 'border-slate-700 bg-slate-900'}`}>
+                      <div className={`w-2 h-2 rounded-full ${settings.enableOverlay !== false ? 'translate-x-5 bg-yellow-500 shadow-[0_0_8px_rgba(234,179,8,0.8)]' : 'bg-slate-600'}`}></div>
+                    </div>
+                  </button>
+
+                  <button 
+                    onClick={() => handleSettingChange('alwaysShowSlots', !settings.alwaysShowSlots)}
+                    className={`w-full p-4 rounded-xl border-2 flex items-center justify-between group ${settings.alwaysShowSlots 
+                      ? 'bg-yellow-500/5 border-yellow-500/50' 
+                      : 'bg-slate-950/40 border-slate-800 hover:border-yellow-500/30'
+                    }`}
+                  >
+                    <div className="flex flex-col items-start gap-1">
+                      <span className={`text-[10px] font-black uppercase tracking-widest ${settings.alwaysShowSlots ? 'text-yellow-500' : 'text-slate-400'}`}>
+                        {settings.language === 'pt' ? 'HUD Persistente' : 'Persistent HUD'}
+                      </span>
+                      <span className="text-[9px] text-slate-500 uppercase text-left leading-tight">
+                        {settings.alwaysShowSlots 
+                          ? (settings.language === 'pt' ? 'Slots sempre visíveis no jogo' : 'Slots always visible in-game')
+                          : (settings.language === 'pt' ? 'Esconder slots ao fechar' : 'Hide slots on close')}
+                      </span>
+                    </div>
+                    <div className={`w-10 h-5 rounded-full border-2 flex items-center px-1 ${settings.alwaysShowSlots ? 'border-yellow-500 bg-yellow-500/20' : 'border-slate-700 bg-slate-900'}`}>
+                      <div className={`w-2 h-2 rounded-full ${settings.alwaysShowSlots ? 'translate-x-5 bg-yellow-500 shadow-[0_0_8px_rgba(234,179,8,0.8)]' : 'bg-slate-600'}`}></div>
                     </div>
                   </button>
                 </div>
@@ -435,7 +531,7 @@ function App() {
                     <button
                       key={lang}
                       onClick={() => handleSettingChange('language', lang)}
-                      className={`py-3 rounded-xl text-[10px] font-black uppercase transition-all border-2 ${settings.language === lang 
+                      className={`py-3 rounded-xl text-[10px] font-black uppercase border-2 ${settings.language === lang 
                         ? 'bg-yellow-500 border-yellow-600 text-slate-950 shadow-[0_0_15px_rgba(234,179,8,0.3)]' 
                         : 'bg-slate-900 border-slate-800 text-slate-400 hover:border-yellow-500/50 hover:text-white hover:bg-yellow-500/5'
                         }`}
@@ -457,7 +553,7 @@ function App() {
                 {fixedSupportStrats.map((strat, i) => (
                   <div key={i} className="flex flex-col gap-4">
                     {/* The 1:1 Card Visual */}
-                    <div className="group relative aspect-square rounded-2xl border-2 border-slate-800/50 bg-slate-900/40 overflow-hidden transition-all hover:border-yellow-500/50">
+                    <div className="group relative aspect-square rounded-2xl border-2 border-slate-800/50 bg-slate-900/40 overflow-hidden hover:border-yellow-500/50">
                       {/* Stratagem Icon */}
                       <img 
                         src={strat.imagem} 
@@ -496,7 +592,7 @@ function App() {
                         await window.api.invoke('set-recording-mode', true)
                         setCapturingSlot(`support-${i}`)
                       }}
-                      className={`w-full py-3.5 rounded-xl font-black text-xs tracking-widest border-2 transition-all ${capturingSlot === `support-${i}`
+                      className={`w-full py-3.5 rounded-xl font-black text-xs tracking-widest border-2 ${capturingSlot === `support-${i}`
                         ? 'bg-yellow-500/10 border-yellow-500 text-yellow-400 animate-pulse-hd'
                         : 'bg-slate-900 border-slate-800 text-slate-300 hover:border-yellow-500/50 hover:text-white'
                         }`}
@@ -547,10 +643,11 @@ function App() {
         )}
 
       </main>
+      )}
 
       {/* FOOTER: SLOTS BAR (FIXED) */}
-      {activeTab === 'macro' && (
-        <footer className="shrink-0 fixed bottom-6 left-1/2 -translate-x-1/2 w-fit bg-slate-950/60 backdrop-blur-2xl border border-white/5 p-4 rounded-3xl z-[100] shadow-[0_20px_50px_-10px_rgba(0,0,0,0.8)]">
+      {((activeTab === 'macro' && !isOverlay) || (isMinimal && settings.alwaysShowSlots) || (!isMinimal && isOverlay && activeTab === 'macro')) && (
+        <footer className={`shrink-0 fixed transition-none ${isMinimal ? 'bottom-2 scale-[0.70] origin-bottom bg-slate-950/20 backdrop-blur-sm shadow-[0_0_15px_rgba(0,0,0,0.5)]' : 'bottom-6 bg-slate-950/60 backdrop-blur-2xl shadow-[0_20px_50px_-10px_rgba(0,0,0,0.8)]'} left-1/2 -translate-x-1/2 w-fit border border-white/5 p-4 rounded-3xl ${isMinimal ? 'z-[9999]' : 'z-[100]'}`}>
           <div className="flex flex-col items-center gap-3">
             <div className="flex justify-center gap-4">
               {slots.map((slot, index) => (
@@ -571,7 +668,7 @@ function App() {
 
       {/* UPDATE NOTIFICATION MODAL */}
       {updateStatus.status === 'ready' && (
-        <div className="fixed inset-0 z-[2000] flex items-center justify-center p-6 bg-slate-950/80 backdrop-blur-md animate-in fade-in duration-300">
+        <div className="fixed inset-0 z-[2000] flex items-center justify-center p-6 bg-slate-950/80 backdrop-blur-md">
           <div className="w-full max-w-md bg-slate-900 border-2 border-yellow-500/50 rounded-3xl p-8 shadow-[0_0_50px_rgba(0,0,0,0.5)] relative overflow-hidden">
             {/* Background Glow */}
             <div className="absolute -top-24 -right-24 w-48 h-48 bg-yellow-500/10 blur-[60px] rounded-full"></div>
