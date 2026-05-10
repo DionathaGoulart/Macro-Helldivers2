@@ -1009,24 +1009,6 @@
     ]
   },
   {
-    "id": 67,
-    "nome": "EXO-45 Patriot Exosuit",
-    "imagem": "stratagems/EXO-45_Patriot_Exosuit_Stratagem_Icon.webp",
-    "tag": [
-      "Supply",
-      "Mecha"
-    ],
-    "codex": [
-      "LEFT",
-      "DOWN",
-      "RIGHT",
-      "UP",
-      "LEFT",
-      "DOWN",
-      "DOWN"
-    ]
-  },
-  {
     "id": 66,
     "nome": "EXO-49 Emancipator Exosuit",
     "imagem": "stratagems/EXO-49_Emancipator_Exosuit_Stratagem_Icon.webp",
@@ -1045,7 +1027,43 @@
     ]
   },
   {
+    "id": 67,
+    "nome": "EXO-45 Patriot Exosuit",
+    "imagem": "stratagems/EXO-45_Patriot_Exosuit_Stratagem_Icon.webp",
+    "tag": [
+      "Supply",
+      "Mecha"
+    ],
+    "codex": [
+      "LEFT",
+      "DOWN",
+      "RIGHT",
+      "UP",
+      "LEFT",
+      "DOWN",
+      "DOWN"
+    ]
+  },
+  {
     "id": 68,
+    "nome": "EXO-55 Breakthrough Exosuit",
+    "imagem": "stratagems/Breakthrough_Exosuit_Stratagem_Icon.png",
+    "tag": [
+      "Supply",
+      "Mecha"
+    ],
+    "codex": [
+      "LEFT",
+      "DOWN",
+      "RIGHT",
+      "LEFT",
+      "RIGHT",
+      "DOWN",
+      "UP"
+    ]
+  },
+  {
+    "id": 69,
     "nome": "EXO-51 Lumberer Exosuit",
     "imagem": "stratagems/Lumberer_Exosuit_Stratagem_Icon.png",
     "tag": [
@@ -1061,16 +1079,6 @@
       "LEFT",
       "UP"
     ]
-  },
-  {
-    "id": 69,
-    "nome": "EXO-55 Breakthrough Exosuit",
-    "imagem": "stratagems/Breakthrough_Exosuit_Stratagem_Icon.png",
-    "tag": [
-      "Supply",
-      "Mecha"
-    ],
-    "codex": []
   },
   {
     "id": 70,
