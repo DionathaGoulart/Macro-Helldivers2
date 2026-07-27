@@ -19,11 +19,18 @@
       "dist",
       "dist-electron"
     ],
+    "extraResources": [
+      "public/icon.png"
+    ],
     "asarUnpack": [
       "**/@nut-tree-fork/**/*"
     ],
     "directories": {
       "output": "release"
+    },
+    "mac": {
+      "target": "dmg",
+      "icon": "public/icon.png"
     },
     "win": {
       "target": "nsis",

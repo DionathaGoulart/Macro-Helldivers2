@@ -244,7 +244,7 @@ function registerMacros() {
 function createTray() {
   if (tray) return
   const iconPath = app.isPackaged
-    ? path.join(__dirname, '../dist/icon.png')
+    ? path.join(process.resourcesPath, 'icon.png')
     : path.join(__dirname, '../public/icon.png')
   
   try {
