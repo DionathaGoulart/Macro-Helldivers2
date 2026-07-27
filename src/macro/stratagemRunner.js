@@ -1,6 +1,6 @@
 const { keyboard, Key } = require('@nut-tree-fork/nut-js')
 
-keyboard.config.autoDelayMs = 1
+keyboard.config.autoDelayMs = 10
 const delay = (ms) => new Promise(r => setTimeout(r, ms))
 let isRunning = false
 
