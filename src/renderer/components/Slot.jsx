@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef, memo } from 'react'
 import { ArrowUp, ArrowDown, ArrowLeft, ArrowRight } from 'lucide-react'
 
 export const ArrowIcon = ({ direction, className = "", size = 16 }) => {
@@ -13,17 +13,21 @@ export const ArrowIcon = ({ direction, className = "", size = 16 }) => {
   }
 }
 
-export default function Slot({ index, selectedStratagem, isActive, onSelectSlot, shortcut }) {
+function Slot({ index, selectedStratagem, isActive, onSelectSlot, shortcut }) {
   const [activeVisual, setActiveVisual] = useState(false)
+  const timerRef = useRef(null)
 
   useEffect(() => {
-    if (window.api) {
-      window.api.onMacroTriggered((triggeredIndex) => {
-        if (triggeredIndex === index) {
-          setActiveVisual(true)
-          setTimeout(() => setActiveVisual(false), 500)
-        }
-      })
+    const unsubscribe = window.api?.onMacroTriggered?.((triggeredIndex) => {
+      if (triggeredIndex !== index) return
+      setActiveVisual(true)
+      clearTimeout(timerRef.current)
+      timerRef.current = setTimeout(() => setActiveVisual(false), 500)
+    })
+
+    return () => {
+      unsubscribe?.()
+      clearTimeout(timerRef.current)
     }
   }, [index])
 
@@ -70,3 +74,5 @@ export default function Slot({ index, selectedStratagem, isActive, onSelectSlot,
     </button>
   )
 }
+
+export default memo(Slot)

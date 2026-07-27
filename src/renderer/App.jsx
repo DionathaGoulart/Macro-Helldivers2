@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useState, useEffect, useCallback, useMemo, memo } from 'react'
 import Slot, { ArrowIcon } from './components/Slot'
 import stratagemsData from './data/stratagems.json'
 import { translations } from './data/translations'
@@ -20,6 +20,60 @@ const keyMap = {
   'Numpad3': 'Numpad3', 'Numpad4': 'Numpad4', 'Numpad5': 'Numpad5',
   'Numpad6': 'Numpad6', 'Numpad7': 'Numpad7', 'Numpad8': 'Numpad8', 'Numpad9': 'Numpad9',
 }
+
+const TAG_HOVER_CLASSES = {
+  Offensive: 'hover:border-red-500/50 hover:shadow-[0_0_30px_rgba(239,68,68,0.15)]',
+  Defensive: 'hover:border-green-500/50 hover:shadow-[0_0_30px_rgba(34,197,94,0.15)]',
+  Supply: 'hover:border-cyan-500/50 hover:shadow-[0_0_30px_rgba(6,182,212,0.15)]'
+}
+
+const StratagemCard = memo(function StratagemCard({ strat, tag, isInActiveSlot, disabled, clearLabel, onAssign }) {
+  const hoverClasses = TAG_HOVER_CLASSES[tag] || TAG_HOVER_CLASSES.Supply
+
+  return (
+    <button
+      onClick={() => !disabled && onAssign(strat)}
+      title={isInActiveSlot ? clearLabel : strat.nome}
+      className={`group relative aspect-square rounded-2xl border-2 overflow-hidden
+        ${disabled
+          ? 'bg-slate-950/50 border-slate-900 opacity-20 cursor-not-allowed'
+          : isInActiveSlot
+            ? 'bg-slate-900/40 border-yellow-500/60 shadow-[0_0_20px_rgba(234,179,8,0.15)]'
+            : `bg-slate-900/40 border-slate-800/50 ${hoverClasses}`}`}
+    >
+      {/* Stratagem Icon - Full bleed */}
+      <img
+        src={strat.imagem}
+        alt={strat.nome}
+        decoding="async"
+        loading="lazy"
+        className="w-full h-full object-cover opacity-70 group-hover:scale-110 group-hover:opacity-100 transition-all duration-500 transform-gpu will-change-transform"
+        style={{ imageRendering: 'auto' }}
+      />
+
+      {/* HUD Overlay: Name (Top) */}
+      <div className="absolute inset-x-0 top-0 bg-gradient-to-b from-slate-950 via-slate-950/70 to-transparent p-3 pb-8 flex justify-center z-10">
+        <span className="text-[10px] font-black text-slate-100 uppercase tracking-tighter text-center leading-none">
+          {strat.nome}
+        </span>
+      </div>
+
+      {/* HUD Overlay: Codex (Bottom) */}
+      <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-slate-950 via-slate-950/90 to-transparent p-4 pt-12 flex justify-center z-10">
+        <div className={`flex ${strat.codex.length > 6 ? 'gap-1' : 'gap-1.5'}`}>
+          {strat.codex.map((dir, i) => (
+            <ArrowIcon
+              key={i}
+              direction={dir}
+              size={strat.codex.length > 6 ? 13 : 16}
+              className="text-cyan-500 drop-shadow-lg"
+            />
+          ))}
+        </div>
+      </div>
+    </button>
+  )
+})
 
 function App() {
   const [activeTab, setActiveTab] = useState('macro')
@@ -106,6 +160,13 @@ function App() {
     newSlots[index] = null
     updateSlots(newSlots)
   }
+
+  const isCardDisabled = useCallback((strat) => {
+    if (slots[activeSlot]?.id === strat.id) return false
+    if (slots.some(s => s && s.id === strat.id)) return true
+    const isMecha = strat.tag && strat.tag.includes('Mecha')
+    return !!isMecha && slots.some((s, i) => i !== activeSlot && s && s.tag && s.tag.includes('Mecha'))
+  }, [slots, activeSlot])
 
   const handleAssignStratagem = (stratagem) => {
     // Clicar no estratagema já equipado no slot ativo desequipa
@@ -347,66 +408,17 @@ function App() {
                   </h2>
 
                 <div className="grid grid-cols-4 gap-3">
-                  {stratagemsByTag[tag].map((strat) => {
-                    const isInActiveSlot = slots[activeSlot]?.id === strat.id
-                    const isEquipped = slots.some(s => s && s.id === strat.id)
-                    const isMecha = strat.tag && strat.tag.includes('Mecha')
-                    const hasOtherMecha = slots.some((s, i) => i !== activeSlot && s && s.tag && s.tag.includes('Mecha'))
-                    const disabled = !isInActiveSlot && (isEquipped || (isMecha && hasOtherMecha))
-                    
-                    const tagColor = tag === 'Offensive' ? 'red' : tag === 'Defensive' ? 'green' : 'cyan'
-                    const hoverClasses = {
-                      red: 'hover:border-red-500/50 hover:shadow-[0_0_30px_rgba(239,68,68,0.15)]',
-                      green: 'hover:border-green-500/50 hover:shadow-[0_0_30px_rgba(34,197,94,0.15)]',
-                      cyan: 'hover:border-cyan-500/50 hover:shadow-[0_0_30px_rgba(6,182,212,0.15)]'
-                    }[tagColor]
-
-                    return (
-                      <button
-                        key={strat.id}
-                        onClick={() => !disabled && handleAssignStratagem(strat)}
-                        title={isInActiveSlot ? t.macro.clearSlot : strat.nome}
-                        className={`group relative aspect-square rounded-2xl border-2 overflow-hidden
-                          ${disabled
-                            ? 'bg-slate-950/50 border-slate-900 opacity-20 cursor-not-allowed'
-                            : isInActiveSlot
-                              ? 'bg-slate-900/40 border-yellow-500/60 shadow-[0_0_20px_rgba(234,179,8,0.15)]'
-                              : `bg-slate-900/40 border-slate-800/50 ${hoverClasses}`}`}
-                      >
-                        {/* Stratagem Icon - Full bleed */}
-                        <img 
-                          src={strat.imagem} 
-                          alt={strat.nome} 
-                          decoding="async"
-                          loading="lazy"
-                          className="w-full h-full object-cover opacity-70 group-hover:scale-110 group-hover:opacity-100 transition-all duration-500 transform-gpu will-change-transform" 
-                          style={{ imageRendering: 'auto' }}
-                        />
-
-                        {/* HUD Overlay: Name (Top) */}
-                        <div className="absolute inset-x-0 top-0 bg-gradient-to-b from-slate-950 via-slate-950/70 to-transparent p-3 pb-8 flex justify-center z-10">
-                          <span className="text-[10px] font-black text-slate-100 uppercase tracking-tighter text-center leading-none">
-                            {strat.nome}
-                          </span>
-                        </div>
-
-                        {/* HUD Overlay: Codex (Bottom) */}
-                        <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-slate-950 via-slate-950/90 to-transparent p-4 pt-12 flex justify-center z-10">
-                          <div className={`flex ${strat.codex.length > 6 ? 'gap-1' : 'gap-1.5'}`}>
-                            {strat.codex.map((dir, i) => (
-                              <ArrowIcon 
-                                key={i} 
-                                direction={dir} 
-                                size={strat.codex.length > 6 ? 13 : 16} 
-                                className="text-cyan-500 drop-shadow-lg" 
-                              />
-                            ))}
-                          </div>
-                        </div>
-
-                      </button>
-                    )
-                  })}
+                  {stratagemsByTag[tag].map((strat) => (
+                    <StratagemCard
+                      key={strat.id}
+                      strat={strat}
+                      tag={tag}
+                      isInActiveSlot={slots[activeSlot]?.id === strat.id}
+                      disabled={isCardDisabled(strat)}
+                      clearLabel={t.macro.clearSlot}
+                      onAssign={handleAssignStratagem}
+                    />
+                  ))}
                 </div>
               </section>
             )})}
