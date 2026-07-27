@@ -68,27 +68,14 @@ function App() {
   }, [])
 
   useEffect(() => {
-    if (window.api && window.api.onUpdateStatus) {
-      window.api.onUpdateStatus((info) => {
-        setUpdateStatus(info)
-      })
-    }
-    if (window.api && window.api.onGameFocusChanged) {
-      window.api.onGameFocusChanged((focused) => {
-        console.log('Game focus:', focused)
-      })
-    }
-    if (window.api && window.api.onToggleMinimalMode) {
-      window.api.onToggleMinimalMode((minimal) => {
-        setIsMinimal(minimal)
-      })
-    }
-    if (window.api && window.api.onSyncSlots) {
-      window.api.onSyncSlots((newSlots) => setSlots(newSlots))
-    }
-    if (window.api && window.api.onSyncSettings) {
-      window.api.onSyncSettings((newSettings) => setSettings(prev => ({ ...prev, ...newSettings })))
-    }
+    const disposers = [
+      window.api?.onUpdateStatus?.((info) => setUpdateStatus(info)),
+      window.api?.onGameFocusChanged?.((focused) => console.log('Game focus:', focused)),
+      window.api?.onToggleMinimalMode?.((minimal) => setIsMinimal(minimal)),
+      window.api?.onSyncSlots?.((newSlots) => setSlots(newSlots)),
+      window.api?.onSyncSettings?.((newSettings) => setSettings(prev => ({ ...prev, ...newSettings })))
+    ]
+    return () => disposers.forEach(dispose => dispose?.())
   }, [])
 
   const handleAssignStratagem = (stratagem) => {
@@ -154,7 +141,7 @@ function App() {
       handleSupportShortcutChange(index, mapped)
     }
     setCapturingSlot(null)
-    window.api.invoke('set-recording-mode', false)
+    window.api?.setRecordingMode?.(false)
   }, [capturingSlot, settings])
 
   useEffect(() => {
@@ -163,7 +150,7 @@ function App() {
         if (e.key === 'Escape') {
           e.preventDefault()
           setCapturingSlot(null)
-          window.api.invoke('set-recording-mode', false)
+          window.api?.setRecordingMode?.(false)
           return
         }
         handleKeyCapture(e)
@@ -405,7 +392,7 @@ function App() {
                       <div className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">{t.settings.shortcutLabel} {i + 1}</div>
                       <button
                         onClick={async () => {
-                          await window.api.invoke('set-recording-mode', true)
+                          await window.api?.setRecordingMode?.(true)
                           setCapturingSlot(i)
                         }}
                         className={`w-full py-3.5 rounded-xl font-black text-xs tracking-widest border-2 ${capturingSlot === i
@@ -469,7 +456,7 @@ function App() {
                     onClick={() => {
                       const newValue = settings.enableOverlay === false ? true : false;
                       handleSettingChange('enableOverlay', newValue);
-                      window.api?.invoke?.('set-recording-mode', false); // Trigger re-register
+                      window.api?.setRecordingMode?.(false); // Trigger re-register
                     }}
                     className={`w-full p-4 rounded-xl border-2 flex items-center justify-between group ${settings.enableOverlay !== false 
                       ? 'bg-yellow-500/5 border-yellow-500/50' 
@@ -584,7 +571,7 @@ function App() {
                     {/* Shortcut Button */}
                     <button
                       onClick={async () => {
-                        await window.api.invoke('set-recording-mode', true)
+                        await window.api?.setRecordingMode?.(true)
                         setCapturingSlot(`support-${i}`)
                       }}
                       className={`w-full py-3.5 rounded-xl font-black text-xs tracking-widest border-2 ${capturingSlot === `support-${i}`
@@ -613,7 +600,7 @@ function App() {
               <div className="flex items-center gap-2.5">
                 {updateStatus.status === 'ready' ? (
                   <button 
-                    onClick={() => window.api.invoke('install-update')}
+                    onClick={() => window.api?.installUpdate?.()}
                     className="flex items-center gap-2 px-3 py-1 bg-yellow-500 rounded-lg text-[9px] font-black uppercase text-slate-950 animate-pulse-hd shadow-[0_0_15px_rgba(234,179,8,0.4)]"
                   >
                     <div className="w-1.5 h-1.5 rounded-full bg-slate-950"></div>
@@ -691,7 +678,7 @@ function App() {
 
               <div className="flex gap-3 pt-2">
                 <button
-                  onClick={() => window.api.invoke('install-update')}
+                  onClick={() => window.api?.installUpdate?.()}
                   className="flex-1 px-6 py-4 bg-yellow-500 hover:bg-yellow-400 text-slate-950 rounded-2xl font-black uppercase tracking-widest text-xs transition-all shadow-[0_10px_20px_rgba(234,179,8,0.2)] hover:scale-[1.02] active:scale-95"
                 >
                   {settings.language === 'pt' ? 'Reiniciar Agora' : 'Restart Now'}
