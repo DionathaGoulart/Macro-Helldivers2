@@ -94,6 +94,7 @@ const DEFAULT_SETTINGS = {
   shortcuts: ['F1', 'F2', 'F3', 'F4'],
   supportShortcuts: [null, null, null],
   modifierKey: 'LeftControl',
+  sprintModifier: 'Shift',
   useArrows: false,
   enableOverlay: true,
   alwaysShowSlots: false
@@ -210,13 +211,21 @@ function registerMacros() {
   if (isRecordingState || !isGameFocused) return
   globalShortcut.unregisterAll()
   registerOverlayShortcut()
-  
+
+  // Atalho extra para quem segura a tecla de corrida enquanto chama o estratagema
+  const sprintModifier = currentSettings.sprintModifier ?? 'Shift'
+  const sprintPrefix = sprintModifier === 'None' ? null : `${sprintModifier}+`
+
+  const registerWithSprint = (key, run) => {
+    globalShortcut.register(key, run)
+    if (sprintPrefix) globalShortcut.register(`${sprintPrefix}${key}`, run)
+  }
+
   // Slots normais
   currentSettings.shortcuts.forEach((key, index) => {
     if (!key) return
     try {
-      globalShortcut.register(key, () => handleMacroTrigger(currentSlots[index]?.codex, index, false))
-      globalShortcut.register(`Shift+${key}`, () => handleMacroTrigger(currentSlots[index]?.codex, index, false))
+      registerWithSprint(key, () => handleMacroTrigger(currentSlots[index]?.codex, index, false))
     } catch (e) {}
   })
 
@@ -225,8 +234,7 @@ function registerMacros() {
     currentSettings.supportShortcuts.forEach((key, index) => {
       if (!key) return
       try {
-        globalShortcut.register(key, () => handleMacroTrigger(SUPPORT_CODEXES[index], index, true))
-        globalShortcut.register(`Shift+${key}`, () => handleMacroTrigger(SUPPORT_CODEXES[index], index, true))
+        registerWithSprint(key, () => handleMacroTrigger(SUPPORT_CODEXES[index], index, true))
       } catch (e) {}
     })
   }

@@ -5,6 +5,8 @@ import { translations } from './data/translations'
 import pkg from '../../package.json'
 import { SUPPORT_STRATS } from '../shared/constants.js'
 
+const SPRINT_MODIFIERS = ['Shift', 'Alt', 'Ctrl', 'None']
+
 // Mapa de teclas do browser para o formato do Electron/nut.js
 const keyMap = {
   'F1': 'F1', 'F2': 'F2', 'F3': 'F3', 'F4': 'F4',
@@ -29,6 +31,7 @@ function App() {
     shortcuts: ['F1', 'F2', 'F3', 'F4'],
     supportShortcuts: [null, null, null],
     modifierKey: 'LeftControl',
+    sprintModifier: 'Shift',
     useArrows: false,
     language: 'pt',
     enableOverlay: true,
@@ -432,7 +435,26 @@ function App() {
                     </div>
                   </div>
 
-                  <button 
+                  <div className="space-y-3">
+                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{t.settings.sprint}</label>
+                    <p className="text-[9px] text-slate-600 leading-tight">{t.settings.sprintDesc}</p>
+                    <div className="grid grid-cols-4 gap-2">
+                      {SPRINT_MODIFIERS.map((mod) => (
+                        <button
+                          key={mod}
+                          onClick={() => handleSettingChange('sprintModifier', mod)}
+                          className={`py-3 rounded-xl text-[10px] font-black uppercase border-2 ${settings.sprintModifier === mod
+                            ? 'bg-yellow-500 border-yellow-600 text-slate-950 shadow-[0_0_15px_rgba(234,179,8,0.3)]'
+                            : 'bg-slate-900 border-slate-800 text-slate-400 hover:border-yellow-500/50 hover:text-white hover:bg-yellow-500/5'
+                            }`}
+                        >
+                          {mod === 'None' ? t.settings.sprintNone : mod}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <button
                     onClick={() => handleSettingChange('useArrows', !settings.useArrows)}
                     className={`w-full p-4 rounded-xl border-2 flex items-center justify-between group ${settings.useArrows 
                       ? 'bg-yellow-500/5 border-yellow-500/50' 
