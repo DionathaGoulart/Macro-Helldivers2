@@ -2,6 +2,7 @@ const { app, BrowserWindow, globalShortcut, ipcMain, Tray, Menu, screen } = requ
 const path = require('path')
 const fs = require('fs')
 const { autoUpdater } = require('electron-updater')
+import { SUPPORT_CODEXES } from '../shared/constants.js'
 
 // Configurações Globais
 let win
@@ -87,12 +88,6 @@ function loadMacroEngine() {
     return null
   }
 }
-
-const SUPPORT_CODEXES = [
-  ['Up', 'Down', 'Right', 'Left', 'Up'],     // Reinforce
-  ['Down', 'Down', 'Up', 'Right'],           // Resupply
-  ['Up', 'Up', 'Left', 'Up', 'Right']        // Eagle Rearm
-]
 
 const DEFAULT_SETTINGS = {
   shortcuts: ['F1', 'F2', 'F3', 'F4'],

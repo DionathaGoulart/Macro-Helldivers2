@@ -3,6 +3,7 @@ import Slot, { ArrowIcon } from './components/Slot'
 import stratagemsData from './data/stratagems.json'
 import { translations } from './data/translations'
 import pkg from '../../package.json'
+import { SUPPORT_STRATS } from '../shared/constants.js'
 
 // Mapa de teclas do browser para o formato do Electron/nut.js
 const keyMap = {
@@ -17,13 +18,6 @@ const keyMap = {
   'Numpad3': 'Numpad3', 'Numpad4': 'Numpad4', 'Numpad5': 'Numpad5',
   'Numpad6': 'Numpad6', 'Numpad7': 'Numpad7', 'Numpad8': 'Numpad8', 'Numpad9': 'Numpad9',
 }
-
-// Estratagemas de Apoio Fixo que não mudam
-const fixedSupportStrats = [
-  { nome: 'Reinforce', imagem: 'Reinforce_Stratagem_Icon.png', codex: ['UP', 'DOWN', 'RIGHT', 'LEFT', 'UP'] },
-  { nome: 'Resupply', imagem: 'Resupply_Stratagem_Icon.png', codex: ['DOWN', 'DOWN', 'UP', 'RIGHT'] },
-  { nome: 'Eagle Rearm', imagem: 'Eagle_Rearm_Stratagem_Icon.png', codex: ['UP', 'UP', 'LEFT', 'UP', 'RIGHT'] }
-]
 
 function App() {
   const [activeTab, setActiveTab] = useState('macro')
@@ -551,7 +545,7 @@ function App() {
                 {t.settings.support}
               </h2>
               <div className="grid grid-cols-3 gap-5">
-                {fixedSupportStrats.map((strat, i) => (
+                {SUPPORT_STRATS.map((strat, i) => (
                   <div key={i} className="flex flex-col gap-4">
                     {/* The 1:1 Card Visual */}
                     <div className="group relative aspect-square rounded-2xl border-2 border-slate-800/50 bg-slate-900/40 overflow-hidden hover:border-yellow-500/50">
