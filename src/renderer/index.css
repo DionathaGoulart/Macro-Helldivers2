@@ -34,16 +34,15 @@
     opacity: 0.2;
   }
 
+  /* Granulado gerado localmente: o app roda offline e a textura remota nunca carregava */
   body::after {
     content: "";
     position: fixed;
-    top: -150%; left: -150%;
-    width: 300%; height: 300%;
-    background-image: url('https://grainy-gradients.vercel.app/noise.svg');
-    opacity: 0.03;
+    inset: 0;
+    background: repeating-conic-gradient(#80808080 0.0001%, transparent 0.0002%, transparent 0.5%) 50% 50% / 200px 200px;
+    opacity: 0.015;
     pointer-events: none;
     z-index: 9998;
-    animation: noise 8s steps(10) infinite;
   }
 }
 
@@ -115,21 +114,6 @@
   .scrollbar-hd::-webkit-scrollbar-thumb {
     @apply bg-slate-800/80 rounded-full border-2 border-slate-950 hover:bg-[var(--color-hd-primary)]/50 transition-colors;
   }
-}
-
-@keyframes noise {
-  will-change: transform;
-  0% { transform: translate(0,0) }
-  10% { transform: translate(-5%,-5%) }
-  20% { transform: translate(-10%,5%) }
-  30% { transform: translate(5%,-10%) }
-  40% { transform: translate(-5%,15%) }
-  50% { transform: translate(-10%,5%) }
-  60% { transform: translate(15%,0) }
-  70% { transform: translate(0,10%) }
-  80% { transform: translate(-15%,0) }
-  90% { transform: translate(10%,5%) }
-  100% { transform: translate(5%,0) }
 }
 
 /* Custom Intro Animations */
