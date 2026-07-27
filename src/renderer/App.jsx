@@ -38,6 +38,9 @@ function App() {
     alwaysShowSlots: false
   })
   const [updateStatus, setUpdateStatus] = useState({ status: 'idle', percent: 0 })
+  const [gameFocused, setGameFocused] = useState(false)
+  const [supportActiveVisual, setSupportActiveVisual] = useState(null)
+  const [macroBlockedSlot, setMacroBlockedSlot] = useState(null)
   const [isBooting, setIsBooting] = useState(window.location.hash !== '#overlay')
   const [isMinimal, setIsMinimal] = useState(window.location.hash === '#overlay')
   const isOverlay = window.location.hash === '#overlay'
@@ -71,14 +74,25 @@ function App() {
   }, [])
 
   useEffect(() => {
+    const timers = []
+    const flash = (setter, value, ms) => {
+      setter(value)
+      timers.push(setTimeout(() => setter(null), ms))
+    }
     const disposers = [
       window.api?.onUpdateStatus?.((info) => setUpdateStatus(info)),
-      window.api?.onGameFocusChanged?.((focused) => console.log('Game focus:', focused)),
+      window.api?.onGameFocusChanged?.((focused) => setGameFocused(focused)),
       window.api?.onToggleMinimalMode?.((minimal) => setIsMinimal(minimal)),
       window.api?.onSyncSlots?.((newSlots) => setSlots(newSlots)),
-      window.api?.onSyncSettings?.((newSettings) => setSettings(prev => ({ ...prev, ...newSettings })))
+      window.api?.onSyncSettings?.((newSettings) => setSettings(prev => ({ ...prev, ...newSettings }))),
+      window.api?.onSupportMacroTriggered?.((index) => flash(setSupportActiveVisual, index, 500)),
+      window.api?.onMacroBlocked?.((blocked) => flash(setMacroBlockedSlot, blocked, 400))
     ]
-    return () => disposers.forEach(dispose => dispose?.())
+
+    return () => {
+      disposers.forEach(dispose => dispose?.())
+      timers.forEach(clearTimeout)
+    }
   }, [])
 
   const handleAssignStratagem = (stratagem) => {
@@ -557,7 +571,13 @@ function App() {
                 {SUPPORT_STRATS.map((strat, i) => (
                   <div key={i} className="flex flex-col gap-4">
                     {/* The 1:1 Card Visual */}
-                    <div className="group relative aspect-square rounded-2xl border-2 border-slate-800/50 bg-slate-900/40 overflow-hidden hover:border-yellow-500/50">
+                    <div className={`group relative aspect-square rounded-2xl border-2 bg-slate-900/40 overflow-hidden ${
+                      supportActiveVisual === i
+                        ? 'border-yellow-400 shadow-[0_0_20px_rgba(251,191,36,0.3)]'
+                        : macroBlockedSlot?.isSupport && macroBlockedSlot.slot === i
+                          ? 'border-red-500/70 shadow-[0_0_20px_rgba(239,68,68,0.25)]'
+                          : 'border-slate-800/50 hover:border-yellow-500/50'
+                    }`}>
                       {/* Stratagem Icon */}
                       <img 
                         src={strat.imagem} 
@@ -618,7 +638,16 @@ function App() {
             <div className="w-full h-[1px] bg-gradient-to-r from-transparent via-slate-800 to-transparent opacity-50"></div>
             
             <div className="py-6 px-6 flex items-center justify-between">
-              <span className="text-[9px] font-black tracking-[0.4em] uppercase text-slate-600">{t.settings.version} v{pkg.version}</span>
+              <div className="flex items-center gap-3">
+                <span className="text-[9px] font-black tracking-[0.4em] uppercase text-slate-600">{t.settings.version} v{pkg.version}</span>
+                <div className="w-[1px] h-3 bg-slate-800"></div>
+                <div className="flex items-center gap-1.5">
+                  <div className={`w-1.5 h-1.5 rounded-full ${gameFocused ? 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.8)]' : 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.8)]'}`}></div>
+                  <span className="text-[9px] font-black uppercase text-slate-500 tracking-[0.2em]">
+                    {gameFocused ? t.settings.gameActive : t.settings.gameInactive}
+                  </span>
+                </div>
+              </div>
               <div className="flex items-center gap-2.5">
                 {updateStatus.status === 'ready' ? (
                   <button 
@@ -655,7 +684,10 @@ function App() {
           <div className="flex flex-col items-center gap-3">
             <div className="flex justify-center gap-4">
               {slots.map((slot, index) => (
-                <div key={index} className="flex-shrink-0">
+                <div key={index} className="flex-shrink-0 relative">
+                  {macroBlockedSlot && !macroBlockedSlot.isSupport && macroBlockedSlot.slot === index && (
+                    <div className="absolute -inset-1 rounded-2xl bg-red-500/30 animate-pulse z-40 pointer-events-none" />
+                  )}
                   <Slot
                     index={index}
                     selectedStratagem={slot}
