@@ -261,10 +261,49 @@ function createTray() {
   }
 }
 
+function getWindowBoundsPath() {
+  return path.join(app.getPath('userData'), 'Helldivers Macro', 'window-bounds.json')
+}
+
+let saveBoundsTimer = null
+
+function saveWindowBounds() {
+  if (!win || win.isDestroyed()) return
+  clearTimeout(saveBoundsTimer)
+  saveBoundsTimer = setTimeout(() => {
+    try {
+      fs.writeFileSync(getWindowBoundsPath(), JSON.stringify(win.getBounds()))
+    } catch (e) {
+      console.error('Erro ao salvar posição da janela:', e)
+    }
+  }, 500)
+}
+
+// Descarta posições fora dos monitores atuais para a janela não abrir invisível
+function loadWindowBounds() {
+  try {
+    const p = getWindowBoundsPath()
+    if (!fs.existsSync(p)) return null
+    const bounds = JSON.parse(fs.readFileSync(p, 'utf8'))
+    const isVisible = screen.getAllDisplays().some(display => {
+      const { x, y, width, height } = display.workArea
+      return bounds.x >= x && bounds.x + bounds.width <= x + width &&
+             bounds.y >= y && bounds.y + bounds.height <= y + height
+    })
+    return isVisible ? bounds : null
+  } catch (e) {
+    return null
+  }
+}
+
 function createWindow() {
+  const savedBounds = loadWindowBounds()
+
   win = new BrowserWindow({
-    width: 820,
-    height: 640,
+    width: savedBounds?.width || 820,
+    height: savedBounds?.height || 640,
+    x: savedBounds?.x,
+    y: savedBounds?.y,
     title: "Macro Helldivers 2",
     icon: path.join(__dirname, '../public/icon.png'),
     webPreferences: {
@@ -282,9 +321,13 @@ function createWindow() {
     autoUpdater.checkForUpdatesAndNotify().catch(() => {})
   })
 
+  win.on('resize', saveWindowBounds)
+  win.on('move', saveWindowBounds)
+
   win.on('close', (event) => {
     if (!isQuitting) {
       event.preventDefault()
+      saveWindowBounds()
       win.hide()
       return false
     }
