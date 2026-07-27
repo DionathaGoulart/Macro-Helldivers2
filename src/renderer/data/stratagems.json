@@ -1081,6 +1081,40 @@
     ]
   },
   {
+    "id": 88,
+    "nome": "M-103 Supply FRV",
+    "imagem": "stratagems/Supply_FRV_Stratagem_Icon.webp",
+    "tag": [
+      "Supply"
+    ],
+    "codex": [
+      "LEFT",
+      "DOWN",
+      "LEFT",
+      "LEFT",
+      "DOWN",
+      "UP",
+      "RIGHT"
+    ]
+  },
+  {
+    "id": 89,
+    "nome": "M-104 Incinerator FRV",
+    "imagem": "stratagems/Incinerator_FRV_Stratagem_Icon.webp",
+    "tag": [
+      "Supply"
+    ],
+    "codex": [
+      "LEFT",
+      "DOWN",
+      "RIGHT",
+      "LEFT",
+      "DOWN",
+      "UP",
+      "UP"
+    ]
+  },
+  {
     "id": 70,
     "nome": "A/G-16 Gatling Sentry",
     "imagem": "stratagems/Gatling_Sentry_Stratagem_Icon.webp",
