@@ -8,7 +8,8 @@ export const translations = {
       selectTitle: 'Selecionar Estratagemas para o Slot',
       others: 'Outros',
       listening: 'ESCUTANDO...',
-      bind: 'VINCULAR'
+      bind: 'VINCULAR',
+      clearSlot: 'Remover do slot'
     },
     settings: {
       keybinding: 'Atalhos de Combate',
@@ -57,7 +58,8 @@ export const translations = {
       selectTitle: 'Select Stratagems for Slot',
       others: 'Others',
       listening: 'LISTENING...',
-      bind: 'BIND'
+      bind: 'BIND',
+      clearSlot: 'Clear slot'
     },
     settings: {
       keybinding: 'Combat Shortcuts',

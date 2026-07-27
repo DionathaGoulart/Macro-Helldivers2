@@ -95,7 +95,26 @@ function App() {
     }
   }, [])
 
+  const updateSlots = useCallback((newSlots) => {
+    setSlots(newSlots)
+    localStorage.setItem('helldivers-macro-slots', JSON.stringify(newSlots))
+    if (window.api) window.api.updateSlots(newSlots)
+  }, [])
+
+  const handleClearSlot = (index) => {
+    const newSlots = [...slots]
+    newSlots[index] = null
+    updateSlots(newSlots)
+  }
+
   const handleAssignStratagem = (stratagem) => {
+    // Clicar no estratagema já equipado no slot ativo desequipa
+    const current = slots[activeSlot]
+    if (current && current.id === stratagem.id) {
+      handleClearSlot(activeSlot)
+      return
+    }
+
     const isEquipped = slots.some(s => s && s.id === stratagem.id)
     if (isEquipped) return
 
@@ -107,9 +126,7 @@ function App() {
 
     const newSlots = [...slots]
     newSlots[activeSlot] = stratagem
-    setSlots(newSlots)
-    localStorage.setItem('helldivers-macro-slots', JSON.stringify(newSlots))
-    if (window.api) window.api.updateSlots(newSlots)
+    updateSlots(newSlots)
     if (activeSlot < 3) setActiveSlot(activeSlot + 1)
   }
 
@@ -331,10 +348,11 @@ function App() {
 
                 <div className="grid grid-cols-4 gap-3">
                   {stratagemsByTag[tag].map((strat) => {
+                    const isInActiveSlot = slots[activeSlot]?.id === strat.id
                     const isEquipped = slots.some(s => s && s.id === strat.id)
                     const isMecha = strat.tag && strat.tag.includes('Mecha')
                     const hasOtherMecha = slots.some((s, i) => i !== activeSlot && s && s.tag && s.tag.includes('Mecha'))
-                    const disabled = isEquipped || (isMecha && hasOtherMecha)
+                    const disabled = !isInActiveSlot && (isEquipped || (isMecha && hasOtherMecha))
                     
                     const tagColor = tag === 'Offensive' ? 'red' : tag === 'Defensive' ? 'green' : 'cyan'
                     const hoverClasses = {
@@ -347,10 +365,13 @@ function App() {
                       <button
                         key={strat.id}
                         onClick={() => !disabled && handleAssignStratagem(strat)}
+                        title={isInActiveSlot ? t.macro.clearSlot : strat.nome}
                         className={`group relative aspect-square rounded-2xl border-2 overflow-hidden
                           ${disabled
                             ? 'bg-slate-950/50 border-slate-900 opacity-20 cursor-not-allowed'
-                            : `bg-slate-900/40 border-slate-800/50 ${hoverClasses}`}`}
+                            : isInActiveSlot
+                              ? 'bg-slate-900/40 border-yellow-500/60 shadow-[0_0_20px_rgba(234,179,8,0.15)]'
+                              : `bg-slate-900/40 border-slate-800/50 ${hoverClasses}`}`}
                       >
                         {/* Stratagem Icon - Full bleed */}
                         <img 
@@ -684,7 +705,7 @@ function App() {
           <div className="flex flex-col items-center gap-3">
             <div className="flex justify-center gap-4">
               {slots.map((slot, index) => (
-                <div key={index} className="flex-shrink-0 relative">
+                <div key={index} className="flex-shrink-0 relative group">
                   {macroBlockedSlot && !macroBlockedSlot.isSupport && macroBlockedSlot.slot === index && (
                     <div className="absolute -inset-1 rounded-2xl bg-red-500/30 animate-pulse z-40 pointer-events-none" />
                   )}
@@ -695,6 +716,15 @@ function App() {
                     onSelectSlot={setActiveSlot}
                     shortcut={settings.shortcuts[index]}
                   />
+                  {slot && !isMinimal && (
+                    <button
+                      onClick={() => handleClearSlot(index)}
+                      title={t.macro.clearSlot}
+                      className="absolute -top-2 -right-2 w-5 h-5 bg-red-500/80 hover:bg-red-500 rounded-full flex items-center justify-center text-white text-xs font-black opacity-0 group-hover:opacity-100 transition-opacity z-50 shadow-lg cursor-pointer"
+                    >
+                      ×
+                    </button>
+                  )}
                 </div>
               ))}
             </div>
