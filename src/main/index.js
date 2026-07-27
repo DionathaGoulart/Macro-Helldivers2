@@ -12,6 +12,7 @@ let isRecordingState = false
 let currentSlots = [null, null, null, null]
 let isGameFocused = false
 let isMinimalMode = false
+let isMacroRunning = false
 let nut = null // Carregamento tardio (Lazy)
 
 let overlayWin = null
@@ -176,38 +177,33 @@ setInterval(async () => {
   }
 }, 500)
 
-async function handleShortcutTrigger(index) {
-  if (isRecordingState || !isGameFocused) return
-  const engine = loadMacroEngine()
-  if (!engine) return
-
-  const stratagem = currentSlots[index]
-  if (stratagem && stratagem.codex) {
-    if (win && !win.isDestroyed()) win.webContents.send('macro-triggered', index)
-    if (overlayWin && !overlayWin.isDestroyed()) overlayWin.webContents.send('macro-triggered', index)
-    try {
-      await engine.runStratagem(stratagem.codex, currentSettings.modifierKey, currentSettings.useArrows)
-    } catch (e) {
-      console.error('Erro ao executar macro:', e)
-    }
-  }
+function broadcast(channel, payload) {
+  if (win && !win.isDestroyed()) win.webContents.send(channel, payload)
+  if (overlayWin && !overlayWin.isDestroyed()) overlayWin.webContents.send(channel, payload)
 }
 
-async function handleSupportTrigger(index) {
-  if (isRecordingState || !isGameFocused) return
+async function handleMacroTrigger(codex, index, isSupport) {
+  if (isRecordingState || !isGameFocused || !codex) return
+
+  // O runner ignora chamadas concorrentes, então avisamos a UI em vez de falhar em silêncio
+  if (isMacroRunning) {
+    broadcast('macro-blocked', { slot: index, isSupport })
+    return
+  }
+
   const engine = loadMacroEngine()
   if (!engine) return
 
-  const codex = SUPPORT_CODEXES[index]
-  if (codex) {
-    if (win && !win.isDestroyed()) win.webContents.send('support-macro-triggered', index)
-    if (overlayWin && !overlayWin.isDestroyed()) overlayWin.webContents.send('support-macro-triggered', index)
-    try {
-      await engine.runStratagem(codex, currentSettings.modifierKey, currentSettings.useArrows)
-    } catch (e) {
-      console.error('Erro ao executar macro de suporte:', e)
-    }
+  isMacroRunning = true
+  broadcast(isSupport ? 'support-macro-triggered' : 'macro-triggered', index)
+  broadcast('macro-status-changed', { slot: index, isSupport, running: true })
+  try {
+    await engine.runStratagem(codex, currentSettings.modifierKey, currentSettings.useArrows)
+  } catch (e) {
+    console.error('Erro ao executar macro:', e)
   }
+  isMacroRunning = false
+  broadcast('macro-status-changed', { slot: index, isSupport, running: false })
 }
 
 function registerMacros() {
@@ -219,8 +215,8 @@ function registerMacros() {
   currentSettings.shortcuts.forEach((key, index) => {
     if (!key) return
     try {
-      globalShortcut.register(key, () => handleShortcutTrigger(index))
-      globalShortcut.register(`Shift+${key}`, () => handleShortcutTrigger(index))
+      globalShortcut.register(key, () => handleMacroTrigger(currentSlots[index]?.codex, index, false))
+      globalShortcut.register(`Shift+${key}`, () => handleMacroTrigger(currentSlots[index]?.codex, index, false))
     } catch (e) {}
   })
 
@@ -229,8 +225,8 @@ function registerMacros() {
     currentSettings.supportShortcuts.forEach((key, index) => {
       if (!key) return
       try {
-        globalShortcut.register(key, () => handleSupportTrigger(index))
-        globalShortcut.register(`Shift+${key}`, () => handleSupportTrigger(index))
+        globalShortcut.register(key, () => handleMacroTrigger(SUPPORT_CODEXES[index], index, true))
+        globalShortcut.register(`Shift+${key}`, () => handleMacroTrigger(SUPPORT_CODEXES[index], index, true))
       } catch (e) {}
     })
   }
