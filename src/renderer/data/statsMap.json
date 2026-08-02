@@ -1,0 +1,496 @@
+{
+  "strategem": {
+    "sup_belt_fed_gl": 48,
+    "backpack_shield_directional": 57,
+    "sup_airburst_launcher": 43,
+    "sup_recoilless_rifle": 49,
+    "sup_grenade_launcher": 29,
+    "sup_breaching_hammer": 20,
+    "sup_defoliation_tool": 19,
+    "sup_quasar_cannon": 34,
+    "sup_bullet_storm": 40,
+    "sup_laser_cannon": 33,
+    "sup_arc_thrower": 35,
+    "sup_solo_silo": 39,
+    "sup_eat_700": 38,
+    "sup_c4_pack": 50,
+    "orbital_railcannon": 7,
+    "backpack_ballistic": 58,
+    "grenade_encampment": 82,
+    "sentry_autocannon": 75,
+    "backpack_hellbomb": 52,
+    "orbital_precision": 0,
+    "exo_breakthrough": 68,
+    "sup_flamethrower": 32,
+    "mines_incendiary": 87,
+    "orbital_airburst": 2,
+    "backpack_supply": 51,
+    "exo_emancipator": 66,
+    "eagle_airstrike": 15,
+    "barrage_gatling": 1,
+    "backpack_shield": 56,
+    "sup_deescalator": 30,
+    "barrage_walking": 5,
+    "barrage_napalm": 3,
+    "sentry_gatling": 70,
+    "sup_autocannon": 42,
+    "encampment_hmg": 82,
+    "mines_infantry": 86,
+    "sup_sterilizer": 31,
+    "orbital_laser": 8,
+    "sentry_rocket": 74,
+    "backpack_jump": 55,
+    "backpack_warp": 53,
+    "eagle_cluster": 16,
+    "sentry_mortar": 78,
+    "encampment_at": 80,
+    "orbital_smoke": 11,
+    "exo_lumberer": 69,
+    "eagle_napalm": 17,
+    "sup_cremator": 45,
+    "sup_stalwart": 23,
+    "eagle_strafe": 13,
+    "sentry_flame": 72,
+    "sup_leveller": 37,
+    "sup_speargun": 26,
+    "sentry_laser": 73,
+    "guard_breath": 63,
+    "sup_commando": 36,
+    "shield_relay": 79,
+    "eagle_500kg": 12,
+    "guard_rover": 62,
+    "orbital_gas": 10,
+    "exo_patriot": 67,
+    "barrage_120": 4,
+    "barrage_380": 6,
+    "eagle_110mm": 14,
+    "sup_maxigun": 47,
+    "sup_railgun": 25,
+    "orbital_ems": 9,
+    "eagle_smoke": 18,
+    "sentry_arc": 83,
+    "sentry_gas": 77,
+    "hover_pack": 54,
+    "sentry_ems": 76,
+    "sentry_mg": 71,
+    "mines_gas": 85,
+    "guard_dog": 61,
+    "guard_hot": 60,
+    "sup_spear": 44,
+    "guard_arc": 59,
+    "sup_epoch": 28,
+    "sup_wasp": 46,
+    "mines_at": 84,
+    "sup_eat": 41,
+    "sup_hmg": 24,
+    "sup_amr": 27,
+    "sup_mg": 22,
+    "bastion": 64,
+    "flag": 21,
+    "frv": 88
+  },
+  "weapons": {
+    "grenade_inc_impact": {
+      "cat": "grenade",
+      "id": "grenade-g-13-incendiary-impact"
+    },
+    "spray_n_pray": {
+      "cat": "primary",
+      "id": "primary-sg-225sp-breaker-spray-pray"
+    },
+    "grenade_smokescreen": {
+      "cat": "grenade",
+      "id": "grenade-g-89-smokescreen"
+    },
+    "entrenchment_tool": {
+      "cat": "secondary",
+      "id": "secondary-entrenchment-tool"
+    },
+    "grenade_termite": {
+      "cat": "grenade",
+      "id": "grenade-g-123-thermite"
+    },
+    "grenade_pistol": {
+      "cat": "secondary",
+      "id": "secondary-gp-31-grenade-pistol"
+    },
+    "missile_pistol": {
+      "cat": "secondary",
+      "id": "secondary-p-33-missile-pistol"
+    },
+    "grenade_impact": {
+      "cat": "grenade",
+      "id": "grenade-g-16-impact"
+    },
+    "double_freedom": {
+      "cat": "primary",
+      "id": "primary-dbs-2-double-freedom"
+    },
+    "liberator_conc": {
+      "cat": "primary",
+      "id": "primary-ar-23c-liberator-concussive"
+    },
+    "grenade_shield": {
+      "cat": "grenade",
+      "id": "grenade-g-sh-39-shield"
+    },
+    "throwing_knife": {
+      "cat": "grenade",
+      "id": "grenade-k-2-throwing-knife"
+    },
+    "liberator_pen": {
+      "cat": "primary",
+      "id": "primary-ar-23p-liberator-penetrator"
+    },
+    "liberator_car": {
+      "cat": "primary",
+      "id": "primary-ar-23a-liberator-carbine"
+    },
+    "punisher_plas": {
+      "cat": "primary",
+      "id": "primary-sg-8p-punisher-plasma"
+    },
+    "grenade_drone": {
+      "cat": "grenade",
+      "id": "grenade-g-50-seeker"
+    },
+    "grenade_smoke": {
+      "cat": "grenade",
+      "id": "grenade-g-3-smoke"
+    },
+    "giga_grenade": {
+      "cat": "grenade",
+      "id": "grenade-g-48-giga-grenade"
+    },
+    "grenade_frag": {
+      "cat": "grenade",
+      "id": "grenade-g-6-frag"
+    },
+    "grenade_pyro": {
+      "cat": "grenade",
+      "id": "grenade-g-142-pyrotech"
+    },
+    "laser_pistol": {
+      "cat": "secondary",
+      "id": "secondary-las-7-dagger"
+    },
+    "grenade_stun": {
+      "cat": "grenade",
+      "id": "grenade-g-23-stun"
+    },
+    "diligence_cs": {
+      "cat": "primary",
+      "id": "primary-r-63cs-diligence-counter-sniper"
+    },
+    "shock_batton": {
+      "cat": "secondary",
+      "id": "secondary-cqc-30-stun-baton"
+    },
+    "grenade_gas": {
+      "cat": "grenade",
+      "id": "grenade-g-4-gas"
+    },
+    "grenade_inc": {
+      "cat": "grenade",
+      "id": "grenade-g-10-incendiary"
+    },
+    "breaker_inc": {
+      "cat": "primary",
+      "id": "primary-sg-225ie-breaker-incendiary"
+    },
+    "grenade_arc": {
+      "cat": "grenade",
+      "id": "grenade-g-31-arc"
+    },
+    "stim_pistol": {
+      "cat": "secondary",
+      "id": "secondary-p-11-stim-pistol"
+    },
+    "re_educator": {
+      "cat": "secondary",
+      "id": "secondary-p-35-re-educator"
+    },
+    "shock_lance": {
+      "cat": "secondary",
+      "id": "secondary-cqc-19-stun-lance"
+    },
+    "grenade_he": {
+      "cat": "grenade",
+      "id": "grenade-g-12-high-explosive"
+    },
+    "lure_mine": {
+      "cat": "grenade",
+      "id": "grenade-tm-1-lure-mine"
+    },
+    "sickle_d": {
+      "cat": "primary",
+      "id": "primary-las-17-double-edge-sickle"
+    },
+    "one_two": {
+      "cat": "primary",
+      "id": "primary-ar-gl-21-one-two"
+    },
+    "sta_52": {
+      "cat": "primary",
+      "id": "primary-sta-52-assault-rifle"
+    },
+    "sta_11": {
+      "cat": "primary",
+      "id": "primary-sta-11-smg"
+    },
+    "constitution": {
+      "cat": "primary",
+      "id": "primary-r-2124-constitution"
+    },
+    "accelerator": {
+      "cat": "primary",
+      "id": "primary-plas-39-accelerator-rifle"
+    },
+    "peacemaker": {
+      "cat": "secondary",
+      "id": "secondary-p-2-peacemaker"
+    },
+    "suppressor": {
+      "cat": "primary",
+      "id": "primary-ar-59-suppressor"
+    },
+    "bushwacker": {
+      "cat": "secondary",
+      "id": "secondary-sg-22-bushwhacker"
+    },
+    "tenderizer": {
+      "cat": "primary",
+      "id": "primary-ar-61-tenderizer"
+    },
+    "ultimatum": {
+      "cat": "secondary",
+      "id": "secondary-gp-20-ultimatum"
+    },
+    "pineapple": {
+      "cat": "grenade",
+      "id": "grenade-g-7-pineapple"
+    },
+    "liberator": {
+      "cat": "primary",
+      "id": "primary-ar-23-liberator"
+    },
+    "adjucator": {
+      "cat": "primary",
+      "id": "primary-br-14-adjudicator"
+    },
+    "dominator": {
+      "cat": "primary",
+      "id": "primary-jar-5-dominator"
+    },
+    "reprimand": {
+      "cat": "primary",
+      "id": "primary-smg-32-reprimand"
+    },
+    "amendment": {
+      "cat": "primary",
+      "id": "primary-r-2-amendment"
+    },
+    "diligence": {
+      "cat": "primary",
+      "id": "primary-r-63-diligence"
+    },
+    "redeemer": {
+      "cat": "secondary",
+      "id": "secondary-p-19-redeemer"
+    },
+    "crossbow": {
+      "cat": "primary",
+      "id": "primary-cb-9-exploding-crossbow"
+    },
+    "dynamite": {
+      "cat": "grenade",
+      "id": "grenade-ted-63-dynamite"
+    },
+    "scorcher": {
+      "cat": "primary",
+      "id": "primary-plas-1-scorcher"
+    },
+    "loyalist": {
+      "cat": "secondary",
+      "id": "secondary-plas-15-loyalist"
+    },
+    "defender": {
+      "cat": "primary",
+      "id": "primary-smg-37-defender"
+    },
+    "punisher": {
+      "cat": "primary",
+      "id": "primary-sg-8-punisher"
+    },
+    "pacifier": {
+      "cat": "primary",
+      "id": "primary-ar-32-pacifier"
+    },
+    "pummeler": {
+      "cat": "primary",
+      "id": "primary-smg-72-pummeler"
+    },
+    "variable": {
+      "cat": "primary",
+      "id": "primary-vg-70-variable"
+    },
+    "purifier": {
+      "cat": "primary",
+      "id": "primary-plas-101-purifier"
+    },
+    "gallant": {
+      "cat": "primary",
+      "id": "primary-smg-203-gallant"
+    },
+    "senator": {
+      "cat": "secondary",
+      "id": "secondary-p-4-senator"
+    },
+    "eruptor": {
+      "cat": "primary",
+      "id": "primary-r-36-eruptor"
+    },
+    "trident": {
+      "cat": "primary",
+      "id": "primary-las-13-trident"
+    },
+    "sweeper": {
+      "cat": "primary",
+      "id": "primary-sg-97-sweeper"
+    },
+    "warrant": {
+      "cat": "secondary",
+      "id": "secondary-p-92-warrant"
+    },
+    "torcher": {
+      "cat": "primary",
+      "id": "primary-flam-66-torcher"
+    },
+    "cookout": {
+      "cat": "primary",
+      "id": "primary-sg-451-cookout"
+    },
+    "breaker": {
+      "cat": "primary",
+      "id": "primary-sg-225-breaker"
+    },
+    "blitzer": {
+      "cat": "primary",
+      "id": "primary-arc-12-blitzer"
+    },
+    "crisper": {
+      "cat": "secondary",
+      "id": "secondary-p-72-crisper"
+    },
+    "verdict": {
+      "cat": "secondary",
+      "id": "secondary-p-113-verdict"
+    },
+    "machete": {
+      "cat": "secondary",
+      "id": "secondary-cqc-42-machete"
+    },
+    "slugger": {
+      "cat": "primary",
+      "id": "primary-sg-8s-slugger"
+    },
+    "deadeye": {
+      "cat": "primary",
+      "id": "primary-r-6-deadeye"
+    },
+    "coyote": {
+      "cat": "primary",
+      "id": "primary-ar-2-coyote"
+    },
+    "scythe": {
+      "cat": "primary",
+      "id": "primary-las-5-scythe"
+    },
+    "stoker": {
+      "cat": "primary",
+      "id": "primary-smg-flam-34-stoker"
+    },
+    "knight": {
+      "cat": "primary",
+      "id": "primary-mp-98-knight"
+    },
+    "sickle": {
+      "cat": "primary",
+      "id": "primary-las-16-sickle"
+    },
+    "censor": {
+      "cat": "primary",
+      "id": "primary-r-72-censor"
+    },
+    "urchin": {
+      "cat": "grenade",
+      "id": "grenade-g-109-urchin"
+    },
+    "talon": {
+      "cat": "secondary",
+      "id": "secondary-las-58-talon"
+    },
+    "sabre": {
+      "cat": "secondary",
+      "id": "secondary-cqc-2-saber"
+    },
+    "veto": {
+      "cat": "secondary",
+      "id": "secondary-p-69-veto"
+    },
+    "ma5c": {
+      "cat": "primary",
+      "id": "primary-ma5c-assault-rifle"
+    },
+    "halt": {
+      "cat": "primary",
+      "id": "primary-sg-20-halt"
+    },
+    "m90a": {
+      "cat": "primary",
+      "id": "primary-m90a-shotgun"
+    },
+    "m6c": {
+      "cat": "secondary",
+      "id": "secondary-m6c-socom-pistol"
+    },
+    "axe": {
+      "cat": "secondary",
+      "id": "secondary-cqc-5-combat-hatchet"
+    },
+    "m7s": {
+      "cat": "primary",
+      "id": "primary-m7s-smg"
+    }
+  },
+  "armor": {
+    "OXYGENATOR": "Oxygenator",
+    "SIEGE-READY": "Siege-Ready",
+    "MED-KIT": "Med-Kit",
+    "INFLAMMABLE": "Inflammable",
+    "ENGINEERING KIT": "Engineering Kit",
+    "DEMOCRACY PROTECTS": "Democracy Protects",
+    "EXTRA PADDING": "Extra Padding",
+    "DESERT STORMER": "Desert Stormer",
+    "CONCUSSIVE PADDING, GRENADIER": "Concussive Padding, Grenadier",
+    "REDUCED SIGNATURE": "Reduced Signature",
+    "ACCLIMATED": "Acclimated",
+    "REINFORCED EPAULETTES": "Reinforced Epaulettes",
+    "SUPPLEMENTARY ADRENALINE": "Supplementary Adrenaline",
+    "UNFLINCHING": "Unflinching",
+    "FORTIFIED": "Fortified",
+    "FEET FIRST": "Feet First",
+    "PEAK PHYSIQUE": "Peak Physique",
+    "SERVO-ASSISTED": "Servo-Assisted",
+    "ROCK SOLID": "Rock Solid",
+    "INTEGRATED EXPLOSIVES": "Integrated Explosives",
+    "SCOUT": "Scout",
+    "ADVANCED FILTRATION": "Advanced Filtration",
+    "CONCUSSIVE PADDING, REINFORCED": "Concussive Padding, Reinforced",
+    "BALLISTIC PADDING": "Ballistic Padding",
+    "GUNSLINGER": "Gunslinger",
+    "ELECTRICAL CONDUIT": "Electrical Conduit",
+    "CONCUSSIVE PADDING, HAZMAT": "Concussive Padding, Hazmat",
+    "ADRENO-DEFIBRILLATOR": "Adreno-Defibrillator"
+  }
+}
