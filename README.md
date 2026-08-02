@@ -1,4 +1,4 @@
-# 🛡️ Macro Helldivers 2
+# 🛡️ Macro Helldivers 2 - v1.0.0
 
 Uma ferramenta de alto desempenho, minimalista e segura para automatizar o acionamento de Estratagemas no Helldivers 2.
 
@@ -6,12 +6,18 @@ Uma ferramenta de alto desempenho, minimalista e segura para automatizar o acion
 
 ## 🚀 Funcionalidades
 
-- **Zero Delay**: Sistema de cache de janela ativa para resposta instantânea.
-- **Segurança Antidetecção**: Emulação de hardware via `nut.js`.
+- **Zero Delay**: Sistema de cache de janela ativa para resposta instantânea, com velocidade do macro configurável (Padrão, Rápida ou Turbo).
+- **Segurança Antidetecção**: Emulação de hardware via `nut.js`, com intervalos humanizados (variação aleatória entre teclas).
 - **Inteligência de Janela**: O macro só funciona quando o Helldivers 2 é a janela em foco.
+- **Overlay In-Game**: Interface sobreposta ao jogo (Ctrl + H) que nunca rouba o foco da missão.
+- **Central de Builds**: Gerador de loadouts completos (estratagemas, armas, armadura, capacete, capa e booster) em dois modos: Meta, com estatísticas reais de pick rate da comunidade por facção e dificuldade, e Aleatória, com regras configuráveis (sets de armadura, loadout balanceado, máximo de 1 torreta).
+- **Builds Salvas**: Salve loadouts completos com nome e aplique nos slots de macro com um clique, inclusive pelo overlay.
+- **Arsenal Completo**: Banco de dados com todos os equipamentos do jogo (armas, armaduras, capacetes, capas, boosters e passivas), com ícones offline.
+- **Busca de Estratagemas**: Filtro por nome na aba de macros, sem se preocupar com acentos.
+- **Backup**: Exporte e restaure builds, slots e configurações em um arquivo JSON.
 - **Sempre Ativo**: Roda silenciosamente na bandeja do sistema.
 - **Personalização**: Escolha entre WASD ou Setas para os códigos.
-- **Suporte a Sprint**: Funciona mesmo enquanto você corre (Shift segurado).
+- **Suporte a Sprint**: Funciona mesmo enquanto você corre (modificador configurável).
 
 ## 📥 Como Instalar e Usar
 
@@ -61,6 +67,12 @@ npm run dev
 
 # Gerar instalador .exe
 npm run build
+
+# Reconstruir o banco de equipamentos a partir da wiki da comunidade
+npm run scrape
+
+# Regenerar o mapeamento de estatísticas do helldive.live
+npm run stats-map
 ```
 
 ---
