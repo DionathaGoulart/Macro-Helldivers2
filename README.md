@@ -23,6 +23,15 @@ Uma ferramenta de alto desempenho, minimalista e segura para automatizar o acion
 
 ---
 
+## 🖥️ Overlay In-Game
+
+O overlay (atalho **Ctrl+H**) é uma janela transparente que **nunca rouba o foco do jogo** — ele aparece por cima sem minimizar o Helldivers 2. Toda a interação no overlay é feita com o mouse (atribuir estratagemas, limpar slots, etc.).
+
+- **Obrigatório**: use o jogo em **"Tela Cheia sem Borda"** (borderless). No modo "Tela Cheia", o Helldivers 2 **se auto-minimiza sempre que qualquer janela desenha por cima dele** (comportamento do DXGI fullscreen do jogo, verificado por teste — acontece até com janelas nativas do Windows, sem roubo de foco algum). A solução usada pelo Discord envolve injeção no processo do jogo — inviável aqui pelo risco com o anticheat GameGuard. O app detecta o modo "Tela Cheia" na config do jogo e exibe um aviso no overlay.
+- **Limitação**: gravar atalhos de teclado pela aba Configurações **dentro do overlay** não funciona (o overlay não recebe teclado por design) — faça isso na janela principal do app.
+
+---
+
 ## 🔄 Como funcionam as Atualizações Automáticas?
 
 O app possui um sistema integrado de **Auto-Update**. 
