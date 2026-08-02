@@ -1,4 +1,4 @@
-const { app, BrowserWindow, globalShortcut, ipcMain, Tray, Menu, screen } = require('electron')
+const { app, BrowserWindow, globalShortcut, ipcMain, Tray, Menu, screen, dialog } = require('electron')
 const path = require('path')
 const fs = require('fs')
 const { autoUpdater } = require('electron-updater')
@@ -11,39 +11,49 @@ let isQuitting = false
 let isRecordingState = false
 let currentSlots = [null, null, null, null]
 let isGameFocused = false
-let isMinimalMode = false
+// A janela do overlay fica SEMPRE visível (transparente/click-through); esconder e
+// mostrar de novo com show()/showInactive() ativa janelas transparentes no Windows,
+// roubando o foco do jogo (que minimiza em tela cheia). Só o CONTEÚDO alterna, via IPC.
+// Estados: 'hidden' (nada renderizado) | 'minimal' (strip de slots) | 'panel' (painel completo)
+let overlayState = 'hidden'
 let isMacroRunning = false
 let nut = null // Carregamento tardio (Lazy)
 
 let overlayWin = null
 
+// O HD2 em "Tela Cheia" (DXGI fullscreen) se auto-minimiza quando QUALQUER janela
+// desenha por cima dele — comportamento do jogo, sem relação com foco. Overlay de
+// janela só funciona em "Tela Cheia sem Borda"; detectamos o modo pra avisar o usuário.
+function isGameExclusiveFullscreen() {
+  try {
+    const cfg = path.join(app.getPath('appData'), 'Arrowhead', 'Helldivers2', 'user_settings.config')
+    const text = fs.readFileSync(cfg, 'utf8')
+    return /^\s*fullscreen\s*=\s*true/m.test(text) && !/^\s*borderless_fullscreen\s*=\s*true/m.test(text)
+  } catch (e) {
+    return false
+  }
+}
+
+function setOverlayState(state) {
+  if (!overlayWin || overlayWin.isDestroyed()) return
+  overlayState = state
+  overlayWin.webContents.send('overlay-state', state)
+  if (state !== 'hidden') {
+    overlayWin.webContents.send('fullscreen-warning', isGameExclusiveFullscreen())
+  }
+  // Mouse só interage com o painel completo; nos demais estados tudo atravessa pro jogo
+  if (state === 'panel') overlayWin.setIgnoreMouseEvents(false)
+  else overlayWin.setIgnoreMouseEvents(true, { forward: true })
+}
+
 const toggleOverlay = () => {
   if (currentSettings.enableOverlay === false || !isGameFocused) return
+  if (!overlayWin || overlayWin.isDestroyed()) return
 
-  if (overlayWin) {
-    if (currentSettings.alwaysShowSlots) {
-      isMinimalMode = !isMinimalMode
-      overlayWin.webContents.send('toggle-minimal-mode', isMinimalMode)
-      
-      if (isMinimalMode) {
-        overlayWin.setIgnoreMouseEvents(true, { forward: true })
-        if (win && !win.isDestroyed()) win.focus() 
-      } else {
-        overlayWin.setIgnoreMouseEvents(false)
-        overlayWin.showInactive()
-        overlayWin.focus()
-      }
-    } else {
-      if (overlayWin.isVisible() && !isMinimalMode) {
-        overlayWin.hide()
-      } else {
-        isMinimalMode = false
-        overlayWin.webContents.send('toggle-minimal-mode', false)
-        overlayWin.setIgnoreMouseEvents(false)
-        overlayWin.showInactive()
-        overlayWin.focus()
-      }
-    }
+  if (overlayState === 'panel') {
+    setOverlayState(currentSettings.alwaysShowSlots ? 'minimal' : 'hidden')
+  } else {
+    setOverlayState('panel')
   }
 }
 
@@ -145,21 +155,28 @@ setInterval(async () => {
     
     // O sistema fica "ativo" se estiver no jogo, no overlay ou na janela de configuração
     const isFocused = isGame || isOverlayActive || isMainApp
-    
+
+    // Jogos podem re-agarrar o topo do z-order (alt-tab, troca de modo de vídeo);
+    // reafirma o overlay acima enquanto o jogo está em foco e há conteúdo visível
+    if (isFocused && overlayState !== 'hidden' && overlayWin && !overlayWin.isDestroyed() && overlayWin.isVisible()) {
+      overlayWin.setAlwaysOnTop(true, 'screen-saver')
+      overlayWin.moveTop()
+    }
+
     if (isFocused !== isGameFocused) {
       isGameFocused = isFocused
       
       if (isGameFocused) {
         registerMacros()
-        if (currentSettings.alwaysShowSlots && overlayWin && !overlayWin.isDestroyed()) {
-          overlayWin.showInactive()
+        if (currentSettings.alwaysShowSlots) {
+          setOverlayState('minimal')
         }
+        // Avisa as duas janelas se o jogo está em "Tela Cheia" (modo incompatível com overlay)
+        broadcast('fullscreen-warning', isGameExclusiveFullscreen())
       } else {
         globalShortcut.unregisterAll()
         registerOverlayShortcut()
-        if (overlayWin && !overlayWin.isDestroyed()) {
-          overlayWin.hide()
-        }
+        setOverlayState('hidden')
       }
 
       if (win && !win.isDestroyed()) {
@@ -199,7 +216,7 @@ async function handleMacroTrigger(codex, index, isSupport) {
   broadcast(isSupport ? 'support-macro-triggered' : 'macro-triggered', index)
   broadcast('macro-status-changed', { slot: index, isSupport, running: true })
   try {
-    await engine.runStratagem(codex, currentSettings.modifierKey, currentSettings.useArrows)
+    await engine.runStratagem(codex, currentSettings.modifierKey, currentSettings.useArrows, currentSettings.macroSpeed)
   } catch (e) {
     console.error('Erro ao executar macro:', e)
   }
@@ -348,7 +365,12 @@ function createOverlayWindow() {
     frame: false,
     alwaysOnTop: true,
     skipTaskbar: true,
-    focusable: true,
+    // WS_EX_NOACTIVATE: recebe cliques sem nunca ativar — o jogo mantém o foco
+    focusable: false,
+    resizable: false,
+    fullscreenable: false,
+    hasShadow: false,
+    roundedCorners: false,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       nodeIntegration: false,
@@ -362,13 +384,13 @@ function createOverlayWindow() {
   if (isDev) overlayWin.loadURL(process.env.VITE_DEV_SERVER_URL + '#overlay')
   else overlayWin.loadFile(path.join(__dirname, '../dist/index.html'), { hash: 'overlay' })
 
-  if (currentSettings.alwaysShowSlots) {
-    isMinimalMode = true
-    overlayWin.webContents.send('toggle-minimal-mode', true)
-    overlayWin.showInactive()
-  } else {
-    overlayWin.hide()
-  }
+  // Sincroniza o estado inicial quando o renderer terminar de carregar
+  overlayWin.webContents.on('did-finish-load', () => {
+    setOverlayState(isGameFocused && currentSettings.alwaysShowSlots ? 'minimal' : 'hidden')
+  })
+
+  // Mostrada uma única vez, aqui, e nunca mais escondida (ver comentário em overlayState)
+  overlayWin.showInactive()
 }
 
 app.whenReady().then(() => {
@@ -376,6 +398,12 @@ app.whenReady().then(() => {
   createOverlayWindow()
   createTray()
   registerOverlayShortcut()
+
+  screen.on('display-metrics-changed', () => {
+    if (overlayWin && !overlayWin.isDestroyed()) {
+      overlayWin.setBounds(screen.getPrimaryDisplay().bounds)
+    }
+  })
 })
 
 // Gerenciamento de Atualizações
@@ -424,11 +452,67 @@ app.on('window-all-closed', () => {
   if (process.platform !== 'darwin' && isQuitting) app.quit()
 })
 
-ipcMain.on('update-slots', (event, slots) => { 
-  currentSlots = slots 
-  if (overlayWin && !overlayWin.isDestroyed()) overlayWin.webContents.send('sync-slots', slots)
-  if (win && !win.isDestroyed()) win.webContents.send('sync-slots', slots)
+ipcMain.on('update-slots', (event, slots) => {
+  currentSlots = slots
+  // Não ecoa de volta pra janela que enviou — ela já tem o estado (evita render duplo)
+  if (overlayWin && !overlayWin.isDestroyed() && overlayWin.webContents !== event.sender) overlayWin.webContents.send('sync-slots', slots)
+  if (win && !win.isDestroyed() && win.webContents !== event.sender) win.webContents.send('sync-slots', slots)
 })
+ipcMain.on('update-loadouts', (event, loadouts) => {
+  // Só repassa pra outra janela — o main não usa loadouts (macros seguem via update-slots)
+  if (overlayWin && !overlayWin.isDestroyed() && overlayWin.webContents !== event.sender) overlayWin.webContents.send('sync-loadouts', loadouts)
+  if (win && !win.isDestroyed() && win.webContents !== event.sender) win.webContents.send('sync-loadouts', loadouts)
+})
+// Estatísticas de pick rate da comunidade (backend do helldive.live).
+// API não documentada de site de fã — pode mudar sem aviso; o renderer degrada com mensagem de erro.
+const HELLDIVE_API = 'https://utm7j5pjvi.us-east-1.awsapprunner.com'
+const HELLDIVE_PATCH_ID = 12 // "Exo Experts" — atualizar quando o site adicionar patch novo
+
+ipcMain.handle('fetch-meta-stats', async (event, faction, difficulty) => {
+  try {
+    const results = {}
+    for (const type of ['strategem', 'weapons', 'armor']) {
+      const url = `${HELLDIVE_API}/items_stats?faction=${encodeURIComponent(faction)}&patch_id=${HELLDIVE_PATCH_ID}&difficulty=${Number(difficulty) || 0}&mission=All&modifier=ALL&type=${type}`
+      const res = await fetch(url, { signal: AbortSignal.timeout(10000) })
+      if (!res.ok) throw new Error(`HTTP ${res.status}`)
+      results[type] = await res.json()
+    }
+    return { ok: true, data: results }
+  } catch (e) {
+    return { ok: false, error: e.message }
+  }
+})
+
+ipcMain.handle('export-data', async (event, data) => {
+  const { canceled, filePath } = await dialog.showSaveDialog({
+    title: 'Exportar backup',
+    defaultPath: 'macro-helldivers2-backup.json',
+    filters: [{ name: 'JSON', extensions: ['json'] }]
+  })
+  if (canceled || !filePath) return { ok: false, canceled: true }
+  try {
+    fs.writeFileSync(filePath, JSON.stringify(data, null, 2), 'utf8')
+    return { ok: true }
+  } catch (e) {
+    return { ok: false, error: e.message }
+  }
+})
+
+ipcMain.handle('import-data', async () => {
+  const { canceled, filePaths } = await dialog.showOpenDialog({
+    title: 'Importar backup',
+    filters: [{ name: 'JSON', extensions: ['json'] }],
+    properties: ['openFile']
+  })
+  if (canceled || !filePaths?.length) return { ok: false, canceled: true }
+  try {
+    const data = JSON.parse(fs.readFileSync(filePaths[0], 'utf8'))
+    return { ok: true, data }
+  } catch (e) {
+    return { ok: false, error: e.message }
+  }
+})
+
 ipcMain.handle('get-settings', () => currentSettings)
 ipcMain.on('save-settings', (event, settings) => {
   const previousAlwaysShow = currentSettings.alwaysShowSlots;
@@ -438,11 +522,11 @@ ipcMain.on('save-settings', (event, settings) => {
   
   if (overlayWin && !overlayWin.isDestroyed()) {
     overlayWin.webContents.send('sync-settings', settings)
-    if (isGameFocused) {
+    if (isGameFocused && overlayState !== 'panel') {
       if (settings.alwaysShowSlots && !previousAlwaysShow) {
-        overlayWin.showInactive()
+        setOverlayState('minimal')
       } else if (!settings.alwaysShowSlots && previousAlwaysShow) {
-        overlayWin.hide()
+        setOverlayState('hidden')
       }
     }
   }
