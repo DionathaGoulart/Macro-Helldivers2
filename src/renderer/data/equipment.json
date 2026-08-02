@@ -1,0 +1,4050 @@
+{
+  "primary": [
+    {
+      "nome": "AR-2 Coyote",
+      "tipo": "Assault Rifles",
+      "dano": "75 Ballistic",
+      "capacidade": "45",
+      "cadencia": "600 rpm",
+      "id": "primary-ar-2-coyote",
+      "imagem": "equipment/primary-ar-2-coyote.png"
+    },
+    {
+      "nome": "AR-23 Liberator",
+      "tipo": "Assault Rifles",
+      "dano": "90 Ballistic",
+      "capacidade": "45",
+      "cadencia": "640 rpm",
+      "id": "primary-ar-23-liberator",
+      "imagem": "equipment/primary-ar-23-liberator.png"
+    },
+    {
+      "nome": "AR-23A Liberator Carbine",
+      "tipo": "Assault Rifles",
+      "dano": "90 Ballistic",
+      "capacidade": "45",
+      "cadencia": "920 rpm",
+      "id": "primary-ar-23a-liberator-carbine",
+      "imagem": "equipment/primary-ar-23a-liberator-carbine.png"
+    },
+    {
+      "nome": "AR-23C Liberator Concussive",
+      "tipo": "Assault Rifles",
+      "dano": "75 Ballistic",
+      "capacidade": "60",
+      "cadencia": "400 rpm",
+      "id": "primary-ar-23c-liberator-concussive",
+      "imagem": "equipment/primary-ar-23c-liberator-concussive.png"
+    },
+    {
+      "nome": "AR-23P Liberator Penetrator",
+      "tipo": "Assault Rifles",
+      "dano": "65 Ballistic",
+      "capacidade": "45",
+      "cadencia": "640 rpm",
+      "id": "primary-ar-23p-liberator-penetrator",
+      "imagem": "equipment/primary-ar-23p-liberator-penetrator.png"
+    },
+    {
+      "nome": "AR-32 Pacifier",
+      "tipo": "Assault Rifles",
+      "dano": "55 Ballistic",
+      "capacidade": "40",
+      "cadencia": "700",
+      "id": "primary-ar-32-pacifier",
+      "imagem": "equipment/primary-ar-32-pacifier.png"
+    },
+    {
+      "nome": "AR-59 Suppressor",
+      "tipo": "Assault Rifles",
+      "dano": "80 Ballistic",
+      "capacidade": "45",
+      "cadencia": "850 rpm",
+      "id": "primary-ar-59-suppressor",
+      "imagem": "equipment/primary-ar-59-suppressor.png"
+    },
+    {
+      "nome": "AR-61 Tenderizer",
+      "tipo": "Assault Rifles",
+      "dano": "105 Ballistic",
+      "capacidade": "35",
+      "cadencia": "600 rpm &bull; 850 rpm",
+      "id": "primary-ar-61-tenderizer",
+      "imagem": "equipment/primary-ar-61-tenderizer.png"
+    },
+    {
+      "nome": "AR/GL-21 One-Two",
+      "tipo": "Assault Rifles",
+      "dano": "95 Ballistic (8mm) [[File:Damage Ballistic Icon.svg|20px|li",
+      "capacidade": "40",
+      "cadencia": "650 rpm",
+      "id": "primary-ar-gl-21-one-two",
+      "imagem": "equipment/primary-ar-gl-21-one-two.png"
+    },
+    {
+      "nome": "ARC-12 Blitzer",
+      "tipo": "Energy-Based",
+      "dano": "250 Arc",
+      "capacidade": "∞",
+      "cadencia": "45 rpm",
+      "id": "primary-arc-12-blitzer",
+      "imagem": "equipment/primary-arc-12-blitzer.png"
+    },
+    {
+      "nome": "BR-14 Adjudicator",
+      "tipo": "Assault Rifles",
+      "dano": "95 Ballistic",
+      "capacidade": "30",
+      "cadencia": "550 rpm",
+      "id": "primary-br-14-adjudicator",
+      "imagem": "equipment/primary-br-14-adjudicator.png"
+    },
+    {
+      "nome": "CB-9 Exploding Crossbow",
+      "tipo": "Explosives",
+      "dano": "270 Projectile [[File:Damage Explosion Icon.svg|20px|link=",
+      "capacidade": "5",
+      "cadencia": "50 rpm",
+      "id": "primary-cb-9-exploding-crossbow",
+      "imagem": "equipment/primary-cb-9-exploding-crossbow.png"
+    },
+    {
+      "nome": "DBS-2 Double Freedom",
+      "tipo": "Shotguns",
+      "dano": "840 Ballistic",
+      "capacidade": "2",
+      "cadencia": "650 rpm",
+      "id": "primary-dbs-2-double-freedom",
+      "imagem": "equipment/primary-dbs-2-double-freedom.png"
+    },
+    {
+      "nome": "FLAM-66 Torcher",
+      "tipo": "Special",
+      "dano": "150 DPS Fire",
+      "capacidade": "100",
+      "cadencia": null,
+      "id": "primary-flam-66-torcher",
+      "imagem": "equipment/primary-flam-66-torcher.png"
+    },
+    {
+      "nome": "JAR-5 Dominator",
+      "tipo": "Special",
+      "dano": "275 Ballistic",
+      "capacidade": "15",
+      "cadencia": "250 rpm",
+      "id": "primary-jar-5-dominator",
+      "imagem": "equipment/primary-jar-5-dominator.png"
+    },
+    {
+      "nome": "LAS-13 Trident",
+      "tipo": "Energy-Based",
+      "dano": "360 Laser",
+      "capacidade": "2s (10)",
+      "cadencia": "300 rpm",
+      "id": "primary-las-13-trident",
+      "imagem": "equipment/primary-las-13-trident.png"
+    },
+    {
+      "nome": "LAS-16 Sickle",
+      "tipo": "Energy-Based",
+      "dano": "60 Ballistic",
+      "capacidade": "7s (87)",
+      "cadencia": "750 rpm",
+      "id": "primary-las-16-sickle",
+      "imagem": "equipment/primary-las-16-sickle.png"
+    },
+    {
+      "nome": "LAS-17 Double-Edge Sickle",
+      "tipo": "Energy-Based",
+      "dano": "55-70 Projectile",
+      "capacidade": "15s (175) (Fires Indefinitely)",
+      "cadencia": "700 rpm",
+      "id": "primary-las-17-double-edge-sickle",
+      "imagem": "equipment/primary-las-17-double-edge-sickle.png"
+    },
+    {
+      "nome": "LAS-5 Scythe",
+      "tipo": "Energy-Based",
+      "dano": "350 DPS Laser &nb",
+      "capacidade": "8s",
+      "cadencia": null,
+      "id": "primary-las-5-scythe",
+      "imagem": "equipment/primary-las-5-scythe.png"
+    },
+    {
+      "nome": "M7S SMG",
+      "tipo": "Submachine Guns",
+      "dano": "90 Ballistic",
+      "capacidade": "48",
+      "cadencia": "872 rpm",
+      "id": "primary-m7s-smg",
+      "imagem": "equipment/primary-m7s-smg.png"
+    },
+    {
+      "nome": "M90A Shotgun",
+      "tipo": "Shotguns",
+      "dano": "605 Ballistic",
+      "capacidade": "6",
+      "cadencia": "80 rpm",
+      "id": "primary-m90a-shotgun",
+      "imagem": "equipment/primary-m90a-shotgun.png"
+    },
+    {
+      "nome": "MA5C Assault Rifle",
+      "tipo": "Assault Rifles",
+      "dano": "90 Ballistic",
+      "capacidade": "32",
+      "cadencia": "640 rpm",
+      "id": "primary-ma5c-assault-rifle",
+      "imagem": "equipment/primary-ma5c-assault-rifle.png"
+    },
+    {
+      "nome": "MP-98 Knight",
+      "tipo": "Submachine Guns",
+      "dano": "90 Ballistic",
+      "capacidade": "50",
+      "cadencia": "1380 rpm",
+      "id": "primary-mp-98-knight",
+      "imagem": "equipment/primary-mp-98-knight.png"
+    },
+    {
+      "nome": "PLAS-1 Scorcher",
+      "tipo": "Energy-Based",
+      "dano": "100 Ballistic [[File:Damage Explosion Icon.svg|20px|link=Dam",
+      "capacidade": "20",
+      "cadencia": "350 rpm",
+      "id": "primary-plas-1-scorcher",
+      "imagem": "equipment/primary-plas-1-scorcher.png"
+    },
+    {
+      "nome": "PLAS-101 Purifier",
+      "tipo": "Energy-Based",
+      "dano": "100-200 Ballistic [[File:Damage Explosion Icon.svg|20px|lin",
+      "capacidade": "15",
+      "cadencia": "1,000 rpm",
+      "id": "primary-plas-101-purifier",
+      "imagem": "equipment/primary-plas-101-purifier.png"
+    },
+    {
+      "nome": "PLAS-39 Accelerator Rifle",
+      "tipo": "Energy-Based",
+      "dano": "250 Ballistic [[File:Damage Explosion Icon.svg|20px|link=Da",
+      "capacidade": "9",
+      "cadencia": "550 rpm",
+      "id": "primary-plas-39-accelerator-rifle",
+      "imagem": "equipment/primary-plas-39-accelerator-rifle.png"
+    },
+    {
+      "nome": "R-2 Amendment",
+      "tipo": "Marksman Rifles",
+      "dano": "200 Ballistic",
+      "capacidade": "20",
+      "cadencia": "480 rpm",
+      "id": "primary-r-2-amendment",
+      "imagem": "equipment/primary-r-2-amendment.png"
+    },
+    {
+      "nome": "R-2124 Constitution",
+      "tipo": "Marksman Rifles",
+      "dano": "180 Ballistic",
+      "capacidade": "5",
+      "cadencia": "60 rpm",
+      "id": "primary-r-2124-constitution",
+      "imagem": "equipment/primary-r-2124-constitution.png"
+    },
+    {
+      "nome": "R-36 Eruptor",
+      "tipo": "Explosives",
+      "dano": "230 Projectile [[File:Damage Explosion Icon.svg|20px|link=",
+      "capacidade": "5",
+      "cadencia": "32 rpm",
+      "id": "primary-r-36-eruptor",
+      "imagem": "equipment/primary-r-36-eruptor.png"
+    },
+    {
+      "nome": "R-4 Hyena",
+      "tipo": "Marksman Rifles",
+      "dano": "220 Ballistic",
+      "capacidade": "15",
+      "cadencia": "190 rpm",
+      "id": "primary-r-4-hyena",
+      "imagem": "equipment/primary-r-4-hyena.png"
+    },
+    {
+      "nome": "R-40-K Hot-Shot Marksman Rifle",
+      "tipo": "Marksman Rifles",
+      "dano": null,
+      "capacidade": null,
+      "cadencia": null,
+      "id": "primary-r-40-k-hot-shot-marksman-rifle",
+      "imagem": "equipment/primary-r-40-k-hot-shot-marksman-rifle.png"
+    },
+    {
+      "nome": "R-6 Deadeye",
+      "tipo": "Marksman Rifles",
+      "dano": "300 Ballistic",
+      "capacidade": "8",
+      "cadencia": "100",
+      "id": "primary-r-6-deadeye",
+      "imagem": "equipment/primary-r-6-deadeye.png"
+    },
+    {
+      "nome": "R-63 Diligence",
+      "tipo": "Marksman Rifles",
+      "dano": "165 Ballistic",
+      "capacidade": "25",
+      "cadencia": "350 rpm",
+      "id": "primary-r-63-diligence",
+      "imagem": "equipment/primary-r-63-diligence.png"
+    },
+    {
+      "nome": "R-63CS Diligence Counter Sniper",
+      "tipo": "Marksman Rifles",
+      "dano": "200 Ballistic",
+      "capacidade": "15",
+      "cadencia": "350 rpm",
+      "id": "primary-r-63cs-diligence-counter-sniper",
+      "imagem": "equipment/primary-r-63cs-diligence-counter-sniper.png"
+    },
+    {
+      "nome": "R-72 Censor",
+      "tipo": "Marksman Rifles",
+      "dano": "165 Ballistic",
+      "capacidade": "20",
+      "cadencia": "400 rpm",
+      "id": "primary-r-72-censor",
+      "imagem": "equipment/primary-r-72-censor.png"
+    },
+    {
+      "nome": "SG-20 Halt",
+      "tipo": "Shotguns",
+      "dano": "385 Ballistic (Flechette) [[File:Damage Ballistic Icon.svg",
+      "capacidade": "8 (x2)",
+      "cadencia": "80 rpm",
+      "id": "primary-sg-20-halt",
+      "imagem": "equipment/primary-sg-20-halt.png"
+    },
+    {
+      "nome": "SG-225 Breaker",
+      "tipo": "Shotguns",
+      "dano": "330 Ballistic",
+      "capacidade": "16",
+      "cadencia": "300 rpm",
+      "id": "primary-sg-225-breaker",
+      "imagem": "equipment/primary-sg-225-breaker.png"
+    },
+    {
+      "nome": "SG-225IE Breaker Incendiary",
+      "tipo": "Shotguns",
+      "dano": "240 Ballistic",
+      "capacidade": "26",
+      "cadencia": "300 rpm",
+      "id": "primary-sg-225ie-breaker-incendiary",
+      "imagem": "equipment/primary-sg-225ie-breaker-incendiary.png"
+    },
+    {
+      "nome": "SG-225SP Breaker Spray&Pray",
+      "tipo": "Shotguns",
+      "dano": "240 Ballistic",
+      "capacidade": "26",
+      "cadencia": "330 rpm",
+      "id": "primary-sg-225sp-breaker-spray-pray",
+      "imagem": "equipment/primary-sg-225sp-breaker-spray-pray.png"
+    },
+    {
+      "nome": "SG-451 Cookout",
+      "tipo": "Shotguns",
+      "dano": "320 Ballistic",
+      "capacidade": "16",
+      "cadencia": "80 rpm",
+      "id": "primary-sg-451-cookout",
+      "imagem": "equipment/primary-sg-451-cookout.png"
+    },
+    {
+      "nome": "SG-8 Punisher",
+      "tipo": "Shotguns",
+      "dano": "405 Ballistic",
+      "capacidade": "16",
+      "cadencia": "80 rpm",
+      "id": "primary-sg-8-punisher",
+      "imagem": "equipment/primary-sg-8-punisher.png"
+    },
+    {
+      "nome": "SG-8P Punisher Plasma",
+      "tipo": "Energy-Based",
+      "dano": "225 Explosion",
+      "capacidade": "10",
+      "cadencia": "80 rpm",
+      "id": "primary-sg-8p-punisher-plasma",
+      "imagem": "equipment/primary-sg-8p-punisher-plasma.png"
+    },
+    {
+      "nome": "SG-8S Slugger",
+      "tipo": "Shotguns",
+      "dano": "330 Ballistic",
+      "capacidade": "16",
+      "cadencia": "80 rpm",
+      "id": "primary-sg-8s-slugger",
+      "imagem": "equipment/primary-sg-8s-slugger.png"
+    },
+    {
+      "nome": "SG-97 Sweeper",
+      "tipo": "Shotguns",
+      "dano": "504 Ballistic",
+      "capacidade": "7",
+      "cadencia": "150 rpm",
+      "id": "primary-sg-97-sweeper",
+      "imagem": "equipment/primary-sg-97-sweeper.png"
+    },
+    {
+      "nome": "SMG-203 Gallant",
+      "tipo": "Submachine Guns",
+      "dano": "65 Ballistic",
+      "capacidade": "50",
+      "cadencia": "1380 rpm",
+      "id": "primary-smg-203-gallant",
+      "imagem": "equipment/primary-smg-203-gallant.png"
+    },
+    {
+      "nome": "SMG-32 Reprimand",
+      "tipo": "Submachine Guns",
+      "dano": "140 Ballistic",
+      "capacidade": "25",
+      "cadencia": "490 rpm",
+      "id": "primary-smg-32-reprimand",
+      "imagem": "equipment/primary-smg-32-reprimand.png"
+    },
+    {
+      "nome": "SMG-37 Defender",
+      "tipo": "Submachine Guns",
+      "dano": "110 Ballistic",
+      "capacidade": "45",
+      "cadencia": "520 rpm",
+      "id": "primary-smg-37-defender",
+      "imagem": "equipment/primary-smg-37-defender.png"
+    },
+    {
+      "nome": "SMG-72 Pummeler",
+      "tipo": "Submachine Guns",
+      "dano": "85 Ballistic",
+      "capacidade": "45",
+      "cadencia": "475 rpm",
+      "id": "primary-smg-72-pummeler",
+      "imagem": "equipment/primary-smg-72-pummeler.png"
+    },
+    {
+      "nome": "SMG/FLAM-34 Stoker",
+      "tipo": "Submachine Guns",
+      "dano": "130 Ballistic",
+      "capacidade": "45",
+      "cadencia": "420 rpm",
+      "id": "primary-smg-flam-34-stoker",
+      "imagem": "equipment/primary-smg-flam-34-stoker.png"
+    },
+    {
+      "nome": "StA-11 SMG",
+      "tipo": "Submachine Guns",
+      "dano": "90 Ballistic",
+      "capacidade": "48",
+      "cadencia": "1050 rpm",
+      "id": "primary-sta-11-smg",
+      "imagem": "equipment/primary-sta-11-smg.png"
+    },
+    {
+      "nome": "StA-52 Assault Rifle",
+      "tipo": "Assault Rifles",
+      "dano": "90 Ballistic",
+      "capacidade": "56",
+      "cadencia": "790 rpm",
+      "id": "primary-sta-52-assault-rifle",
+      "imagem": "equipment/primary-sta-52-assault-rifle.png"
+    },
+    {
+      "nome": "VG-70 Variable",
+      "tipo": "Special",
+      "dano": "85 Ballistic",
+      "capacidade": "49",
+      "cadencia": "300 rpm &bull; 550 rpm &bull; 750rpm",
+      "id": "primary-vg-70-variable",
+      "imagem": "equipment/primary-vg-70-variable.png"
+    }
+  ],
+  "secondary": [
+    {
+      "nome": "CQC-19 Stun Lance",
+      "tipo": "Melee",
+      "dano": "165 Melee",
+      "capacidade": null,
+      "cadencia": null,
+      "id": "secondary-cqc-19-stun-lance",
+      "imagem": "equipment/secondary-cqc-19-stun-lance.png"
+    },
+    {
+      "nome": "CQC-2 Saber",
+      "tipo": "Melee",
+      "dano": "188 Melee",
+      "capacidade": "N/A",
+      "cadencia": "150",
+      "id": "secondary-cqc-2-saber",
+      "imagem": "equipment/secondary-cqc-2-saber.png"
+    },
+    {
+      "nome": "CQC-30 Stun Baton",
+      "tipo": "Melee",
+      "dano": "120 Melee",
+      "capacidade": "N/A",
+      "cadencia": "N/A",
+      "id": "secondary-cqc-30-stun-baton",
+      "imagem": "equipment/secondary-cqc-30-stun-baton.png"
+    },
+    {
+      "nome": "CQC-42 Machete",
+      "tipo": "Melee",
+      "dano": "300 Melee",
+      "capacidade": "N/A",
+      "cadencia": "72",
+      "id": "secondary-cqc-42-machete",
+      "imagem": "equipment/secondary-cqc-42-machete.png"
+    },
+    {
+      "nome": "CQC-5 Combat Hatchet",
+      "tipo": "Melee",
+      "dano": "240 Melee",
+      "capacidade": "N/A",
+      "cadencia": "100",
+      "id": "secondary-cqc-5-combat-hatchet",
+      "imagem": "equipment/secondary-cqc-5-combat-hatchet.png"
+    },
+    {
+      "nome": "Entrenchment Tool",
+      "tipo": "Melee",
+      "dano": "165 Melee",
+      "capacidade": "N/A",
+      "cadencia": "150",
+      "id": "secondary-entrenchment-tool",
+      "imagem": "equipment/secondary-entrenchment-tool.png"
+    },
+    {
+      "nome": "GP-20 Ultimatum",
+      "tipo": "Special",
+      "dano": "1,000 Projectile [[File:Damage Explosion Icon.svg|20px|link",
+      "capacidade": "1",
+      "cadencia": "20 rpm",
+      "id": "secondary-gp-20-ultimatum",
+      "imagem": "equipment/secondary-gp-20-ultimatum.png"
+    },
+    {
+      "nome": "GP-31 Grenade Pistol",
+      "tipo": "Special",
+      "dano": "250 Projectile [[File:Damage Explosion Icon.svg|20px|link=D",
+      "capacidade": "1",
+      "cadencia": "35",
+      "id": "secondary-gp-31-grenade-pistol",
+      "imagem": "equipment/secondary-gp-31-grenade-pistol.png"
+    },
+    {
+      "nome": "LAS-58 Talon",
+      "tipo": "Special",
+      "dano": "200 Ballistic",
+      "capacidade": "7",
+      "cadencia": "750 rpm",
+      "id": "secondary-las-58-talon",
+      "imagem": "equipment/secondary-las-58-talon.png"
+    },
+    {
+      "nome": "LAS-7 Dagger",
+      "tipo": "Special",
+      "dano": "250 DPS Laser &nb",
+      "capacidade": "6.67s",
+      "cadencia": null,
+      "id": "secondary-las-7-dagger",
+      "imagem": "equipment/secondary-las-7-dagger.png"
+    },
+    {
+      "nome": "M6C/SOCOM Pistol",
+      "tipo": "Pistols",
+      "dano": "125 Ballistic",
+      "capacidade": "12",
+      "cadencia": "900 rpm",
+      "id": "secondary-m6c-socom-pistol",
+      "imagem": "equipment/secondary-m6c-socom-pistol.png"
+    },
+    {
+      "nome": "P-11 Stim Pistol",
+      "tipo": "Special",
+      "dano": "0 Ballistic",
+      "capacidade": "6",
+      "cadencia": "70 rpm",
+      "id": "secondary-p-11-stim-pistol",
+      "imagem": "equipment/secondary-p-11-stim-pistol.png"
+    },
+    {
+      "nome": "P-113 Verdict",
+      "tipo": "Pistols",
+      "dano": "140 Ballistic",
+      "capacidade": "10",
+      "cadencia": "450",
+      "id": "secondary-p-113-verdict",
+      "imagem": "equipment/secondary-p-113-verdict.png"
+    },
+    {
+      "nome": "P-19 Redeemer",
+      "tipo": "Pistols",
+      "dano": "70 Ballistic",
+      "capacidade": "31",
+      "cadencia": "1100 rpm",
+      "id": "secondary-p-19-redeemer",
+      "imagem": "equipment/secondary-p-19-redeemer.png"
+    },
+    {
+      "nome": "P-2 Peacemaker",
+      "tipo": "Pistols",
+      "dano": "100 Ballistic",
+      "capacidade": "15",
+      "cadencia": "900",
+      "id": "secondary-p-2-peacemaker",
+      "imagem": "equipment/secondary-p-2-peacemaker.png"
+    },
+    {
+      "nome": "P-33 Missile Pistol",
+      "tipo": "Special",
+      "dano": "1,000 Projectile [[File:Damage Explosion Icon.svg|20px|link",
+      "capacidade": "1",
+      "cadencia": "60 rpm",
+      "id": "secondary-p-33-missile-pistol",
+      "imagem": "equipment/secondary-p-33-missile-pistol.png"
+    },
+    {
+      "nome": "P-35 Re-Educator",
+      "tipo": "Special",
+      "dano": "60 Gas",
+      "capacidade": "6",
+      "cadencia": "110 rpm",
+      "id": "secondary-p-35-re-educator",
+      "imagem": "equipment/secondary-p-35-re-educator.png"
+    },
+    {
+      "nome": "P-4 Senator",
+      "tipo": "Pistols",
+      "dano": "225 Ballistic",
+      "capacidade": "6",
+      "cadencia": "200 rpm",
+      "id": "secondary-p-4-senator",
+      "imagem": "equipment/secondary-p-4-senator.png"
+    },
+    {
+      "nome": "P-40-K Bolt Pistol",
+      "tipo": "Pistol",
+      "dano": null,
+      "capacidade": null,
+      "cadencia": null,
+      "id": "secondary-p-40-k-bolt-pistol",
+      "imagem": "equipment/secondary-p-40-k-bolt-pistol.png"
+    },
+    {
+      "nome": "P-69 Veto",
+      "tipo": "Pistols",
+      "dano": "105 Ballistic",
+      "capacidade": "12",
+      "cadencia": "750 rpm",
+      "id": "secondary-p-69-veto",
+      "imagem": "equipment/secondary-p-69-veto.png"
+    },
+    {
+      "nome": "P-72 Crisper",
+      "tipo": "Special",
+      "dano": "150 DPS Fire",
+      "capacidade": "50",
+      "cadencia": null,
+      "id": "secondary-p-72-crisper",
+      "imagem": "equipment/secondary-p-72-crisper.png"
+    },
+    {
+      "nome": "P-92 Warrant",
+      "tipo": "Pistols",
+      "dano": "80 Ballistic",
+      "capacidade": "13",
+      "cadencia": "450 rpm",
+      "id": "secondary-p-92-warrant",
+      "imagem": "equipment/secondary-p-92-warrant.png"
+    },
+    {
+      "nome": "PLAS-15 Loyalist",
+      "tipo": "Special",
+      "dano": "75-150 Ballistic [[File:Damage Explosion Icon.svg|20px|link",
+      "capacidade": "8",
+      "cadencia": "1000 rpm",
+      "id": "secondary-plas-15-loyalist",
+      "imagem": "equipment/secondary-plas-15-loyalist.png"
+    },
+    {
+      "nome": "SG-22 Bushwhacker",
+      "tipo": "Special",
+      "dano": "405 Ballistic",
+      "capacidade": "3",
+      "cadencia": "650 rpm",
+      "id": "secondary-sg-22-bushwhacker",
+      "imagem": "equipment/secondary-sg-22-bushwhacker.png"
+    }
+  ],
+  "grenade": [
+    {
+      "nome": "G-10 Incendiary",
+      "tipo": "Standard",
+      "dano": "300 Explosion [[File:Damage Fire Icon.svg|20px|link=Damage]",
+      "capacidade": "5",
+      "cadencia": null,
+      "id": "grenade-g-10-incendiary",
+      "imagem": "equipment/grenade-g-10-incendiary.png"
+    },
+    {
+      "nome": "G-109 Urchin",
+      "tipo": "Special",
+      "dano": "0",
+      "capacidade": "5",
+      "cadencia": null,
+      "id": "grenade-g-109-urchin",
+      "imagem": "equipment/grenade-g-109-urchin.png"
+    },
+    {
+      "nome": "G-12 High Explosive",
+      "tipo": "Standard",
+      "dano": "800 Explosion",
+      "capacidade": "5",
+      "cadencia": null,
+      "id": "grenade-g-12-high-explosive",
+      "imagem": "equipment/grenade-g-12-high-explosive.png"
+    },
+    {
+      "nome": "G-123 Thermite",
+      "tipo": "Special",
+      "dano": "150/s over 6.5s Fire [[File:Damage Explosion Icon.svg|20px|lin",
+      "capacidade": "3",
+      "cadencia": null,
+      "id": "grenade-g-123-thermite",
+      "imagem": "equipment/grenade-g-123-thermite.png"
+    },
+    {
+      "nome": "G-13 Incendiary Impact",
+      "tipo": "Special",
+      "dano": "150 Explosion",
+      "capacidade": "5",
+      "cadencia": null,
+      "id": "grenade-g-13-incendiary-impact",
+      "imagem": "equipment/grenade-g-13-incendiary-impact.png"
+    },
+    {
+      "nome": "G-142 Pyrotech",
+      "tipo": "Special",
+      "dano": "20 DPS Fire",
+      "capacidade": "6",
+      "cadencia": null,
+      "id": "grenade-g-142-pyrotech",
+      "imagem": "equipment/grenade-g-142-pyrotech.png"
+    },
+    {
+      "nome": "G-16 Impact",
+      "tipo": "Special",
+      "dano": "400 Explosion",
+      "capacidade": "5",
+      "cadencia": null,
+      "id": "grenade-g-16-impact",
+      "imagem": "equipment/grenade-g-16-impact.png"
+    },
+    {
+      "nome": "G-23 Stun",
+      "tipo": "Special",
+      "dano": "0",
+      "capacidade": "5",
+      "cadencia": null,
+      "id": "grenade-g-23-stun",
+      "imagem": "equipment/grenade-g-23-stun.png"
+    },
+    {
+      "nome": "G-3 Smoke",
+      "tipo": "Special",
+      "dano": "0",
+      "capacidade": "5",
+      "cadencia": null,
+      "id": "grenade-g-3-smoke",
+      "imagem": "equipment/grenade-g-3-smoke.png"
+    },
+    {
+      "nome": "G-31 Arc",
+      "tipo": "Special",
+      "dano": "100 Arc",
+      "capacidade": "5",
+      "cadencia": null,
+      "id": "grenade-g-31-arc",
+      "imagem": "equipment/grenade-g-31-arc.png"
+    },
+    {
+      "nome": "G-4 Gas",
+      "tipo": "Special",
+      "dano": "3 Gas (Explosion) </sp",
+      "capacidade": "4",
+      "cadencia": null,
+      "id": "grenade-g-4-gas",
+      "imagem": "equipment/grenade-g-4-gas.png"
+    },
+    {
+      "nome": "G-40-K Meltamine",
+      "tipo": "Special",
+      "dano": null,
+      "capacidade": null,
+      "cadencia": null,
+      "id": "grenade-g-40-k-meltamine",
+      "imagem": "equipment/grenade-g-40-k-meltamine.png"
+    },
+    {
+      "nome": "G-48 Giga Grenade",
+      "tipo": "Special",
+      "dano": "2,000 Explosion",
+      "capacidade": "2",
+      "cadencia": null,
+      "id": "grenade-g-48-giga-grenade",
+      "imagem": "equipment/grenade-g-48-giga-grenade.png"
+    },
+    {
+      "nome": "G-50 Seeker",
+      "tipo": "Special",
+      "dano": "500 Explosion",
+      "capacidade": "5",
+      "cadencia": null,
+      "id": "grenade-g-50-seeker",
+      "imagem": "equipment/grenade-g-50-seeker.png"
+    },
+    {
+      "nome": "G-6 Frag",
+      "tipo": "Standard",
+      "dano": "500 Explosion [[File:Damage Ballistic Icon.svg|20px|link=Dam",
+      "capacidade": "6",
+      "cadencia": null,
+      "id": "grenade-g-6-frag",
+      "imagem": "equipment/grenade-g-6-frag.png"
+    },
+    {
+      "nome": "G-7 Pineapple",
+      "tipo": "Standard",
+      "dano": "300 Explosion (Grenade) [[File:Damage Ballistic Icon.svg|20p",
+      "capacidade": "5",
+      "cadencia": null,
+      "id": "grenade-g-7-pineapple",
+      "imagem": "equipment/grenade-g-7-pineapple.png"
+    },
+    {
+      "nome": "G-89 Smokescreen",
+      "tipo": "Special",
+      "dano": "0",
+      "capacidade": "5",
+      "cadencia": null,
+      "id": "grenade-g-89-smokescreen",
+      "imagem": "equipment/grenade-g-89-smokescreen.png"
+    },
+    {
+      "nome": "G/SH-39 Shield",
+      "tipo": "Special",
+      "dano": "0 Explosion",
+      "capacidade": "4",
+      "cadencia": null,
+      "id": "grenade-g-sh-39-shield",
+      "imagem": "equipment/grenade-g-sh-39-shield.png"
+    },
+    {
+      "nome": "K-2 Throwing Knife",
+      "tipo": "Special",
+      "dano": "300 Ballistic",
+      "capacidade": "20",
+      "cadencia": null,
+      "id": "grenade-k-2-throwing-knife",
+      "imagem": "equipment/grenade-k-2-throwing-knife.png"
+    },
+    {
+      "nome": "TED-63 Dynamite",
+      "tipo": "Standard",
+      "dano": "1,000 Explosion",
+      "capacidade": "4",
+      "cadencia": null,
+      "id": "grenade-ted-63-dynamite",
+      "imagem": "equipment/grenade-ted-63-dynamite.png"
+    },
+    {
+      "nome": "TM-1 Lure Mine",
+      "tipo": "Special",
+      "dano": "1,000 Explosion",
+      "capacidade": "4",
+      "cadencia": null,
+      "id": "grenade-tm-1-lure-mine",
+      "imagem": "equipment/grenade-tm-1-lure-mine.png"
+    }
+  ],
+  "armor": [
+    {
+      "nome": "A-35 Recon",
+      "peso": "Medium",
+      "armor": 100,
+      "speed": 500,
+      "stamina": 100,
+      "passive": "Feet First",
+      "warbond": "Halo: ODST",
+      "id": "armor-a-35-recon",
+      "imagem": "equipment/armor-a-35-recon.png"
+    },
+    {
+      "nome": "A-9 Helljumper",
+      "peso": "Medium",
+      "armor": 100,
+      "speed": 500,
+      "stamina": 100,
+      "passive": "Feet First",
+      "warbond": "Halo: ODST",
+      "id": "armor-a-9-helljumper",
+      "imagem": "equipment/armor-a-9-helljumper.png"
+    },
+    {
+      "nome": "AC-1 Dutiful",
+      "peso": "Medium",
+      "armor": 100,
+      "speed": 500,
+      "stamina": 100,
+      "passive": "Acclimated",
+      "warbond": "Righteous Revenants",
+      "id": "armor-ac-1-dutiful",
+      "imagem": "equipment/armor-ac-1-dutiful.png"
+    },
+    {
+      "nome": "AC-2 Obedient",
+      "peso": "Light",
+      "armor": 50,
+      "speed": 550,
+      "stamina": 125,
+      "passive": "Acclimated",
+      "warbond": "Righteous Revenants",
+      "id": "armor-ac-2-obedient",
+      "imagem": "equipment/armor-ac-2-obedient.png"
+    },
+    {
+      "nome": "AD-11 Livewire",
+      "peso": "Light",
+      "armor": 50,
+      "speed": 550,
+      "stamina": 125,
+      "passive": "Adreno-Defibrillator",
+      "warbond": "Superstore",
+      "id": "armor-ad-11-livewire",
+      "imagem": "equipment/armor-ad-11-livewire.png"
+    },
+    {
+      "nome": "AD-26 Bleeding Edge",
+      "peso": "Medium",
+      "armor": 100,
+      "speed": 500,
+      "stamina": 100,
+      "passive": "Adreno-Defibrillator",
+      "warbond": "Control Group",
+      "id": "armor-ad-26-bleeding-edge",
+      "imagem": "equipment/armor-ad-26-bleeding-edge.png"
+    },
+    {
+      "nome": "AD-49 Apollonian",
+      "peso": "Heavy",
+      "armor": 150,
+      "speed": 450,
+      "stamina": 50,
+      "passive": "Adreno-Defibrillator",
+      "warbond": "Control Group",
+      "id": "armor-ad-49-apollonian",
+      "imagem": "equipment/armor-ad-49-apollonian.png"
+    },
+    {
+      "nome": "AF-02 Haz-Master",
+      "peso": "Medium",
+      "armor": 100,
+      "speed": 500,
+      "stamina": 100,
+      "passive": "Advanced Filtration",
+      "warbond": "Chemical Agents",
+      "id": "armor-af-02-haz-master",
+      "imagem": "equipment/armor-af-02-haz-master.png"
+    },
+    {
+      "nome": "AF-50 Noxious Ranger",
+      "peso": "Light",
+      "armor": 50,
+      "speed": 550,
+      "stamina": 125,
+      "passive": "Advanced Filtration",
+      "warbond": "Chemical Agents",
+      "id": "armor-af-50-noxious-ranger",
+      "imagem": "equipment/armor-af-50-noxious-ranger.png"
+    },
+    {
+      "nome": "AF-52 Lockdown",
+      "peso": "Heavy",
+      "armor": 150,
+      "speed": 450,
+      "stamina": 50,
+      "passive": "Advanced Filtration",
+      "warbond": "Superstore",
+      "id": "armor-af-52-lockdown",
+      "imagem": "equipment/armor-af-52-lockdown.png"
+    },
+    {
+      "nome": "AF-91 Field Chemist",
+      "peso": "Medium",
+      "armor": 100,
+      "speed": 500,
+      "stamina": 100,
+      "passive": "Advanced Filtration",
+      "warbond": "Superstore",
+      "id": "armor-af-91-field-chemist",
+      "imagem": "equipment/armor-af-91-field-chemist.png"
+    },
+    {
+      "nome": "B-01 Tactical",
+      "peso": "Medium",
+      "armor": 150,
+      "speed": 500,
+      "stamina": 100,
+      "passive": "Extra Padding",
+      "warbond": "Starter Equipment",
+      "id": "armor-b-01-tactical",
+      "imagem": "equipment/armor-b-01-tactical.png"
+    },
+    {
+      "nome": "B-08 Light Gunner",
+      "peso": "Light",
+      "armor": 100,
+      "speed": 550,
+      "stamina": 125,
+      "passive": "Extra Padding",
+      "warbond": "Superstore",
+      "id": "armor-b-08-light-gunner",
+      "imagem": "equipment/armor-b-08-light-gunner.png"
+    },
+    {
+      "nome": "B-22 Model Citizen",
+      "peso": "Medium",
+      "armor": 100,
+      "speed": 500,
+      "stamina": 100,
+      "passive": "Democracy Protects",
+      "warbond": "Anniversary Gift",
+      "id": "armor-b-22-model-citizen",
+      "imagem": "equipment/armor-b-22-model-citizen.png"
+    },
+    {
+      "nome": "B-24 Enforcer",
+      "peso": "Medium",
+      "armor": 129,
+      "speed": 471,
+      "stamina": 71,
+      "passive": "Fortified",
+      "warbond": "Superstore",
+      "id": "armor-b-24-enforcer",
+      "imagem": "equipment/armor-b-24-enforcer.png"
+    },
+    {
+      "nome": "B-27 Fortified Commando",
+      "peso": "Heavy",
+      "armor": 200,
+      "speed": 450,
+      "stamina": 50,
+      "passive": "Extra Padding",
+      "warbond": "Superstore",
+      "id": "armor-b-27-fortified-commando",
+      "imagem": "equipment/armor-b-27-fortified-commando.png"
+    },
+    {
+      "nome": "BP-20 Correct Officer",
+      "peso": "Medium",
+      "armor": 100,
+      "speed": 500,
+      "stamina": 100,
+      "passive": "Ballistic Padding",
+      "warbond": "Force of Law",
+      "id": "armor-bp-20-correct-officer",
+      "imagem": "equipment/armor-bp-20-correct-officer.png"
+    },
+    {
+      "nome": "BP-32 Jackboot",
+      "peso": "Light",
+      "armor": 50,
+      "speed": 550,
+      "stamina": 125,
+      "passive": "Ballistic Padding",
+      "warbond": "Force of Law",
+      "id": "armor-bp-32-jackboot",
+      "imagem": "equipment/armor-bp-32-jackboot.png"
+    },
+    {
+      "nome": "BP-77 Grand Juror",
+      "peso": "Heavy",
+      "armor": 150,
+      "speed": 450,
+      "stamina": 50,
+      "passive": "Ballistic Padding",
+      "warbond": "Superstore",
+      "id": "armor-bp-77-grand-juror",
+      "imagem": "equipment/armor-bp-77-grand-juror.png"
+    },
+    {
+      "nome": "CE-07 Demolition Specialist",
+      "peso": "Light",
+      "armor": 64,
+      "speed": 536,
+      "stamina": 118,
+      "passive": "Engineering Kit",
+      "warbond": "Democratic Detonation",
+      "id": "armor-ce-07-demolition-specialist",
+      "imagem": "equipment/armor-ce-07-demolition-specialist.png"
+    },
+    {
+      "nome": "CE-101 Guerilla Gorilla",
+      "peso": "Heavy",
+      "armor": 150,
+      "speed": 450,
+      "stamina": 50,
+      "passive": "Engineering Kit",
+      "warbond": "Superstore",
+      "id": "armor-ce-101-guerilla-gorilla",
+      "imagem": "equipment/armor-ce-101-guerilla-gorilla.png"
+    },
+    {
+      "nome": "CE-27 Ground Breaker",
+      "peso": "Medium",
+      "armor": 100,
+      "speed": 500,
+      "stamina": 100,
+      "passive": "Engineering Kit",
+      "warbond": "Democratic Detonation",
+      "id": "armor-ce-27-ground-breaker",
+      "imagem": "equipment/armor-ce-27-ground-breaker.png"
+    },
+    {
+      "nome": "CE-35 Trench Engineer",
+      "peso": "Medium",
+      "armor": 100,
+      "speed": 500,
+      "stamina": 100,
+      "passive": "Engineering Kit",
+      "warbond": "Helldivers Mobilize!",
+      "id": "armor-ce-35-trench-engineer",
+      "imagem": "equipment/armor-ce-35-trench-engineer.png"
+    },
+    {
+      "nome": "CE-64 Grenadier",
+      "peso": "Heavy",
+      "armor": 150,
+      "speed": 450,
+      "stamina": 50,
+      "passive": "Engineering Kit",
+      "warbond": "Superstore",
+      "id": "armor-ce-64-grenadier",
+      "imagem": "equipment/armor-ce-64-grenadier.png"
+    },
+    {
+      "nome": "CE-67 Titan",
+      "peso": "Light",
+      "armor": 79,
+      "speed": 521,
+      "stamina": 111,
+      "passive": "Engineering Kit",
+      "warbond": "Superstore",
+      "id": "armor-ce-67-titan",
+      "imagem": "equipment/armor-ce-67-titan.png"
+    },
+    {
+      "nome": "CE-74 Breaker",
+      "peso": "Light",
+      "armor": 50,
+      "speed": 550,
+      "stamina": 125,
+      "passive": "Engineering Kit",
+      "warbond": "Superstore",
+      "id": "armor-ce-74-breaker",
+      "imagem": "equipment/armor-ce-74-breaker.png"
+    },
+    {
+      "nome": "CE-81 Juggernaut",
+      "peso": "Medium",
+      "armor": 100,
+      "speed": 500,
+      "stamina": 100,
+      "passive": "Engineering Kit",
+      "warbond": "Superstore",
+      "id": "armor-ce-81-juggernaut",
+      "imagem": "equipment/armor-ce-81-juggernaut.png"
+    },
+    {
+      "nome": "CM-09 Bonesnapper",
+      "peso": "Medium",
+      "armor": 100,
+      "speed": 500,
+      "stamina": 100,
+      "passive": "Med-Kit",
+      "warbond": "Helldivers Mobilize!",
+      "id": "armor-cm-09-bonesnapper",
+      "imagem": "equipment/armor-cm-09-bonesnapper.png"
+    },
+    {
+      "nome": "CM-10 Clinician",
+      "peso": "Medium",
+      "armor": 100,
+      "speed": 500,
+      "stamina": 100,
+      "passive": "Med-Kit",
+      "warbond": "Superstore",
+      "id": "armor-cm-10-clinician",
+      "imagem": "equipment/armor-cm-10-clinician.png"
+    },
+    {
+      "nome": "CM-14 Physician",
+      "peso": "Medium",
+      "armor": 100,
+      "speed": 500,
+      "stamina": 100,
+      "passive": "Med-Kit",
+      "warbond": "Helldivers Mobilize!",
+      "id": "armor-cm-14-physician",
+      "imagem": "equipment/armor-cm-14-physician.png"
+    },
+    {
+      "nome": "CM-17 Butcher",
+      "peso": "Heavy",
+      "armor": 150,
+      "speed": 450,
+      "stamina": 50,
+      "passive": "Med-Kit",
+      "warbond": "Superstore",
+      "id": "armor-cm-17-butcher",
+      "imagem": "equipment/armor-cm-17-butcher.png"
+    },
+    {
+      "nome": "CM-21 Trench Paramedic",
+      "peso": "Light",
+      "armor": 64,
+      "speed": 536,
+      "stamina": 118,
+      "passive": "Med-Kit",
+      "warbond": "Superstore",
+      "id": "armor-cm-21-trench-paramedic",
+      "imagem": "equipment/armor-cm-21-trench-paramedic.png"
+    },
+    {
+      "nome": "CPG-48 Sapper",
+      "peso": "Medium",
+      "armor": 100,
+      "speed": 500,
+      "stamina": 100,
+      "passive": "Concussive Padding, Grenadier",
+      "warbond": "Entrenched Division",
+      "id": "armor-cpg-48-sapper",
+      "imagem": "equipment/armor-cpg-48-sapper.png"
+    },
+    {
+      "nome": "CPH-26 Commandant (Armor)",
+      "peso": "Light",
+      "armor": 50,
+      "speed": 550,
+      "stamina": 125,
+      "passive": "Concussive Padding, Hazmat",
+      "warbond": "Entrenched Division",
+      "id": "armor-cph-26-commandant-armor",
+      "imagem": "equipment/armor-cph-26-commandant-armor.png"
+    },
+    {
+      "nome": "CPR-80 Bulwark",
+      "peso": "Heavy",
+      "armor": 180,
+      "speed": 450,
+      "stamina": 50,
+      "passive": "Concussive Padding, Reinforced",
+      "warbond": "Superstore",
+      "id": "armor-cpr-80-bulwark",
+      "imagem": "equipment/armor-cpr-80-bulwark.png"
+    },
+    {
+      "nome": "CW-22 Kodiak",
+      "peso": "Heavy",
+      "armor": 150,
+      "speed": 450,
+      "stamina": 50,
+      "passive": "Fortified",
+      "warbond": "Polar Patriots",
+      "id": "armor-cw-22-kodiak",
+      "imagem": "equipment/armor-cw-22-kodiak.png"
+    },
+    {
+      "nome": "CW-36 Winter Warrior",
+      "peso": "Heavy",
+      "armor": 150,
+      "speed": 450,
+      "stamina": 50,
+      "passive": "Servo-Assisted",
+      "warbond": "Polar Patriots",
+      "id": "armor-cw-36-winter-warrior",
+      "imagem": "equipment/armor-cw-36-winter-warrior.png"
+    },
+    {
+      "nome": "CW-4 Arctic Ranger",
+      "peso": "Light",
+      "armor": 50,
+      "speed": 550,
+      "stamina": 125,
+      "passive": "Scout",
+      "warbond": "Polar Patriots",
+      "id": "armor-cw-4-arctic-ranger",
+      "imagem": "equipment/armor-cw-4-arctic-ranger.png"
+    },
+    {
+      "nome": "CW-9 White Wolf",
+      "peso": "Medium",
+      "armor": 150,
+      "speed": 500,
+      "stamina": 100,
+      "passive": "Extra Padding",
+      "warbond": "Superstore",
+      "id": "armor-cw-9-white-wolf",
+      "imagem": "equipment/armor-cw-9-white-wolf.png"
+    },
+    {
+      "nome": "DP-00 Tactical",
+      "peso": "Medium",
+      "armor": 100,
+      "speed": 500,
+      "stamina": 100,
+      "passive": "Democracy Protects",
+      "warbond": "Liberty Day",
+      "id": "armor-dp-00-tactical",
+      "imagem": "equipment/armor-dp-00-tactical.png"
+    },
+    {
+      "nome": "DP-11 Champion of the People",
+      "peso": "Medium",
+      "armor": 100,
+      "speed": 500,
+      "stamina": 100,
+      "passive": "Democracy Protects",
+      "warbond": "Helldivers Mobilize!",
+      "id": "armor-dp-11-champion-of-the-people",
+      "imagem": "equipment/armor-dp-11-champion-of-the-people.png"
+    },
+    {
+      "nome": "DP-40 Hero of the Federation",
+      "peso": "Medium",
+      "armor": 100,
+      "speed": 500,
+      "stamina": 100,
+      "passive": "Democracy Protects",
+      "warbond": "Helldivers Mobilize!",
+      "id": "armor-dp-40-hero-of-the-federation",
+      "imagem": "equipment/armor-dp-40-hero-of-the-federation.png"
+    },
+    {
+      "nome": "DP-53 Savior of the Free",
+      "peso": "Medium",
+      "armor": 100,
+      "speed": 500,
+      "stamina": 100,
+      "passive": "Democracy Protects",
+      "warbond": "Super Citizen Edition",
+      "id": "armor-dp-53-savior-of-the-free",
+      "imagem": "equipment/armor-dp-53-savior-of-the-free.png"
+    },
+    {
+      "nome": "DP-8 Mountain-Scaled",
+      "peso": "Medium",
+      "armor": 100,
+      "speed": 500,
+      "stamina": 100,
+      "passive": "Siege-Ready",
+      "warbond": "Superstore",
+      "id": "armor-dp-8-mountain-scaled",
+      "imagem": "equipment/armor-dp-8-mountain-scaled.png"
+    },
+    {
+      "nome": "DS-10 Big Game Hunter",
+      "peso": "Light",
+      "armor": 50,
+      "speed": 550,
+      "stamina": 125,
+      "passive": "Desert Stormer",
+      "warbond": "Superstore",
+      "id": "armor-ds-10-big-game-hunter",
+      "imagem": "equipment/armor-ds-10-big-game-hunter.png"
+    },
+    {
+      "nome": "DS-191 Scorpion",
+      "peso": "Medium",
+      "armor": 100,
+      "speed": 500,
+      "stamina": 100,
+      "passive": "Desert Stormer",
+      "warbond": "Dust Devils",
+      "id": "armor-ds-191-scorpion",
+      "imagem": "equipment/armor-ds-191-scorpion.png"
+    },
+    {
+      "nome": "DS-42 Federation's Blade",
+      "peso": "Heavy",
+      "armor": 150,
+      "speed": 450,
+      "stamina": 50,
+      "passive": "Desert Stormer",
+      "warbond": "Dust Devils",
+      "id": "armor-ds-42-federation-s-blade",
+      "imagem": "equipment/armor-ds-42-federation-s-blade.png"
+    },
+    {
+      "nome": "EX-00 Prototype X",
+      "peso": "Light",
+      "armor": 50,
+      "speed": 550,
+      "stamina": 125,
+      "passive": "Electrical Conduit",
+      "warbond": "Cutting Edge",
+      "id": "armor-ex-00-prototype-x",
+      "imagem": "equipment/armor-ex-00-prototype-x.png"
+    },
+    {
+      "nome": "EX-03 Prototype 3",
+      "peso": "Medium",
+      "armor": 100,
+      "speed": 500,
+      "stamina": 100,
+      "passive": "Electrical Conduit",
+      "warbond": "Cutting Edge",
+      "id": "armor-ex-03-prototype-3",
+      "imagem": "equipment/armor-ex-03-prototype-3.png"
+    },
+    {
+      "nome": "EX-16 Prototype 16",
+      "peso": "Medium",
+      "armor": 100,
+      "speed": 500,
+      "stamina": 100,
+      "passive": "Electrical Conduit",
+      "warbond": "Cutting Edge",
+      "id": "armor-ex-16-prototype-16",
+      "imagem": "equipment/armor-ex-16-prototype-16.png"
+    },
+    {
+      "nome": "FS-05 Marksman",
+      "peso": "Heavy",
+      "armor": 150,
+      "speed": 450,
+      "stamina": 50,
+      "passive": "Fortified",
+      "warbond": "Helldivers Mobilize!",
+      "id": "armor-fs-05-marksman",
+      "imagem": "equipment/armor-fs-05-marksman.png"
+    },
+    {
+      "nome": "FS-11 Executioner",
+      "peso": "Heavy",
+      "armor": 150,
+      "speed": 450,
+      "stamina": 50,
+      "passive": "Fortified",
+      "warbond": "Superstore",
+      "id": "armor-fs-11-executioner",
+      "imagem": "equipment/armor-fs-11-executioner.png"
+    },
+    {
+      "nome": "FS-23 Battle Master",
+      "peso": "Heavy",
+      "armor": 150,
+      "speed": 450,
+      "stamina": 50,
+      "passive": "Fortified",
+      "warbond": "Helldivers Mobilize!",
+      "id": "armor-fs-23-battle-master",
+      "imagem": "equipment/armor-fs-23-battle-master.png"
+    },
+    {
+      "nome": "FS-34 Exterminator",
+      "peso": "Medium",
+      "armor": 100,
+      "speed": 500,
+      "stamina": 100,
+      "passive": "Fortified",
+      "warbond": "Superstore",
+      "id": "armor-fs-34-exterminator",
+      "imagem": "equipment/armor-fs-34-exterminator.png"
+    },
+    {
+      "nome": "FS-37 Ravager",
+      "peso": "Light",
+      "armor": 50,
+      "speed": 550,
+      "stamina": 125,
+      "passive": "Engineering Kit",
+      "warbond": "Superstore",
+      "id": "armor-fs-37-ravager",
+      "imagem": "equipment/armor-fs-37-ravager.png"
+    },
+    {
+      "nome": "FS-38 Eradicator",
+      "peso": "Light",
+      "armor": 50,
+      "speed": 550,
+      "stamina": 125,
+      "passive": "Fortified",
+      "warbond": "Superstore",
+      "id": "armor-fs-38-eradicator",
+      "imagem": "equipment/armor-fs-38-eradicator.png"
+    },
+    {
+      "nome": "FS-55 Devastator",
+      "peso": "Heavy",
+      "armor": 150,
+      "speed": 450,
+      "stamina": 50,
+      "passive": "Fortified",
+      "warbond": "Democratic Detonation",
+      "id": "armor-fs-55-devastator",
+      "imagem": "equipment/armor-fs-55-devastator.png"
+    },
+    {
+      "nome": "FS-61 Dreadnought",
+      "peso": "Heavy",
+      "armor": 150,
+      "speed": 450,
+      "stamina": 50,
+      "passive": "Servo-Assisted",
+      "warbond": "Superstore",
+      "id": "armor-fs-61-dreadnought",
+      "imagem": "equipment/armor-fs-61-dreadnought.png"
+    },
+    {
+      "nome": "GS-11 Democracy's Deputy",
+      "peso": "Light",
+      "armor": 50,
+      "speed": 550,
+      "stamina": 125,
+      "passive": "Gunslinger",
+      "warbond": "Superstore",
+      "id": "armor-gs-11-democracy-s-deputy",
+      "imagem": "equipment/armor-gs-11-democracy-s-deputy.png"
+    },
+    {
+      "nome": "GS-17 Frontier Marshal",
+      "peso": "Medium",
+      "armor": 100,
+      "speed": 500,
+      "stamina": 100,
+      "passive": "Gunslinger",
+      "warbond": "Borderline Justice",
+      "id": "armor-gs-17-frontier-marshal",
+      "imagem": "equipment/armor-gs-17-frontier-marshal.png"
+    },
+    {
+      "nome": "GS-66 Lawmaker",
+      "peso": "Heavy",
+      "armor": 150,
+      "speed": 450,
+      "stamina": 50,
+      "passive": "Gunslinger",
+      "warbond": "Borderline Justice",
+      "id": "armor-gs-66-lawmaker",
+      "imagem": "equipment/armor-gs-66-lawmaker.png"
+    },
+    {
+      "nome": "I-09 Heatseeker",
+      "peso": "Light",
+      "armor": 50,
+      "speed": 550,
+      "stamina": 125,
+      "passive": "Inflammable",
+      "warbond": "Freedom's Flame",
+      "id": "armor-i-09-heatseeker",
+      "imagem": "equipment/armor-i-09-heatseeker.png"
+    },
+    {
+      "nome": "I-102 Draconaught",
+      "peso": "Medium",
+      "armor": 100,
+      "speed": 500,
+      "stamina": 100,
+      "passive": "Inflammable",
+      "warbond": "Freedom's Flame",
+      "id": "armor-i-102-draconaught",
+      "imagem": "equipment/armor-i-102-draconaught.png"
+    },
+    {
+      "nome": "I-44 Salamander",
+      "peso": "Heavy",
+      "armor": 150,
+      "speed": 450,
+      "stamina": 50,
+      "passive": "Inflammable",
+      "warbond": "Superstore",
+      "id": "armor-i-44-salamander",
+      "imagem": "equipment/armor-i-44-salamander.png"
+    },
+    {
+      "nome": "I-92 Fire Fighter",
+      "peso": "Medium",
+      "armor": 100,
+      "speed": 500,
+      "stamina": 100,
+      "passive": "Inflammable",
+      "warbond": "Superstore",
+      "id": "armor-i-92-fire-fighter",
+      "imagem": "equipment/armor-i-92-fire-fighter.png"
+    },
+    {
+      "nome": "IE-12 Righteous",
+      "peso": "Medium",
+      "armor": 100,
+      "speed": 500,
+      "stamina": 100,
+      "passive": "Integrated Explosives",
+      "warbond": "Servants of Freedom",
+      "id": "armor-ie-12-righteous",
+      "imagem": "equipment/armor-ie-12-righteous.png"
+    },
+    {
+      "nome": "IE-3 Martyr",
+      "peso": "Medium",
+      "armor": 100,
+      "speed": 500,
+      "stamina": 100,
+      "passive": "Integrated Explosives",
+      "warbond": "Servants of Freedom",
+      "id": "armor-ie-3-martyr",
+      "imagem": "equipment/armor-ie-3-martyr.png"
+    },
+    {
+      "nome": "IE-57 Hell-Bent",
+      "peso": "Light",
+      "armor": 50,
+      "speed": 550,
+      "stamina": 125,
+      "passive": "Integrated Explosives",
+      "warbond": "Superstore",
+      "id": "armor-ie-57-hell-bent",
+      "imagem": "equipment/armor-ie-57-hell-bent.png"
+    },
+    {
+      "nome": "O-2 Heavy Operator",
+      "peso": "Heavy",
+      "armor": 150,
+      "speed": 450,
+      "stamina": 50,
+      "passive": "Oxygenator",
+      "warbond": "Exo Experts",
+      "id": "armor-o-2-heavy-operator",
+      "imagem": "equipment/armor-o-2-heavy-operator.png"
+    },
+    {
+      "nome": "O-3 Free Spirit",
+      "peso": "Light",
+      "armor": 50,
+      "speed": 550,
+      "stamina": 125,
+      "passive": "Oxygenator",
+      "warbond": "Exo Experts",
+      "id": "armor-o-3-free-spirit",
+      "imagem": "equipment/armor-o-3-free-spirit.png"
+    },
+    {
+      "nome": "O-44 Bonded Pilot",
+      "peso": "Medium",
+      "armor": 100,
+      "speed": 500,
+      "stamina": 100,
+      "passive": "Oxygenator",
+      "warbond": "Superstore",
+      "id": "armor-o-44-bonded-pilot",
+      "imagem": "equipment/armor-o-44-bonded-pilot.png"
+    },
+    {
+      "nome": "PH-202 Twigsnapper",
+      "peso": "Heavy",
+      "armor": 150,
+      "speed": 450,
+      "stamina": 50,
+      "passive": "Peak Physique",
+      "warbond": "Viper Commandos",
+      "id": "armor-ph-202-twigsnapper",
+      "imagem": "equipment/armor-ph-202-twigsnapper.png"
+    },
+    {
+      "nome": "PH-56 Jaguar",
+      "peso": "Medium",
+      "armor": 100,
+      "speed": 500,
+      "stamina": 100,
+      "passive": "Peak Physique",
+      "warbond": "Superstore",
+      "id": "armor-ph-56-jaguar",
+      "imagem": "equipment/armor-ph-56-jaguar.png"
+    },
+    {
+      "nome": "PH-9 Predator",
+      "peso": "Light",
+      "armor": 50,
+      "speed": 550,
+      "stamina": 125,
+      "passive": "Peak Physique",
+      "warbond": "Viper Commandos",
+      "id": "armor-ph-9-predator",
+      "imagem": "equipment/armor-ph-9-predator.png"
+    },
+    {
+      "nome": "RE-1861 Parade Commander",
+      "peso": "Light",
+      "armor": 50,
+      "speed": 550,
+      "stamina": 125,
+      "passive": "Reinforced Epaulettes",
+      "warbond": "Masters of Ceremony",
+      "id": "armor-re-1861-parade-commander",
+      "imagem": "equipment/armor-re-1861-parade-commander.png"
+    },
+    {
+      "nome": "RE-2310 Honorary Guard",
+      "peso": "Medium",
+      "armor": 100,
+      "speed": 500,
+      "stamina": 100,
+      "passive": "Reinforced Epaulettes",
+      "warbond": "Masters of Ceremony",
+      "id": "armor-re-2310-honorary-guard",
+      "imagem": "equipment/armor-re-2310-honorary-guard.png"
+    },
+    {
+      "nome": "RE-824 Bearer of the Standard",
+      "peso": "Heavy",
+      "armor": 150,
+      "speed": 450,
+      "stamina": 50,
+      "passive": "Reinforced Epaulettes",
+      "warbond": "Superstore",
+      "id": "armor-re-824-bearer-of-the-standard",
+      "imagem": "equipment/armor-re-824-bearer-of-the-standard.png"
+    },
+    {
+      "nome": "RS-100 Sanctioner",
+      "peso": "Light",
+      "armor": 50,
+      "speed": 550,
+      "stamina": 125,
+      "passive": "Reduced Signature",
+      "warbond": "Superstore",
+      "id": "armor-rs-100-sanctioner",
+      "imagem": "equipment/armor-rs-100-sanctioner.png"
+    },
+    {
+      "nome": "RS-20 Constrictor",
+      "peso": "Light",
+      "armor": 50,
+      "speed": 550,
+      "stamina": 125,
+      "passive": "Rock Solid",
+      "warbond": "Python Commandos",
+      "id": "armor-rs-20-constrictor",
+      "imagem": "equipment/armor-rs-20-constrictor.png"
+    },
+    {
+      "nome": "RS-40 Beast of Prey",
+      "peso": "Heavy",
+      "armor": 150,
+      "speed": 450,
+      "stamina": 50,
+      "passive": "Rock Solid",
+      "warbond": "Python Commandos",
+      "id": "armor-rs-40-beast-of-prey",
+      "imagem": "equipment/armor-rs-40-beast-of-prey.png"
+    },
+    {
+      "nome": "RS-6 Fiend Destroyer",
+      "peso": "Medium",
+      "armor": 100,
+      "speed": 500,
+      "stamina": 100,
+      "passive": "Rock Solid",
+      "warbond": "Superstore",
+      "id": "armor-rs-6-fiend-destroyer",
+      "imagem": "equipment/armor-rs-6-fiend-destroyer.png"
+    },
+    {
+      "nome": "RS-67 Null Cipher",
+      "peso": "Medium",
+      "armor": 100,
+      "speed": 500,
+      "stamina": 100,
+      "passive": "Reduced Signature",
+      "warbond": "Redacted Regiment",
+      "id": "armor-rs-67-null-cipher",
+      "imagem": "equipment/armor-rs-67-null-cipher.png"
+    },
+    {
+      "nome": "RS-89 Shadow Paragon",
+      "peso": "Light",
+      "armor": 50,
+      "speed": 550,
+      "stamina": 125,
+      "passive": "Reduced Signature",
+      "warbond": "Redacted Regiment",
+      "id": "armor-rs-89-shadow-paragon",
+      "imagem": "equipment/armor-rs-89-shadow-paragon.png"
+    },
+    {
+      "nome": "SA-04 Combat Technician",
+      "peso": "Medium",
+      "armor": 100,
+      "speed": 500,
+      "stamina": 100,
+      "passive": "Scout",
+      "warbond": "Helldivers Mobilize!",
+      "id": "armor-sa-04-combat-technician",
+      "imagem": "equipment/armor-sa-04-combat-technician.png"
+    },
+    {
+      "nome": "SA-12 Servo Assisted",
+      "peso": "Medium",
+      "armor": 100,
+      "speed": 500,
+      "stamina": 100,
+      "passive": "Servo-Assisted",
+      "warbond": "Steeled Veterans",
+      "id": "armor-sa-12-servo-assisted",
+      "imagem": "equipment/armor-sa-12-servo-assisted.png"
+    },
+    {
+      "nome": "SA-25 Steel Trooper",
+      "peso": "Medium",
+      "armor": 100,
+      "speed": 500,
+      "stamina": 100,
+      "passive": "Servo-Assisted",
+      "warbond": "Steeled Veterans",
+      "id": "armor-sa-25-steel-trooper",
+      "imagem": "equipment/armor-sa-25-steel-trooper.png"
+    },
+    {
+      "nome": "SA-32 Dynamo",
+      "peso": "Heavy",
+      "armor": 150,
+      "speed": 450,
+      "stamina": 50,
+      "passive": "Servo-Assisted",
+      "warbond": "Steeled Veterans",
+      "id": "armor-sa-32-dynamo",
+      "imagem": "equipment/armor-sa-32-dynamo.png"
+    },
+    {
+      "nome": "SA-7 Headfirst",
+      "peso": "Medium",
+      "armor": 125,
+      "speed": 500,
+      "stamina": 100,
+      "passive": "Supplementary Adrenaline",
+      "warbond": "Siege Breakers",
+      "id": "armor-sa-7-headfirst",
+      "imagem": "equipment/armor-sa-7-headfirst.png"
+    },
+    {
+      "nome": "SA-8 Ram",
+      "peso": "Heavy",
+      "armor": 175,
+      "speed": 450,
+      "stamina": 50,
+      "passive": "Supplementary Adrenaline",
+      "warbond": "Siege Breakers",
+      "id": "armor-sa-8-ram",
+      "imagem": "equipment/armor-sa-8-ram.png"
+    },
+    {
+      "nome": "SC-15 Drone Master",
+      "peso": "Medium",
+      "armor": 100,
+      "speed": 500,
+      "stamina": 100,
+      "passive": "Engineering Kit",
+      "warbond": "Superstore",
+      "id": "armor-sc-15-drone-master",
+      "imagem": "equipment/armor-sc-15-drone-master.png"
+    },
+    {
+      "nome": "SC-30 Trailblazer Scout",
+      "peso": "Light",
+      "armor": 50,
+      "speed": 550,
+      "stamina": 125,
+      "passive": "Scout",
+      "warbond": "Helldivers Mobilize!",
+      "id": "armor-sc-30-trailblazer-scout",
+      "imagem": "equipment/armor-sc-30-trailblazer-scout.png"
+    },
+    {
+      "nome": "SC-34 Infiltrator",
+      "peso": "Light",
+      "armor": 70,
+      "speed": 530,
+      "stamina": 115,
+      "passive": "Scout",
+      "warbond": "Helldivers Mobilize!",
+      "id": "armor-sc-34-infiltrator",
+      "imagem": "equipment/armor-sc-34-infiltrator.png"
+    },
+    {
+      "nome": "SC-37 Legionnaire",
+      "peso": "Light",
+      "armor": 50,
+      "speed": 550,
+      "stamina": 125,
+      "passive": "Servo-Assisted",
+      "warbond": "Superstore",
+      "id": "armor-sc-37-legionnaire",
+      "imagem": "equipment/armor-sc-37-legionnaire.png"
+    },
+    {
+      "nome": "SR-18 Roadblock",
+      "peso": "Heavy",
+      "armor": 150,
+      "speed": 450,
+      "stamina": 50,
+      "passive": "Siege-Ready",
+      "warbond": "Urban Legends",
+      "id": "armor-sr-18-roadblock",
+      "imagem": "equipment/armor-sr-18-roadblock.png"
+    },
+    {
+      "nome": "SR-24 Street Scout",
+      "peso": "Light",
+      "armor": 50,
+      "speed": 550,
+      "stamina": 125,
+      "passive": "Siege-Ready",
+      "warbond": "Urban Legends",
+      "id": "armor-sr-24-street-scout",
+      "imagem": "equipment/armor-sr-24-street-scout.png"
+    },
+    {
+      "nome": "SR-64 Cinderblock",
+      "peso": "Heavy",
+      "armor": 150,
+      "speed": 450,
+      "stamina": 50,
+      "passive": "Siege-Ready",
+      "warbond": "Superstore",
+      "id": "armor-sr-64-cinderblock",
+      "imagem": "equipment/armor-sr-64-cinderblock.png"
+    },
+    {
+      "nome": "TG-122 Demo-Trooper",
+      "peso": "Heavy",
+      "armor": 150,
+      "speed": 450,
+      "stamina": 50,
+      "passive": "True Grit",
+      "warbond": "Castellan’s Creed",
+      "id": "armor-tg-122-demo-trooper",
+      "imagem": "equipment/armor-tg-122-demo-trooper.png"
+    },
+    {
+      "nome": "TG-8 Sharpshooter",
+      "peso": "Medium",
+      "armor": 100,
+      "speed": 500,
+      "stamina": 100,
+      "passive": "True Grit",
+      "warbond": "Castellan’s Creed",
+      "id": "armor-tg-8-sharpshooter",
+      "imagem": "equipment/armor-tg-8-sharpshooter.png"
+    },
+    {
+      "nome": "TR-117 Alpha Commander",
+      "peso": "Medium",
+      "armor": 100,
+      "speed": 500,
+      "stamina": 100,
+      "passive": "Med-Kit",
+      "warbond": "Downloadable Content",
+      "id": "armor-tr-117-alpha-commander",
+      "imagem": "equipment/armor-tr-117-alpha-commander.png"
+    },
+    {
+      "nome": "TR-40 Gold Eagle",
+      "peso": "Medium",
+      "armor": 150,
+      "speed": 500,
+      "stamina": 100,
+      "passive": "Extra Padding",
+      "warbond": "Escalation of Freedom",
+      "id": "armor-tr-40-gold-eagle",
+      "imagem": "equipment/armor-tr-40-gold-eagle.png"
+    },
+    {
+      "nome": "TR-62 Knight",
+      "peso": "Heavy",
+      "armor": 150,
+      "speed": 450,
+      "stamina": 50,
+      "passive": "Servo-Assisted",
+      "warbond": "Pre-Order Bonus",
+      "id": "armor-tr-62-knight",
+      "imagem": "equipment/armor-tr-62-knight.png"
+    },
+    {
+      "nome": "TR-7 Ambassador of the Brand",
+      "peso": "Medium",
+      "armor": 150,
+      "speed": 500,
+      "stamina": 100,
+      "passive": "Extra Padding",
+      "warbond": "Pre-Order Bonus",
+      "id": "armor-tr-7-ambassador-of-the-brand",
+      "imagem": "equipment/armor-tr-7-ambassador-of-the-brand.png"
+    },
+    {
+      "nome": "TR-9 Cavalier of Democracy",
+      "peso": "Medium",
+      "armor": 100,
+      "speed": 500,
+      "stamina": 100,
+      "passive": "Democracy Protects",
+      "warbond": "Pre-Order Bonus",
+      "id": "armor-tr-9-cavalier-of-democracy",
+      "imagem": "equipment/armor-tr-9-cavalier-of-democracy.png"
+    },
+    {
+      "nome": "UF-16 Inspector",
+      "peso": "Light",
+      "armor": 75,
+      "speed": 550,
+      "stamina": 125,
+      "passive": "Unflinching",
+      "warbond": "Truth Enforcers",
+      "id": "armor-uf-16-inspector",
+      "imagem": "equipment/armor-uf-16-inspector.png"
+    },
+    {
+      "nome": "UF-50 Bloodhound",
+      "peso": "Medium",
+      "armor": 125,
+      "speed": 500,
+      "stamina": 100,
+      "passive": "Unflinching",
+      "warbond": "Truth Enforcers",
+      "id": "armor-uf-50-bloodhound",
+      "imagem": "equipment/armor-uf-50-bloodhound.png"
+    },
+    {
+      "nome": "UF-84 Doubt Killer",
+      "peso": "Medium",
+      "armor": 125,
+      "speed": 500,
+      "stamina": 100,
+      "passive": "Unflinching",
+      "warbond": "Superstore",
+      "id": "armor-uf-84-doubt-killer",
+      "imagem": "equipment/armor-uf-84-doubt-killer.png"
+    }
+  ],
+  "helmet": [
+    {
+      "nome": "A-35 Recon",
+      "warbond": "Halo: ODST",
+      "id": "helmet-a-35-recon",
+      "imagem": "equipment/helmet-a-35-recon.png"
+    },
+    {
+      "nome": "A-9 Helljumper",
+      "warbond": "Halo: ODST",
+      "id": "helmet-a-9-helljumper",
+      "imagem": "equipment/helmet-a-9-helljumper.png"
+    },
+    {
+      "nome": "AC-1 Dutiful",
+      "warbond": "Righteous Revenants",
+      "id": "helmet-ac-1-dutiful",
+      "imagem": "equipment/helmet-ac-1-dutiful.png"
+    },
+    {
+      "nome": "AC-2 Obedient",
+      "warbond": "Righteous Revenants",
+      "id": "helmet-ac-2-obedient",
+      "imagem": "equipment/helmet-ac-2-obedient.png"
+    },
+    {
+      "nome": "AD-11 Livewire",
+      "warbond": "Superstore",
+      "id": "helmet-ad-11-livewire",
+      "imagem": "equipment/helmet-ad-11-livewire.png"
+    },
+    {
+      "nome": "AD-26 Bleeding Edge",
+      "warbond": "Control Group",
+      "id": "helmet-ad-26-bleeding-edge",
+      "imagem": "equipment/helmet-ad-26-bleeding-edge.png"
+    },
+    {
+      "nome": "AD-49 Apollonian",
+      "warbond": "Control Group",
+      "id": "helmet-ad-49-apollonian",
+      "imagem": "equipment/helmet-ad-49-apollonian.png"
+    },
+    {
+      "nome": "AF-02 Haz-Master",
+      "warbond": "Chemical Agents",
+      "id": "helmet-af-02-haz-master",
+      "imagem": "equipment/helmet-af-02-haz-master.png"
+    },
+    {
+      "nome": "AF-50 Noxious Ranger",
+      "warbond": "Chemical Agents",
+      "id": "helmet-af-50-noxious-ranger",
+      "imagem": "equipment/helmet-af-50-noxious-ranger.png"
+    },
+    {
+      "nome": "AF-52 Lockdown",
+      "warbond": "Superstore",
+      "id": "helmet-af-52-lockdown",
+      "imagem": "equipment/helmet-af-52-lockdown.png"
+    },
+    {
+      "nome": "AF-91 Field Chemist",
+      "warbond": "Superstore",
+      "id": "helmet-af-91-field-chemist",
+      "imagem": "equipment/helmet-af-91-field-chemist.png"
+    },
+    {
+      "nome": "B-01 Tactical",
+      "warbond": "Starter Equipment",
+      "id": "helmet-b-01-tactical",
+      "imagem": "equipment/helmet-b-01-tactical.png"
+    },
+    {
+      "nome": "B-08 Light Gunner",
+      "warbond": "Superstore",
+      "id": "helmet-b-08-light-gunner",
+      "imagem": "equipment/helmet-b-08-light-gunner.png"
+    },
+    {
+      "nome": "B-22 Model Citizen",
+      "warbond": "Anniversary Gift",
+      "id": "helmet-b-22-model-citizen",
+      "imagem": "equipment/helmet-b-22-model-citizen.png"
+    },
+    {
+      "nome": "B-24 Enforcer",
+      "warbond": "Superstore",
+      "id": "helmet-b-24-enforcer",
+      "imagem": "equipment/helmet-b-24-enforcer.png"
+    },
+    {
+      "nome": "B-27 Fortified Commando",
+      "warbond": "Superstore",
+      "id": "helmet-b-27-fortified-commando",
+      "imagem": "equipment/helmet-b-27-fortified-commando.png"
+    },
+    {
+      "nome": "BP-20 Correct Officer",
+      "warbond": "Force of Law",
+      "id": "helmet-bp-20-correct-officer",
+      "imagem": "equipment/helmet-bp-20-correct-officer.png"
+    },
+    {
+      "nome": "BP-32 Jackboot",
+      "warbond": "Force of Law",
+      "id": "helmet-bp-32-jackboot",
+      "imagem": "equipment/helmet-bp-32-jackboot.png"
+    },
+    {
+      "nome": "BP-77 Grand Juror",
+      "warbond": "Superstore",
+      "id": "helmet-bp-77-grand-juror",
+      "imagem": "equipment/helmet-bp-77-grand-juror.png"
+    },
+    {
+      "nome": "CE-07 Demolition Specialist",
+      "warbond": "Democratic Detonation",
+      "id": "helmet-ce-07-demolition-specialist",
+      "imagem": "equipment/helmet-ce-07-demolition-specialist.png"
+    },
+    {
+      "nome": "CE-101 Guerilla Gorilla",
+      "warbond": "Superstore",
+      "id": "helmet-ce-101-guerilla-gorilla",
+      "imagem": "equipment/helmet-ce-101-guerilla-gorilla.png"
+    },
+    {
+      "nome": "CE-27 Ground Breaker",
+      "warbond": "Democratic Detonation",
+      "id": "helmet-ce-27-ground-breaker",
+      "imagem": "equipment/helmet-ce-27-ground-breaker.png"
+    },
+    {
+      "nome": "CE-35 Trench Engineer",
+      "warbond": "Helldivers Mobilize!",
+      "id": "helmet-ce-35-trench-engineer",
+      "imagem": "equipment/helmet-ce-35-trench-engineer.png"
+    },
+    {
+      "nome": "CE-64 Grenadier",
+      "warbond": "Superstore",
+      "id": "helmet-ce-64-grenadier",
+      "imagem": "equipment/helmet-ce-64-grenadier.png"
+    },
+    {
+      "nome": "CE-67 Titan",
+      "warbond": "Superstore",
+      "id": "helmet-ce-67-titan",
+      "imagem": "equipment/helmet-ce-67-titan.png"
+    },
+    {
+      "nome": "CE-74 Breaker",
+      "warbond": "Superstore",
+      "id": "helmet-ce-74-breaker",
+      "imagem": "equipment/helmet-ce-74-breaker.png"
+    },
+    {
+      "nome": "CE-81 Juggernaut",
+      "warbond": "Superstore",
+      "id": "helmet-ce-81-juggernaut",
+      "imagem": "equipment/helmet-ce-81-juggernaut.png"
+    },
+    {
+      "nome": "CM-09 Bonesnapper",
+      "warbond": "Helldivers Mobilize!",
+      "id": "helmet-cm-09-bonesnapper",
+      "imagem": "equipment/helmet-cm-09-bonesnapper.png"
+    },
+    {
+      "nome": "CM-10 Clinician",
+      "warbond": "Superstore",
+      "id": "helmet-cm-10-clinician",
+      "imagem": "equipment/helmet-cm-10-clinician.png"
+    },
+    {
+      "nome": "CM-14 Physician",
+      "warbond": "Helldivers Mobilize!",
+      "id": "helmet-cm-14-physician",
+      "imagem": "equipment/helmet-cm-14-physician.png"
+    },
+    {
+      "nome": "CM-17 Butcher",
+      "warbond": "Superstore",
+      "id": "helmet-cm-17-butcher",
+      "imagem": "equipment/helmet-cm-17-butcher.png"
+    },
+    {
+      "nome": "CM-21 Trench Paramedic",
+      "warbond": "Superstore",
+      "id": "helmet-cm-21-trench-paramedic",
+      "imagem": "equipment/helmet-cm-21-trench-paramedic.png"
+    },
+    {
+      "nome": "CPG-48 Sapper",
+      "warbond": "Entrenched Division",
+      "id": "helmet-cpg-48-sapper",
+      "imagem": "equipment/helmet-cpg-48-sapper.png"
+    },
+    {
+      "nome": "CPH-26 Commandant (Armor)",
+      "warbond": "Entrenched Division",
+      "id": "helmet-cph-26-commandant-armor",
+      "imagem": "equipment/helmet-cph-26-commandant-armor.png"
+    },
+    {
+      "nome": "CPR-80 Bulwark",
+      "warbond": "Superstore",
+      "id": "helmet-cpr-80-bulwark",
+      "imagem": "equipment/helmet-cpr-80-bulwark.png"
+    },
+    {
+      "nome": "CW-22 Kodiak",
+      "warbond": "Polar Patriots",
+      "id": "helmet-cw-22-kodiak",
+      "imagem": "equipment/helmet-cw-22-kodiak.png"
+    },
+    {
+      "nome": "CW-36 Winter Warrior",
+      "warbond": "Polar Patriots",
+      "id": "helmet-cw-36-winter-warrior",
+      "imagem": "equipment/helmet-cw-36-winter-warrior.png"
+    },
+    {
+      "nome": "CW-4 Arctic Ranger",
+      "warbond": "Polar Patriots",
+      "id": "helmet-cw-4-arctic-ranger",
+      "imagem": "equipment/helmet-cw-4-arctic-ranger.png"
+    },
+    {
+      "nome": "CW-9 White Wolf",
+      "warbond": "Superstore",
+      "id": "helmet-cw-9-white-wolf",
+      "imagem": "equipment/helmet-cw-9-white-wolf.png"
+    },
+    {
+      "nome": "DP-00 Tactical",
+      "warbond": "Liberty Day",
+      "id": "helmet-dp-00-tactical",
+      "imagem": "equipment/helmet-dp-00-tactical.png"
+    },
+    {
+      "nome": "DP-11 Champion of the People",
+      "warbond": "Helldivers Mobilize!",
+      "id": "helmet-dp-11-champion-of-the-people",
+      "imagem": "equipment/helmet-dp-11-champion-of-the-people.png"
+    },
+    {
+      "nome": "DP-40 Hero of the Federation",
+      "warbond": "Helldivers Mobilize!",
+      "id": "helmet-dp-40-hero-of-the-federation",
+      "imagem": "equipment/helmet-dp-40-hero-of-the-federation.png"
+    },
+    {
+      "nome": "DP-53 Savior of the Free",
+      "warbond": "Super Citizen Edition",
+      "id": "helmet-dp-53-savior-of-the-free",
+      "imagem": "equipment/helmet-dp-53-savior-of-the-free.png"
+    },
+    {
+      "nome": "DP-8 Mountain-Scaled",
+      "warbond": "Superstore",
+      "id": "helmet-dp-8-mountain-scaled",
+      "imagem": "equipment/helmet-dp-8-mountain-scaled.png"
+    },
+    {
+      "nome": "DS-10 Big Game Hunter",
+      "warbond": "Superstore",
+      "id": "helmet-ds-10-big-game-hunter",
+      "imagem": "equipment/helmet-ds-10-big-game-hunter.png"
+    },
+    {
+      "nome": "DS-191 Scorpion",
+      "warbond": "Dust Devils",
+      "id": "helmet-ds-191-scorpion",
+      "imagem": "equipment/helmet-ds-191-scorpion.png"
+    },
+    {
+      "nome": "DS-42 Federation's Blade",
+      "warbond": "Dust Devils",
+      "id": "helmet-ds-42-federation-s-blade",
+      "imagem": "equipment/helmet-ds-42-federation-s-blade.png"
+    },
+    {
+      "nome": "EX-00 Prototype X",
+      "warbond": "Cutting Edge",
+      "id": "helmet-ex-00-prototype-x",
+      "imagem": "equipment/helmet-ex-00-prototype-x.png"
+    },
+    {
+      "nome": "EX-03 Prototype 3",
+      "warbond": "Cutting Edge",
+      "id": "helmet-ex-03-prototype-3",
+      "imagem": "equipment/helmet-ex-03-prototype-3.png"
+    },
+    {
+      "nome": "EX-16 Prototype 16",
+      "warbond": "Cutting Edge",
+      "id": "helmet-ex-16-prototype-16",
+      "imagem": "equipment/helmet-ex-16-prototype-16.png"
+    },
+    {
+      "nome": "FS-05 Marksman",
+      "warbond": "Helldivers Mobilize!",
+      "id": "helmet-fs-05-marksman",
+      "imagem": "equipment/helmet-fs-05-marksman.png"
+    },
+    {
+      "nome": "FS-11 Executioner",
+      "warbond": "Superstore",
+      "id": "helmet-fs-11-executioner",
+      "imagem": "equipment/helmet-fs-11-executioner.png"
+    },
+    {
+      "nome": "FS-23 Battle Master",
+      "warbond": "Helldivers Mobilize!",
+      "id": "helmet-fs-23-battle-master",
+      "imagem": "equipment/helmet-fs-23-battle-master.png"
+    },
+    {
+      "nome": "FS-34 Exterminator",
+      "warbond": "Superstore",
+      "id": "helmet-fs-34-exterminator",
+      "imagem": "equipment/helmet-fs-34-exterminator.png"
+    },
+    {
+      "nome": "FS-37 Ravager",
+      "warbond": "Superstore",
+      "id": "helmet-fs-37-ravager",
+      "imagem": "equipment/helmet-fs-37-ravager.png"
+    },
+    {
+      "nome": "FS-38 Eradicator",
+      "warbond": "Superstore",
+      "id": "helmet-fs-38-eradicator",
+      "imagem": "equipment/helmet-fs-38-eradicator.png"
+    },
+    {
+      "nome": "FS-55 Devastator",
+      "warbond": "Democratic Detonation",
+      "id": "helmet-fs-55-devastator",
+      "imagem": "equipment/helmet-fs-55-devastator.png"
+    },
+    {
+      "nome": "FS-61 Dreadnought",
+      "warbond": "Superstore",
+      "id": "helmet-fs-61-dreadnought",
+      "imagem": "equipment/helmet-fs-61-dreadnought.png"
+    },
+    {
+      "nome": "GS-11 Democracy's Deputy",
+      "warbond": "Superstore",
+      "id": "helmet-gs-11-democracy-s-deputy",
+      "imagem": "equipment/helmet-gs-11-democracy-s-deputy.png"
+    },
+    {
+      "nome": "GS-17 Frontier Marshal",
+      "warbond": "Borderline Justice",
+      "id": "helmet-gs-17-frontier-marshal",
+      "imagem": "equipment/helmet-gs-17-frontier-marshal.png"
+    },
+    {
+      "nome": "GS-66 Lawmaker",
+      "warbond": "Borderline Justice",
+      "id": "helmet-gs-66-lawmaker",
+      "imagem": "equipment/helmet-gs-66-lawmaker.png"
+    },
+    {
+      "nome": "I-09 Heatseeker",
+      "warbond": "Freedom's Flame",
+      "id": "helmet-i-09-heatseeker",
+      "imagem": "equipment/helmet-i-09-heatseeker.png"
+    },
+    {
+      "nome": "I-102 Draconaught",
+      "warbond": "Freedom's Flame",
+      "id": "helmet-i-102-draconaught",
+      "imagem": "equipment/helmet-i-102-draconaught.png"
+    },
+    {
+      "nome": "I-44 Salamander",
+      "warbond": "Superstore",
+      "id": "helmet-i-44-salamander",
+      "imagem": "equipment/helmet-i-44-salamander.png"
+    },
+    {
+      "nome": "I-92 Fire Fighter",
+      "warbond": "Superstore",
+      "id": "helmet-i-92-fire-fighter",
+      "imagem": "equipment/helmet-i-92-fire-fighter.png"
+    },
+    {
+      "nome": "IE-12 Righteous",
+      "warbond": "Servants of Freedom",
+      "id": "helmet-ie-12-righteous",
+      "imagem": "equipment/helmet-ie-12-righteous.png"
+    },
+    {
+      "nome": "IE-3 Martyr",
+      "warbond": "Servants of Freedom",
+      "id": "helmet-ie-3-martyr",
+      "imagem": "equipment/helmet-ie-3-martyr.png"
+    },
+    {
+      "nome": "IE-57 Hell-Bent",
+      "warbond": "Superstore",
+      "id": "helmet-ie-57-hell-bent",
+      "imagem": "equipment/helmet-ie-57-hell-bent.png"
+    },
+    {
+      "nome": "KDM-500 Outrider",
+      "warbond": "Lightning Intercept",
+      "id": "helmet-kdm-500-outrider",
+      "imagem": "equipment/helmet-kdm-500-outrider.png"
+    },
+    {
+      "nome": "O-2 Heavy Operator",
+      "warbond": "Exo Experts",
+      "id": "helmet-o-2-heavy-operator",
+      "imagem": "equipment/helmet-o-2-heavy-operator.png"
+    },
+    {
+      "nome": "O-3 Free Spirit",
+      "warbond": "Exo Experts",
+      "id": "helmet-o-3-free-spirit",
+      "imagem": "equipment/helmet-o-3-free-spirit.png"
+    },
+    {
+      "nome": "O-44 Bonded Pilot",
+      "warbond": "Superstore",
+      "id": "helmet-o-44-bonded-pilot",
+      "imagem": "equipment/helmet-o-44-bonded-pilot.png"
+    },
+    {
+      "nome": "PH-202 Twigsnapper",
+      "warbond": "Viper Commandos",
+      "id": "helmet-ph-202-twigsnapper",
+      "imagem": "equipment/helmet-ph-202-twigsnapper.png"
+    },
+    {
+      "nome": "PH-56 Jaguar",
+      "warbond": "Superstore",
+      "id": "helmet-ph-56-jaguar",
+      "imagem": "equipment/helmet-ph-56-jaguar.png"
+    },
+    {
+      "nome": "PH-9 Predator",
+      "warbond": "Viper Commandos",
+      "id": "helmet-ph-9-predator",
+      "imagem": "equipment/helmet-ph-9-predator.png"
+    },
+    {
+      "nome": "RE-1861 Parade Commander",
+      "warbond": "Masters of Ceremony",
+      "id": "helmet-re-1861-parade-commander",
+      "imagem": "equipment/helmet-re-1861-parade-commander.png"
+    },
+    {
+      "nome": "RE-2310 Honorary Guard",
+      "warbond": "Masters of Ceremony",
+      "id": "helmet-re-2310-honorary-guard",
+      "imagem": "equipment/helmet-re-2310-honorary-guard.png"
+    },
+    {
+      "nome": "RE-824 Bearer of the Standard",
+      "warbond": "Superstore",
+      "id": "helmet-re-824-bearer-of-the-standard",
+      "imagem": "equipment/helmet-re-824-bearer-of-the-standard.png"
+    },
+    {
+      "nome": "RS-100 Sanctioner",
+      "warbond": "Superstore",
+      "id": "helmet-rs-100-sanctioner",
+      "imagem": "equipment/helmet-rs-100-sanctioner.png"
+    },
+    {
+      "nome": "RS-20 Constrictor",
+      "warbond": "Python Commandos",
+      "id": "helmet-rs-20-constrictor",
+      "imagem": "equipment/helmet-rs-20-constrictor.png"
+    },
+    {
+      "nome": "RS-40 Beast of Prey",
+      "warbond": "Python Commandos",
+      "id": "helmet-rs-40-beast-of-prey",
+      "imagem": "equipment/helmet-rs-40-beast-of-prey.png"
+    },
+    {
+      "nome": "RS-6 Fiend Destroyer",
+      "warbond": "Superstore",
+      "id": "helmet-rs-6-fiend-destroyer",
+      "imagem": "equipment/helmet-rs-6-fiend-destroyer.png"
+    },
+    {
+      "nome": "RS-67 Null Cipher",
+      "warbond": "Redacted Regiment",
+      "id": "helmet-rs-67-null-cipher",
+      "imagem": "equipment/helmet-rs-67-null-cipher.png"
+    },
+    {
+      "nome": "RS-89 Shadow Paragon",
+      "warbond": "Redacted Regiment",
+      "id": "helmet-rs-89-shadow-paragon",
+      "imagem": "equipment/helmet-rs-89-shadow-paragon.png"
+    },
+    {
+      "nome": "SA-04 Combat Technician",
+      "warbond": "Helldivers Mobilize!",
+      "id": "helmet-sa-04-combat-technician",
+      "imagem": "equipment/helmet-sa-04-combat-technician.png"
+    },
+    {
+      "nome": "SA-12 Servo Assisted",
+      "warbond": "Steeled Veterans",
+      "id": "helmet-sa-12-servo-assisted",
+      "imagem": "equipment/helmet-sa-12-servo-assisted.png"
+    },
+    {
+      "nome": "SA-25 Steel Trooper",
+      "warbond": "Steeled Veterans",
+      "id": "helmet-sa-25-steel-trooper",
+      "imagem": "equipment/helmet-sa-25-steel-trooper.png"
+    },
+    {
+      "nome": "SA-32 Dynamo",
+      "warbond": "Steeled Veterans",
+      "id": "helmet-sa-32-dynamo",
+      "imagem": "equipment/helmet-sa-32-dynamo.png"
+    },
+    {
+      "nome": "SA-7 Headfirst",
+      "warbond": "Siege Breakers",
+      "id": "helmet-sa-7-headfirst",
+      "imagem": "equipment/helmet-sa-7-headfirst.png"
+    },
+    {
+      "nome": "SA-8 Ram",
+      "warbond": "Siege Breakers",
+      "id": "helmet-sa-8-ram",
+      "imagem": "equipment/helmet-sa-8-ram.png"
+    },
+    {
+      "nome": "SC-15 Drone Master",
+      "warbond": "Superstore",
+      "id": "helmet-sc-15-drone-master",
+      "imagem": "equipment/helmet-sc-15-drone-master.png"
+    },
+    {
+      "nome": "SC-30 Trailblazer Scout",
+      "warbond": "Helldivers Mobilize!",
+      "id": "helmet-sc-30-trailblazer-scout",
+      "imagem": "equipment/helmet-sc-30-trailblazer-scout.png"
+    },
+    {
+      "nome": "SC-34 Infiltrator",
+      "warbond": "Helldivers Mobilize!",
+      "id": "helmet-sc-34-infiltrator",
+      "imagem": "equipment/helmet-sc-34-infiltrator.png"
+    },
+    {
+      "nome": "SC-37 Legionnaire",
+      "warbond": "Superstore",
+      "id": "helmet-sc-37-legionnaire",
+      "imagem": "equipment/helmet-sc-37-legionnaire.png"
+    },
+    {
+      "nome": "SR-18 Roadblock",
+      "warbond": "Urban Legends",
+      "id": "helmet-sr-18-roadblock",
+      "imagem": "equipment/helmet-sr-18-roadblock.png"
+    },
+    {
+      "nome": "SR-24 Street Scout",
+      "warbond": "Urban Legends",
+      "id": "helmet-sr-24-street-scout",
+      "imagem": "equipment/helmet-sr-24-street-scout.png"
+    },
+    {
+      "nome": "SR-64 Cinderblock",
+      "warbond": "Superstore",
+      "id": "helmet-sr-64-cinderblock",
+      "imagem": "equipment/helmet-sr-64-cinderblock.png"
+    },
+    {
+      "nome": "TG-122 Demo-Trooper",
+      "warbond": "Castellan’s Creed",
+      "id": "helmet-tg-122-demo-trooper",
+      "imagem": "equipment/helmet-tg-122-demo-trooper.png"
+    },
+    {
+      "nome": "TG-8 Sharpshooter",
+      "warbond": "Castellan’s Creed",
+      "id": "helmet-tg-8-sharpshooter",
+      "imagem": "equipment/helmet-tg-8-sharpshooter.png"
+    },
+    {
+      "nome": "TR-117 Alpha Commander",
+      "warbond": "Downloadable Content",
+      "id": "helmet-tr-117-alpha-commander",
+      "imagem": "equipment/helmet-tr-117-alpha-commander.png"
+    },
+    {
+      "nome": "TR-40 Gold Eagle",
+      "warbond": "Escalation of Freedom",
+      "id": "helmet-tr-40-gold-eagle",
+      "imagem": "equipment/helmet-tr-40-gold-eagle.png"
+    },
+    {
+      "nome": "TR-62 Knight",
+      "warbond": "Pre-Order Bonus",
+      "id": "helmet-tr-62-knight",
+      "imagem": "equipment/helmet-tr-62-knight.png"
+    },
+    {
+      "nome": "TR-7 Ambassador of the Brand",
+      "warbond": "Pre-Order Bonus",
+      "id": "helmet-tr-7-ambassador-of-the-brand",
+      "imagem": "equipment/helmet-tr-7-ambassador-of-the-brand.png"
+    },
+    {
+      "nome": "TR-9 Cavalier of Democracy",
+      "warbond": "Pre-Order Bonus",
+      "id": "helmet-tr-9-cavalier-of-democracy",
+      "imagem": "equipment/helmet-tr-9-cavalier-of-democracy.png"
+    },
+    {
+      "nome": "UF-16 Inspector",
+      "warbond": "Truth Enforcers",
+      "id": "helmet-uf-16-inspector",
+      "imagem": "equipment/helmet-uf-16-inspector.png"
+    },
+    {
+      "nome": "UF-50 Bloodhound",
+      "warbond": "Truth Enforcers",
+      "id": "helmet-uf-50-bloodhound",
+      "imagem": "equipment/helmet-uf-50-bloodhound.png"
+    },
+    {
+      "nome": "UF-84 Doubt Killer",
+      "warbond": "Superstore",
+      "id": "helmet-uf-84-doubt-killer",
+      "imagem": "equipment/helmet-uf-84-doubt-killer.png"
+    }
+  ],
+  "cape": [
+    {
+      "nome": "Against the Tyrant Cloud",
+      "warbond": "Oshaune",
+      "id": "cape-against-the-tyrant-cloud",
+      "imagem": "equipment/cape-against-the-tyrant-cloud.png"
+    },
+    {
+      "nome": "Agent of Oblivion",
+      "warbond": "Cutting Edge",
+      "id": "cape-agent-of-oblivion",
+      "imagem": "equipment/cape-agent-of-oblivion.png"
+    },
+    {
+      "nome": "Badge of Order",
+      "warbond": "Superstore",
+      "id": "cape-badge-of-order",
+      "imagem": "equipment/cape-badge-of-order.png"
+    },
+    {
+      "nome": "Bastion of Integrity",
+      "warbond": "Steeled Veterans",
+      "id": "cape-bastion-of-integrity",
+      "imagem": "equipment/cape-bastion-of-integrity.png"
+    },
+    {
+      "nome": "Blazing Samaritan",
+      "warbond": "Helldivers Mobilize!",
+      "id": "cape-blazing-samaritan",
+      "imagem": "equipment/cape-blazing-samaritan.png"
+    },
+    {
+      "nome": "Botslayer",
+      "warbond": "Cutting Edge",
+      "id": "cape-botslayer",
+      "imagem": "equipment/cape-botslayer.png"
+    },
+    {
+      "nome": "Camo Cloak",
+      "warbond": "Castellan’s Creed",
+      "id": "cape-camo-cloak",
+      "imagem": "equipment/cape-camo-cloak.png"
+    },
+    {
+      "nome": "City Fighter's Resolve",
+      "warbond": "Castellan’s Creed",
+      "id": "cape-city-fighter-s-resolve",
+      "imagem": "equipment/cape-city-fighter-s-resolve.png"
+    },
+    {
+      "nome": "Cloak of Posterity's Gratitude (Cape)",
+      "warbond": "Steeled Veterans",
+      "id": "cape-cloak-of-posterity-s-gratitude-cape",
+      "imagem": "equipment/cape-cloak-of-posterity-s-gratitude-cape.png"
+    },
+    {
+      "nome": "Conductor of Brilliance",
+      "warbond": "Control Group",
+      "id": "cape-conductor-of-brilliance",
+      "imagem": "equipment/cape-conductor-of-brilliance.png"
+    },
+    {
+      "nome": "Cover of Darkness",
+      "warbond": "Superstore",
+      "id": "cape-cover-of-darkness",
+      "imagem": "equipment/cape-cover-of-darkness.png"
+    },
+    {
+      "nome": "Crest of the Unsullied",
+      "warbond": "Entrenched Division",
+      "id": "cape-crest-of-the-unsullied",
+      "imagem": "equipment/cape-crest-of-the-unsullied.png"
+    },
+    {
+      "nome": "Cresting Honor",
+      "warbond": "Helldivers Mobilize!",
+      "id": "cape-cresting-honor",
+      "imagem": "equipment/cape-cresting-honor.png"
+    },
+    {
+      "nome": "De-Forester's Sailcloth",
+      "warbond": "Superstore",
+      "id": "cape-de-forester-s-sailcloth",
+      "imagem": "equipment/cape-de-forester-s-sailcloth.png"
+    },
+    {
+      "nome": "Defender of Our Dream",
+      "warbond": "Righteous Revenants",
+      "id": "cape-defender-of-our-dream",
+      "imagem": "equipment/cape-defender-of-our-dream.png"
+    },
+    {
+      "nome": "Diagram of the Noblest Payload",
+      "warbond": "Superstore",
+      "id": "cape-diagram-of-the-noblest-payload",
+      "imagem": "equipment/cape-diagram-of-the-noblest-payload.png"
+    },
+    {
+      "nome": "Dignity of Toil",
+      "warbond": "Entrenched Division",
+      "id": "cape-dignity-of-toil",
+      "imagem": "equipment/cape-dignity-of-toil.png"
+    },
+    {
+      "nome": "Dissident's Nightmare",
+      "warbond": "Polar Patriots",
+      "id": "cape-dissident-s-nightmare",
+      "imagem": "equipment/cape-dissident-s-nightmare.png"
+    },
+    {
+      "nome": "Drape of Glory",
+      "warbond": "Steeled Veterans",
+      "id": "cape-drape-of-glory",
+      "imagem": "equipment/cape-drape-of-glory.png"
+    },
+    {
+      "nome": "Eagle's Fury",
+      "warbond": "Democratic Detonation",
+      "id": "cape-eagle-s-fury",
+      "imagem": "equipment/cape-eagle-s-fury.png"
+    },
+    {
+      "nome": "Emblem of Freedom",
+      "warbond": "Social Media MO",
+      "id": "cape-emblem-of-freedom",
+      "imagem": "equipment/cape-emblem-of-freedom.png"
+    },
+    {
+      "nome": "Eternal Corona",
+      "warbond": "Superstore",
+      "id": "cape-eternal-corona",
+      "imagem": "equipment/cape-eternal-corona.png"
+    },
+    {
+      "nome": "Executioner's Canopy",
+      "warbond": "Viper Commandos",
+      "id": "cape-executioner-s-canopy",
+      "imagem": "equipment/cape-executioner-s-canopy.png"
+    },
+    {
+      "nome": "Eye of Freedom",
+      "warbond": "Anniversary Gift",
+      "id": "cape-eye-of-freedom",
+      "imagem": "equipment/cape-eye-of-freedom.png"
+    },
+    {
+      "nome": "Eye of Liberty",
+      "warbond": "Anniversary Gift",
+      "id": "cape-eye-of-liberty",
+      "imagem": "equipment/cape-eye-of-liberty.png"
+    },
+    {
+      "nome": "Eye of the Clandestine",
+      "warbond": "Halo: ODST",
+      "id": "cape-eye-of-the-clandestine",
+      "imagem": "equipment/cape-eye-of-the-clandestine.png"
+    },
+    {
+      "nome": "Fallen Hero's Vengeance",
+      "warbond": "Malevelon Creek Memorial Day",
+      "id": "cape-fallen-hero-s-vengeance",
+      "imagem": "equipment/cape-fallen-hero-s-vengeance.png"
+    },
+    {
+      "nome": "Federation's Embrace",
+      "warbond": "Masters of Ceremony",
+      "id": "cape-federation-s-embrace",
+      "imagem": "equipment/cape-federation-s-embrace.png"
+    },
+    {
+      "nome": "Foe Rent Asunder",
+      "warbond": "Python Commandos",
+      "id": "cape-foe-rent-asunder",
+      "imagem": "equipment/cape-foe-rent-asunder.png"
+    },
+    {
+      "nome": "Foesmasher",
+      "warbond": "Starter Equipment",
+      "id": "cape-foesmasher",
+      "imagem": "equipment/cape-foesmasher.png"
+    },
+    {
+      "nome": "Fre Liberam",
+      "warbond": "Servants of Freedom",
+      "id": "cape-fre-liberam",
+      "imagem": "equipment/cape-fre-liberam.png"
+    },
+    {
+      "nome": "Free-Spirited Spangles",
+      "warbond": "Exo Experts",
+      "id": "cape-free-spirited-spangles",
+      "imagem": "equipment/cape-free-spirited-spangles.png"
+    },
+    {
+      "nome": "Freedom's Tapestry",
+      "warbond": "Democratic Detonation",
+      "id": "cape-freedom-s-tapestry",
+      "imagem": "equipment/cape-freedom-s-tapestry.png"
+    },
+    {
+      "nome": "Gilded Quill",
+      "warbond": "Superstore",
+      "id": "cape-gilded-quill",
+      "imagem": "equipment/cape-gilded-quill.png"
+    },
+    {
+      "nome": "Harbinger of True Equality",
+      "warbond": "Democratic Detonation",
+      "id": "cape-harbinger-of-true-equality",
+      "imagem": "equipment/cape-harbinger-of-true-equality.png"
+    },
+    {
+      "nome": "Holder of the Yellow Line",
+      "warbond": "Urban Legends",
+      "id": "cape-holder-of-the-yellow-line",
+      "imagem": "equipment/cape-holder-of-the-yellow-line.png"
+    },
+    {
+      "nome": "Honored Heirloom",
+      "warbond": "Halo: ODST",
+      "id": "cape-honored-heirloom",
+      "imagem": "equipment/cape-honored-heirloom.png"
+    },
+    {
+      "nome": "Humble Regalia",
+      "warbond": "Masters of Ceremony",
+      "id": "cape-humble-regalia",
+      "imagem": "equipment/cape-humble-regalia.png"
+    },
+    {
+      "nome": "Independence Bringer",
+      "warbond": "Helldivers Mobilize!",
+      "id": "cape-independence-bringer",
+      "imagem": "equipment/cape-independence-bringer.png"
+    },
+    {
+      "nome": "Ingress-81",
+      "warbond": "Station-81",
+      "id": "cape-ingress-81",
+      "imagem": "equipment/cape-ingress-81.png"
+    },
+    {
+      "nome": "Judgment Day",
+      "warbond": "Helldivers Mobilize!",
+      "id": "cape-judgment-day",
+      "imagem": "equipment/cape-judgment-day.png"
+    },
+    {
+      "nome": "Liberty's Herald",
+      "warbond": "Helldivers Mobilize!",
+      "id": "cape-liberty-s-herald",
+      "imagem": "equipment/cape-liberty-s-herald.png"
+    },
+    {
+      "nome": "Light of Eternal Liberty",
+      "warbond": "Helldivers Mobilize!",
+      "id": "cape-light-of-eternal-liberty",
+      "imagem": "equipment/cape-light-of-eternal-liberty.png"
+    },
+    {
+      "nome": "Mantle of True Citizenship",
+      "warbond": "Helldivers Mobilize!",
+      "id": "cape-mantle-of-true-citizenship",
+      "imagem": "equipment/cape-mantle-of-true-citizenship.png"
+    },
+    {
+      "nome": "Mark of the Constrictor",
+      "warbond": "Python Commandos",
+      "id": "cape-mark-of-the-constrictor",
+      "imagem": "equipment/cape-mark-of-the-constrictor.png"
+    },
+    {
+      "nome": "Mark of the Crimson Fang",
+      "warbond": "Viper Commandos",
+      "id": "cape-mark-of-the-crimson-fang",
+      "imagem": "equipment/cape-mark-of-the-crimson-fang.png"
+    },
+    {
+      "nome": "Martyris Rex",
+      "warbond": "Cutting Edge",
+      "id": "cape-martyris-rex",
+      "imagem": "equipment/cape-martyris-rex.png"
+    },
+    {
+      "nome": "Miranda's Legacy",
+      "warbond": "Force of Law",
+      "id": "cape-miranda-s-legacy",
+      "imagem": "equipment/cape-miranda-s-legacy.png"
+    },
+    {
+      "nome": "Mother Eagle's Wings",
+      "warbond": "Force of Law",
+      "id": "cape-mother-eagle-s-wings",
+      "imagem": "equipment/cape-mother-eagle-s-wings.png"
+    },
+    {
+      "nome": "Order of the Venerated Ballot",
+      "warbond": "Polar Patriots",
+      "id": "cape-order-of-the-venerated-ballot",
+      "imagem": "equipment/cape-order-of-the-venerated-ballot.png"
+    },
+    {
+      "nome": "Over Artifice Triumphant",
+      "warbond": "Control Group",
+      "id": "cape-over-artifice-triumphant",
+      "imagem": "equipment/cape-over-artifice-triumphant.png"
+    },
+    {
+      "nome": "Patient Zero's Remembrance",
+      "warbond": "Chemical Agents",
+      "id": "cape-patient-zero-s-remembrance",
+      "imagem": "equipment/cape-patient-zero-s-remembrance.png"
+    },
+    {
+      "nome": "Per Democrasum",
+      "warbond": "Servants of Freedom",
+      "id": "cape-per-democrasum",
+      "imagem": "equipment/cape-per-democrasum.png"
+    },
+    {
+      "nome": "Pillar of the Abyss",
+      "warbond": "Redacted Regiment",
+      "id": "cape-pillar-of-the-abyss",
+      "imagem": "equipment/cape-pillar-of-the-abyss.png"
+    },
+    {
+      "nome": "Pillars of Freedom",
+      "warbond": "Ministry of Prosperity",
+      "id": "cape-pillars-of-freedom",
+      "imagem": "equipment/cape-pillars-of-freedom.png"
+    },
+    {
+      "nome": "Pinions of Everlasting Glory",
+      "warbond": "Polar Patriots",
+      "id": "cape-pinions-of-everlasting-glory",
+      "imagem": "equipment/cape-pinions-of-everlasting-glory.png"
+    },
+    {
+      "nome": "Pride of the Whistleblower",
+      "warbond": "Truth Enforcers",
+      "id": "cape-pride-of-the-whistleblower",
+      "imagem": "equipment/cape-pride-of-the-whistleblower.png"
+    },
+    {
+      "nome": "Proof of Faultless Virtue",
+      "warbond": "Truth Enforcers",
+      "id": "cape-proof-of-faultless-virtue",
+      "imagem": "equipment/cape-proof-of-faultless-virtue.png"
+    },
+    {
+      "nome": "Protector of the Heart",
+      "warbond": "Heart of Democracy",
+      "id": "cape-protector-of-the-heart",
+      "imagem": "equipment/cape-protector-of-the-heart.png"
+    },
+    {
+      "nome": "Purifying Eclipse",
+      "warbond": "Freedom's Flame",
+      "id": "cape-purifying-eclipse",
+      "imagem": "equipment/cape-purifying-eclipse.png"
+    },
+    {
+      "nome": "Rags of the Fashionable",
+      "warbond": "Siege Breakers",
+      "id": "cape-rags-of-the-fashionable",
+      "imagem": "equipment/cape-rags-of-the-fashionable.png"
+    },
+    {
+      "nome": "Reaper of Bounties",
+      "warbond": "Borderline Justice",
+      "id": "cape-reaper-of-bounties",
+      "imagem": "equipment/cape-reaper-of-bounties.png"
+    },
+    {
+      "nome": "Rebar Resolve",
+      "warbond": "Urban Legends",
+      "id": "cape-rebar-resolve",
+      "imagem": "equipment/cape-rebar-resolve.png"
+    },
+    {
+      "nome": "Reckoning's Cheer",
+      "warbond": "Festival of Reckoning",
+      "id": "cape-reckoning-s-cheer",
+      "imagem": "equipment/cape-reckoning-s-cheer.png"
+    },
+    {
+      "nome": "Rightful Occupier",
+      "warbond": "Dust Devils",
+      "id": "cape-rightful-occupier",
+      "imagem": "equipment/cape-rightful-occupier.png"
+    },
+    {
+      "nome": "Schema Laid Bare",
+      "warbond": "Superstore",
+      "id": "cape-schema-laid-bare",
+      "imagem": "equipment/cape-schema-laid-bare.png"
+    },
+    {
+      "nome": "Seal of General Consensus",
+      "warbond": "Superstore",
+      "id": "cape-seal-of-general-consensus",
+      "imagem": "equipment/cape-seal-of-general-consensus.png"
+    },
+    {
+      "nome": "Standard of Safe Distance",
+      "warbond": "Chemical Agents",
+      "id": "cape-standard-of-safe-distance",
+      "imagem": "equipment/cape-standard-of-safe-distance.png"
+    },
+    {
+      "nome": "Stars and Suffrage",
+      "warbond": "Helldivers Mobilize!",
+      "id": "cape-stars-and-suffrage",
+      "imagem": "equipment/cape-stars-and-suffrage.png"
+    },
+    {
+      "nome": "Stone-Wrought Perseverance",
+      "warbond": "Superstore",
+      "id": "cape-stone-wrought-perseverance",
+      "imagem": "equipment/cape-stone-wrought-perseverance.png"
+    },
+    {
+      "nome": "Strength in Our Arms",
+      "warbond": "Righteous Revenants",
+      "id": "cape-strength-in-our-arms",
+      "imagem": "equipment/cape-strength-in-our-arms.png"
+    },
+    {
+      "nome": "Testament to Attrition",
+      "warbond": "Superstore",
+      "id": "cape-testament-to-attrition",
+      "imagem": "equipment/cape-testament-to-attrition.png"
+    },
+    {
+      "nome": "The Breach",
+      "warbond": "Freedom's Flame",
+      "id": "cape-the-breach",
+      "imagem": "equipment/cape-the-breach.png"
+    },
+    {
+      "nome": "Thundering Hooves of Loyalty",
+      "warbond": "Superstore",
+      "id": "cape-thundering-hooves-of-loyalty",
+      "imagem": "equipment/cape-thundering-hooves-of-loyalty.png"
+    },
+    {
+      "nome": "Tideturner",
+      "warbond": "Helldivers Mobilize!",
+      "id": "cape-tideturner",
+      "imagem": "equipment/cape-tideturner.png"
+    },
+    {
+      "nome": "Triangulation Veil",
+      "warbond": "Redacted Regiment",
+      "id": "cape-triangulation-veil",
+      "imagem": "equipment/cape-triangulation-veil.png"
+    },
+    {
+      "nome": "Tyrant Hunter",
+      "warbond": "Steeled Veterans",
+      "id": "cape-tyrant-hunter",
+      "imagem": "equipment/cape-tyrant-hunter.png"
+    },
+    {
+      "nome": "Unblemished Allegiance",
+      "warbond": "Helldivers Mobilize!",
+      "id": "cape-unblemished-allegiance",
+      "imagem": "equipment/cape-unblemished-allegiance.png"
+    },
+    {
+      "nome": "United in Equality (Cape)",
+      "warbond": "Major Order A3-5-6",
+      "id": "cape-united-in-equality-cape",
+      "imagem": "equipment/cape-united-in-equality-cape.png"
+    },
+    {
+      "nome": "Veil of the Valorous Vagabond",
+      "warbond": "Superstore",
+      "id": "cape-veil-of-the-valorous-vagabond",
+      "imagem": "equipment/cape-veil-of-the-valorous-vagabond.png"
+    },
+    {
+      "nome": "Veridical Ideology",
+      "warbond": "Liberty Day",
+      "id": "cape-veridical-ideology",
+      "imagem": "equipment/cape-veridical-ideology.png"
+    },
+    {
+      "nome": "Vision of Freedom",
+      "warbond": "Superstore",
+      "id": "cape-vision-of-freedom",
+      "imagem": "equipment/cape-vision-of-freedom.png"
+    },
+    {
+      "nome": "Watchful Compatriot",
+      "warbond": "Exo Experts",
+      "id": "cape-watchful-compatriot",
+      "imagem": "equipment/cape-watchful-compatriot.png"
+    },
+    {
+      "nome": "Way of the Bandolier",
+      "warbond": "Borderline Justice",
+      "id": "cape-way-of-the-bandolier",
+      "imagem": "equipment/cape-way-of-the-bandolier.png"
+    },
+    {
+      "nome": "Wedgeful Tricorn",
+      "warbond": "Siege Breakers",
+      "id": "cape-wedgeful-tricorn",
+      "imagem": "equipment/cape-wedgeful-tricorn.png"
+    },
+    {
+      "nome": "Will of the People",
+      "warbond": "Super Citizen Edition",
+      "id": "cape-will-of-the-people",
+      "imagem": "equipment/cape-will-of-the-people.png"
+    },
+    {
+      "nome": "Windswept Wayfinder",
+      "warbond": "Dust Devils",
+      "id": "cape-windswept-wayfinder",
+      "imagem": "equipment/cape-windswept-wayfinder.png"
+    }
+  ],
+  "booster": [
+    {
+      "nome": "Hellpod Space Optimization",
+      "descricao": "Helldivers come out of the Hellpod fully stocked on Ammo, Grenades and Stims.",
+      "id": "booster-hellpod-space-optimization",
+      "imagem": "equipment/booster-hellpod-space-optimization.svg"
+    },
+    {
+      "nome": "Vitality Enhancement",
+      "descricao": "Provides minor damage reduction from all sources for all Helldivers",
+      "id": "booster-vitality-enhancement",
+      "imagem": "equipment/booster-vitality-enhancement.svg"
+    },
+    {
+      "nome": "UAV Recon Booster",
+      "descricao": "Increases all Helldivers' effective radar range.",
+      "id": "booster-uav-recon-booster",
+      "imagem": "equipment/booster-uav-recon-booster.svg"
+    },
+    {
+      "nome": "Stamina Enhancement",
+      "descricao": "Increases all Helldivers' stamina capacity and recovery.",
+      "id": "booster-stamina-enhancement",
+      "imagem": "equipment/booster-stamina-enhancement.svg"
+    },
+    {
+      "nome": "Muscle Enhancement",
+      "descricao": "Allows Helldivers to traverse difficult terrain with ease.",
+      "id": "booster-muscle-enhancement",
+      "imagem": "equipment/booster-muscle-enhancement.svg"
+    },
+    {
+      "nome": "Increased Reinforcement Budget",
+      "descricao": "Increases the number of available reinforcements.",
+      "id": "booster-increased-reinforcement-budget",
+      "imagem": "equipment/booster-increased-reinforcement-budget.svg"
+    },
+    {
+      "nome": "Flexible Reinforcement Budget",
+      "descricao": "Reduces time until new reinforcements are granted once they've been depleted.",
+      "id": "booster-flexible-reinforcement-budget",
+      "imagem": "equipment/booster-flexible-reinforcement-budget.svg"
+    },
+    {
+      "nome": "Localization Confusion",
+      "descricao": "Increases the time between enemy encounters.",
+      "id": "booster-localization-confusion",
+      "imagem": "equipment/booster-localization-confusion.svg"
+    },
+    {
+      "nome": "Expert Extraction Pilot",
+      "descricao": "Lowers the time it takes for the extraction shuttle to reach the extraction beacon.",
+      "id": "booster-expert-extraction-pilot",
+      "imagem": "equipment/booster-expert-extraction-pilot.svg"
+    },
+    {
+      "nome": "Motivational Shocks",
+      "descricao": "Allows all Helldivers to recover faster after being slowed by an attack, such as acid. Does not mitigate “area effects,” such as EMS strikes.",
+      "id": "booster-motivational-shocks",
+      "imagem": "equipment/booster-motivational-shocks.svg"
+    },
+    {
+      "nome": "Experimental Infusion",
+      "descricao": "In addition to restoring health, Stims temporarily increase movement speed and damage reduction.",
+      "id": "booster-experimental-infusion",
+      "imagem": "equipment/booster-experimental-infusion.svg"
+    },
+    {
+      "nome": "Firebomb Hellpods",
+      "descricao": "Lines all Hellpods with volatile incendiaries that detonate upon impact, igniting any units in vicinity of the drop site.",
+      "id": "booster-firebomb-hellpods",
+      "imagem": "equipment/booster-firebomb-hellpods.svg"
+    },
+    {
+      "nome": "Dead Sprint",
+      "descricao": "Allows Helldivers to keep sprinting even when they are out of stamina, draining their health instead.",
+      "id": "booster-dead-sprint",
+      "imagem": "equipment/booster-dead-sprint.svg"
+    },
+    {
+      "nome": "Armed Resupply Pods",
+      "descricao": "Mounts a modified AR-23 Liberator to all resupply pods, allowing them to double as automatic turrets.",
+      "id": "booster-armed-resupply-pods",
+      "imagem": "equipment/booster-armed-resupply-pods.svg"
+    },
+    {
+      "nome": "Sample Extricator",
+      "descricao": "Large enemies now have a chance of dropping Samples on death. Capped at 10 drops per mission.",
+      "id": "booster-sample-extricator",
+      "imagem": "equipment/booster-sample-extricator.svg"
+    },
+    {
+      "nome": "Sample Scanner",
+      "descricao": "The Sample scanner gives you a 15% chance to receive twice the Samples on sample pick up.",
+      "id": "booster-sample-scanner",
+      "imagem": "equipment/booster-sample-scanner.svg"
+    },
+    {
+      "nome": "Stun Pods",
+      "descricao": "Exposes Hellpod wiring upon surface contact, stunning any units in the vicinity of the drop site.",
+      "id": "booster-stun-pods",
+      "imagem": "equipment/booster-stun-pods.svg"
+    },
+    {
+      "nome": "Concealed Insertion",
+      "descricao": "Equips Hellpods to deploy smokescreens on impact, obscuring Helldiver deployment.",
+      "id": "booster-concealed-insertion",
+      "imagem": "equipment/booster-concealed-insertion.svg"
+    }
+  ],
+  "passives": [
+    {
+      "nome": "Acclimated",
+      "descricao": "Provides 50% resistance to fire, gas, acid, and electrical damage.",
+      "id": "passives-acclimated",
+      "imagem": "equipment/passives-acclimated.svg"
+    },
+    {
+      "nome": "Adreno-Defibrillator",
+      "descricao": "Provides one-time, short-lived resuscitation upon death, given that the Helldiver's body is still intact. Increases stim effect duration by 2.0s. Provides 50% resistance to arc damage.",
+      "id": "passives-adreno-defibrillator",
+      "imagem": "equipment/passives-adreno-defibrillator.svg"
+    },
+    {
+      "nome": "Advanced Filtration",
+      "descricao": "Provides 80% resistance to gas damage and effects.",
+      "id": "passives-advanced-filtration",
+      "imagem": "equipment/passives-advanced-filtration.svg"
+    },
+    {
+      "nome": "Ballistic Padding",
+      "descricao": "Provides 25% resistance to chest damage. Provides 25% resistance to explosive damage. Prevents all damage from bleeding if chest hemorrhages.",
+      "id": "passives-ballistic-padding",
+      "imagem": "equipment/passives-ballistic-padding.svg"
+    },
+    {
+      "nome": "Concussive Padding, Grenadier",
+      "descricao": "Provides 50% resistance to explosive damage. Increases initial inventory and holding capacity of throwables by +2.",
+      "id": "passives-concussive-padding-grenadier",
+      "imagem": "equipment/passives-concussive-padding-grenadier.svg"
+    },
+    {
+      "nome": "Concussive Padding, Hazmat",
+      "descricao": "Provides 50% resistance to explosive damage. Provides 25% resistance to gas damage and effects. Sidearm recoil reduced by 30%.",
+      "id": "passives-concussive-padding-hazmat",
+      "imagem": "equipment/passives-concussive-padding-hazmat.svg"
+    },
+    {
+      "nome": "Concussive Padding, Reinforced",
+      "descricao": "Provides 50% resistance to explosive damage. Provides a higher armor rating.",
+      "id": "passives-concussive-padding-reinforced",
+      "imagem": "equipment/passives-concussive-padding-reinforced.svg"
+    },
+    {
+      "nome": "Democracy Protects",
+      "descricao": "50% chance to not die when taking lethal damage. Prevents all damage from bleeding if chest hemorrhages.",
+      "id": "passives-democracy-protects",
+      "imagem": "equipment/passives-democracy-protects.svg"
+    },
+    {
+      "nome": "Desert Stormer",
+      "descricao": "Provides 40% resistance to fire, gas, acid, and electrical damage. Increases throwing range by 20%.",
+      "id": "passives-desert-stormer",
+      "imagem": "equipment/passives-desert-stormer.svg"
+    },
+    {
+      "nome": "Electrical Conduit",
+      "descricao": "Provides 95% resistance to arc damage.",
+      "id": "passives-electrical-conduit",
+      "imagem": "equipment/passives-electrical-conduit.svg"
+    },
+    {
+      "nome": "Engineering Kit",
+      "descricao": "Further reduces recoil when crouching or prone by 30%. Increases initial inventory and holding capacity of throwables by +2.",
+      "id": "passives-engineering-kit",
+      "imagem": "equipment/passives-engineering-kit.svg"
+    },
+    {
+      "nome": "Extra Padding",
+      "descricao": "Provides a higher armor rating.",
+      "id": "passives-extra-padding",
+      "imagem": "equipment/passives-extra-padding.svg"
+    },
+    {
+      "nome": "Feet First",
+      "descricao": "Wearer makes 50% less noise when moving. Increases point-of-interest identification range by 30%. Provides immunity to leg injuries.",
+      "id": "passives-feet-first",
+      "imagem": "equipment/passives-feet-first.svg"
+    },
+    {
+      "nome": "Fortified",
+      "descricao": "Further reduces recoil when crouching or prone by 30%. Provides 50% resistance to explosive damage.",
+      "id": "passives-fortified",
+      "imagem": "equipment/passives-fortified.svg"
+    },
+    {
+      "nome": "Gunslinger",
+      "descricao": "Increases sidearms reload speed by 40%. Sidearm draw/holster speed increased by 50%. Sidearm recoil reduced by 70%.",
+      "id": "passives-gunslinger",
+      "imagem": "equipment/passives-gunslinger.svg"
+    },
+    {
+      "nome": "Inflammable",
+      "descricao": "Provides 75% damage resistance to fire, allowing bearer to rest assured in their inflammability.",
+      "id": "passives-inflammable",
+      "imagem": "equipment/passives-inflammable.svg"
+    },
+    {
+      "nome": "Integrated Explosives",
+      "descricao": "Armor explodes 1.5s after the wearer dies. Increases initial inventory and holding capacity of throwables by +2.",
+      "id": "passives-integrated-explosives",
+      "imagem": "equipment/passives-integrated-explosives.svg"
+    },
+    {
+      "nome": "Med-Kit",
+      "descricao": "Increases initial inventory and holding capacity of stims by +2. Increases stim effect duration by 2.0s.",
+      "id": "passives-med-kit",
+      "imagem": "equipment/passives-med-kit.svg"
+    },
+    {
+      "nome": "Oxygenator",
+      "descricao": "Increases the wearer's walking speed and running speed. Increases the speed and duration of slides.",
+      "id": "passives-oxygenator",
+      "imagem": "equipment/passives-oxygenator.svg"
+    },
+    {
+      "nome": "Peak Physique",
+      "descricao": "Increases melee damage by 40%. Improves weapons handling with less drag on weapon movement.",
+      "id": "passives-peak-physique",
+      "imagem": "equipment/passives-peak-physique.svg"
+    },
+    {
+      "nome": "Reduced Signature",
+      "descricao": "Wearer makes 50% less noise when moving. Reduces range at which enemies can detect the wearer by 40%.",
+      "id": "passives-reduced-signature",
+      "imagem": "equipment/passives-reduced-signature.svg"
+    },
+    {
+      "nome": "Reinforced Epaulettes",
+      "descricao": "Increases reload speed of primary weapons by 30%. Gives wearer a 50% chance to avoid grievous limb injury. Increases melee damage by 20%.",
+      "id": "passives-reinforced-epaulettes",
+      "imagem": "equipment/passives-reinforced-epaulettes.svg"
+    },
+    {
+      "nome": "Rock Solid",
+      "descricao": "Increases melee damage by 40%. Bearer is more resistant to being knocked prone.",
+      "id": "passives-rock-solid",
+      "imagem": "equipment/passives-rock-solid.svg"
+    },
+    {
+      "nome": "Scout",
+      "descricao": "Markers placed on the map will generate radar scans every 2.0s. Reduces range at which enemies can detect the wearer by 30%.",
+      "id": "passives-scout",
+      "imagem": "equipment/passives-scout.svg"
+    },
+    {
+      "nome": "Servo-Assisted",
+      "descricao": "Increases throwing range by 30%. Provides +50% limb health.",
+      "id": "passives-servo-assisted",
+      "imagem": "equipment/passives-servo-assisted.svg"
+    },
+    {
+      "nome": "Siege-Ready",
+      "descricao": "Increases reload speed of primary weapons by 30%. Increases ammo capacity of all weapons by 20%. Does not affect weapon backpacks.",
+      "id": "passives-siege-ready",
+      "imagem": "equipment/passives-siege-ready.svg"
+    },
+    {
+      "nome": "Supplementary Adrenaline",
+      "descricao": "When the wearer takes damage, they regain some stamina. Provides a higher armor rating.",
+      "id": "passives-supplementary-adrenaline",
+      "imagem": "equipment/passives-supplementary-adrenaline.svg"
+    },
+    {
+      "nome": "True Grit",
+      "descricao": "Provides +20 Weapon Handling. Provides +30% Reload Speed for Support Weapons.",
+      "id": "passives-true-grit",
+      "imagem": "equipment/passives-true-grit.png"
+    },
+    {
+      "nome": "Unflinching",
+      "descricao": "Helps prevent Helldivers from flinching when hit. Provides a higher armor rating. Markers placed on the map will generate radar scans every 2.0s.",
+      "id": "passives-unflinching",
+      "imagem": "equipment/passives-unflinching.svg"
+    }
+  ],
+  "stratagemInfo": [
+    {
+      "nome": "40-K Meltagun",
+      "type": "Support Weapon",
+      "backpack": false
+    },
+    {
+      "nome": "A/AC-8 Autocannon Sentry",
+      "type": "Sentry",
+      "backpack": false
+    },
+    {
+      "nome": "A/ARC-3 Tesla Tower",
+      "type": "Sentry",
+      "backpack": false
+    },
+    {
+      "nome": "A/FLAM-40 Flame Sentry",
+      "type": "Sentry",
+      "backpack": false
+    },
+    {
+      "nome": "A/G-16 Gatling Sentry",
+      "type": "Sentry",
+      "backpack": false
+    },
+    {
+      "nome": "A/GM-17 Gas Mortar Sentry",
+      "type": "Sentry",
+      "backpack": false
+    },
+    {
+      "nome": "A/LAS-98 Laser Sentry",
+      "type": "Sentry",
+      "backpack": false
+    },
+    {
+      "nome": "A/M-12 Mortar Sentry",
+      "type": "Sentry",
+      "backpack": false
+    },
+    {
+      "nome": "A/M-23 EMS Mortar Sentry",
+      "type": "Sentry",
+      "backpack": false
+    },
+    {
+      "nome": "A/MG-43 Machine Gun Sentry",
+      "type": "Sentry",
+      "backpack": false
+    },
+    {
+      "nome": "A/MLS-4X Rocket Sentry",
+      "type": "Sentry",
+      "backpack": false
+    },
+    {
+      "nome": "AC-8 Autocannon",
+      "type": "Support Weapon",
+      "backpack": true
+    },
+    {
+      "nome": "APW-1 Anti-Materiel Rifle",
+      "type": "Support Weapon",
+      "backpack": false
+    },
+    {
+      "nome": "ARC-3 Arc Thrower",
+      "type": "Support Weapon",
+      "backpack": false
+    },
+    {
+      "nome": "AX/AR-23 Guard Dog",
+      "type": "Backpack",
+      "backpack": true
+    },
+    {
+      "nome": "AX/ARC-3 K-9",
+      "type": "Backpack",
+      "backpack": true
+    },
+    {
+      "nome": "AX/FLAM-75 Hot Dog",
+      "type": "Backpack",
+      "backpack": true
+    },
+    {
+      "nome": "AX/LAS-5 Rover",
+      "type": "Backpack",
+      "backpack": true
+    },
+    {
+      "nome": "AX/TX-13 Dog Breath",
+      "type": "Backpack",
+      "backpack": true
+    },
+    {
+      "nome": "B-1 Supply Pack",
+      "type": "Backpack",
+      "backpack": true
+    },
+    {
+      "nome": "B-100 Portable Hellbomb",
+      "type": "Backpack",
+      "backpack": true
+    },
+    {
+      "nome": "B/FLAM-80 Cremator",
+      "type": "Support Weapon",
+      "backpack": true
+    },
+    {
+      "nome": "B/MD C4 Pack",
+      "type": "Support Weapon",
+      "backpack": true
+    },
+    {
+      "nome": "Call In Super Destroyer",
+      "type": "Ship",
+      "backpack": false
+    },
+    {
+      "nome": "Cargo Container",
+      "type": "Objective",
+      "backpack": false
+    },
+    {
+      "nome": "CQC-1 One True Flag",
+      "type": "Support Weapon",
+      "backpack": false
+    },
+    {
+      "nome": "CQC-20 Breaching Hammer",
+      "type": "Support Weapon",
+      "backpack": false
+    },
+    {
+      "nome": "CQC-9 Defoliation Tool",
+      "type": "Support Weapon",
+      "backpack": false
+    },
+    {
+      "nome": "Dark Fluid Vessel",
+      "type": "Objective",
+      "backpack": true
+    },
+    {
+      "nome": "E/AT-12 Anti-Tank Emplacement",
+      "type": "Emplacement",
+      "backpack": false
+    },
+    {
+      "nome": "E/GL-21 Grenadier Battlement",
+      "type": "Emplacement",
+      "backpack": false
+    },
+    {
+      "nome": "E/MG-101 HMG Emplacement",
+      "type": "Emplacement",
+      "backpack": false
+    },
+    {
+      "nome": "Eagle 110mm Rocket Pods",
+      "type": "Eagle",
+      "backpack": false
+    },
+    {
+      "nome": "Eagle 500kg Bomb",
+      "type": "Eagle",
+      "backpack": false
+    },
+    {
+      "nome": "Eagle Airstrike",
+      "type": "Eagle",
+      "backpack": false
+    },
+    {
+      "nome": "Eagle Cluster Bomb",
+      "type": "Eagle",
+      "backpack": false
+    },
+    {
+      "nome": "Eagle Napalm Airstrike",
+      "type": "Eagle",
+      "backpack": false
+    },
+    {
+      "nome": "Eagle Rearm",
+      "type": "Ship",
+      "backpack": false
+    },
+    {
+      "nome": "Eagle Smoke Strike",
+      "type": "Eagle",
+      "backpack": false
+    },
+    {
+      "nome": "Eagle Strafing Run",
+      "type": "Eagle",
+      "backpack": false
+    },
+    {
+      "nome": "EAT-17 Expendable Anti-Tank",
+      "type": "Support Weapon",
+      "backpack": false
+    },
+    {
+      "nome": "EAT-411 Leveller",
+      "type": "Support Weapon",
+      "backpack": false
+    },
+    {
+      "nome": "EAT-700 Expendable Napalm",
+      "type": "Support Weapon",
+      "backpack": false
+    },
+    {
+      "nome": "EXO-45 Patriot Exosuit",
+      "type": "Vehicle",
+      "backpack": false
+    },
+    {
+      "nome": "EXO-49 Emancipator Exosuit",
+      "type": "Vehicle",
+      "backpack": false
+    },
+    {
+      "nome": "EXO-51 Lumberer Exosuit",
+      "type": "Vehicle",
+      "backpack": false
+    },
+    {
+      "nome": "EXO-55 Breakthrough Exosuit",
+      "type": "Vehicle",
+      "backpack": false
+    },
+    {
+      "nome": "FAF-14 Spear",
+      "type": "Support Weapon",
+      "backpack": true
+    },
+    {
+      "nome": "FLAM-40 Flamethrower",
+      "type": "Support Weapon",
+      "backpack": false
+    },
+    {
+      "nome": "FX-12 Shield Generator Relay",
+      "type": "Emplacement",
+      "backpack": false
+    },
+    {
+      "nome": "GL-21 Grenade Launcher",
+      "type": "Support Weapon",
+      "backpack": false
+    },
+    {
+      "nome": "GL-28 Belt-Fed Grenade Launcher",
+      "type": "Support Weapon",
+      "backpack": true
+    },
+    {
+      "nome": "GL-52 De-Escalator",
+      "type": "Support Weapon",
+      "backpack": false
+    },
+    {
+      "nome": "GR-8 Recoilless Rifle",
+      "type": "Support Weapon",
+      "backpack": true
+    },
+    {
+      "nome": "Hive Breaker Drill",
+      "type": "Objective",
+      "backpack": false
+    },
+    {
+      "nome": "LAS-98 Laser Cannon",
+      "type": "Support Weapon",
+      "backpack": false
+    },
+    {
+      "nome": "LAS-99 Quasar Cannon",
+      "type": "Support Weapon",
+      "backpack": false
+    },
+    {
+      "nome": "LIFT-182 Warp Pack",
+      "type": "Backpack",
+      "backpack": true
+    },
+    {
+      "nome": "LIFT-850 Jump Pack",
+      "type": "Backpack",
+      "backpack": true
+    },
+    {
+      "nome": "Hover Pack",
+      "type": "Backpack",
+      "backpack": true
+    },
+    {
+      "nome": "M-1000 Maxigun",
+      "type": "Support Weapon",
+      "backpack": true
+    },
+    {
+      "nome": "M-102 Fast Recon Vehicle",
+      "type": "Vehicle",
+      "backpack": false
+    },
+    {
+      "nome": "Supply FRV",
+      "type": "Vehicle",
+      "backpack": false
+    },
+    {
+      "nome": "M-104 Incinerator FRV",
+      "type": "Vehicle",
+      "backpack": false
+    },
+    {
+      "nome": "M-105 Stalwart",
+      "type": "Support Weapon",
+      "backpack": false
+    },
+    {
+      "nome": "MD-17 Anti-Tank Mines",
+      "type": "Emplacement",
+      "backpack": false
+    },
+    {
+      "nome": "MD-6 Anti-Personnel Minefield",
+      "type": "Emplacement",
+      "backpack": false
+    },
+    {
+      "nome": "MD-8 Gas Mines",
+      "type": "Emplacement",
+      "backpack": false
+    },
+    {
+      "nome": "MD-I4 Incendiary Mines",
+      "type": "Emplacement",
+      "backpack": false
+    },
+    {
+      "nome": "MG-206 Heavy Machine Gun",
+      "type": "Support Weapon",
+      "backpack": false
+    },
+    {
+      "nome": "MG-43 Machine Gun",
+      "type": "Support Weapon",
+      "backpack": false
+    },
+    {
+      "nome": "MGX-42 Bullet Storm",
+      "type": "Support Weapon",
+      "backpack": false
+    },
+    {
+      "nome": "MLS-4X Commando",
+      "type": "Support Weapon",
+      "backpack": false
+    },
+    {
+      "nome": "MS-11 Solo Silo",
+      "type": "Support Weapon",
+      "backpack": false
+    },
+    {
+      "nome": "Hellbomb",
+      "type": "Objective",
+      "backpack": false
+    },
+    {
+      "nome": "Orbital 120mm HE Barrage",
+      "type": "Orbital",
+      "backpack": false
+    },
+    {
+      "nome": "Orbital 380mm HE Barrage",
+      "type": "Orbital",
+      "backpack": false
+    },
+    {
+      "nome": "Orbital Airburst Strike",
+      "type": "Orbital",
+      "backpack": false
+    },
+    {
+      "nome": "Orbital EMS Strike",
+      "type": "Orbital",
+      "backpack": false
+    },
+    {
+      "nome": "Orbital Gas Strike",
+      "type": "Orbital",
+      "backpack": false
+    },
+    {
+      "nome": "Orbital Gatling Barrage",
+      "type": "Orbital",
+      "backpack": false
+    },
+    {
+      "nome": "Orbital Illumination Flare",
+      "type": "Other",
+      "backpack": false
+    },
+    {
+      "nome": "Orbital Laser",
+      "type": "Orbital",
+      "backpack": false
+    },
+    {
+      "nome": "Orbital Napalm Barrage",
+      "type": "Orbital",
+      "backpack": false
+    },
+    {
+      "nome": "Orbital Precision Strike",
+      "type": "Orbital",
+      "backpack": false
+    },
+    {
+      "nome": "Orbital Railcannon Strike",
+      "type": "Orbital",
+      "backpack": false
+    },
+    {
+      "nome": "Orbital Smoke Strike",
+      "type": "Orbital",
+      "backpack": false
+    },
+    {
+      "nome": "Orbital Walking Barrage",
+      "type": "Orbital",
+      "backpack": false
+    },
+    {
+      "nome": "PLAS-45 Epoch",
+      "type": "Support Weapon",
+      "backpack": false
+    },
+    {
+      "nome": "Prospecting Drill",
+      "type": "Objective",
+      "backpack": false
+    },
+    {
+      "nome": "Reinforce",
+      "type": "Ship",
+      "backpack": false
+    },
+    {
+      "nome": "Link Hellpods to Destroyer",
+      "type": "Objective",
+      "backpack": false
+    },
+    {
+      "nome": "Resupply",
+      "type": "Ship",
+      "backpack": false
+    },
+    {
+      "nome": "RL-77 Airburst Rocket Launcher",
+      "type": "Support Weapon",
+      "backpack": true
+    },
+    {
+      "nome": "RS-422 Railgun",
+      "type": "Support Weapon",
+      "backpack": false
+    },
+    {
+      "nome": "S-11 Speargun",
+      "type": "Support Weapon",
+      "backpack": false
+    },
+    {
+      "nome": "SEAF Artillery",
+      "type": "Objective",
+      "backpack": false
+    },
+    {
+      "nome": "Seismic Probe",
+      "type": "Objective",
+      "backpack": false
+    },
+    {
+      "nome": "SSSD Delivery",
+      "type": null,
+      "backpack": false
+    },
+    {
+      "nome": "Super Earth Flag",
+      "type": null,
+      "backpack": false
+    },
+    {
+      "nome": "SH-20 Ballistic Shield Backpack",
+      "type": "Backpack",
+      "backpack": true
+    },
+    {
+      "nome": "SH-32 Shield Generator Pack",
+      "type": "Backpack",
+      "backpack": true
+    },
+    {
+      "nome": "SH-51 Directional Shield",
+      "type": "Backpack",
+      "backpack": true
+    },
+    {
+      "nome": "SoS Beacon",
+      "type": "Ship",
+      "backpack": false
+    },
+    {
+      "nome": "StA-X3 W.A.S.P. Launcher",
+      "type": "Support Weapon",
+      "backpack": true
+    },
+    {
+      "nome": "TD-220 Bastion MK XVI",
+      "type": "Vehicle",
+      "backpack": false
+    },
+    {
+      "nome": "Tectonic Drill",
+      "type": "Objective",
+      "backpack": false
+    },
+    {
+      "nome": "TX-41 Sterilizer",
+      "type": "Support Weapon",
+      "backpack": false
+    },
+    {
+      "nome": "Upload Data",
+      "type": "Objective",
+      "backpack": false
+    }
+  ]
+}
