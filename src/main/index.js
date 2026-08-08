@@ -257,23 +257,47 @@ function registerMacros() {
   }
 }
 
+// Um Tray sem ícone válido lança e deixa a janela inalcançável depois de fechada,
+// então tentamos todos os caminhos possíveis antes de desistir
+function resolveTrayIcon() {
+  const candidates = app.isPackaged
+    ? [
+        path.join(process.resourcesPath, 'icon.png'),
+        path.join(process.resourcesPath, 'public', 'icon.png'),
+        path.join(app.getAppPath(), 'public', 'icon.png')
+      ]
+    : [path.join(__dirname, '../public/icon.png')]
+  return candidates.find(p => fs.existsSync(p)) || null
+}
+
 function createTray() {
   if (tray) return
-  const iconPath = app.isPackaged
-    ? path.join(process.resourcesPath, 'icon.png')
-    : path.join(__dirname, '../public/icon.png')
-  
+  const iconPath = resolveTrayIcon()
+  if (!iconPath) {
+    console.error('Ícone do tray não encontrado; a janela vai fechar em vez de minimizar')
+    return
+  }
+
+  const restore = () => {
+    if (!win || win.isDestroyed()) return
+    if (win.isMinimized()) win.restore()
+    win.show()
+    win.focus()
+  }
+
   try {
     tray = new Tray(iconPath)
     const contextMenu = Menu.buildFromTemplate([
-      { label: 'Abrir Macro Helldivers 2', click: () => win.show() },
+      { label: 'Abrir Macro Helldivers 2', click: restore },
       { type: 'separator' },
       { label: 'Sair', click: () => { isQuitting = true; app.quit() }}
     ])
     tray.setToolTip('Macro Helldivers 2')
     tray.setContextMenu(contextMenu)
-    tray.on('click', () => win.show())
+    tray.on('click', restore)
+    tray.on('double-click', restore)
   } catch (e) {
+    tray = null
     console.error('Erro ao criar Tray:', e)
   }
 }
@@ -341,13 +365,22 @@ function createWindow() {
   win.on('resize', saveWindowBounds)
   win.on('move', saveWindowBounds)
 
+  // Minimizar também recolhe pro tray: o app segue rodando os macros em segundo plano
+  win.on('minimize', (event) => {
+    if (!tray) return
+    event.preventDefault()
+    win.hide()
+  })
+
   win.on('close', (event) => {
-    if (!isQuitting) {
+    // Sem tray a janela escondida seria irrecuperável — nesse caso fechar encerra mesmo
+    if (!isQuitting && tray) {
       event.preventDefault()
       saveWindowBounds()
       win.hide()
       return false
     }
+    if (!isQuitting) isQuitting = true
   })
 }
 

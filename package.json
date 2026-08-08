@@ -22,7 +22,10 @@
       "dist-electron"
     ],
     "extraResources": [
-      "public/icon.png"
+      {
+        "from": "public/icon.png",
+        "to": "icon.png"
+      }
     ],
     "asarUnpack": [
       "**/@nut-tree-fork/**/*"
