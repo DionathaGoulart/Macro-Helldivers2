@@ -89,6 +89,9 @@ const StratagemCard = memo(function StratagemCard({ strat, tag, isInActiveSlot, 
 
 const EQUIPMENT_SLOTS = ['primary', 'secondary', 'grenade', 'armor', 'helmet', 'cape', 'booster']
 
+// Busca sem acento e sem case: "orbital" acha "Orbital", "gatling" acha "A/G-16 Gatling"
+const normalizeText = (s) => s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+
 const BuildItemCard = memo(function BuildItemCard({ label, name, image, subtitle, description, badge, locked, onToggleLock, lockTitle }) {
   return (
     <div className={`relative rounded-2xl border-2 overflow-hidden bg-slate-900/40 ${locked ? 'border-yellow-500/60 shadow-[0_0_20px_rgba(234,179,8,0.15)]' : 'border-slate-800/50'}`}>
@@ -133,6 +136,8 @@ function App() {
   const [randomBuild, setRandomBuild] = useState(null)
   const [buildLocks, setBuildLocks] = useState({})
   const [buildSubTab, setBuildSubTab] = useState('meta')
+  const [customSlot, setCustomSlot] = useState(0)
+  const [buildSearch, setBuildSearch] = useState('')
   const [metaFaction, setMetaFaction] = useState('terminid')
   const [metaDifficulty, setMetaDifficulty] = useState(0)
   const [metaStats, setMetaStats] = useState(null)
@@ -307,8 +312,10 @@ function App() {
     EQUIPMENT_SLOTS.forEach(slot => {
       build[slot] = loadout.equip?.[slot] ? (equipById[loadout.equip[slot]] || null) : null
     })
-    // Builds antigas (salvas antes do equipamento existir) mostram só os estratagemas
-    if (EQUIPMENT_SLOTS.some(slot => build[slot])) setRandomBuild(build)
+    // Builds antigas (salvas antes do equipamento existir) não têm `equip` e mostram
+    // só os estratagemas; builds novas (inclusive personalizadas sem equipamento)
+    // sobrescrevem a tela inteira
+    if (loadout.equip) setRandomBuild(build)
     else if (randomBuild) setRandomBuild({ ...randomBuild, stratagems: resolved })
     else setRandomBuild(build)
   }
@@ -407,6 +414,69 @@ function App() {
   const applyBuildStratagems = () => {
     if (randomBuild?.stratagems) updateSlots([...randomBuild.stratagems])
   }
+
+  // ---- Build personalizada (montada na mão) ----
+
+  const customStrats = randomBuild?.stratagems || [null, null, null, null]
+
+  const patchBuild = (patch) => setRandomBuild(prev => ({
+    stratagems: [null, null, null, null],
+    ...prev,
+    ...patch
+  }))
+
+  const isCustomCardDisabled = useCallback((strat) => {
+    const list = randomBuild?.stratagems || [null, null, null, null]
+    if (list[customSlot]?.id === strat.id) return false
+    if (list.some(s => s && s.id === strat.id)) return true
+    return hasExclusiveConflict(strat, list, customSlot)
+  }, [randomBuild, customSlot])
+
+  const handleCustomAssign = useCallback((strat) => {
+    setRandomBuild(prev => {
+      const base = prev || {}
+      const list = [...(base.stratagems || [null, null, null, null])]
+      // Clicar no que já está no slot ativo remove
+      if (list[customSlot]?.id === strat.id) {
+        list[customSlot] = null
+        return { ...base, stratagems: list }
+      }
+      if (list.some((s, i) => i !== customSlot && s?.id === strat.id)) return base
+      if (hasExclusiveConflict(strat, list, customSlot)) return base
+      list[customSlot] = strat
+      return { ...base, stratagems: list }
+    })
+    setCustomSlot(s => (s < 3 ? s + 1 : s))
+  }, [customSlot])
+
+  const handleCustomClearSlot = (i) => {
+    const list = [...customStrats]
+    list[i] = null
+    patchBuild({ stratagems: list })
+  }
+
+  // Traz o que já está nos slots do macro pra edição
+  const handleCustomImportSlots = () => patchBuild({ stratagems: [...slots] })
+
+  const handleCustomReset = () => {
+    setRandomBuild(null)
+    setCustomSlot(0)
+    setBuildSearch('')
+  }
+
+  const handleCustomEquipChange = (slot, id) => patchBuild({ [slot]: id ? (equipById[id] || null) : null })
+
+  const customStratagemList = useMemo(() => {
+    const order = ['Offensive', 'Supply', 'Defensive']
+    const q = normalizeText(buildSearch.trim())
+    return stratagemsData
+      .filter(s => !q || normalizeText(s.nome).includes(q))
+      .sort((a, b) => {
+        const ia = order.indexOf(a.tag?.[0]), ib = order.indexOf(b.tag?.[0])
+        if (ia !== ib) return (ia === -1 ? 99 : ia) - (ib === -1 ? 99 : ib)
+        return a.nome.localeCompare(b.nome)
+      })
+  }, [buildSearch])
 
   const passiveByName = useMemo(() => {
     const map = {}
@@ -711,8 +781,6 @@ function App() {
     })
   }, [stratagemsByTag])
 
-  // Busca sem acento e sem case: "orbital" acha "Orbital", "gatling" acha "A/G-16 Gatling"
-  const normalizeText = (s) => s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
   const filteredStratagemsByTag = useMemo(() => {
     const q = normalizeText(searchQuery.trim())
     if (!q) return stratagemsByTag
@@ -917,10 +985,10 @@ function App() {
 
         {activeTab === 'build' && (
           <div className="max-w-5xl w-full mx-auto px-6 space-y-6 pt-6 pb-24">
-            {/* SUB-ABAS: META | ALEATÓRIA */}
+            {/* SUB-ABAS: META | ALEATÓRIA | PERSONALIZADA */}
             <div className="flex justify-center">
               <div className="flex bg-slate-950/60 border border-white/5 rounded-2xl p-1 gap-1">
-                {['meta', 'random'].map((sub) => (
+                {['meta', 'random', 'custom'].map((sub) => (
                   <button
                     key={sub}
                     onClick={() => setBuildSubTab(sub)}
@@ -929,13 +997,14 @@ function App() {
                       : 'text-slate-500 hover:text-white'
                       }`}
                   >
-                    {sub === 'meta' ? t.build.subMeta : t.build.subRandom}
+                    {sub === 'meta' ? t.build.subMeta : sub === 'random' ? t.build.subRandom : t.build.subCustom}
                   </button>
                 ))}
               </div>
             </div>
 
-            {/* OPÇÕES DA BUILD */}
+            {/* OPÇÕES DA BUILD (só valem para os sorteios) */}
+            {buildSubTab !== 'custom' && (
             <div className="hd-card p-4 space-y-2">
               {[
                 { key: 'buildMatchSet', def: true, title: t.build.matchSet, on: t.build.matchSetOn, off: t.build.matchSetOff },
@@ -967,6 +1036,129 @@ function App() {
                 )
               })}
             </div>
+            )}
+
+            {/* SUB-ABA PERSONALIZADA */}
+            {buildSubTab === 'custom' && (
+              <div className="hd-card p-5 border-l-4 border-l-slate-700 hover:border-l-cyan-500/50 space-y-4">
+                <h2 className="flex items-center gap-3 text-xs font-black uppercase tracking-widest text-slate-400">
+                  <div className="w-2 h-2 rounded-full border bg-cyan-500 shadow-[0_0_12px_rgba(34,211,238,0.8)] border-cyan-400/50"></div>
+                  {t.build.customTitle}
+                  <div className="ml-auto flex gap-2">
+                    <button
+                      onClick={handleCustomImportSlots}
+                      className="py-2 px-4 rounded-xl text-[9px] font-black uppercase tracking-widest border-2 bg-slate-900 border-slate-800 text-slate-300 hover:border-cyan-500/50 hover:text-white hover:bg-cyan-500/5"
+                    >
+                      {t.build.customImport}
+                    </button>
+                    <button
+                      onClick={handleCustomReset}
+                      className="py-2 px-4 rounded-xl text-[9px] font-black uppercase tracking-widest border-2 bg-slate-900 border-slate-800 text-slate-500 hover:border-red-500/50 hover:text-white hover:bg-red-500/5"
+                    >
+                      {t.build.customClear}
+                    </button>
+                  </div>
+                </h2>
+                <p className="text-[9px] text-slate-600 uppercase tracking-widest leading-relaxed">{t.build.customHint}</p>
+
+                {/* Slots em edição */}
+                <div className="grid grid-cols-4 gap-3">
+                  {customStrats.map((s, i) => (
+                    <button
+                      key={i}
+                      onClick={() => setCustomSlot(i)}
+                      className={`relative rounded-2xl border-2 p-3 flex flex-col items-center gap-2 ${customSlot === i
+                        ? 'bg-cyan-500/5 border-cyan-500/60 shadow-[0_0_20px_rgba(34,211,238,0.15)]'
+                        : 'bg-slate-950/40 border-slate-800 hover:border-cyan-500/30'
+                        }`}
+                    >
+                      <span className={`text-[8px] font-black uppercase tracking-widest ${customSlot === i ? 'text-cyan-400' : 'text-slate-500'}`}>
+                        {t.build.stratagem} {i + 1}
+                      </span>
+                      <div className="w-14 h-14 flex items-center justify-center">
+                        {s
+                          ? <img src={s.imagem} alt={s.nome} loading="lazy" decoding="async" className="max-w-full max-h-full object-contain" />
+                          : <span className="text-2xl text-slate-700">▣</span>}
+                      </div>
+                      <span className="text-[9px] font-black uppercase tracking-tight text-slate-300 leading-tight text-center min-h-[22px]">
+                        {s?.nome || '—'}
+                      </span>
+                      {s && (
+                        <span
+                          onClick={(e) => { e.stopPropagation(); handleCustomClearSlot(i) }}
+                          title={t.macro.clearSlot}
+                          className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-red-600 hover:bg-red-500 text-white rounded-full flex items-center justify-center text-[9px] font-bold leading-none"
+                        >
+                          ×
+                        </span>
+                      )}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Busca + grade de estratagemas */}
+                <div className="relative">
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-600 text-sm pointer-events-none">⌕</span>
+                  <input
+                    type="text"
+                    value={buildSearch}
+                    onChange={(e) => setBuildSearch(e.target.value)}
+                    placeholder={t.macro.searchPlaceholder}
+                    className="w-full py-3 pl-10 pr-10 rounded-xl text-[11px] font-bold uppercase tracking-wider bg-slate-950/60 border-2 border-slate-800 text-slate-200 placeholder:text-slate-600 focus:border-cyan-500/50 focus:outline-none"
+                  />
+                  {buildSearch && (
+                    <button
+                      onClick={() => setBuildSearch('')}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 flex items-center justify-center text-slate-500 hover:text-white text-xs font-bold"
+                    >
+                      ×
+                    </button>
+                  )}
+                </div>
+
+                {customStratagemList.length === 0 ? (
+                  <p className="text-center text-[10px] text-slate-600 uppercase tracking-widest py-8">
+                    {t.macro.searchNoResults} “{buildSearch}”
+                  </p>
+                ) : (
+                  <div className="grid grid-cols-5 gap-3 max-h-[420px] overflow-y-auto scrollbar-hd pr-1">
+                    {customStratagemList.map((strat) => (
+                      <StratagemCard
+                        key={strat.id}
+                        strat={strat}
+                        tag={strat.tag?.[0]}
+                        isInActiveSlot={customStrats[customSlot]?.id === strat.id}
+                        disabled={isCustomCardDisabled(strat)}
+                        clearLabel={t.macro.clearSlot}
+                        onAssign={handleCustomAssign}
+                      />
+                    ))}
+                  </div>
+                )}
+
+                {/* Equipamento opcional */}
+                <div>
+                  <h3 className="text-[9px] font-black uppercase tracking-widest text-slate-500 mb-2">{t.build.customEquipment}</h3>
+                  <div className="grid grid-cols-4 gap-2">
+                    {EQUIPMENT_SLOTS.map((slot) => (
+                      <label key={slot} className="flex flex-col gap-1">
+                        <span className="text-[8px] font-black uppercase tracking-widest text-slate-600">{t.build[slot]}</span>
+                        <select
+                          value={randomBuild?.[slot]?.id ?? ''}
+                          onChange={(e) => handleCustomEquipChange(slot, e.target.value)}
+                          className="w-full py-2 px-2 rounded-xl text-[9px] font-bold uppercase bg-slate-950/60 border-2 border-slate-800 text-slate-200 focus:border-cyan-500/50 focus:outline-none"
+                        >
+                          <option value="">{t.build.equipNone}</option>
+                          {(equipmentData[slot] || []).map((item) => (
+                            <option key={item.id} value={item.id}>{item.nome}</option>
+                          ))}
+                        </select>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* SUB-ABA ALEATÓRIA */}
             {buildSubTab === 'random' && (

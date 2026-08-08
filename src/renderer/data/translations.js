@@ -8,8 +8,9 @@ export const translations = {
     build: {
       subMeta: 'Meta',
       subRandom: 'Aleatória',
+      subCustom: 'Personalizada',
       saved: 'Builds Salvas',
-      savedEmpty: 'Gere uma build e salve com um nome',
+      savedEmpty: 'Monte ou gere uma build e salve com um nome',
       savePlaceholder: 'Nome da build...',
       saveBuild: 'Salvar',
       deleteBuild: 'Excluir build',
@@ -53,7 +54,13 @@ export const translations = {
       maxSentry: 'Máx. 1 Torreta',
       maxSentryOn: 'No máximo 1 sentinela por build',
       maxSentryOff: 'Sem limite de sentinelas',
-      setBadge: 'SET'
+      setBadge: 'SET',
+      customTitle: 'Montar Build',
+      customHint: 'Escolha o slot, clique nos estratagemas para equipar (clique de novo para remover) e selecione o equipamento se quiser. Depois dê um nome e salve em Builds Salvas.',
+      customImport: 'Usar slots atuais',
+      customClear: 'Limpar tudo',
+      customEquipment: 'Equipamento (opcional)',
+      equipNone: '— Nenhum —'
     },
     macro: {
       selectTitle: 'Selecionar Estratagemas para o Slot',
@@ -126,8 +133,9 @@ export const translations = {
     build: {
       subMeta: 'Meta',
       subRandom: 'Random',
+      subCustom: 'Custom',
       saved: 'Saved Builds',
-      savedEmpty: 'Generate a build and save it with a name',
+      savedEmpty: 'Build or generate a loadout and save it with a name',
       savePlaceholder: 'Build name...',
       saveBuild: 'Save',
       deleteBuild: 'Delete build',
@@ -171,7 +179,13 @@ export const translations = {
       maxSentry: 'Max 1 Sentry',
       maxSentryOn: 'At most 1 sentry per build',
       maxSentryOff: 'No sentry limit',
-      setBadge: 'SET'
+      setBadge: 'SET',
+      customTitle: 'Build Loadout',
+      customHint: 'Pick a slot, click stratagems to equip (click again to remove) and choose gear if you want. Then name it and save it under Saved Builds.',
+      customImport: 'Use current slots',
+      customClear: 'Clear all',
+      customEquipment: 'Equipment (optional)',
+      equipNone: '— None —'
     },
     macro: {
       selectTitle: 'Select Stratagems for Slot',
