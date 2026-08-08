@@ -135,7 +135,28 @@ function loadSettings() {
 let currentSettings = loadSettings()
 
 // Polling de Foco (Seguro)
-setInterval(async () => {
+// Só começa depois que a janela principal pintou: o primeiro loadMacroEngine()
+// carrega módulos nativos e bloqueia o processo main por ~1s — durante o boot
+// isso trava a abertura do app.
+let focusPollTimer = null
+let isPollingFocus = false
+
+function startFocusPolling() {
+  if (focusPollTimer) return
+  focusPollTimer = setInterval(pollGameFocus, 500)
+}
+
+async function pollGameFocus() {
+  if (isPollingFocus) return // getActiveWindow lento não pode empilhar chamadas
+  isPollingFocus = true
+  try {
+    await checkGameFocus()
+  } finally {
+    isPollingFocus = false
+  }
+}
+
+async function checkGameFocus() {
   const engine = loadMacroEngine()
   if (!engine || !engine.getActiveWindow) return
 
@@ -193,7 +214,7 @@ setInterval(async () => {
       if (win && !win.isDestroyed()) win.webContents.send('game-focus-changed', false)
     }
   }
-}, 500)
+}
 
 function broadcast(channel, payload) {
   if (win && !win.isDestroyed()) win.webContents.send(channel, payload)
@@ -359,7 +380,11 @@ function createWindow() {
   else win.loadFile(path.join(__dirname, '../dist/index.html'))
 
   win.webContents.on('did-finish-load', () => {
-    autoUpdater.checkForUpdatesAndNotify().catch(() => {})
+    // Fora do caminho crítico do boot: ambos tocam rede/módulo nativo
+    setTimeout(() => {
+      autoUpdater.checkForUpdatesAndNotify().catch(() => {})
+      startFocusPolling()
+    }, 1500)
   })
 
   win.on('resize', saveWindowBounds)
@@ -428,9 +453,11 @@ function createOverlayWindow() {
 
 app.whenReady().then(() => {
   createWindow()
-  createOverlayWindow()
   createTray()
   registerOverlayShortcut()
+  // A janela de overlay carrega um segundo renderer inteiro; fora do boot pra
+  // não competir com a primeira pintura da janela principal
+  setTimeout(createOverlayWindow, 1000)
 
   screen.on('display-metrics-changed', () => {
     if (overlayWin && !overlayWin.isDestroyed()) {
