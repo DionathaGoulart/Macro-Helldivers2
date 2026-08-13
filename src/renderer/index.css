@@ -55,8 +55,11 @@
 }
 
 @layer components {
+  /* Sem backdrop-blur: o fundo da janela é opaco, então o desfoque não mudava um pixel
+     e ainda custava um passe de blur por card a cada repintura. O vidro real fica só
+     no painel do overlay, que é o único lugar com jogo atrás. */
   .hd-card {
-    @apply bg-slate-900/40 border border-slate-800/80 rounded-2xl backdrop-blur-xl 
+    @apply bg-slate-900/40 border border-slate-800/80 rounded-2xl
            shadow-[0_8px_32px_-4px_rgba(0,0,0,0.5)];
   }
 

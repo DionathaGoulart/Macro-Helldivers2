@@ -826,7 +826,8 @@ function App() {
                 <div className="w-20 h-20 border-4 border-yellow-500 rounded-full flex items-center justify-center">
                   <span className="text-3xl font-black text-yellow-500 tracking-tighter">HD</span>
                 </div>
-                <div className="absolute inset-0 border-4 border-cyan-500 rounded-full animate-ping opacity-20"></div>
+                {/* sem animate-ping: era uma animação infinita rodando por cima de uma
+                    tela que já dura 4,5 s, mantendo o compositor a 60fps à toa */}
               </div>
               <h1 className="text-yellow-500 text-xs font-black tracking-[0.5em] uppercase">
                 Macro Helldivers 2
@@ -866,9 +867,11 @@ function App() {
         isOverlay && !isMinimal ? 'w-[820px] h-[640px] bg-slate-950/70 rounded-3xl border border-white/10 shadow-[0_0_50px_rgba(0,0,0,0.4)] overflow-hidden relative m-auto backdrop-blur-md' : 'h-full'
       }`}>
       
-      {/* HEADER: TABS */}
+      {/* HEADER: TABS
+          Sem backdrop-blur: na janela principal o fundo é opaco (nada pra desfocar) e
+          no overlay o painel já aplica o vidro uma vez, no container */}
       {!isMinimal && (
-      <header className="shrink-0 bg-slate-950/40 backdrop-blur-2xl border-b border-white/5 z-50 relative">
+      <header className="shrink-0 bg-slate-950/40 border-b border-white/5 z-50 relative">
         {/* HUD Decorations */}
         <div className="absolute top-0 left-0 w-8 h-8 border-t border-l border-cyan-500/20 pointer-events-none rounded-tl-2xl"></div>
         <div className="absolute top-0 right-0 w-8 h-8 border-t border-r border-cyan-500/20 pointer-events-none"></div>
@@ -1624,7 +1627,7 @@ function App() {
                         alt={strat.nome} 
                         decoding="async"
                         loading="lazy"
-                        className="w-full h-full object-cover opacity-80 group-hover:scale-110 group-hover:opacity-100 transition-all duration-500 transform-gpu will-change-transform" 
+                        className="w-full h-full object-cover opacity-80 group-hover:scale-110 group-hover:opacity-100 transition-all duration-500"
                         style={{ imageRendering: 'auto' }}
                       />
 
@@ -1750,7 +1753,7 @@ function App() {
 
       {/* FOOTER: SLOTS BAR (FIXED) */}
       {((activeTab === 'macro' && !isOverlay) || (isMinimal && settings.alwaysShowSlots) || (!isMinimal && isOverlay && activeTab === 'macro')) && (
-        <footer className={`shrink-0 fixed transition-none ${isMinimal ? 'bottom-2 scale-[0.70] origin-bottom bg-slate-950/20 backdrop-blur-sm shadow-[0_0_15px_rgba(0,0,0,0.5)]' : 'bottom-6 bg-slate-950/60 backdrop-blur-2xl shadow-[0_20px_50px_-10px_rgba(0,0,0,0.8)]'} left-1/2 -translate-x-1/2 w-fit border border-white/5 p-4 rounded-3xl ${isMinimal ? 'z-[9999]' : 'z-[100]'}`}>
+        <footer className={`shrink-0 fixed transition-none ${isMinimal ? 'bottom-2 scale-[0.70] origin-bottom bg-slate-950/20 backdrop-blur-sm shadow-[0_0_15px_rgba(0,0,0,0.5)]' : 'bottom-6 bg-slate-950/60 shadow-[0_20px_50px_-10px_rgba(0,0,0,0.8)]'} left-1/2 -translate-x-1/2 w-fit border border-white/5 p-4 rounded-3xl ${isMinimal ? 'z-[9999]' : 'z-[100]'}`}>
           <div className="flex flex-col items-center gap-3">
             <div className="flex justify-center gap-4">
               {slots.map((slot, index) => (
