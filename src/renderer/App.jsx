@@ -798,7 +798,9 @@ function App() {
 
   return (
     <>
-    {fullscreenWarning && (isOverlay || gameFocused) && (
+    {/* No estado minimal a janela do overlay é só o retângulo do strip: o aviso não
+        caberia. Ele continua aparecendo no painel e na janela principal. */}
+    {fullscreenWarning && !isMinimal && (isOverlay || gameFocused) && (
       <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[10001] max-w-xl bg-yellow-950/95 border-2 border-yellow-500/70 text-yellow-200 text-xs font-bold px-5 py-3 rounded-2xl shadow-[0_0_30px_rgba(234,179,8,0.25)] text-center leading-relaxed">
         ⚠ {t.overlay?.fullscreenWarning}
       </div>

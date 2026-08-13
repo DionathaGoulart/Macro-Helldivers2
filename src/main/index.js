@@ -13,8 +13,10 @@ let currentSlots = [null, null, null, null]
 let isGameFocused = false
 // A janela do overlay fica SEMPRE visível (transparente/click-through); esconder e
 // mostrar de novo com show()/showInactive() ativa janelas transparentes no Windows,
-// roubando o foco do jogo (que minimiza em tela cheia). Só o CONTEÚDO alterna, via IPC.
-// Estados: 'hidden' (nada renderizado) | 'minimal' (strip de slots) | 'panel' (painel completo)
+// roubando o foco do jogo (que minimiza em tela cheia). Em vez disso alternam o
+// CONTEÚDO (via IPC) e os BOUNDS (ver overlayBoundsFor) — janela de tela cheia é
+// composta pelo DWM por cima do jogo mesmo sem nada desenhado.
+// Estados: 'hidden' (1x1, nada renderizado) | 'minimal' (strip de slots) | 'panel' (painel completo)
 let overlayState = 'hidden'
 let isMacroRunning = false
 let nut = null // Carregamento tardio (Lazy)
@@ -24,19 +26,78 @@ let overlayWin = null
 // O HD2 em "Tela Cheia" (DXGI fullscreen) se auto-minimiza quando QUALQUER janela
 // desenha por cima dele — comportamento do jogo, sem relação com foco. Overlay de
 // janela só funciona em "Tela Cheia sem Borda"; detectamos o modo pra avisar o usuário.
+// Lido em toda troca de estado/foco, então cacheamos: só relê quando o mtime muda.
+let fullscreenCache = { mtime: -1, value: false }
+
 function isGameExclusiveFullscreen() {
   try {
     const cfg = path.join(app.getPath('appData'), 'Arrowhead', 'Helldivers2', 'user_settings.config')
+    const mtime = fs.statSync(cfg).mtimeMs
+    if (mtime === fullscreenCache.mtime) return fullscreenCache.value
     const text = fs.readFileSync(cfg, 'utf8')
-    return /^\s*fullscreen\s*=\s*true/m.test(text) && !/^\s*borderless_fullscreen\s*=\s*true/m.test(text)
+    const value = /^\s*fullscreen\s*=\s*true/m.test(text) && !/^\s*borderless_fullscreen\s*=\s*true/m.test(text)
+    fullscreenCache = { mtime, value }
+    return value
   } catch (e) {
+    fullscreenCache = { mtime: -1, value: false }
     return false
+  }
+}
+
+// Uma janela transparente de tela cheia é composta pelo DWM por cima do jogo em TODO
+// frame, mesmo sem nada desenhado. Como não podemos escondê-la (ver overlayState),
+// encolhemos os bounds pro tamanho real do conteúdo de cada estado.
+// Medidas fixas em DIP, iguais ao CSS: painel = w-[820px] h-[640px] + folga da sombra;
+// strip = 4 slots w-16 com gap-4 + p-4, escalado 0.70, + folga do brilho/pulse.
+const OVERLAY_SIZES = {
+  panel: { width: 840, height: 660 },
+  minimal: { width: 340, height: 130 }
+}
+
+function overlayBoundsFor(state) {
+  const display = screen.getPrimaryDisplay()
+  const b = display.bounds
+  // 1x1 num canto: janela segue viva (nunca damos show/hide) mas o compositor
+  // praticamente não tem o que compor
+  if (state === 'hidden') return { x: b.x, y: b.y, width: 1, height: 1 }
+  const size = OVERLAY_SIZES[state]
+  if (!size) return { ...b }
+  if (state === 'minimal') {
+    // Ancorado embaixo no centro, onde o CSS posiciona o strip (bottom-2)
+    return {
+      x: Math.round(b.x + (b.width - size.width) / 2),
+      y: Math.round(b.y + b.height - size.height),
+      width: size.width,
+      height: size.height
+    }
+  }
+  return {
+    x: Math.round(b.x + (b.width - size.width) / 2),
+    y: Math.round(b.y + (b.height - size.height) / 2),
+    width: size.width,
+    height: size.height
+  }
+}
+
+function applyOverlayBounds(state) {
+  if (!overlayWin || overlayWin.isDestroyed()) return
+  try {
+    // A janela é resizable:false pra ninguém arrastar a borda. No Windows isso trava
+    // min/max size no tamanho atual e pode fazer setBounds virar no-op — liberamos
+    // só durante a chamada.
+    const wasResizable = overlayWin.isResizable()
+    if (!wasResizable) overlayWin.setResizable(true)
+    overlayWin.setBounds(overlayBoundsFor(state))
+    if (!wasResizable) overlayWin.setResizable(false)
+  } catch (e) {
+    console.error('Erro ao redimensionar overlay:', e)
   }
 }
 
 function setOverlayState(state) {
   if (!overlayWin || overlayWin.isDestroyed()) return
   overlayState = state
+  applyOverlayBounds(state)
   overlayWin.webContents.send('overlay-state', state)
   if (state !== 'hidden') {
     overlayWin.webContents.send('fullscreen-warning', isGameExclusiveFullscreen())
@@ -416,14 +477,14 @@ function createWindow() {
 }
 
 function createOverlayWindow() {
-  const primaryDisplay = screen.getPrimaryDisplay()
-  const { width, height } = primaryDisplay.bounds
+  // Nasce já do tamanho do painel; setOverlayState ajusta pro estado real assim que carrega
+  const initial = overlayBoundsFor('panel')
 
   overlayWin = new BrowserWindow({
-    width,
-    height,
-    x: 0,
-    y: 0,
+    width: initial.width,
+    height: initial.height,
+    x: initial.x,
+    y: initial.y,
     title: 'HD2_OVERLAY',
     transparent: true,
     frame: false,
@@ -466,9 +527,7 @@ app.whenReady().then(() => {
   setTimeout(createOverlayWindow, 1000)
 
   screen.on('display-metrics-changed', () => {
-    if (overlayWin && !overlayWin.isDestroyed()) {
-      overlayWin.setBounds(screen.getPrimaryDisplay().bounds)
-    }
+    applyOverlayBounds(overlayState)
   })
 })
 

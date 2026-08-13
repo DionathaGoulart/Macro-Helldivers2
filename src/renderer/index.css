@@ -21,6 +21,14 @@
     background: transparent !important;
   }
 
+  /* Scanline e granulado são pseudo-elementos de tela cheia. Na janela de overlay eles
+     eram pintados POR CIMA do jogo permanentemente — inclusive no estado 'hidden', em
+     que nada é renderizado. Duas camadas fullscreen compostas a cada frame, de graça. */
+  body.is-overlay::before,
+  body.is-overlay::after {
+    content: none;
+  }
+
   body::before {
     content: " ";
     display: block;
