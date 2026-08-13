@@ -42,12 +42,19 @@
     },
     "mac": {
       "target": "dmg",
-      "icon": "public/icon.png"
+      "icon": "public/icon.png",
+      "files": [
+        "!**/@nut-tree-fork/libnut-win32/**"
+      ]
     },
     "win": {
       "target": "nsis",
       "icon": "public/icon.png",
-      "requestedExecutionLevel": "requireAdministrator"
+      "requestedExecutionLevel": "requireAdministrator",
+      "files": [
+        "!**/@nut-tree-fork/libnut-darwin/**",
+        "!**/@nut-tree-fork/node-mac-permissions/**"
+      ]
     },
     "nsis": {
       "oneClick": false,
