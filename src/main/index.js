@@ -199,21 +199,39 @@ let currentSettings = loadSettings()
 // Só começa depois que a janela principal pintou: o primeiro loadMacroEngine()
 // carrega módulos nativos e bloqueia o processo main por ~1s — durante o boot
 // isso trava a abertura do app.
+// Cadência adaptativa: rápido enquanto o jogo está em foco (reagir ao alt-tab),
+// lento quando o app só está esperando na bandeja
+const POLL_ACTIVE_MS = 400
+const POLL_IDLE_MS = 2000
+const IDLE_AFTER_TICKS = 10
+
+// Reafirmar o z-order é SetWindowPos por cima de um jogo em tela cheia; fazer isso a
+// cada tick gera churn à toa. O caso que ele cobre (alt-tab, troca de modo de vídeo) é raro.
+const ZORDER_REASSERT_TICKS = 12
+
 let focusPollTimer = null
-let isPollingFocus = false
+let idleTicks = 0
+let zOrderCooldown = 0
+let lastWindowHandle = null
+let lastWindowTitle = null
+
+function scheduleFocusPoll() {
+  const delay = (isGameFocused || idleTicks < IDLE_AFTER_TICKS) ? POLL_ACTIVE_MS : POLL_IDLE_MS
+  focusPollTimer = setTimeout(pollGameFocus, delay)
+}
 
 function startFocusPolling() {
   if (focusPollTimer) return
-  focusPollTimer = setInterval(pollGameFocus, 500)
+  scheduleFocusPoll()
 }
 
+// Encadeado com setTimeout em vez de setInterval: chamadas nativas lentas nunca empilham
 async function pollGameFocus() {
-  if (isPollingFocus) return // getActiveWindow lento não pode empilhar chamadas
-  isPollingFocus = true
+  focusPollTimer = null
   try {
     await checkGameFocus()
   } finally {
-    isPollingFocus = false
+    scheduleFocusPoll()
   }
 }
 
@@ -224,11 +242,22 @@ async function checkGameFocus() {
   try {
     const activeWindow = await engine.getActiveWindow()
     if (!activeWindow) return // Ignora nulos momentâneos (transições de janela)
-    
-    // Suporte a propriedade ou função para compatibilidade com diferentes versões do nut-js
-    const title = typeof activeWindow.title === 'function' ? await activeWindow.title() : await activeWindow.title
-    
-    if (!title) return // Ignora se não conseguir ler o título momentaneamente
+
+    // getWindowTitle é a chamada nativa cara (monta string atravessando a fronteira).
+    // Jogando, a janela ativa fica a mesma por minutos — o handle já diz isso de graça.
+    const handle = activeWindow.windowHandle
+    let title
+    if (handle != null && handle === lastWindowHandle) {
+      title = lastWindowTitle
+    } else {
+      // Suporte a propriedade ou função para compatibilidade com diferentes versões do nut-js
+      title = typeof activeWindow.title === 'function' ? await activeWindow.title() : await activeWindow.title
+      if (!title) return // Ignora se não conseguir ler o título momentaneamente
+      lastWindowHandle = handle ?? null
+      lastWindowTitle = title
+    }
+
+    if (!title) return
 
     // Busca pelo título do jogo e janelas do app
     const isOverlayActive = title.toUpperCase().includes('HD2_OVERLAY')
@@ -238,16 +267,24 @@ async function checkGameFocus() {
     // O sistema fica "ativo" se estiver no jogo, no overlay ou na janela de configuração
     const isFocused = isGame || isOverlayActive || isMainApp
 
+    idleTicks = isFocused ? 0 : idleTicks + 1
+
     // Jogos podem re-agarrar o topo do z-order (alt-tab, troca de modo de vídeo);
     // reafirma o overlay acima enquanto o jogo está em foco e há conteúdo visível
     if (isFocused && overlayState !== 'hidden' && overlayWin && !overlayWin.isDestroyed() && overlayWin.isVisible()) {
-      overlayWin.setAlwaysOnTop(true, 'screen-saver')
-      overlayWin.moveTop()
+      if (zOrderCooldown <= 0) {
+        overlayWin.setAlwaysOnTop(true, 'screen-saver')
+        overlayWin.moveTop()
+        zOrderCooldown = ZORDER_REASSERT_TICKS
+      } else {
+        zOrderCooldown--
+      }
     }
 
     if (isFocused !== isGameFocused) {
       isGameFocused = isFocused
-      
+      zOrderCooldown = 0 // reafirma o z-order no próximo tick depois de qualquer transição
+
       if (isGameFocused) {
         registerMacros()
         if (currentSettings.alwaysShowSlots) {
@@ -270,6 +307,7 @@ async function checkGameFocus() {
     }
   } catch (e) {
     // Se der erro, por segurança desativamos para não disparar macro em apps errados
+    lastWindowHandle = null // não reaproveita título de uma leitura que falhou
     if (isGameFocused) {
       isGameFocused = false
       if (win && !win.isDestroyed()) win.webContents.send('game-focus-changed', false)
