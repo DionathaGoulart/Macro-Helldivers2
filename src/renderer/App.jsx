@@ -104,16 +104,17 @@ function App() {
       } catch (e) { console.error(e) }
     }
 
+    // Merge contra DEFAULT_SETTINGS, não contra o `settings` do render atual: o efeito
+    // roda uma vez só e a closure carregaria o valor do primeiro render pra sempre
     const savedSettings = localStorage.getItem('helldivers-macro-settings')
+    let merged = DEFAULT_SETTINGS
     if (savedSettings) {
       try {
-        const parsed = JSON.parse(savedSettings)
-        setSettings(prev => ({ ...prev, ...parsed }))
-        if (window.api) window.api.saveSettings({ ...settings, ...parsed })
+        merged = { ...DEFAULT_SETTINGS, ...JSON.parse(savedSettings) }
       } catch (e) { console.error(e) }
-    } else {
-      if (window.api) window.api.saveSettings(settings)
     }
+    setSettings(merged)
+    if (window.api) window.api.saveSettings(merged)
   }, [])
 
   useEffect(() => {
