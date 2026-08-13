@@ -482,6 +482,12 @@ function createWindow() {
       preload: path.join(__dirname, 'preload.js'),
       nodeIntegration: false,
       contextIsolation: true,
+      sandbox: true,
+      // O app não tem campo de texto longo; sem isso o Electron sobe o serviço de
+      // verificação ortográfica e chega a baixar dicionário
+      spellcheck: false,
+      backgroundThrottling: true,
+      v8CacheOptions: 'code',
     },
     autoHideMenuBar: true,
   })
@@ -543,6 +549,10 @@ function createOverlayWindow() {
       preload: path.join(__dirname, 'preload.js'),
       nodeIntegration: false,
       contextIsolation: true,
+      sandbox: true,
+      spellcheck: false,
+      backgroundThrottling: true,
+      v8CacheOptions: 'code',
     }
   })
 
