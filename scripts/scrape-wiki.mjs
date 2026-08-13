@@ -148,6 +148,20 @@ async function getStratagemInfo() {
   }))
 }
 
+// Warbonds: a origem de quase todo item. O app já guarda o nome da warbond em
+// armor/helmet/cape; aqui vem a ficha (capa, data, tipo, preço) pra exibir.
+async function getWarbonds() {
+  const rows = await cargoAll('Warbonds', '_pageName=page,title,image,date,type,cost')
+  const seen = new Set()
+  return rows.filter(r => !isJunk(r) && r.title && !seen.has(r.title) && seen.add(r.title)).map(r => ({
+    nome: r.title,
+    _file: r.image || null,
+    tipo: r.type || null,
+    data: (r.date || '').slice(0, 10) || null,
+    custo: stripWikitext(r.cost) || null,
+  })).sort((a, b) => (a.data || '').localeCompare(b.data || ''))
+}
+
 async function getBoosters() {
   const json = await fetchJson({ action: 'parse', page: 'Boosters', prop: 'wikitext' })
   const wikitext = json.parse.wikitext['*']
@@ -163,13 +177,13 @@ async function getBoosters() {
 
 // ---------- Imagens ----------
 
-async function downloadImage(file, destBase) {
+async function downloadImage(file, destBase, width = 200) {
   const isSvg = /\.svg$/i.test(file)
   const ext = isSvg ? '.svg' : '.png'
   const dest = `${destBase}${ext}`
   const destAbs = path.join(IMG_DIR, dest)
   if (fs.existsSync(destAbs) && fs.statSync(destAbs).size > 0) return dest // cache entre execuções
-  const url = `${FILEPATH_URL}${encodeURIComponent(file)}${isSvg ? '' : '?width=200'}`
+  const url = `${FILEPATH_URL}${encodeURIComponent(file)}${isSvg ? '' : `?width=${width}`}`
   // A wiki aplica rate-limit agressivo (429): backoff exponencial e paciência
   const backoffs = [2000, 5000, 15000, 30000, 60000]
   for (let attempt = 0; attempt <= backoffs.length; attempt++) {
@@ -198,12 +212,14 @@ async function downloadImage(file, destBase) {
 }
 
 async function attachImages(items, categoria) {
+  // Capas de warbond são banners 2:1 — 200px de largura fica ilegível
+  const width = categoria === 'warbond' ? 400 : 200
   // Sequencial de propósito: paralelismo dispara o rate-limit da wiki (429)
   for (let i = 0; i < items.length; i++) {
     const item = items[i]
     item.id = `${categoria}-${slug(item.nome)}`
     if (item._file) {
-      const saved = await downloadImage(item._file, `${categoria}-${slug(item.nome)}`)
+      const saved = await downloadImage(item._file, `${categoria}-${slug(item.nome)}`, width)
       item.imagem = saved ? `equipment/${saved}` : null
       await sleep(250)
     } else {
@@ -222,7 +238,7 @@ async function main() {
   fs.mkdirSync(IMG_DIR, { recursive: true })
 
   console.log('Coletando dados da wiki (Cargo API)...')
-  const [primary, secondary, grenade, armor, helmet, cape, passives, booster, stratagemInfo] = await Promise.all([
+  const [primary, secondary, grenade, armor, helmet, cape, passives, booster, warbond, stratagemInfo] = await Promise.all([
     getWeapons('Primary Weapons'),
     getWeapons('Secondary Weapons'),
     getWeapons('Throwables'),
@@ -231,10 +247,11 @@ async function main() {
     getCapes(),
     getPassives(),
     getBoosters(),
+    getWarbonds(),
     getStratagemInfo(),
   ])
 
-  const data = { primary, secondary, grenade, armor, helmet, cape, booster, passives, stratagemInfo }
+  const data = { primary, secondary, grenade, armor, helmet, cape, booster, passives, warbond, stratagemInfo }
 
   console.log('Contagens:', Object.fromEntries(Object.entries(data).map(([k, v]) => [k, v.length])))
   const empty = Object.entries(data).filter(([, v]) => v.length === 0).map(([k]) => k)

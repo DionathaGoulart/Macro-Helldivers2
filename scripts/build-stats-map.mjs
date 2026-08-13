@@ -35,12 +35,17 @@ const TOKEN_SYNONYMS = {
 // Casos que o auto-match não resolve (typos da API, apelidos) — slug: nome exato do item
 const ALIAS = {
   strategem: {
-    backpack_ballistic: 'SH-20 Ballistic Shield Supply',
+    backpack_ballistic: 'SH-20 Ballistic Shield Backpack',
     backpack_shield_directional: 'SH-51 Directional Shield',
     backpack_hellbomb: 'B-100 Portable Hellbomb',
     mines_infantry: 'MD-6 Anti-Personnel Minefield',
     eagle_strafe: 'Eagle Strafing Run',
     sentry_arc: 'A/ARC-3 Tesla Tower',
+    // A wiki tirou o "Guard Dog" do nome de cada drone, mas os slugs da API mantêm o prefixo
+    guard_rover: 'AX/LAS-5 Rover',
+    guard_arc: 'AX/ARC-3 K-9',
+    guard_hot: 'AX/FLAM-75 Hot Dog',
+    guard_breath: 'AX/TX-13 Dog Breath',
   },
   weapons: {
     grenade_termite: 'G-123 Thermite',
