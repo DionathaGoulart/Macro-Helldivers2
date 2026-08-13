@@ -44,6 +44,11 @@ export default defineConfig({
       '@': path.resolve(__dirname, 'src'),
     },
   },
+  // Os JSON de dados viram JSON.parse('...') em vez de literal de objeto: o V8 parseia
+  // string bem mais rápido, e são ~115 KB avaliados no boot de cada janela
+  json: {
+    stringify: true,
+  },
   build: {
     outDir: 'dist',
     emptyOutDir: true,
