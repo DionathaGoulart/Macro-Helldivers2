@@ -16,7 +16,11 @@ export default defineConfig({
           build: {
             outDir: 'dist-electron',
             rollupOptions: {
-              external: ['@nut-tree-fork/nut-js', 'electron']
+              // electron-updater fica de fora do bundle pra que o require tardio de
+              // index.js seja mesmo tardio: embutido, ele (mais js-yaml, semver e
+              // lodash) era parseado antes da primeira janela aparecer.
+              // O electron-builder já copia as dependências de produção.
+              external: ['@nut-tree-fork/nut-js', 'electron', 'electron-updater']
             }
           },
         },

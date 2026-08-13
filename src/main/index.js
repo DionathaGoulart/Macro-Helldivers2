@@ -1,7 +1,6 @@
 const { app, BrowserWindow, globalShortcut, ipcMain, Tray, Menu, screen, dialog } = require('electron')
 const path = require('path')
 const fs = require('fs')
-const { autoUpdater } = require('electron-updater')
 import { SUPPORT_CODEXES } from '../shared/constants.js'
 
 // Configurações Globais
@@ -296,6 +295,8 @@ async function checkGameFocus() {
         globalShortcut.unregisterAll()
         registerOverlayShortcut()
         setOverlayState('hidden')
+        // Checagem adiada porque o jogo estava em foco no boot: agora dá
+        if (!hasCheckedUpdates) checkForUpdates()
       }
 
       if (win && !win.isDestroyed()) {
@@ -491,7 +492,7 @@ function createWindow() {
   win.webContents.on('did-finish-load', () => {
     // Fora do caminho crítico do boot: ambos tocam rede/módulo nativo
     setTimeout(() => {
-      autoUpdater.checkForUpdatesAndNotify().catch(() => {})
+      checkForUpdates()
       startFocusPolling()
     }, 1500)
   })
@@ -574,7 +575,10 @@ app.whenReady().then(() => {
 })
 
 // Gerenciamento de Atualizações
-autoUpdater.autoDownload = true
+// electron-updater arrasta js-yaml, semver e lodash junto (~250 KB no bundle do main).
+// Carregado sob demanda pra não ser parseado antes da primeira janela aparecer.
+let autoUpdater = null
+let hasCheckedUpdates = false
 
 function sendStatusToWindow(status, extra = {}) {
   if (win && !win.isDestroyed()) {
@@ -582,37 +586,70 @@ function sendStatusToWindow(status, extra = {}) {
   }
 }
 
-autoUpdater.on('checking-for-update', () => {
-  console.log('Verificando atualizações...')
-  sendStatusToWindow('checking')
-})
+function getAutoUpdater() {
+  if (autoUpdater) return autoUpdater
+  try {
+    autoUpdater = require('electron-updater').autoUpdater
+  } catch (e) {
+    console.error('Falha ao carregar electron-updater:', e)
+    return null
+  }
 
-autoUpdater.on('update-available', (info) => {
-  console.log('Atualização disponível:', info.version)
-  sendStatusToWindow('available', { version: info.version })
-})
+  // Baixar sozinho significa puxar o instalador inteiro (rede + disco + CPU) no meio
+  // de uma missão. Agora o download só acontece se o usuário mandar.
+  autoUpdater.autoDownload = false
 
-autoUpdater.on('update-not-available', () => {
-  console.log('Nenhuma atualização disponível.')
-  sendStatusToWindow('up-to-date')
-})
+  autoUpdater.on('checking-for-update', () => {
+    console.log('Verificando atualizações...')
+    sendStatusToWindow('checking')
+  })
 
-autoUpdater.on('download-progress', (progress) => {
-  sendStatusToWindow('downloading', { percent: progress.percent })
-})
+  autoUpdater.on('update-available', (info) => {
+    console.log('Atualização disponível:', info.version)
+    sendStatusToWindow('available', { version: info.version })
+  })
 
-autoUpdater.on('update-downloaded', (info) => {
-  console.log('Atualização baixada.')
-  sendStatusToWindow('ready', { version: info.version })
-})
+  autoUpdater.on('update-not-available', () => {
+    console.log('Nenhuma atualização disponível.')
+    sendStatusToWindow('up-to-date')
+  })
 
-autoUpdater.on('error', (err) => {
-  console.error('Erro no Auto-Updater:', err)
-  sendStatusToWindow('error', { message: err.message })
+  autoUpdater.on('download-progress', (progress) => {
+    sendStatusToWindow('downloading', { percent: progress.percent })
+  })
+
+  autoUpdater.on('update-downloaded', (info) => {
+    console.log('Atualização baixada.')
+    sendStatusToWindow('ready', { version: info.version })
+  })
+
+  autoUpdater.on('error', (err) => {
+    console.error('Erro no Auto-Updater:', err)
+    sendStatusToWindow('error', { message: err.message })
+  })
+
+  return autoUpdater
+}
+
+// Nunca toca a rede com o jogo em foco; se estiver, tenta de novo na próxima vez
+// que o jogo sair de foco (ver checkGameFocus)
+function checkForUpdates() {
+  if (isGameFocused) return
+  const updater = getAutoUpdater()
+  if (!updater) return
+  hasCheckedUpdates = true
+  updater.checkForUpdates().catch(() => {})
+}
+
+ipcMain.handle('download-update', () => {
+  const updater = getAutoUpdater()
+  if (!updater) return false
+  updater.downloadUpdate().catch(() => {})
+  return true
 })
 
 ipcMain.handle('install-update', () => {
-  autoUpdater.quitAndInstall()
+  autoUpdater?.quitAndInstall()
 })
 
 app.on('window-all-closed', () => {

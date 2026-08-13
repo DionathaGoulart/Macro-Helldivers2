@@ -879,6 +879,16 @@ function App() {
                       {updateStatus.status === 'error' && t.settings.updateError}
                       {(!updateStatus.status || updateStatus.status === 'idle') && t.settings.updated}
                     </span>
+                    {/* O download deixou de ser automático pra não puxar o instalador
+                        no meio de uma partida — agora é o usuário que manda */}
+                    {updateStatus.status === 'available' && (
+                      <button
+                        onClick={() => window.api?.downloadUpdate?.()}
+                        className="px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-[0.2em] bg-slate-900 border border-yellow-500/50 text-yellow-400 hover:bg-yellow-500 hover:text-slate-950"
+                      >
+                        {t.settings.updateDownload}
+                      </button>
+                    )}
                   </>
                 )}
               </div>

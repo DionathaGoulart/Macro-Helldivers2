@@ -34,5 +34,6 @@ contextBridge.exposeInMainWorld('api', {
   fetchMetaStats: (faction, difficulty) => ipcRenderer.invoke('fetch-meta-stats', faction, difficulty),
   importData: () => ipcRenderer.invoke('import-data'),
   setRecordingMode: (isRecording) => ipcRenderer.invoke('set-recording-mode', isRecording),
+  downloadUpdate: () => ipcRenderer.invoke('download-update'),
   installUpdate: () => ipcRenderer.invoke('install-update')
 })
