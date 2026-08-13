@@ -295,10 +295,14 @@ async function handleMacroTrigger(codex, index, isSupport) {
   if (!engine) return
 
   isMacroRunning = true
+  // A sequência de teclas começa ANTES dos avisos: cada broadcast são dois sends IPC
+  // com serialização estruturada, e isso é latência gasta no ponto mais sensível do app.
+  // O feedback visual chegar alguns ms depois ninguém percebe; o input, sim.
+  const running = engine.runStratagem(codex, currentSettings.modifierKey, currentSettings.useArrows, currentSettings.macroSpeed)
   broadcast(isSupport ? 'support-macro-triggered' : 'macro-triggered', index)
   broadcast('macro-status-changed', { slot: index, isSupport, running: true })
   try {
-    await engine.runStratagem(codex, currentSettings.modifierKey, currentSettings.useArrows, currentSettings.macroSpeed)
+    await running
   } catch (e) {
     console.error('Erro ao executar macro:', e)
   }
