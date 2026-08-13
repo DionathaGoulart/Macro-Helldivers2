@@ -98,6 +98,9 @@ npm run sync-stratagems
 
 # Regenerar o mapeamento de estatísticas do helldive.live
 npm run stats-map
+
+# Converter as imagens de public/ para WebP e gerar o ícone do tray (requer cwebp)
+npm run optimize-images
 ```
 
 > `sync-stratagems` converte os ícones SVG da wiki em WebP e precisa do ImageMagick

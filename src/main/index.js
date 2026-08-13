@@ -280,14 +280,20 @@ function registerMacros() {
 
 // Um Tray sem ícone válido lança e deixa a janela inalcançável depois de fechada,
 // então tentamos todos os caminhos possíveis antes de desistir
+// tray.png é a versão 64px; icon.png (1024px) fica como fallback, mas decodificar
+// um bitmap de 1024 pra desenhar 16px na barra de tarefas é desperdício puro
 function resolveTrayIcon() {
   const candidates = app.isPackaged
     ? [
+        path.join(process.resourcesPath, 'tray.png'),
         path.join(process.resourcesPath, 'icon.png'),
         path.join(process.resourcesPath, 'public', 'icon.png'),
         path.join(app.getAppPath(), 'public', 'icon.png')
       ]
-    : [path.join(__dirname, '../public/icon.png')]
+    : [
+        path.join(__dirname, '../public/tray.png'),
+        path.join(__dirname, '../public/icon.png')
+      ]
   return candidates.find(p => fs.existsSync(p)) || null
 }
 

@@ -7,7 +7,7 @@
       "capacidade": "45",
       "cadencia": "600 rpm",
       "id": "primary-ar-2-coyote",
-      "imagem": "equipment/primary-ar-2-coyote.png"
+      "imagem": "equipment/primary-ar-2-coyote.webp"
     },
     {
       "nome": "AR-23 Liberator",
@@ -16,7 +16,7 @@
       "capacidade": "45",
       "cadencia": "640 rpm",
       "id": "primary-ar-23-liberator",
-      "imagem": "equipment/primary-ar-23-liberator.png"
+      "imagem": "equipment/primary-ar-23-liberator.webp"
     },
     {
       "nome": "AR-23A Liberator Carbine",
@@ -25,7 +25,7 @@
       "capacidade": "45",
       "cadencia": "920 rpm",
       "id": "primary-ar-23a-liberator-carbine",
-      "imagem": "equipment/primary-ar-23a-liberator-carbine.png"
+      "imagem": "equipment/primary-ar-23a-liberator-carbine.webp"
     },
     {
       "nome": "AR-23C Liberator Concussive",
@@ -34,7 +34,7 @@
       "capacidade": "60",
       "cadencia": "400 rpm",
       "id": "primary-ar-23c-liberator-concussive",
-      "imagem": "equipment/primary-ar-23c-liberator-concussive.png"
+      "imagem": "equipment/primary-ar-23c-liberator-concussive.webp"
     },
     {
       "nome": "AR-23P Liberator Penetrator",
@@ -43,7 +43,7 @@
       "capacidade": "45",
       "cadencia": "640 rpm",
       "id": "primary-ar-23p-liberator-penetrator",
-      "imagem": "equipment/primary-ar-23p-liberator-penetrator.png"
+      "imagem": "equipment/primary-ar-23p-liberator-penetrator.webp"
     },
     {
       "nome": "AR-32 Pacifier",
@@ -52,7 +52,7 @@
       "capacidade": "40",
       "cadencia": "700",
       "id": "primary-ar-32-pacifier",
-      "imagem": "equipment/primary-ar-32-pacifier.png"
+      "imagem": "equipment/primary-ar-32-pacifier.webp"
     },
     {
       "nome": "AR-59 Suppressor",
@@ -61,7 +61,7 @@
       "capacidade": "45",
       "cadencia": "850 rpm",
       "id": "primary-ar-59-suppressor",
-      "imagem": "equipment/primary-ar-59-suppressor.png"
+      "imagem": "equipment/primary-ar-59-suppressor.webp"
     },
     {
       "nome": "AR-61 Tenderizer",
@@ -70,7 +70,7 @@
       "capacidade": "35",
       "cadencia": "600 rpm &bull; 850 rpm",
       "id": "primary-ar-61-tenderizer",
-      "imagem": "equipment/primary-ar-61-tenderizer.png"
+      "imagem": "equipment/primary-ar-61-tenderizer.webp"
     },
     {
       "nome": "AR/GL-21 One-Two",
@@ -79,7 +79,7 @@
       "capacidade": "40",
       "cadencia": "650 rpm",
       "id": "primary-ar-gl-21-one-two",
-      "imagem": "equipment/primary-ar-gl-21-one-two.png"
+      "imagem": "equipment/primary-ar-gl-21-one-two.webp"
     },
     {
       "nome": "ARC-12 Blitzer",
@@ -88,7 +88,7 @@
       "capacidade": "∞",
       "cadencia": "45 rpm",
       "id": "primary-arc-12-blitzer",
-      "imagem": "equipment/primary-arc-12-blitzer.png"
+      "imagem": "equipment/primary-arc-12-blitzer.webp"
     },
     {
       "nome": "BR-14 Adjudicator",
@@ -97,7 +97,7 @@
       "capacidade": "30",
       "cadencia": "550 rpm",
       "id": "primary-br-14-adjudicator",
-      "imagem": "equipment/primary-br-14-adjudicator.png"
+      "imagem": "equipment/primary-br-14-adjudicator.webp"
     },
     {
       "nome": "CB-9 Exploding Crossbow",
@@ -106,7 +106,7 @@
       "capacidade": "5",
       "cadencia": "50 rpm",
       "id": "primary-cb-9-exploding-crossbow",
-      "imagem": "equipment/primary-cb-9-exploding-crossbow.png"
+      "imagem": "equipment/primary-cb-9-exploding-crossbow.webp"
     },
     {
       "nome": "DBS-2 Double Freedom",
@@ -115,7 +115,7 @@
       "capacidade": "2",
       "cadencia": "650 rpm",
       "id": "primary-dbs-2-double-freedom",
-      "imagem": "equipment/primary-dbs-2-double-freedom.png"
+      "imagem": "equipment/primary-dbs-2-double-freedom.webp"
     },
     {
       "nome": "FLAM-66 Torcher",
@@ -124,7 +124,7 @@
       "capacidade": "100",
       "cadencia": null,
       "id": "primary-flam-66-torcher",
-      "imagem": "equipment/primary-flam-66-torcher.png"
+      "imagem": "equipment/primary-flam-66-torcher.webp"
     },
     {
       "nome": "JAR-5 Dominator",
@@ -133,7 +133,7 @@
       "capacidade": "15",
       "cadencia": "250 rpm",
       "id": "primary-jar-5-dominator",
-      "imagem": "equipment/primary-jar-5-dominator.png"
+      "imagem": "equipment/primary-jar-5-dominator.webp"
     },
     {
       "nome": "LAS-13 Trident",
@@ -142,7 +142,7 @@
       "capacidade": "2s (10)",
       "cadencia": "300 rpm",
       "id": "primary-las-13-trident",
-      "imagem": "equipment/primary-las-13-trident.png"
+      "imagem": "equipment/primary-las-13-trident.webp"
     },
     {
       "nome": "LAS-16 Sickle",
@@ -151,7 +151,7 @@
       "capacidade": "7s (87)",
       "cadencia": "750 rpm",
       "id": "primary-las-16-sickle",
-      "imagem": "equipment/primary-las-16-sickle.png"
+      "imagem": "equipment/primary-las-16-sickle.webp"
     },
     {
       "nome": "LAS-17 Double-Edge Sickle",
@@ -160,7 +160,7 @@
       "capacidade": "15s (175) (Fires Indefinitely)",
       "cadencia": "700 rpm",
       "id": "primary-las-17-double-edge-sickle",
-      "imagem": "equipment/primary-las-17-double-edge-sickle.png"
+      "imagem": "equipment/primary-las-17-double-edge-sickle.webp"
     },
     {
       "nome": "LAS-5 Scythe",
@@ -169,7 +169,7 @@
       "capacidade": "8s",
       "cadencia": null,
       "id": "primary-las-5-scythe",
-      "imagem": "equipment/primary-las-5-scythe.png"
+      "imagem": "equipment/primary-las-5-scythe.webp"
     },
     {
       "nome": "M7S SMG",
@@ -178,7 +178,7 @@
       "capacidade": "48",
       "cadencia": "872 rpm",
       "id": "primary-m7s-smg",
-      "imagem": "equipment/primary-m7s-smg.png"
+      "imagem": "equipment/primary-m7s-smg.webp"
     },
     {
       "nome": "M90A Shotgun",
@@ -187,7 +187,7 @@
       "capacidade": "6",
       "cadencia": "80 rpm",
       "id": "primary-m90a-shotgun",
-      "imagem": "equipment/primary-m90a-shotgun.png"
+      "imagem": "equipment/primary-m90a-shotgun.webp"
     },
     {
       "nome": "MA5C Assault Rifle",
@@ -196,7 +196,7 @@
       "capacidade": "32",
       "cadencia": "640 rpm",
       "id": "primary-ma5c-assault-rifle",
-      "imagem": "equipment/primary-ma5c-assault-rifle.png"
+      "imagem": "equipment/primary-ma5c-assault-rifle.webp"
     },
     {
       "nome": "MP-98 Knight",
@@ -205,7 +205,7 @@
       "capacidade": "50",
       "cadencia": "1380 rpm",
       "id": "primary-mp-98-knight",
-      "imagem": "equipment/primary-mp-98-knight.png"
+      "imagem": "equipment/primary-mp-98-knight.webp"
     },
     {
       "nome": "PLAS-1 Scorcher",
@@ -214,7 +214,7 @@
       "capacidade": "20",
       "cadencia": "350 rpm",
       "id": "primary-plas-1-scorcher",
-      "imagem": "equipment/primary-plas-1-scorcher.png"
+      "imagem": "equipment/primary-plas-1-scorcher.webp"
     },
     {
       "nome": "PLAS-101 Purifier",
@@ -223,7 +223,7 @@
       "capacidade": "15",
       "cadencia": "1,000 rpm",
       "id": "primary-plas-101-purifier",
-      "imagem": "equipment/primary-plas-101-purifier.png"
+      "imagem": "equipment/primary-plas-101-purifier.webp"
     },
     {
       "nome": "PLAS-39 Accelerator Rifle",
@@ -232,7 +232,7 @@
       "capacidade": "9",
       "cadencia": "550 rpm",
       "id": "primary-plas-39-accelerator-rifle",
-      "imagem": "equipment/primary-plas-39-accelerator-rifle.png"
+      "imagem": "equipment/primary-plas-39-accelerator-rifle.webp"
     },
     {
       "nome": "R-2 Amendment",
@@ -241,7 +241,7 @@
       "capacidade": "20",
       "cadencia": "480 rpm",
       "id": "primary-r-2-amendment",
-      "imagem": "equipment/primary-r-2-amendment.png"
+      "imagem": "equipment/primary-r-2-amendment.webp"
     },
     {
       "nome": "R-2124 Constitution",
@@ -250,16 +250,16 @@
       "capacidade": "5",
       "cadencia": "60 rpm",
       "id": "primary-r-2124-constitution",
-      "imagem": "equipment/primary-r-2124-constitution.png"
+      "imagem": "equipment/primary-r-2124-constitution.webp"
     },
     {
       "nome": "R-36 Eruptor",
       "tipo": "Explosives",
-      "dano": "230 Projectile [[File:Damage Explosion Icon.svg|20px|link=",
+      "dano": "230 Projectile [[File:Damage Explosion Icon.",
       "capacidade": "5",
       "cadencia": "32 rpm",
       "id": "primary-r-36-eruptor",
-      "imagem": "equipment/primary-r-36-eruptor.png"
+      "imagem": "equipment/primary-r-36-eruptor.webp"
     },
     {
       "nome": "R-4 Hyena",
@@ -268,16 +268,7 @@
       "capacidade": "15",
       "cadencia": "190 rpm",
       "id": "primary-r-4-hyena",
-      "imagem": "equipment/primary-r-4-hyena.png"
-    },
-    {
-      "nome": "R-40-K Hot-Shot Marksman Rifle",
-      "tipo": "Marksman Rifles",
-      "dano": null,
-      "capacidade": null,
-      "cadencia": null,
-      "id": "primary-r-40-k-hot-shot-marksman-rifle",
-      "imagem": "equipment/primary-r-40-k-hot-shot-marksman-rifle.png"
+      "imagem": "equipment/primary-r-4-hyena.webp"
     },
     {
       "nome": "R-6 Deadeye",
@@ -286,7 +277,7 @@
       "capacidade": "8",
       "cadencia": "100",
       "id": "primary-r-6-deadeye",
-      "imagem": "equipment/primary-r-6-deadeye.png"
+      "imagem": "equipment/primary-r-6-deadeye.webp"
     },
     {
       "nome": "R-63 Diligence",
@@ -295,7 +286,7 @@
       "capacidade": "25",
       "cadencia": "350 rpm",
       "id": "primary-r-63-diligence",
-      "imagem": "equipment/primary-r-63-diligence.png"
+      "imagem": "equipment/primary-r-63-diligence.webp"
     },
     {
       "nome": "R-63CS Diligence Counter Sniper",
@@ -304,7 +295,7 @@
       "capacidade": "15",
       "cadencia": "350 rpm",
       "id": "primary-r-63cs-diligence-counter-sniper",
-      "imagem": "equipment/primary-r-63cs-diligence-counter-sniper.png"
+      "imagem": "equipment/primary-r-63cs-diligence-counter-sniper.webp"
     },
     {
       "nome": "R-72 Censor",
@@ -313,7 +304,16 @@
       "capacidade": "20",
       "cadencia": "400 rpm",
       "id": "primary-r-72-censor",
-      "imagem": "equipment/primary-r-72-censor.png"
+      "imagem": "equipment/primary-r-72-censor.webp"
+    },
+    {
+      "nome": "R/40-K Hot-Shot Marksman Rifle",
+      "tipo": "Energy-Based",
+      "dano": "275 Ballistic",
+      "capacidade": "12",
+      "cadencia": "210",
+      "id": "primary-r-40-k-hot-shot-marksman-rifle",
+      "imagem": "equipment/primary-r-40-k-hot-shot-marksman-rifle.webp"
     },
     {
       "nome": "SG-20 Halt",
@@ -322,7 +322,7 @@
       "capacidade": "8 (x2)",
       "cadencia": "80 rpm",
       "id": "primary-sg-20-halt",
-      "imagem": "equipment/primary-sg-20-halt.png"
+      "imagem": "equipment/primary-sg-20-halt.webp"
     },
     {
       "nome": "SG-225 Breaker",
@@ -331,16 +331,16 @@
       "capacidade": "16",
       "cadencia": "300 rpm",
       "id": "primary-sg-225-breaker",
-      "imagem": "equipment/primary-sg-225-breaker.png"
+      "imagem": "equipment/primary-sg-225-breaker.webp"
     },
     {
       "nome": "SG-225IE Breaker Incendiary",
       "tipo": "Shotguns",
-      "dano": "240 Ballistic",
+      "dano": "240 Ballistic [[File:Damage Fire Icon.svg|20px|link=Dam",
       "capacidade": "26",
       "cadencia": "300 rpm",
       "id": "primary-sg-225ie-breaker-incendiary",
-      "imagem": "equipment/primary-sg-225ie-breaker-incendiary.png"
+      "imagem": "equipment/primary-sg-225ie-breaker-incendiary.webp"
     },
     {
       "nome": "SG-225SP Breaker Spray&Pray",
@@ -349,7 +349,7 @@
       "capacidade": "26",
       "cadencia": "330 rpm",
       "id": "primary-sg-225sp-breaker-spray-pray",
-      "imagem": "equipment/primary-sg-225sp-breaker-spray-pray.png"
+      "imagem": "equipment/primary-sg-225sp-breaker-spray-pray.webp"
     },
     {
       "nome": "SG-451 Cookout",
@@ -358,7 +358,7 @@
       "capacidade": "16",
       "cadencia": "80 rpm",
       "id": "primary-sg-451-cookout",
-      "imagem": "equipment/primary-sg-451-cookout.png"
+      "imagem": "equipment/primary-sg-451-cookout.webp"
     },
     {
       "nome": "SG-8 Punisher",
@@ -367,7 +367,7 @@
       "capacidade": "16",
       "cadencia": "80 rpm",
       "id": "primary-sg-8-punisher",
-      "imagem": "equipment/primary-sg-8-punisher.png"
+      "imagem": "equipment/primary-sg-8-punisher.webp"
     },
     {
       "nome": "SG-8P Punisher Plasma",
@@ -376,7 +376,7 @@
       "capacidade": "10",
       "cadencia": "80 rpm",
       "id": "primary-sg-8p-punisher-plasma",
-      "imagem": "equipment/primary-sg-8p-punisher-plasma.png"
+      "imagem": "equipment/primary-sg-8p-punisher-plasma.webp"
     },
     {
       "nome": "SG-8S Slugger",
@@ -385,7 +385,7 @@
       "capacidade": "16",
       "cadencia": "80 rpm",
       "id": "primary-sg-8s-slugger",
-      "imagem": "equipment/primary-sg-8s-slugger.png"
+      "imagem": "equipment/primary-sg-8s-slugger.webp"
     },
     {
       "nome": "SG-97 Sweeper",
@@ -394,7 +394,7 @@
       "capacidade": "7",
       "cadencia": "150 rpm",
       "id": "primary-sg-97-sweeper",
-      "imagem": "equipment/primary-sg-97-sweeper.png"
+      "imagem": "equipment/primary-sg-97-sweeper.webp"
     },
     {
       "nome": "SMG-203 Gallant",
@@ -403,7 +403,7 @@
       "capacidade": "50",
       "cadencia": "1380 rpm",
       "id": "primary-smg-203-gallant",
-      "imagem": "equipment/primary-smg-203-gallant.png"
+      "imagem": "equipment/primary-smg-203-gallant.webp"
     },
     {
       "nome": "SMG-32 Reprimand",
@@ -412,7 +412,7 @@
       "capacidade": "25",
       "cadencia": "490 rpm",
       "id": "primary-smg-32-reprimand",
-      "imagem": "equipment/primary-smg-32-reprimand.png"
+      "imagem": "equipment/primary-smg-32-reprimand.webp"
     },
     {
       "nome": "SMG-37 Defender",
@@ -421,7 +421,7 @@
       "capacidade": "45",
       "cadencia": "520 rpm",
       "id": "primary-smg-37-defender",
-      "imagem": "equipment/primary-smg-37-defender.png"
+      "imagem": "equipment/primary-smg-37-defender.webp"
     },
     {
       "nome": "SMG-72 Pummeler",
@@ -430,7 +430,7 @@
       "capacidade": "45",
       "cadencia": "475 rpm",
       "id": "primary-smg-72-pummeler",
-      "imagem": "equipment/primary-smg-72-pummeler.png"
+      "imagem": "equipment/primary-smg-72-pummeler.webp"
     },
     {
       "nome": "SMG/FLAM-34 Stoker",
@@ -439,7 +439,7 @@
       "capacidade": "45",
       "cadencia": "420 rpm",
       "id": "primary-smg-flam-34-stoker",
-      "imagem": "equipment/primary-smg-flam-34-stoker.png"
+      "imagem": "equipment/primary-smg-flam-34-stoker.webp"
     },
     {
       "nome": "StA-11 SMG",
@@ -448,7 +448,7 @@
       "capacidade": "48",
       "cadencia": "1050 rpm",
       "id": "primary-sta-11-smg",
-      "imagem": "equipment/primary-sta-11-smg.png"
+      "imagem": "equipment/primary-sta-11-smg.webp"
     },
     {
       "nome": "StA-52 Assault Rifle",
@@ -457,7 +457,7 @@
       "capacidade": "56",
       "cadencia": "790 rpm",
       "id": "primary-sta-52-assault-rifle",
-      "imagem": "equipment/primary-sta-52-assault-rifle.png"
+      "imagem": "equipment/primary-sta-52-assault-rifle.webp"
     },
     {
       "nome": "VG-70 Variable",
@@ -466,7 +466,7 @@
       "capacidade": "49",
       "cadencia": "300 rpm &bull; 550 rpm &bull; 750rpm",
       "id": "primary-vg-70-variable",
-      "imagem": "equipment/primary-vg-70-variable.png"
+      "imagem": "equipment/primary-vg-70-variable.webp"
     }
   ],
   "secondary": [
@@ -477,7 +477,7 @@
       "capacidade": null,
       "cadencia": null,
       "id": "secondary-cqc-19-stun-lance",
-      "imagem": "equipment/secondary-cqc-19-stun-lance.png"
+      "imagem": "equipment/secondary-cqc-19-stun-lance.webp"
     },
     {
       "nome": "CQC-2 Saber",
@@ -486,7 +486,7 @@
       "capacidade": "N/A",
       "cadencia": "150",
       "id": "secondary-cqc-2-saber",
-      "imagem": "equipment/secondary-cqc-2-saber.png"
+      "imagem": "equipment/secondary-cqc-2-saber.webp"
     },
     {
       "nome": "CQC-30 Stun Baton",
@@ -495,7 +495,7 @@
       "capacidade": "N/A",
       "cadencia": "N/A",
       "id": "secondary-cqc-30-stun-baton",
-      "imagem": "equipment/secondary-cqc-30-stun-baton.png"
+      "imagem": "equipment/secondary-cqc-30-stun-baton.webp"
     },
     {
       "nome": "CQC-42 Machete",
@@ -504,7 +504,7 @@
       "capacidade": "N/A",
       "cadencia": "72",
       "id": "secondary-cqc-42-machete",
-      "imagem": "equipment/secondary-cqc-42-machete.png"
+      "imagem": "equipment/secondary-cqc-42-machete.webp"
     },
     {
       "nome": "CQC-5 Combat Hatchet",
@@ -513,7 +513,7 @@
       "capacidade": "N/A",
       "cadencia": "100",
       "id": "secondary-cqc-5-combat-hatchet",
-      "imagem": "equipment/secondary-cqc-5-combat-hatchet.png"
+      "imagem": "equipment/secondary-cqc-5-combat-hatchet.webp"
     },
     {
       "nome": "Entrenchment Tool",
@@ -522,7 +522,7 @@
       "capacidade": "N/A",
       "cadencia": "150",
       "id": "secondary-entrenchment-tool",
-      "imagem": "equipment/secondary-entrenchment-tool.png"
+      "imagem": "equipment/secondary-entrenchment-tool.webp"
     },
     {
       "nome": "GP-20 Ultimatum",
@@ -531,7 +531,7 @@
       "capacidade": "1",
       "cadencia": "20 rpm",
       "id": "secondary-gp-20-ultimatum",
-      "imagem": "equipment/secondary-gp-20-ultimatum.png"
+      "imagem": "equipment/secondary-gp-20-ultimatum.webp"
     },
     {
       "nome": "GP-31 Grenade Pistol",
@@ -540,7 +540,7 @@
       "capacidade": "1",
       "cadencia": "35",
       "id": "secondary-gp-31-grenade-pistol",
-      "imagem": "equipment/secondary-gp-31-grenade-pistol.png"
+      "imagem": "equipment/secondary-gp-31-grenade-pistol.webp"
     },
     {
       "nome": "LAS-58 Talon",
@@ -549,7 +549,7 @@
       "capacidade": "7",
       "cadencia": "750 rpm",
       "id": "secondary-las-58-talon",
-      "imagem": "equipment/secondary-las-58-talon.png"
+      "imagem": "equipment/secondary-las-58-talon.webp"
     },
     {
       "nome": "LAS-7 Dagger",
@@ -558,7 +558,7 @@
       "capacidade": "6.67s",
       "cadencia": null,
       "id": "secondary-las-7-dagger",
-      "imagem": "equipment/secondary-las-7-dagger.png"
+      "imagem": "equipment/secondary-las-7-dagger.webp"
     },
     {
       "nome": "M6C/SOCOM Pistol",
@@ -567,7 +567,7 @@
       "capacidade": "12",
       "cadencia": "900 rpm",
       "id": "secondary-m6c-socom-pistol",
-      "imagem": "equipment/secondary-m6c-socom-pistol.png"
+      "imagem": "equipment/secondary-m6c-socom-pistol.webp"
     },
     {
       "nome": "P-11 Stim Pistol",
@@ -576,7 +576,7 @@
       "capacidade": "6",
       "cadencia": "70 rpm",
       "id": "secondary-p-11-stim-pistol",
-      "imagem": "equipment/secondary-p-11-stim-pistol.png"
+      "imagem": "equipment/secondary-p-11-stim-pistol.webp"
     },
     {
       "nome": "P-113 Verdict",
@@ -585,7 +585,7 @@
       "capacidade": "10",
       "cadencia": "450",
       "id": "secondary-p-113-verdict",
-      "imagem": "equipment/secondary-p-113-verdict.png"
+      "imagem": "equipment/secondary-p-113-verdict.webp"
     },
     {
       "nome": "P-19 Redeemer",
@@ -594,7 +594,7 @@
       "capacidade": "31",
       "cadencia": "1100 rpm",
       "id": "secondary-p-19-redeemer",
-      "imagem": "equipment/secondary-p-19-redeemer.png"
+      "imagem": "equipment/secondary-p-19-redeemer.webp"
     },
     {
       "nome": "P-2 Peacemaker",
@@ -603,7 +603,7 @@
       "capacidade": "15",
       "cadencia": "900",
       "id": "secondary-p-2-peacemaker",
-      "imagem": "equipment/secondary-p-2-peacemaker.png"
+      "imagem": "equipment/secondary-p-2-peacemaker.webp"
     },
     {
       "nome": "P-33 Missile Pistol",
@@ -612,7 +612,7 @@
       "capacidade": "1",
       "cadencia": "60 rpm",
       "id": "secondary-p-33-missile-pistol",
-      "imagem": "equipment/secondary-p-33-missile-pistol.png"
+      "imagem": "equipment/secondary-p-33-missile-pistol.webp"
     },
     {
       "nome": "P-35 Re-Educator",
@@ -621,7 +621,7 @@
       "capacidade": "6",
       "cadencia": "110 rpm",
       "id": "secondary-p-35-re-educator",
-      "imagem": "equipment/secondary-p-35-re-educator.png"
+      "imagem": "equipment/secondary-p-35-re-educator.webp"
     },
     {
       "nome": "P-4 Senator",
@@ -630,16 +630,7 @@
       "capacidade": "6",
       "cadencia": "200 rpm",
       "id": "secondary-p-4-senator",
-      "imagem": "equipment/secondary-p-4-senator.png"
-    },
-    {
-      "nome": "P-40-K Bolt Pistol",
-      "tipo": "Pistol",
-      "dano": null,
-      "capacidade": null,
-      "cadencia": null,
-      "id": "secondary-p-40-k-bolt-pistol",
-      "imagem": "equipment/secondary-p-40-k-bolt-pistol.png"
+      "imagem": "equipment/secondary-p-4-senator.webp"
     },
     {
       "nome": "P-69 Veto",
@@ -648,7 +639,7 @@
       "capacidade": "12",
       "cadencia": "750 rpm",
       "id": "secondary-p-69-veto",
-      "imagem": "equipment/secondary-p-69-veto.png"
+      "imagem": "equipment/secondary-p-69-veto.webp"
     },
     {
       "nome": "P-72 Crisper",
@@ -657,7 +648,7 @@
       "capacidade": "50",
       "cadencia": null,
       "id": "secondary-p-72-crisper",
-      "imagem": "equipment/secondary-p-72-crisper.png"
+      "imagem": "equipment/secondary-p-72-crisper.webp"
     },
     {
       "nome": "P-92 Warrant",
@@ -666,7 +657,16 @@
       "capacidade": "13",
       "cadencia": "450 rpm",
       "id": "secondary-p-92-warrant",
-      "imagem": "equipment/secondary-p-92-warrant.png"
+      "imagem": "equipment/secondary-p-92-warrant.webp"
+    },
+    {
+      "nome": "P/40-K Bolt Pistol",
+      "tipo": "Special",
+      "dano": "500",
+      "capacidade": "6",
+      "cadencia": "150",
+      "id": "secondary-p-40-k-bolt-pistol",
+      "imagem": "equipment/secondary-p-40-k-bolt-pistol.webp"
     },
     {
       "nome": "PLAS-15 Loyalist",
@@ -675,7 +675,7 @@
       "capacidade": "8",
       "cadencia": "1000 rpm",
       "id": "secondary-plas-15-loyalist",
-      "imagem": "equipment/secondary-plas-15-loyalist.png"
+      "imagem": "equipment/secondary-plas-15-loyalist.webp"
     },
     {
       "nome": "SG-22 Bushwhacker",
@@ -684,7 +684,7 @@
       "capacidade": "3",
       "cadencia": "650 rpm",
       "id": "secondary-sg-22-bushwhacker",
-      "imagem": "equipment/secondary-sg-22-bushwhacker.png"
+      "imagem": "equipment/secondary-sg-22-bushwhacker.webp"
     }
   ],
   "grenade": [
@@ -695,7 +695,7 @@
       "capacidade": "5",
       "cadencia": null,
       "id": "grenade-g-10-incendiary",
-      "imagem": "equipment/grenade-g-10-incendiary.png"
+      "imagem": "equipment/grenade-g-10-incendiary.webp"
     },
     {
       "nome": "G-109 Urchin",
@@ -704,7 +704,7 @@
       "capacidade": "5",
       "cadencia": null,
       "id": "grenade-g-109-urchin",
-      "imagem": "equipment/grenade-g-109-urchin.png"
+      "imagem": "equipment/grenade-g-109-urchin.webp"
     },
     {
       "nome": "G-12 High Explosive",
@@ -713,7 +713,7 @@
       "capacidade": "5",
       "cadencia": null,
       "id": "grenade-g-12-high-explosive",
-      "imagem": "equipment/grenade-g-12-high-explosive.png"
+      "imagem": "equipment/grenade-g-12-high-explosive.webp"
     },
     {
       "nome": "G-123 Thermite",
@@ -722,7 +722,7 @@
       "capacidade": "3",
       "cadencia": null,
       "id": "grenade-g-123-thermite",
-      "imagem": "equipment/grenade-g-123-thermite.png"
+      "imagem": "equipment/grenade-g-123-thermite.webp"
     },
     {
       "nome": "G-13 Incendiary Impact",
@@ -731,7 +731,7 @@
       "capacidade": "5",
       "cadencia": null,
       "id": "grenade-g-13-incendiary-impact",
-      "imagem": "equipment/grenade-g-13-incendiary-impact.png"
+      "imagem": "equipment/grenade-g-13-incendiary-impact.webp"
     },
     {
       "nome": "G-142 Pyrotech",
@@ -740,7 +740,7 @@
       "capacidade": "6",
       "cadencia": null,
       "id": "grenade-g-142-pyrotech",
-      "imagem": "equipment/grenade-g-142-pyrotech.png"
+      "imagem": "equipment/grenade-g-142-pyrotech.webp"
     },
     {
       "nome": "G-16 Impact",
@@ -749,7 +749,7 @@
       "capacidade": "5",
       "cadencia": null,
       "id": "grenade-g-16-impact",
-      "imagem": "equipment/grenade-g-16-impact.png"
+      "imagem": "equipment/grenade-g-16-impact.webp"
     },
     {
       "nome": "G-23 Stun",
@@ -758,7 +758,7 @@
       "capacidade": "5",
       "cadencia": null,
       "id": "grenade-g-23-stun",
-      "imagem": "equipment/grenade-g-23-stun.png"
+      "imagem": "equipment/grenade-g-23-stun.webp"
     },
     {
       "nome": "G-3 Smoke",
@@ -767,7 +767,7 @@
       "capacidade": "5",
       "cadencia": null,
       "id": "grenade-g-3-smoke",
-      "imagem": "equipment/grenade-g-3-smoke.png"
+      "imagem": "equipment/grenade-g-3-smoke.webp"
     },
     {
       "nome": "G-31 Arc",
@@ -776,7 +776,7 @@
       "capacidade": "5",
       "cadencia": null,
       "id": "grenade-g-31-arc",
-      "imagem": "equipment/grenade-g-31-arc.png"
+      "imagem": "equipment/grenade-g-31-arc.webp"
     },
     {
       "nome": "G-4 Gas",
@@ -785,16 +785,7 @@
       "capacidade": "4",
       "cadencia": null,
       "id": "grenade-g-4-gas",
-      "imagem": "equipment/grenade-g-4-gas.png"
-    },
-    {
-      "nome": "G-40-K Meltamine",
-      "tipo": "Special",
-      "dano": null,
-      "capacidade": null,
-      "cadencia": null,
-      "id": "grenade-g-40-k-meltamine",
-      "imagem": "equipment/grenade-g-40-k-meltamine.png"
+      "imagem": "equipment/grenade-g-4-gas.webp"
     },
     {
       "nome": "G-48 Giga Grenade",
@@ -803,7 +794,7 @@
       "capacidade": "2",
       "cadencia": null,
       "id": "grenade-g-48-giga-grenade",
-      "imagem": "equipment/grenade-g-48-giga-grenade.png"
+      "imagem": "equipment/grenade-g-48-giga-grenade.webp"
     },
     {
       "nome": "G-50 Seeker",
@@ -812,7 +803,7 @@
       "capacidade": "5",
       "cadencia": null,
       "id": "grenade-g-50-seeker",
-      "imagem": "equipment/grenade-g-50-seeker.png"
+      "imagem": "equipment/grenade-g-50-seeker.webp"
     },
     {
       "nome": "G-6 Frag",
@@ -821,7 +812,7 @@
       "capacidade": "6",
       "cadencia": null,
       "id": "grenade-g-6-frag",
-      "imagem": "equipment/grenade-g-6-frag.png"
+      "imagem": "equipment/grenade-g-6-frag.webp"
     },
     {
       "nome": "G-7 Pineapple",
@@ -830,7 +821,7 @@
       "capacidade": "5",
       "cadencia": null,
       "id": "grenade-g-7-pineapple",
-      "imagem": "equipment/grenade-g-7-pineapple.png"
+      "imagem": "equipment/grenade-g-7-pineapple.webp"
     },
     {
       "nome": "G-89 Smokescreen",
@@ -839,7 +830,16 @@
       "capacidade": "5",
       "cadencia": null,
       "id": "grenade-g-89-smokescreen",
-      "imagem": "equipment/grenade-g-89-smokescreen.png"
+      "imagem": "equipment/grenade-g-89-smokescreen.webp"
+    },
+    {
+      "nome": "G/40-K Melta Mine",
+      "tipo": "Special",
+      "dano": "2,000 Explosion",
+      "capacidade": "4",
+      "cadencia": null,
+      "id": "grenade-g-40-k-melta-mine",
+      "imagem": "equipment/grenade-g-40-k-melta-mine.webp"
     },
     {
       "nome": "G/SH-39 Shield",
@@ -848,7 +848,7 @@
       "capacidade": "4",
       "cadencia": null,
       "id": "grenade-g-sh-39-shield",
-      "imagem": "equipment/grenade-g-sh-39-shield.png"
+      "imagem": "equipment/grenade-g-sh-39-shield.webp"
     },
     {
       "nome": "K-2 Throwing Knife",
@@ -857,7 +857,7 @@
       "capacidade": "20",
       "cadencia": null,
       "id": "grenade-k-2-throwing-knife",
-      "imagem": "equipment/grenade-k-2-throwing-knife.png"
+      "imagem": "equipment/grenade-k-2-throwing-knife.webp"
     },
     {
       "nome": "TED-63 Dynamite",
@@ -866,7 +866,7 @@
       "capacidade": "4",
       "cadencia": null,
       "id": "grenade-ted-63-dynamite",
-      "imagem": "equipment/grenade-ted-63-dynamite.png"
+      "imagem": "equipment/grenade-ted-63-dynamite.webp"
     },
     {
       "nome": "TM-1 Lure Mine",
@@ -875,7 +875,7 @@
       "capacidade": "4",
       "cadencia": null,
       "id": "grenade-tm-1-lure-mine",
-      "imagem": "equipment/grenade-tm-1-lure-mine.png"
+      "imagem": "equipment/grenade-tm-1-lure-mine.webp"
     }
   ],
   "armor": [
@@ -888,7 +888,7 @@
       "passive": "Feet First",
       "warbond": "Halo: ODST",
       "id": "armor-a-35-recon",
-      "imagem": "equipment/armor-a-35-recon.png"
+      "imagem": "equipment/armor-a-35-recon.webp"
     },
     {
       "nome": "A-9 Helljumper",
@@ -899,7 +899,7 @@
       "passive": "Feet First",
       "warbond": "Halo: ODST",
       "id": "armor-a-9-helljumper",
-      "imagem": "equipment/armor-a-9-helljumper.png"
+      "imagem": "equipment/armor-a-9-helljumper.webp"
     },
     {
       "nome": "AC-1 Dutiful",
@@ -910,7 +910,7 @@
       "passive": "Acclimated",
       "warbond": "Righteous Revenants",
       "id": "armor-ac-1-dutiful",
-      "imagem": "equipment/armor-ac-1-dutiful.png"
+      "imagem": "equipment/armor-ac-1-dutiful.webp"
     },
     {
       "nome": "AC-2 Obedient",
@@ -921,7 +921,7 @@
       "passive": "Acclimated",
       "warbond": "Righteous Revenants",
       "id": "armor-ac-2-obedient",
-      "imagem": "equipment/armor-ac-2-obedient.png"
+      "imagem": "equipment/armor-ac-2-obedient.webp"
     },
     {
       "nome": "AD-11 Livewire",
@@ -932,7 +932,7 @@
       "passive": "Adreno-Defibrillator",
       "warbond": "Superstore",
       "id": "armor-ad-11-livewire",
-      "imagem": "equipment/armor-ad-11-livewire.png"
+      "imagem": "equipment/armor-ad-11-livewire.webp"
     },
     {
       "nome": "AD-26 Bleeding Edge",
@@ -943,7 +943,7 @@
       "passive": "Adreno-Defibrillator",
       "warbond": "Control Group",
       "id": "armor-ad-26-bleeding-edge",
-      "imagem": "equipment/armor-ad-26-bleeding-edge.png"
+      "imagem": "equipment/armor-ad-26-bleeding-edge.webp"
     },
     {
       "nome": "AD-49 Apollonian",
@@ -954,7 +954,7 @@
       "passive": "Adreno-Defibrillator",
       "warbond": "Control Group",
       "id": "armor-ad-49-apollonian",
-      "imagem": "equipment/armor-ad-49-apollonian.png"
+      "imagem": "equipment/armor-ad-49-apollonian.webp"
     },
     {
       "nome": "AF-02 Haz-Master",
@@ -965,7 +965,7 @@
       "passive": "Advanced Filtration",
       "warbond": "Chemical Agents",
       "id": "armor-af-02-haz-master",
-      "imagem": "equipment/armor-af-02-haz-master.png"
+      "imagem": "equipment/armor-af-02-haz-master.webp"
     },
     {
       "nome": "AF-50 Noxious Ranger",
@@ -976,7 +976,7 @@
       "passive": "Advanced Filtration",
       "warbond": "Chemical Agents",
       "id": "armor-af-50-noxious-ranger",
-      "imagem": "equipment/armor-af-50-noxious-ranger.png"
+      "imagem": "equipment/armor-af-50-noxious-ranger.webp"
     },
     {
       "nome": "AF-52 Lockdown",
@@ -987,7 +987,7 @@
       "passive": "Advanced Filtration",
       "warbond": "Superstore",
       "id": "armor-af-52-lockdown",
-      "imagem": "equipment/armor-af-52-lockdown.png"
+      "imagem": "equipment/armor-af-52-lockdown.webp"
     },
     {
       "nome": "AF-91 Field Chemist",
@@ -998,7 +998,7 @@
       "passive": "Advanced Filtration",
       "warbond": "Superstore",
       "id": "armor-af-91-field-chemist",
-      "imagem": "equipment/armor-af-91-field-chemist.png"
+      "imagem": "equipment/armor-af-91-field-chemist.webp"
     },
     {
       "nome": "B-01 Tactical",
@@ -1009,7 +1009,7 @@
       "passive": "Extra Padding",
       "warbond": "Starter Equipment",
       "id": "armor-b-01-tactical",
-      "imagem": "equipment/armor-b-01-tactical.png"
+      "imagem": "equipment/armor-b-01-tactical.webp"
     },
     {
       "nome": "B-08 Light Gunner",
@@ -1020,7 +1020,7 @@
       "passive": "Extra Padding",
       "warbond": "Superstore",
       "id": "armor-b-08-light-gunner",
-      "imagem": "equipment/armor-b-08-light-gunner.png"
+      "imagem": "equipment/armor-b-08-light-gunner.webp"
     },
     {
       "nome": "B-22 Model Citizen",
@@ -1031,7 +1031,7 @@
       "passive": "Democracy Protects",
       "warbond": "Anniversary Gift",
       "id": "armor-b-22-model-citizen",
-      "imagem": "equipment/armor-b-22-model-citizen.png"
+      "imagem": "equipment/armor-b-22-model-citizen.webp"
     },
     {
       "nome": "B-24 Enforcer",
@@ -1042,7 +1042,7 @@
       "passive": "Fortified",
       "warbond": "Superstore",
       "id": "armor-b-24-enforcer",
-      "imagem": "equipment/armor-b-24-enforcer.png"
+      "imagem": "equipment/armor-b-24-enforcer.webp"
     },
     {
       "nome": "B-27 Fortified Commando",
@@ -1053,7 +1053,7 @@
       "passive": "Extra Padding",
       "warbond": "Superstore",
       "id": "armor-b-27-fortified-commando",
-      "imagem": "equipment/armor-b-27-fortified-commando.png"
+      "imagem": "equipment/armor-b-27-fortified-commando.webp"
     },
     {
       "nome": "BP-20 Correct Officer",
@@ -1064,7 +1064,7 @@
       "passive": "Ballistic Padding",
       "warbond": "Force of Law",
       "id": "armor-bp-20-correct-officer",
-      "imagem": "equipment/armor-bp-20-correct-officer.png"
+      "imagem": "equipment/armor-bp-20-correct-officer.webp"
     },
     {
       "nome": "BP-32 Jackboot",
@@ -1075,7 +1075,7 @@
       "passive": "Ballistic Padding",
       "warbond": "Force of Law",
       "id": "armor-bp-32-jackboot",
-      "imagem": "equipment/armor-bp-32-jackboot.png"
+      "imagem": "equipment/armor-bp-32-jackboot.webp"
     },
     {
       "nome": "BP-77 Grand Juror",
@@ -1086,7 +1086,7 @@
       "passive": "Ballistic Padding",
       "warbond": "Superstore",
       "id": "armor-bp-77-grand-juror",
-      "imagem": "equipment/armor-bp-77-grand-juror.png"
+      "imagem": "equipment/armor-bp-77-grand-juror.webp"
     },
     {
       "nome": "CE-07 Demolition Specialist",
@@ -1097,7 +1097,7 @@
       "passive": "Engineering Kit",
       "warbond": "Democratic Detonation",
       "id": "armor-ce-07-demolition-specialist",
-      "imagem": "equipment/armor-ce-07-demolition-specialist.png"
+      "imagem": "equipment/armor-ce-07-demolition-specialist.webp"
     },
     {
       "nome": "CE-101 Guerilla Gorilla",
@@ -1108,7 +1108,7 @@
       "passive": "Engineering Kit",
       "warbond": "Superstore",
       "id": "armor-ce-101-guerilla-gorilla",
-      "imagem": "equipment/armor-ce-101-guerilla-gorilla.png"
+      "imagem": "equipment/armor-ce-101-guerilla-gorilla.webp"
     },
     {
       "nome": "CE-27 Ground Breaker",
@@ -1119,7 +1119,7 @@
       "passive": "Engineering Kit",
       "warbond": "Democratic Detonation",
       "id": "armor-ce-27-ground-breaker",
-      "imagem": "equipment/armor-ce-27-ground-breaker.png"
+      "imagem": "equipment/armor-ce-27-ground-breaker.webp"
     },
     {
       "nome": "CE-35 Trench Engineer",
@@ -1130,7 +1130,7 @@
       "passive": "Engineering Kit",
       "warbond": "Helldivers Mobilize!",
       "id": "armor-ce-35-trench-engineer",
-      "imagem": "equipment/armor-ce-35-trench-engineer.png"
+      "imagem": "equipment/armor-ce-35-trench-engineer.webp"
     },
     {
       "nome": "CE-64 Grenadier",
@@ -1141,7 +1141,7 @@
       "passive": "Engineering Kit",
       "warbond": "Superstore",
       "id": "armor-ce-64-grenadier",
-      "imagem": "equipment/armor-ce-64-grenadier.png"
+      "imagem": "equipment/armor-ce-64-grenadier.webp"
     },
     {
       "nome": "CE-67 Titan",
@@ -1152,7 +1152,7 @@
       "passive": "Engineering Kit",
       "warbond": "Superstore",
       "id": "armor-ce-67-titan",
-      "imagem": "equipment/armor-ce-67-titan.png"
+      "imagem": "equipment/armor-ce-67-titan.webp"
     },
     {
       "nome": "CE-74 Breaker",
@@ -1163,7 +1163,7 @@
       "passive": "Engineering Kit",
       "warbond": "Superstore",
       "id": "armor-ce-74-breaker",
-      "imagem": "equipment/armor-ce-74-breaker.png"
+      "imagem": "equipment/armor-ce-74-breaker.webp"
     },
     {
       "nome": "CE-81 Juggernaut",
@@ -1174,7 +1174,7 @@
       "passive": "Engineering Kit",
       "warbond": "Superstore",
       "id": "armor-ce-81-juggernaut",
-      "imagem": "equipment/armor-ce-81-juggernaut.png"
+      "imagem": "equipment/armor-ce-81-juggernaut.webp"
     },
     {
       "nome": "CM-09 Bonesnapper",
@@ -1185,7 +1185,7 @@
       "passive": "Med-Kit",
       "warbond": "Helldivers Mobilize!",
       "id": "armor-cm-09-bonesnapper",
-      "imagem": "equipment/armor-cm-09-bonesnapper.png"
+      "imagem": "equipment/armor-cm-09-bonesnapper.webp"
     },
     {
       "nome": "CM-10 Clinician",
@@ -1196,7 +1196,7 @@
       "passive": "Med-Kit",
       "warbond": "Superstore",
       "id": "armor-cm-10-clinician",
-      "imagem": "equipment/armor-cm-10-clinician.png"
+      "imagem": "equipment/armor-cm-10-clinician.webp"
     },
     {
       "nome": "CM-14 Physician",
@@ -1207,7 +1207,7 @@
       "passive": "Med-Kit",
       "warbond": "Helldivers Mobilize!",
       "id": "armor-cm-14-physician",
-      "imagem": "equipment/armor-cm-14-physician.png"
+      "imagem": "equipment/armor-cm-14-physician.webp"
     },
     {
       "nome": "CM-17 Butcher",
@@ -1218,7 +1218,7 @@
       "passive": "Med-Kit",
       "warbond": "Superstore",
       "id": "armor-cm-17-butcher",
-      "imagem": "equipment/armor-cm-17-butcher.png"
+      "imagem": "equipment/armor-cm-17-butcher.webp"
     },
     {
       "nome": "CM-21 Trench Paramedic",
@@ -1229,7 +1229,7 @@
       "passive": "Med-Kit",
       "warbond": "Superstore",
       "id": "armor-cm-21-trench-paramedic",
-      "imagem": "equipment/armor-cm-21-trench-paramedic.png"
+      "imagem": "equipment/armor-cm-21-trench-paramedic.webp"
     },
     {
       "nome": "CPG-48 Sapper",
@@ -1240,7 +1240,7 @@
       "passive": "Concussive Padding, Grenadier",
       "warbond": "Entrenched Division",
       "id": "armor-cpg-48-sapper",
-      "imagem": "equipment/armor-cpg-48-sapper.png"
+      "imagem": "equipment/armor-cpg-48-sapper.webp"
     },
     {
       "nome": "CPH-26 Commandant (Armor)",
@@ -1251,7 +1251,7 @@
       "passive": "Concussive Padding, Hazmat",
       "warbond": "Entrenched Division",
       "id": "armor-cph-26-commandant-armor",
-      "imagem": "equipment/armor-cph-26-commandant-armor.png"
+      "imagem": "equipment/armor-cph-26-commandant-armor.webp"
     },
     {
       "nome": "CPR-80 Bulwark",
@@ -1262,7 +1262,7 @@
       "passive": "Concussive Padding, Reinforced",
       "warbond": "Superstore",
       "id": "armor-cpr-80-bulwark",
-      "imagem": "equipment/armor-cpr-80-bulwark.png"
+      "imagem": "equipment/armor-cpr-80-bulwark.webp"
     },
     {
       "nome": "CW-22 Kodiak",
@@ -1273,7 +1273,7 @@
       "passive": "Fortified",
       "warbond": "Polar Patriots",
       "id": "armor-cw-22-kodiak",
-      "imagem": "equipment/armor-cw-22-kodiak.png"
+      "imagem": "equipment/armor-cw-22-kodiak.webp"
     },
     {
       "nome": "CW-36 Winter Warrior",
@@ -1284,7 +1284,7 @@
       "passive": "Servo-Assisted",
       "warbond": "Polar Patriots",
       "id": "armor-cw-36-winter-warrior",
-      "imagem": "equipment/armor-cw-36-winter-warrior.png"
+      "imagem": "equipment/armor-cw-36-winter-warrior.webp"
     },
     {
       "nome": "CW-4 Arctic Ranger",
@@ -1295,7 +1295,7 @@
       "passive": "Scout",
       "warbond": "Polar Patriots",
       "id": "armor-cw-4-arctic-ranger",
-      "imagem": "equipment/armor-cw-4-arctic-ranger.png"
+      "imagem": "equipment/armor-cw-4-arctic-ranger.webp"
     },
     {
       "nome": "CW-9 White Wolf",
@@ -1306,7 +1306,7 @@
       "passive": "Extra Padding",
       "warbond": "Superstore",
       "id": "armor-cw-9-white-wolf",
-      "imagem": "equipment/armor-cw-9-white-wolf.png"
+      "imagem": "equipment/armor-cw-9-white-wolf.webp"
     },
     {
       "nome": "DP-00 Tactical",
@@ -1317,7 +1317,7 @@
       "passive": "Democracy Protects",
       "warbond": "Liberty Day",
       "id": "armor-dp-00-tactical",
-      "imagem": "equipment/armor-dp-00-tactical.png"
+      "imagem": "equipment/armor-dp-00-tactical.webp"
     },
     {
       "nome": "DP-11 Champion of the People",
@@ -1328,7 +1328,7 @@
       "passive": "Democracy Protects",
       "warbond": "Helldivers Mobilize!",
       "id": "armor-dp-11-champion-of-the-people",
-      "imagem": "equipment/armor-dp-11-champion-of-the-people.png"
+      "imagem": "equipment/armor-dp-11-champion-of-the-people.webp"
     },
     {
       "nome": "DP-40 Hero of the Federation",
@@ -1339,7 +1339,7 @@
       "passive": "Democracy Protects",
       "warbond": "Helldivers Mobilize!",
       "id": "armor-dp-40-hero-of-the-federation",
-      "imagem": "equipment/armor-dp-40-hero-of-the-federation.png"
+      "imagem": "equipment/armor-dp-40-hero-of-the-federation.webp"
     },
     {
       "nome": "DP-53 Savior of the Free",
@@ -1350,7 +1350,7 @@
       "passive": "Democracy Protects",
       "warbond": "Super Citizen Edition",
       "id": "armor-dp-53-savior-of-the-free",
-      "imagem": "equipment/armor-dp-53-savior-of-the-free.png"
+      "imagem": "equipment/armor-dp-53-savior-of-the-free.webp"
     },
     {
       "nome": "DP-8 Mountain-Scaled",
@@ -1361,7 +1361,7 @@
       "passive": "Siege-Ready",
       "warbond": "Superstore",
       "id": "armor-dp-8-mountain-scaled",
-      "imagem": "equipment/armor-dp-8-mountain-scaled.png"
+      "imagem": "equipment/armor-dp-8-mountain-scaled.webp"
     },
     {
       "nome": "DS-10 Big Game Hunter",
@@ -1372,7 +1372,7 @@
       "passive": "Desert Stormer",
       "warbond": "Superstore",
       "id": "armor-ds-10-big-game-hunter",
-      "imagem": "equipment/armor-ds-10-big-game-hunter.png"
+      "imagem": "equipment/armor-ds-10-big-game-hunter.webp"
     },
     {
       "nome": "DS-191 Scorpion",
@@ -1383,7 +1383,7 @@
       "passive": "Desert Stormer",
       "warbond": "Dust Devils",
       "id": "armor-ds-191-scorpion",
-      "imagem": "equipment/armor-ds-191-scorpion.png"
+      "imagem": "equipment/armor-ds-191-scorpion.webp"
     },
     {
       "nome": "DS-42 Federation's Blade",
@@ -1394,7 +1394,7 @@
       "passive": "Desert Stormer",
       "warbond": "Dust Devils",
       "id": "armor-ds-42-federation-s-blade",
-      "imagem": "equipment/armor-ds-42-federation-s-blade.png"
+      "imagem": "equipment/armor-ds-42-federation-s-blade.webp"
     },
     {
       "nome": "EX-00 Prototype X",
@@ -1405,7 +1405,7 @@
       "passive": "Electrical Conduit",
       "warbond": "Cutting Edge",
       "id": "armor-ex-00-prototype-x",
-      "imagem": "equipment/armor-ex-00-prototype-x.png"
+      "imagem": "equipment/armor-ex-00-prototype-x.webp"
     },
     {
       "nome": "EX-03 Prototype 3",
@@ -1416,7 +1416,7 @@
       "passive": "Electrical Conduit",
       "warbond": "Cutting Edge",
       "id": "armor-ex-03-prototype-3",
-      "imagem": "equipment/armor-ex-03-prototype-3.png"
+      "imagem": "equipment/armor-ex-03-prototype-3.webp"
     },
     {
       "nome": "EX-16 Prototype 16",
@@ -1427,7 +1427,7 @@
       "passive": "Electrical Conduit",
       "warbond": "Cutting Edge",
       "id": "armor-ex-16-prototype-16",
-      "imagem": "equipment/armor-ex-16-prototype-16.png"
+      "imagem": "equipment/armor-ex-16-prototype-16.webp"
     },
     {
       "nome": "FS-05 Marksman",
@@ -1438,7 +1438,7 @@
       "passive": "Fortified",
       "warbond": "Helldivers Mobilize!",
       "id": "armor-fs-05-marksman",
-      "imagem": "equipment/armor-fs-05-marksman.png"
+      "imagem": "equipment/armor-fs-05-marksman.webp"
     },
     {
       "nome": "FS-11 Executioner",
@@ -1449,7 +1449,7 @@
       "passive": "Fortified",
       "warbond": "Superstore",
       "id": "armor-fs-11-executioner",
-      "imagem": "equipment/armor-fs-11-executioner.png"
+      "imagem": "equipment/armor-fs-11-executioner.webp"
     },
     {
       "nome": "FS-23 Battle Master",
@@ -1460,7 +1460,7 @@
       "passive": "Fortified",
       "warbond": "Helldivers Mobilize!",
       "id": "armor-fs-23-battle-master",
-      "imagem": "equipment/armor-fs-23-battle-master.png"
+      "imagem": "equipment/armor-fs-23-battle-master.webp"
     },
     {
       "nome": "FS-34 Exterminator",
@@ -1471,7 +1471,7 @@
       "passive": "Fortified",
       "warbond": "Superstore",
       "id": "armor-fs-34-exterminator",
-      "imagem": "equipment/armor-fs-34-exterminator.png"
+      "imagem": "equipment/armor-fs-34-exterminator.webp"
     },
     {
       "nome": "FS-37 Ravager",
@@ -1482,7 +1482,7 @@
       "passive": "Engineering Kit",
       "warbond": "Superstore",
       "id": "armor-fs-37-ravager",
-      "imagem": "equipment/armor-fs-37-ravager.png"
+      "imagem": "equipment/armor-fs-37-ravager.webp"
     },
     {
       "nome": "FS-38 Eradicator",
@@ -1493,7 +1493,7 @@
       "passive": "Fortified",
       "warbond": "Superstore",
       "id": "armor-fs-38-eradicator",
-      "imagem": "equipment/armor-fs-38-eradicator.png"
+      "imagem": "equipment/armor-fs-38-eradicator.webp"
     },
     {
       "nome": "FS-55 Devastator",
@@ -1504,7 +1504,7 @@
       "passive": "Fortified",
       "warbond": "Democratic Detonation",
       "id": "armor-fs-55-devastator",
-      "imagem": "equipment/armor-fs-55-devastator.png"
+      "imagem": "equipment/armor-fs-55-devastator.webp"
     },
     {
       "nome": "FS-61 Dreadnought",
@@ -1515,7 +1515,7 @@
       "passive": "Servo-Assisted",
       "warbond": "Superstore",
       "id": "armor-fs-61-dreadnought",
-      "imagem": "equipment/armor-fs-61-dreadnought.png"
+      "imagem": "equipment/armor-fs-61-dreadnought.webp"
     },
     {
       "nome": "GS-11 Democracy's Deputy",
@@ -1526,7 +1526,7 @@
       "passive": "Gunslinger",
       "warbond": "Superstore",
       "id": "armor-gs-11-democracy-s-deputy",
-      "imagem": "equipment/armor-gs-11-democracy-s-deputy.png"
+      "imagem": "equipment/armor-gs-11-democracy-s-deputy.webp"
     },
     {
       "nome": "GS-17 Frontier Marshal",
@@ -1537,7 +1537,7 @@
       "passive": "Gunslinger",
       "warbond": "Borderline Justice",
       "id": "armor-gs-17-frontier-marshal",
-      "imagem": "equipment/armor-gs-17-frontier-marshal.png"
+      "imagem": "equipment/armor-gs-17-frontier-marshal.webp"
     },
     {
       "nome": "GS-66 Lawmaker",
@@ -1548,7 +1548,7 @@
       "passive": "Gunslinger",
       "warbond": "Borderline Justice",
       "id": "armor-gs-66-lawmaker",
-      "imagem": "equipment/armor-gs-66-lawmaker.png"
+      "imagem": "equipment/armor-gs-66-lawmaker.webp"
     },
     {
       "nome": "I-09 Heatseeker",
@@ -1559,7 +1559,7 @@
       "passive": "Inflammable",
       "warbond": "Freedom's Flame",
       "id": "armor-i-09-heatseeker",
-      "imagem": "equipment/armor-i-09-heatseeker.png"
+      "imagem": "equipment/armor-i-09-heatseeker.webp"
     },
     {
       "nome": "I-102 Draconaught",
@@ -1570,7 +1570,7 @@
       "passive": "Inflammable",
       "warbond": "Freedom's Flame",
       "id": "armor-i-102-draconaught",
-      "imagem": "equipment/armor-i-102-draconaught.png"
+      "imagem": "equipment/armor-i-102-draconaught.webp"
     },
     {
       "nome": "I-44 Salamander",
@@ -1581,7 +1581,7 @@
       "passive": "Inflammable",
       "warbond": "Superstore",
       "id": "armor-i-44-salamander",
-      "imagem": "equipment/armor-i-44-salamander.png"
+      "imagem": "equipment/armor-i-44-salamander.webp"
     },
     {
       "nome": "I-92 Fire Fighter",
@@ -1592,7 +1592,7 @@
       "passive": "Inflammable",
       "warbond": "Superstore",
       "id": "armor-i-92-fire-fighter",
-      "imagem": "equipment/armor-i-92-fire-fighter.png"
+      "imagem": "equipment/armor-i-92-fire-fighter.webp"
     },
     {
       "nome": "IE-12 Righteous",
@@ -1603,7 +1603,7 @@
       "passive": "Integrated Explosives",
       "warbond": "Servants of Freedom",
       "id": "armor-ie-12-righteous",
-      "imagem": "equipment/armor-ie-12-righteous.png"
+      "imagem": "equipment/armor-ie-12-righteous.webp"
     },
     {
       "nome": "IE-3 Martyr",
@@ -1614,7 +1614,7 @@
       "passive": "Integrated Explosives",
       "warbond": "Servants of Freedom",
       "id": "armor-ie-3-martyr",
-      "imagem": "equipment/armor-ie-3-martyr.png"
+      "imagem": "equipment/armor-ie-3-martyr.webp"
     },
     {
       "nome": "IE-57 Hell-Bent",
@@ -1625,7 +1625,18 @@
       "passive": "Integrated Explosives",
       "warbond": "Superstore",
       "id": "armor-ie-57-hell-bent",
-      "imagem": "equipment/armor-ie-57-hell-bent.png"
+      "imagem": "equipment/armor-ie-57-hell-bent.webp"
+    },
+    {
+      "nome": "KDM-500 Outrider",
+      "peso": "Heavy",
+      "armor": 150,
+      "speed": 450,
+      "stamina": 50,
+      "passive": "Kinetic Displacement Mitigation",
+      "warbond": "Permanent Enclosure",
+      "id": "armor-kdm-500-outrider",
+      "imagem": "equipment/armor-kdm-500-outrider.webp"
     },
     {
       "nome": "O-2 Heavy Operator",
@@ -1636,7 +1647,7 @@
       "passive": "Oxygenator",
       "warbond": "Exo Experts",
       "id": "armor-o-2-heavy-operator",
-      "imagem": "equipment/armor-o-2-heavy-operator.png"
+      "imagem": "equipment/armor-o-2-heavy-operator.webp"
     },
     {
       "nome": "O-3 Free Spirit",
@@ -1647,7 +1658,7 @@
       "passive": "Oxygenator",
       "warbond": "Exo Experts",
       "id": "armor-o-3-free-spirit",
-      "imagem": "equipment/armor-o-3-free-spirit.png"
+      "imagem": "equipment/armor-o-3-free-spirit.webp"
     },
     {
       "nome": "O-44 Bonded Pilot",
@@ -1658,7 +1669,7 @@
       "passive": "Oxygenator",
       "warbond": "Superstore",
       "id": "armor-o-44-bonded-pilot",
-      "imagem": "equipment/armor-o-44-bonded-pilot.png"
+      "imagem": "equipment/armor-o-44-bonded-pilot.webp"
     },
     {
       "nome": "PH-202 Twigsnapper",
@@ -1669,7 +1680,7 @@
       "passive": "Peak Physique",
       "warbond": "Viper Commandos",
       "id": "armor-ph-202-twigsnapper",
-      "imagem": "equipment/armor-ph-202-twigsnapper.png"
+      "imagem": "equipment/armor-ph-202-twigsnapper.webp"
     },
     {
       "nome": "PH-56 Jaguar",
@@ -1680,7 +1691,7 @@
       "passive": "Peak Physique",
       "warbond": "Superstore",
       "id": "armor-ph-56-jaguar",
-      "imagem": "equipment/armor-ph-56-jaguar.png"
+      "imagem": "equipment/armor-ph-56-jaguar.webp"
     },
     {
       "nome": "PH-9 Predator",
@@ -1691,7 +1702,7 @@
       "passive": "Peak Physique",
       "warbond": "Viper Commandos",
       "id": "armor-ph-9-predator",
-      "imagem": "equipment/armor-ph-9-predator.png"
+      "imagem": "equipment/armor-ph-9-predator.webp"
     },
     {
       "nome": "RE-1861 Parade Commander",
@@ -1702,7 +1713,7 @@
       "passive": "Reinforced Epaulettes",
       "warbond": "Masters of Ceremony",
       "id": "armor-re-1861-parade-commander",
-      "imagem": "equipment/armor-re-1861-parade-commander.png"
+      "imagem": "equipment/armor-re-1861-parade-commander.webp"
     },
     {
       "nome": "RE-2310 Honorary Guard",
@@ -1713,7 +1724,7 @@
       "passive": "Reinforced Epaulettes",
       "warbond": "Masters of Ceremony",
       "id": "armor-re-2310-honorary-guard",
-      "imagem": "equipment/armor-re-2310-honorary-guard.png"
+      "imagem": "equipment/armor-re-2310-honorary-guard.webp"
     },
     {
       "nome": "RE-824 Bearer of the Standard",
@@ -1724,7 +1735,7 @@
       "passive": "Reinforced Epaulettes",
       "warbond": "Superstore",
       "id": "armor-re-824-bearer-of-the-standard",
-      "imagem": "equipment/armor-re-824-bearer-of-the-standard.png"
+      "imagem": "equipment/armor-re-824-bearer-of-the-standard.webp"
     },
     {
       "nome": "RS-100 Sanctioner",
@@ -1735,7 +1746,7 @@
       "passive": "Reduced Signature",
       "warbond": "Superstore",
       "id": "armor-rs-100-sanctioner",
-      "imagem": "equipment/armor-rs-100-sanctioner.png"
+      "imagem": "equipment/armor-rs-100-sanctioner.webp"
     },
     {
       "nome": "RS-20 Constrictor",
@@ -1746,7 +1757,7 @@
       "passive": "Rock Solid",
       "warbond": "Python Commandos",
       "id": "armor-rs-20-constrictor",
-      "imagem": "equipment/armor-rs-20-constrictor.png"
+      "imagem": "equipment/armor-rs-20-constrictor.webp"
     },
     {
       "nome": "RS-40 Beast of Prey",
@@ -1757,7 +1768,7 @@
       "passive": "Rock Solid",
       "warbond": "Python Commandos",
       "id": "armor-rs-40-beast-of-prey",
-      "imagem": "equipment/armor-rs-40-beast-of-prey.png"
+      "imagem": "equipment/armor-rs-40-beast-of-prey.webp"
     },
     {
       "nome": "RS-6 Fiend Destroyer",
@@ -1768,7 +1779,7 @@
       "passive": "Rock Solid",
       "warbond": "Superstore",
       "id": "armor-rs-6-fiend-destroyer",
-      "imagem": "equipment/armor-rs-6-fiend-destroyer.png"
+      "imagem": "equipment/armor-rs-6-fiend-destroyer.webp"
     },
     {
       "nome": "RS-67 Null Cipher",
@@ -1779,7 +1790,7 @@
       "passive": "Reduced Signature",
       "warbond": "Redacted Regiment",
       "id": "armor-rs-67-null-cipher",
-      "imagem": "equipment/armor-rs-67-null-cipher.png"
+      "imagem": "equipment/armor-rs-67-null-cipher.webp"
     },
     {
       "nome": "RS-89 Shadow Paragon",
@@ -1790,7 +1801,7 @@
       "passive": "Reduced Signature",
       "warbond": "Redacted Regiment",
       "id": "armor-rs-89-shadow-paragon",
-      "imagem": "equipment/armor-rs-89-shadow-paragon.png"
+      "imagem": "equipment/armor-rs-89-shadow-paragon.webp"
     },
     {
       "nome": "SA-04 Combat Technician",
@@ -1801,7 +1812,7 @@
       "passive": "Scout",
       "warbond": "Helldivers Mobilize!",
       "id": "armor-sa-04-combat-technician",
-      "imagem": "equipment/armor-sa-04-combat-technician.png"
+      "imagem": "equipment/armor-sa-04-combat-technician.webp"
     },
     {
       "nome": "SA-12 Servo Assisted",
@@ -1812,7 +1823,7 @@
       "passive": "Servo-Assisted",
       "warbond": "Steeled Veterans",
       "id": "armor-sa-12-servo-assisted",
-      "imagem": "equipment/armor-sa-12-servo-assisted.png"
+      "imagem": "equipment/armor-sa-12-servo-assisted.webp"
     },
     {
       "nome": "SA-25 Steel Trooper",
@@ -1823,7 +1834,7 @@
       "passive": "Servo-Assisted",
       "warbond": "Steeled Veterans",
       "id": "armor-sa-25-steel-trooper",
-      "imagem": "equipment/armor-sa-25-steel-trooper.png"
+      "imagem": "equipment/armor-sa-25-steel-trooper.webp"
     },
     {
       "nome": "SA-32 Dynamo",
@@ -1834,7 +1845,7 @@
       "passive": "Servo-Assisted",
       "warbond": "Steeled Veterans",
       "id": "armor-sa-32-dynamo",
-      "imagem": "equipment/armor-sa-32-dynamo.png"
+      "imagem": "equipment/armor-sa-32-dynamo.webp"
     },
     {
       "nome": "SA-7 Headfirst",
@@ -1845,7 +1856,7 @@
       "passive": "Supplementary Adrenaline",
       "warbond": "Siege Breakers",
       "id": "armor-sa-7-headfirst",
-      "imagem": "equipment/armor-sa-7-headfirst.png"
+      "imagem": "equipment/armor-sa-7-headfirst.webp"
     },
     {
       "nome": "SA-8 Ram",
@@ -1856,7 +1867,7 @@
       "passive": "Supplementary Adrenaline",
       "warbond": "Siege Breakers",
       "id": "armor-sa-8-ram",
-      "imagem": "equipment/armor-sa-8-ram.png"
+      "imagem": "equipment/armor-sa-8-ram.webp"
     },
     {
       "nome": "SC-15 Drone Master",
@@ -1867,7 +1878,7 @@
       "passive": "Engineering Kit",
       "warbond": "Superstore",
       "id": "armor-sc-15-drone-master",
-      "imagem": "equipment/armor-sc-15-drone-master.png"
+      "imagem": "equipment/armor-sc-15-drone-master.webp"
     },
     {
       "nome": "SC-30 Trailblazer Scout",
@@ -1878,7 +1889,7 @@
       "passive": "Scout",
       "warbond": "Helldivers Mobilize!",
       "id": "armor-sc-30-trailblazer-scout",
-      "imagem": "equipment/armor-sc-30-trailblazer-scout.png"
+      "imagem": "equipment/armor-sc-30-trailblazer-scout.webp"
     },
     {
       "nome": "SC-34 Infiltrator",
@@ -1889,7 +1900,7 @@
       "passive": "Scout",
       "warbond": "Helldivers Mobilize!",
       "id": "armor-sc-34-infiltrator",
-      "imagem": "equipment/armor-sc-34-infiltrator.png"
+      "imagem": "equipment/armor-sc-34-infiltrator.webp"
     },
     {
       "nome": "SC-37 Legionnaire",
@@ -1900,7 +1911,7 @@
       "passive": "Servo-Assisted",
       "warbond": "Superstore",
       "id": "armor-sc-37-legionnaire",
-      "imagem": "equipment/armor-sc-37-legionnaire.png"
+      "imagem": "equipment/armor-sc-37-legionnaire.webp"
     },
     {
       "nome": "SR-18 Roadblock",
@@ -1911,7 +1922,7 @@
       "passive": "Siege-Ready",
       "warbond": "Urban Legends",
       "id": "armor-sr-18-roadblock",
-      "imagem": "equipment/armor-sr-18-roadblock.png"
+      "imagem": "equipment/armor-sr-18-roadblock.webp"
     },
     {
       "nome": "SR-24 Street Scout",
@@ -1922,7 +1933,7 @@
       "passive": "Siege-Ready",
       "warbond": "Urban Legends",
       "id": "armor-sr-24-street-scout",
-      "imagem": "equipment/armor-sr-24-street-scout.png"
+      "imagem": "equipment/armor-sr-24-street-scout.webp"
     },
     {
       "nome": "SR-64 Cinderblock",
@@ -1933,7 +1944,7 @@
       "passive": "Siege-Ready",
       "warbond": "Superstore",
       "id": "armor-sr-64-cinderblock",
-      "imagem": "equipment/armor-sr-64-cinderblock.png"
+      "imagem": "equipment/armor-sr-64-cinderblock.webp"
     },
     {
       "nome": "TG-122 Demo-Trooper",
@@ -1944,7 +1955,7 @@
       "passive": "True Grit",
       "warbond": "Castellan’s Creed",
       "id": "armor-tg-122-demo-trooper",
-      "imagem": "equipment/armor-tg-122-demo-trooper.png"
+      "imagem": "equipment/armor-tg-122-demo-trooper.webp"
     },
     {
       "nome": "TG-8 Sharpshooter",
@@ -1955,7 +1966,7 @@
       "passive": "True Grit",
       "warbond": "Castellan’s Creed",
       "id": "armor-tg-8-sharpshooter",
-      "imagem": "equipment/armor-tg-8-sharpshooter.png"
+      "imagem": "equipment/armor-tg-8-sharpshooter.webp"
     },
     {
       "nome": "TR-117 Alpha Commander",
@@ -1966,7 +1977,7 @@
       "passive": "Med-Kit",
       "warbond": "Downloadable Content",
       "id": "armor-tr-117-alpha-commander",
-      "imagem": "equipment/armor-tr-117-alpha-commander.png"
+      "imagem": "equipment/armor-tr-117-alpha-commander.webp"
     },
     {
       "nome": "TR-40 Gold Eagle",
@@ -1977,7 +1988,7 @@
       "passive": "Extra Padding",
       "warbond": "Escalation of Freedom",
       "id": "armor-tr-40-gold-eagle",
-      "imagem": "equipment/armor-tr-40-gold-eagle.png"
+      "imagem": "equipment/armor-tr-40-gold-eagle.webp"
     },
     {
       "nome": "TR-62 Knight",
@@ -1988,7 +1999,7 @@
       "passive": "Servo-Assisted",
       "warbond": "Pre-Order Bonus",
       "id": "armor-tr-62-knight",
-      "imagem": "equipment/armor-tr-62-knight.png"
+      "imagem": "equipment/armor-tr-62-knight.webp"
     },
     {
       "nome": "TR-7 Ambassador of the Brand",
@@ -1999,7 +2010,7 @@
       "passive": "Extra Padding",
       "warbond": "Pre-Order Bonus",
       "id": "armor-tr-7-ambassador-of-the-brand",
-      "imagem": "equipment/armor-tr-7-ambassador-of-the-brand.png"
+      "imagem": "equipment/armor-tr-7-ambassador-of-the-brand.webp"
     },
     {
       "nome": "TR-9 Cavalier of Democracy",
@@ -2010,7 +2021,7 @@
       "passive": "Democracy Protects",
       "warbond": "Pre-Order Bonus",
       "id": "armor-tr-9-cavalier-of-democracy",
-      "imagem": "equipment/armor-tr-9-cavalier-of-democracy.png"
+      "imagem": "equipment/armor-tr-9-cavalier-of-democracy.webp"
     },
     {
       "nome": "UF-16 Inspector",
@@ -2021,7 +2032,7 @@
       "passive": "Unflinching",
       "warbond": "Truth Enforcers",
       "id": "armor-uf-16-inspector",
-      "imagem": "equipment/armor-uf-16-inspector.png"
+      "imagem": "equipment/armor-uf-16-inspector.webp"
     },
     {
       "nome": "UF-50 Bloodhound",
@@ -2032,7 +2043,7 @@
       "passive": "Unflinching",
       "warbond": "Truth Enforcers",
       "id": "armor-uf-50-bloodhound",
-      "imagem": "equipment/armor-uf-50-bloodhound.png"
+      "imagem": "equipment/armor-uf-50-bloodhound.webp"
     },
     {
       "nome": "UF-84 Doubt Killer",
@@ -2043,7 +2054,7 @@
       "passive": "Unflinching",
       "warbond": "Superstore",
       "id": "armor-uf-84-doubt-killer",
-      "imagem": "equipment/armor-uf-84-doubt-killer.png"
+      "imagem": "equipment/armor-uf-84-doubt-killer.webp"
     }
   ],
   "helmet": [
@@ -2051,643 +2062,643 @@
       "nome": "A-35 Recon",
       "warbond": "Halo: ODST",
       "id": "helmet-a-35-recon",
-      "imagem": "equipment/helmet-a-35-recon.png"
+      "imagem": "equipment/helmet-a-35-recon.webp"
     },
     {
       "nome": "A-9 Helljumper",
       "warbond": "Halo: ODST",
       "id": "helmet-a-9-helljumper",
-      "imagem": "equipment/helmet-a-9-helljumper.png"
+      "imagem": "equipment/helmet-a-9-helljumper.webp"
     },
     {
       "nome": "AC-1 Dutiful",
       "warbond": "Righteous Revenants",
       "id": "helmet-ac-1-dutiful",
-      "imagem": "equipment/helmet-ac-1-dutiful.png"
+      "imagem": "equipment/helmet-ac-1-dutiful.webp"
     },
     {
       "nome": "AC-2 Obedient",
       "warbond": "Righteous Revenants",
       "id": "helmet-ac-2-obedient",
-      "imagem": "equipment/helmet-ac-2-obedient.png"
+      "imagem": "equipment/helmet-ac-2-obedient.webp"
     },
     {
       "nome": "AD-11 Livewire",
       "warbond": "Superstore",
       "id": "helmet-ad-11-livewire",
-      "imagem": "equipment/helmet-ad-11-livewire.png"
+      "imagem": "equipment/helmet-ad-11-livewire.webp"
     },
     {
       "nome": "AD-26 Bleeding Edge",
       "warbond": "Control Group",
       "id": "helmet-ad-26-bleeding-edge",
-      "imagem": "equipment/helmet-ad-26-bleeding-edge.png"
+      "imagem": "equipment/helmet-ad-26-bleeding-edge.webp"
     },
     {
       "nome": "AD-49 Apollonian",
       "warbond": "Control Group",
       "id": "helmet-ad-49-apollonian",
-      "imagem": "equipment/helmet-ad-49-apollonian.png"
+      "imagem": "equipment/helmet-ad-49-apollonian.webp"
     },
     {
       "nome": "AF-02 Haz-Master",
       "warbond": "Chemical Agents",
       "id": "helmet-af-02-haz-master",
-      "imagem": "equipment/helmet-af-02-haz-master.png"
+      "imagem": "equipment/helmet-af-02-haz-master.webp"
     },
     {
       "nome": "AF-50 Noxious Ranger",
       "warbond": "Chemical Agents",
       "id": "helmet-af-50-noxious-ranger",
-      "imagem": "equipment/helmet-af-50-noxious-ranger.png"
+      "imagem": "equipment/helmet-af-50-noxious-ranger.webp"
     },
     {
       "nome": "AF-52 Lockdown",
       "warbond": "Superstore",
       "id": "helmet-af-52-lockdown",
-      "imagem": "equipment/helmet-af-52-lockdown.png"
+      "imagem": "equipment/helmet-af-52-lockdown.webp"
     },
     {
       "nome": "AF-91 Field Chemist",
       "warbond": "Superstore",
       "id": "helmet-af-91-field-chemist",
-      "imagem": "equipment/helmet-af-91-field-chemist.png"
+      "imagem": "equipment/helmet-af-91-field-chemist.webp"
     },
     {
       "nome": "B-01 Tactical",
       "warbond": "Starter Equipment",
       "id": "helmet-b-01-tactical",
-      "imagem": "equipment/helmet-b-01-tactical.png"
+      "imagem": "equipment/helmet-b-01-tactical.webp"
     },
     {
       "nome": "B-08 Light Gunner",
       "warbond": "Superstore",
       "id": "helmet-b-08-light-gunner",
-      "imagem": "equipment/helmet-b-08-light-gunner.png"
+      "imagem": "equipment/helmet-b-08-light-gunner.webp"
     },
     {
       "nome": "B-22 Model Citizen",
       "warbond": "Anniversary Gift",
       "id": "helmet-b-22-model-citizen",
-      "imagem": "equipment/helmet-b-22-model-citizen.png"
+      "imagem": "equipment/helmet-b-22-model-citizen.webp"
     },
     {
       "nome": "B-24 Enforcer",
       "warbond": "Superstore",
       "id": "helmet-b-24-enforcer",
-      "imagem": "equipment/helmet-b-24-enforcer.png"
+      "imagem": "equipment/helmet-b-24-enforcer.webp"
     },
     {
       "nome": "B-27 Fortified Commando",
       "warbond": "Superstore",
       "id": "helmet-b-27-fortified-commando",
-      "imagem": "equipment/helmet-b-27-fortified-commando.png"
+      "imagem": "equipment/helmet-b-27-fortified-commando.webp"
     },
     {
       "nome": "BP-20 Correct Officer",
       "warbond": "Force of Law",
       "id": "helmet-bp-20-correct-officer",
-      "imagem": "equipment/helmet-bp-20-correct-officer.png"
+      "imagem": "equipment/helmet-bp-20-correct-officer.webp"
     },
     {
       "nome": "BP-32 Jackboot",
       "warbond": "Force of Law",
       "id": "helmet-bp-32-jackboot",
-      "imagem": "equipment/helmet-bp-32-jackboot.png"
+      "imagem": "equipment/helmet-bp-32-jackboot.webp"
     },
     {
       "nome": "BP-77 Grand Juror",
       "warbond": "Superstore",
       "id": "helmet-bp-77-grand-juror",
-      "imagem": "equipment/helmet-bp-77-grand-juror.png"
+      "imagem": "equipment/helmet-bp-77-grand-juror.webp"
     },
     {
       "nome": "CE-07 Demolition Specialist",
       "warbond": "Democratic Detonation",
       "id": "helmet-ce-07-demolition-specialist",
-      "imagem": "equipment/helmet-ce-07-demolition-specialist.png"
+      "imagem": "equipment/helmet-ce-07-demolition-specialist.webp"
     },
     {
       "nome": "CE-101 Guerilla Gorilla",
       "warbond": "Superstore",
       "id": "helmet-ce-101-guerilla-gorilla",
-      "imagem": "equipment/helmet-ce-101-guerilla-gorilla.png"
+      "imagem": "equipment/helmet-ce-101-guerilla-gorilla.webp"
     },
     {
       "nome": "CE-27 Ground Breaker",
       "warbond": "Democratic Detonation",
       "id": "helmet-ce-27-ground-breaker",
-      "imagem": "equipment/helmet-ce-27-ground-breaker.png"
+      "imagem": "equipment/helmet-ce-27-ground-breaker.webp"
     },
     {
       "nome": "CE-35 Trench Engineer",
       "warbond": "Helldivers Mobilize!",
       "id": "helmet-ce-35-trench-engineer",
-      "imagem": "equipment/helmet-ce-35-trench-engineer.png"
+      "imagem": "equipment/helmet-ce-35-trench-engineer.webp"
     },
     {
       "nome": "CE-64 Grenadier",
       "warbond": "Superstore",
       "id": "helmet-ce-64-grenadier",
-      "imagem": "equipment/helmet-ce-64-grenadier.png"
+      "imagem": "equipment/helmet-ce-64-grenadier.webp"
     },
     {
       "nome": "CE-67 Titan",
       "warbond": "Superstore",
       "id": "helmet-ce-67-titan",
-      "imagem": "equipment/helmet-ce-67-titan.png"
+      "imagem": "equipment/helmet-ce-67-titan.webp"
     },
     {
       "nome": "CE-74 Breaker",
       "warbond": "Superstore",
       "id": "helmet-ce-74-breaker",
-      "imagem": "equipment/helmet-ce-74-breaker.png"
+      "imagem": "equipment/helmet-ce-74-breaker.webp"
     },
     {
       "nome": "CE-81 Juggernaut",
       "warbond": "Superstore",
       "id": "helmet-ce-81-juggernaut",
-      "imagem": "equipment/helmet-ce-81-juggernaut.png"
+      "imagem": "equipment/helmet-ce-81-juggernaut.webp"
     },
     {
       "nome": "CM-09 Bonesnapper",
       "warbond": "Helldivers Mobilize!",
       "id": "helmet-cm-09-bonesnapper",
-      "imagem": "equipment/helmet-cm-09-bonesnapper.png"
+      "imagem": "equipment/helmet-cm-09-bonesnapper.webp"
     },
     {
       "nome": "CM-10 Clinician",
       "warbond": "Superstore",
       "id": "helmet-cm-10-clinician",
-      "imagem": "equipment/helmet-cm-10-clinician.png"
+      "imagem": "equipment/helmet-cm-10-clinician.webp"
     },
     {
       "nome": "CM-14 Physician",
       "warbond": "Helldivers Mobilize!",
       "id": "helmet-cm-14-physician",
-      "imagem": "equipment/helmet-cm-14-physician.png"
+      "imagem": "equipment/helmet-cm-14-physician.webp"
     },
     {
       "nome": "CM-17 Butcher",
       "warbond": "Superstore",
       "id": "helmet-cm-17-butcher",
-      "imagem": "equipment/helmet-cm-17-butcher.png"
+      "imagem": "equipment/helmet-cm-17-butcher.webp"
     },
     {
       "nome": "CM-21 Trench Paramedic",
       "warbond": "Superstore",
       "id": "helmet-cm-21-trench-paramedic",
-      "imagem": "equipment/helmet-cm-21-trench-paramedic.png"
+      "imagem": "equipment/helmet-cm-21-trench-paramedic.webp"
     },
     {
       "nome": "CPG-48 Sapper",
       "warbond": "Entrenched Division",
       "id": "helmet-cpg-48-sapper",
-      "imagem": "equipment/helmet-cpg-48-sapper.png"
+      "imagem": "equipment/helmet-cpg-48-sapper.webp"
     },
     {
       "nome": "CPH-26 Commandant (Armor)",
       "warbond": "Entrenched Division",
       "id": "helmet-cph-26-commandant-armor",
-      "imagem": "equipment/helmet-cph-26-commandant-armor.png"
+      "imagem": "equipment/helmet-cph-26-commandant-armor.webp"
     },
     {
       "nome": "CPR-80 Bulwark",
       "warbond": "Superstore",
       "id": "helmet-cpr-80-bulwark",
-      "imagem": "equipment/helmet-cpr-80-bulwark.png"
+      "imagem": "equipment/helmet-cpr-80-bulwark.webp"
     },
     {
       "nome": "CW-22 Kodiak",
       "warbond": "Polar Patriots",
       "id": "helmet-cw-22-kodiak",
-      "imagem": "equipment/helmet-cw-22-kodiak.png"
+      "imagem": "equipment/helmet-cw-22-kodiak.webp"
     },
     {
       "nome": "CW-36 Winter Warrior",
       "warbond": "Polar Patriots",
       "id": "helmet-cw-36-winter-warrior",
-      "imagem": "equipment/helmet-cw-36-winter-warrior.png"
+      "imagem": "equipment/helmet-cw-36-winter-warrior.webp"
     },
     {
       "nome": "CW-4 Arctic Ranger",
       "warbond": "Polar Patriots",
       "id": "helmet-cw-4-arctic-ranger",
-      "imagem": "equipment/helmet-cw-4-arctic-ranger.png"
+      "imagem": "equipment/helmet-cw-4-arctic-ranger.webp"
     },
     {
       "nome": "CW-9 White Wolf",
       "warbond": "Superstore",
       "id": "helmet-cw-9-white-wolf",
-      "imagem": "equipment/helmet-cw-9-white-wolf.png"
+      "imagem": "equipment/helmet-cw-9-white-wolf.webp"
     },
     {
       "nome": "DP-00 Tactical",
       "warbond": "Liberty Day",
       "id": "helmet-dp-00-tactical",
-      "imagem": "equipment/helmet-dp-00-tactical.png"
+      "imagem": "equipment/helmet-dp-00-tactical.webp"
     },
     {
       "nome": "DP-11 Champion of the People",
       "warbond": "Helldivers Mobilize!",
       "id": "helmet-dp-11-champion-of-the-people",
-      "imagem": "equipment/helmet-dp-11-champion-of-the-people.png"
+      "imagem": "equipment/helmet-dp-11-champion-of-the-people.webp"
     },
     {
       "nome": "DP-40 Hero of the Federation",
       "warbond": "Helldivers Mobilize!",
       "id": "helmet-dp-40-hero-of-the-federation",
-      "imagem": "equipment/helmet-dp-40-hero-of-the-federation.png"
+      "imagem": "equipment/helmet-dp-40-hero-of-the-federation.webp"
     },
     {
       "nome": "DP-53 Savior of the Free",
       "warbond": "Super Citizen Edition",
       "id": "helmet-dp-53-savior-of-the-free",
-      "imagem": "equipment/helmet-dp-53-savior-of-the-free.png"
+      "imagem": "equipment/helmet-dp-53-savior-of-the-free.webp"
     },
     {
       "nome": "DP-8 Mountain-Scaled",
       "warbond": "Superstore",
       "id": "helmet-dp-8-mountain-scaled",
-      "imagem": "equipment/helmet-dp-8-mountain-scaled.png"
+      "imagem": "equipment/helmet-dp-8-mountain-scaled.webp"
     },
     {
       "nome": "DS-10 Big Game Hunter",
       "warbond": "Superstore",
       "id": "helmet-ds-10-big-game-hunter",
-      "imagem": "equipment/helmet-ds-10-big-game-hunter.png"
+      "imagem": "equipment/helmet-ds-10-big-game-hunter.webp"
     },
     {
       "nome": "DS-191 Scorpion",
       "warbond": "Dust Devils",
       "id": "helmet-ds-191-scorpion",
-      "imagem": "equipment/helmet-ds-191-scorpion.png"
+      "imagem": "equipment/helmet-ds-191-scorpion.webp"
     },
     {
       "nome": "DS-42 Federation's Blade",
       "warbond": "Dust Devils",
       "id": "helmet-ds-42-federation-s-blade",
-      "imagem": "equipment/helmet-ds-42-federation-s-blade.png"
+      "imagem": "equipment/helmet-ds-42-federation-s-blade.webp"
     },
     {
       "nome": "EX-00 Prototype X",
       "warbond": "Cutting Edge",
       "id": "helmet-ex-00-prototype-x",
-      "imagem": "equipment/helmet-ex-00-prototype-x.png"
+      "imagem": "equipment/helmet-ex-00-prototype-x.webp"
     },
     {
       "nome": "EX-03 Prototype 3",
       "warbond": "Cutting Edge",
       "id": "helmet-ex-03-prototype-3",
-      "imagem": "equipment/helmet-ex-03-prototype-3.png"
+      "imagem": "equipment/helmet-ex-03-prototype-3.webp"
     },
     {
       "nome": "EX-16 Prototype 16",
       "warbond": "Cutting Edge",
       "id": "helmet-ex-16-prototype-16",
-      "imagem": "equipment/helmet-ex-16-prototype-16.png"
+      "imagem": "equipment/helmet-ex-16-prototype-16.webp"
     },
     {
       "nome": "FS-05 Marksman",
       "warbond": "Helldivers Mobilize!",
       "id": "helmet-fs-05-marksman",
-      "imagem": "equipment/helmet-fs-05-marksman.png"
+      "imagem": "equipment/helmet-fs-05-marksman.webp"
     },
     {
       "nome": "FS-11 Executioner",
       "warbond": "Superstore",
       "id": "helmet-fs-11-executioner",
-      "imagem": "equipment/helmet-fs-11-executioner.png"
+      "imagem": "equipment/helmet-fs-11-executioner.webp"
     },
     {
       "nome": "FS-23 Battle Master",
       "warbond": "Helldivers Mobilize!",
       "id": "helmet-fs-23-battle-master",
-      "imagem": "equipment/helmet-fs-23-battle-master.png"
+      "imagem": "equipment/helmet-fs-23-battle-master.webp"
     },
     {
       "nome": "FS-34 Exterminator",
       "warbond": "Superstore",
       "id": "helmet-fs-34-exterminator",
-      "imagem": "equipment/helmet-fs-34-exterminator.png"
+      "imagem": "equipment/helmet-fs-34-exterminator.webp"
     },
     {
       "nome": "FS-37 Ravager",
       "warbond": "Superstore",
       "id": "helmet-fs-37-ravager",
-      "imagem": "equipment/helmet-fs-37-ravager.png"
+      "imagem": "equipment/helmet-fs-37-ravager.webp"
     },
     {
       "nome": "FS-38 Eradicator",
       "warbond": "Superstore",
       "id": "helmet-fs-38-eradicator",
-      "imagem": "equipment/helmet-fs-38-eradicator.png"
+      "imagem": "equipment/helmet-fs-38-eradicator.webp"
     },
     {
       "nome": "FS-55 Devastator",
       "warbond": "Democratic Detonation",
       "id": "helmet-fs-55-devastator",
-      "imagem": "equipment/helmet-fs-55-devastator.png"
+      "imagem": "equipment/helmet-fs-55-devastator.webp"
     },
     {
       "nome": "FS-61 Dreadnought",
       "warbond": "Superstore",
       "id": "helmet-fs-61-dreadnought",
-      "imagem": "equipment/helmet-fs-61-dreadnought.png"
+      "imagem": "equipment/helmet-fs-61-dreadnought.webp"
     },
     {
       "nome": "GS-11 Democracy's Deputy",
       "warbond": "Superstore",
       "id": "helmet-gs-11-democracy-s-deputy",
-      "imagem": "equipment/helmet-gs-11-democracy-s-deputy.png"
+      "imagem": "equipment/helmet-gs-11-democracy-s-deputy.webp"
     },
     {
       "nome": "GS-17 Frontier Marshal",
       "warbond": "Borderline Justice",
       "id": "helmet-gs-17-frontier-marshal",
-      "imagem": "equipment/helmet-gs-17-frontier-marshal.png"
+      "imagem": "equipment/helmet-gs-17-frontier-marshal.webp"
     },
     {
       "nome": "GS-66 Lawmaker",
       "warbond": "Borderline Justice",
       "id": "helmet-gs-66-lawmaker",
-      "imagem": "equipment/helmet-gs-66-lawmaker.png"
+      "imagem": "equipment/helmet-gs-66-lawmaker.webp"
     },
     {
       "nome": "I-09 Heatseeker",
       "warbond": "Freedom's Flame",
       "id": "helmet-i-09-heatseeker",
-      "imagem": "equipment/helmet-i-09-heatseeker.png"
+      "imagem": "equipment/helmet-i-09-heatseeker.webp"
     },
     {
       "nome": "I-102 Draconaught",
       "warbond": "Freedom's Flame",
       "id": "helmet-i-102-draconaught",
-      "imagem": "equipment/helmet-i-102-draconaught.png"
+      "imagem": "equipment/helmet-i-102-draconaught.webp"
     },
     {
       "nome": "I-44 Salamander",
       "warbond": "Superstore",
       "id": "helmet-i-44-salamander",
-      "imagem": "equipment/helmet-i-44-salamander.png"
+      "imagem": "equipment/helmet-i-44-salamander.webp"
     },
     {
       "nome": "I-92 Fire Fighter",
       "warbond": "Superstore",
       "id": "helmet-i-92-fire-fighter",
-      "imagem": "equipment/helmet-i-92-fire-fighter.png"
+      "imagem": "equipment/helmet-i-92-fire-fighter.webp"
     },
     {
       "nome": "IE-12 Righteous",
       "warbond": "Servants of Freedom",
       "id": "helmet-ie-12-righteous",
-      "imagem": "equipment/helmet-ie-12-righteous.png"
+      "imagem": "equipment/helmet-ie-12-righteous.webp"
     },
     {
       "nome": "IE-3 Martyr",
       "warbond": "Servants of Freedom",
       "id": "helmet-ie-3-martyr",
-      "imagem": "equipment/helmet-ie-3-martyr.png"
+      "imagem": "equipment/helmet-ie-3-martyr.webp"
     },
     {
       "nome": "IE-57 Hell-Bent",
       "warbond": "Superstore",
       "id": "helmet-ie-57-hell-bent",
-      "imagem": "equipment/helmet-ie-57-hell-bent.png"
+      "imagem": "equipment/helmet-ie-57-hell-bent.webp"
     },
     {
       "nome": "KDM-500 Outrider",
       "warbond": "Lightning Intercept",
       "id": "helmet-kdm-500-outrider",
-      "imagem": "equipment/helmet-kdm-500-outrider.png"
+      "imagem": "equipment/helmet-kdm-500-outrider.webp"
     },
     {
       "nome": "O-2 Heavy Operator",
       "warbond": "Exo Experts",
       "id": "helmet-o-2-heavy-operator",
-      "imagem": "equipment/helmet-o-2-heavy-operator.png"
+      "imagem": "equipment/helmet-o-2-heavy-operator.webp"
     },
     {
       "nome": "O-3 Free Spirit",
       "warbond": "Exo Experts",
       "id": "helmet-o-3-free-spirit",
-      "imagem": "equipment/helmet-o-3-free-spirit.png"
+      "imagem": "equipment/helmet-o-3-free-spirit.webp"
     },
     {
       "nome": "O-44 Bonded Pilot",
       "warbond": "Superstore",
       "id": "helmet-o-44-bonded-pilot",
-      "imagem": "equipment/helmet-o-44-bonded-pilot.png"
+      "imagem": "equipment/helmet-o-44-bonded-pilot.webp"
     },
     {
       "nome": "PH-202 Twigsnapper",
       "warbond": "Viper Commandos",
       "id": "helmet-ph-202-twigsnapper",
-      "imagem": "equipment/helmet-ph-202-twigsnapper.png"
+      "imagem": "equipment/helmet-ph-202-twigsnapper.webp"
     },
     {
       "nome": "PH-56 Jaguar",
       "warbond": "Superstore",
       "id": "helmet-ph-56-jaguar",
-      "imagem": "equipment/helmet-ph-56-jaguar.png"
+      "imagem": "equipment/helmet-ph-56-jaguar.webp"
     },
     {
       "nome": "PH-9 Predator",
       "warbond": "Viper Commandos",
       "id": "helmet-ph-9-predator",
-      "imagem": "equipment/helmet-ph-9-predator.png"
+      "imagem": "equipment/helmet-ph-9-predator.webp"
     },
     {
       "nome": "RE-1861 Parade Commander",
       "warbond": "Masters of Ceremony",
       "id": "helmet-re-1861-parade-commander",
-      "imagem": "equipment/helmet-re-1861-parade-commander.png"
+      "imagem": "equipment/helmet-re-1861-parade-commander.webp"
     },
     {
       "nome": "RE-2310 Honorary Guard",
       "warbond": "Masters of Ceremony",
       "id": "helmet-re-2310-honorary-guard",
-      "imagem": "equipment/helmet-re-2310-honorary-guard.png"
+      "imagem": "equipment/helmet-re-2310-honorary-guard.webp"
     },
     {
       "nome": "RE-824 Bearer of the Standard",
       "warbond": "Superstore",
       "id": "helmet-re-824-bearer-of-the-standard",
-      "imagem": "equipment/helmet-re-824-bearer-of-the-standard.png"
+      "imagem": "equipment/helmet-re-824-bearer-of-the-standard.webp"
     },
     {
       "nome": "RS-100 Sanctioner",
       "warbond": "Superstore",
       "id": "helmet-rs-100-sanctioner",
-      "imagem": "equipment/helmet-rs-100-sanctioner.png"
+      "imagem": "equipment/helmet-rs-100-sanctioner.webp"
     },
     {
       "nome": "RS-20 Constrictor",
       "warbond": "Python Commandos",
       "id": "helmet-rs-20-constrictor",
-      "imagem": "equipment/helmet-rs-20-constrictor.png"
+      "imagem": "equipment/helmet-rs-20-constrictor.webp"
     },
     {
       "nome": "RS-40 Beast of Prey",
       "warbond": "Python Commandos",
       "id": "helmet-rs-40-beast-of-prey",
-      "imagem": "equipment/helmet-rs-40-beast-of-prey.png"
+      "imagem": "equipment/helmet-rs-40-beast-of-prey.webp"
     },
     {
       "nome": "RS-6 Fiend Destroyer",
       "warbond": "Superstore",
       "id": "helmet-rs-6-fiend-destroyer",
-      "imagem": "equipment/helmet-rs-6-fiend-destroyer.png"
+      "imagem": "equipment/helmet-rs-6-fiend-destroyer.webp"
     },
     {
       "nome": "RS-67 Null Cipher",
       "warbond": "Redacted Regiment",
       "id": "helmet-rs-67-null-cipher",
-      "imagem": "equipment/helmet-rs-67-null-cipher.png"
+      "imagem": "equipment/helmet-rs-67-null-cipher.webp"
     },
     {
       "nome": "RS-89 Shadow Paragon",
       "warbond": "Redacted Regiment",
       "id": "helmet-rs-89-shadow-paragon",
-      "imagem": "equipment/helmet-rs-89-shadow-paragon.png"
+      "imagem": "equipment/helmet-rs-89-shadow-paragon.webp"
     },
     {
       "nome": "SA-04 Combat Technician",
       "warbond": "Helldivers Mobilize!",
       "id": "helmet-sa-04-combat-technician",
-      "imagem": "equipment/helmet-sa-04-combat-technician.png"
+      "imagem": "equipment/helmet-sa-04-combat-technician.webp"
     },
     {
       "nome": "SA-12 Servo Assisted",
       "warbond": "Steeled Veterans",
       "id": "helmet-sa-12-servo-assisted",
-      "imagem": "equipment/helmet-sa-12-servo-assisted.png"
+      "imagem": "equipment/helmet-sa-12-servo-assisted.webp"
     },
     {
       "nome": "SA-25 Steel Trooper",
       "warbond": "Steeled Veterans",
       "id": "helmet-sa-25-steel-trooper",
-      "imagem": "equipment/helmet-sa-25-steel-trooper.png"
+      "imagem": "equipment/helmet-sa-25-steel-trooper.webp"
     },
     {
       "nome": "SA-32 Dynamo",
       "warbond": "Steeled Veterans",
       "id": "helmet-sa-32-dynamo",
-      "imagem": "equipment/helmet-sa-32-dynamo.png"
+      "imagem": "equipment/helmet-sa-32-dynamo.webp"
     },
     {
       "nome": "SA-7 Headfirst",
       "warbond": "Siege Breakers",
       "id": "helmet-sa-7-headfirst",
-      "imagem": "equipment/helmet-sa-7-headfirst.png"
+      "imagem": "equipment/helmet-sa-7-headfirst.webp"
     },
     {
       "nome": "SA-8 Ram",
       "warbond": "Siege Breakers",
       "id": "helmet-sa-8-ram",
-      "imagem": "equipment/helmet-sa-8-ram.png"
+      "imagem": "equipment/helmet-sa-8-ram.webp"
     },
     {
       "nome": "SC-15 Drone Master",
       "warbond": "Superstore",
       "id": "helmet-sc-15-drone-master",
-      "imagem": "equipment/helmet-sc-15-drone-master.png"
+      "imagem": "equipment/helmet-sc-15-drone-master.webp"
     },
     {
       "nome": "SC-30 Trailblazer Scout",
       "warbond": "Helldivers Mobilize!",
       "id": "helmet-sc-30-trailblazer-scout",
-      "imagem": "equipment/helmet-sc-30-trailblazer-scout.png"
+      "imagem": "equipment/helmet-sc-30-trailblazer-scout.webp"
     },
     {
       "nome": "SC-34 Infiltrator",
       "warbond": "Helldivers Mobilize!",
       "id": "helmet-sc-34-infiltrator",
-      "imagem": "equipment/helmet-sc-34-infiltrator.png"
+      "imagem": "equipment/helmet-sc-34-infiltrator.webp"
     },
     {
       "nome": "SC-37 Legionnaire",
       "warbond": "Superstore",
       "id": "helmet-sc-37-legionnaire",
-      "imagem": "equipment/helmet-sc-37-legionnaire.png"
+      "imagem": "equipment/helmet-sc-37-legionnaire.webp"
     },
     {
       "nome": "SR-18 Roadblock",
       "warbond": "Urban Legends",
       "id": "helmet-sr-18-roadblock",
-      "imagem": "equipment/helmet-sr-18-roadblock.png"
+      "imagem": "equipment/helmet-sr-18-roadblock.webp"
     },
     {
       "nome": "SR-24 Street Scout",
       "warbond": "Urban Legends",
       "id": "helmet-sr-24-street-scout",
-      "imagem": "equipment/helmet-sr-24-street-scout.png"
+      "imagem": "equipment/helmet-sr-24-street-scout.webp"
     },
     {
       "nome": "SR-64 Cinderblock",
       "warbond": "Superstore",
       "id": "helmet-sr-64-cinderblock",
-      "imagem": "equipment/helmet-sr-64-cinderblock.png"
+      "imagem": "equipment/helmet-sr-64-cinderblock.webp"
     },
     {
       "nome": "TG-122 Demo-Trooper",
       "warbond": "Castellan’s Creed",
       "id": "helmet-tg-122-demo-trooper",
-      "imagem": "equipment/helmet-tg-122-demo-trooper.png"
+      "imagem": "equipment/helmet-tg-122-demo-trooper.webp"
     },
     {
       "nome": "TG-8 Sharpshooter",
       "warbond": "Castellan’s Creed",
       "id": "helmet-tg-8-sharpshooter",
-      "imagem": "equipment/helmet-tg-8-sharpshooter.png"
+      "imagem": "equipment/helmet-tg-8-sharpshooter.webp"
     },
     {
       "nome": "TR-117 Alpha Commander",
       "warbond": "Downloadable Content",
       "id": "helmet-tr-117-alpha-commander",
-      "imagem": "equipment/helmet-tr-117-alpha-commander.png"
+      "imagem": "equipment/helmet-tr-117-alpha-commander.webp"
     },
     {
       "nome": "TR-40 Gold Eagle",
       "warbond": "Escalation of Freedom",
       "id": "helmet-tr-40-gold-eagle",
-      "imagem": "equipment/helmet-tr-40-gold-eagle.png"
+      "imagem": "equipment/helmet-tr-40-gold-eagle.webp"
     },
     {
       "nome": "TR-62 Knight",
       "warbond": "Pre-Order Bonus",
       "id": "helmet-tr-62-knight",
-      "imagem": "equipment/helmet-tr-62-knight.png"
+      "imagem": "equipment/helmet-tr-62-knight.webp"
     },
     {
       "nome": "TR-7 Ambassador of the Brand",
       "warbond": "Pre-Order Bonus",
       "id": "helmet-tr-7-ambassador-of-the-brand",
-      "imagem": "equipment/helmet-tr-7-ambassador-of-the-brand.png"
+      "imagem": "equipment/helmet-tr-7-ambassador-of-the-brand.webp"
     },
     {
       "nome": "TR-9 Cavalier of Democracy",
       "warbond": "Pre-Order Bonus",
       "id": "helmet-tr-9-cavalier-of-democracy",
-      "imagem": "equipment/helmet-tr-9-cavalier-of-democracy.png"
+      "imagem": "equipment/helmet-tr-9-cavalier-of-democracy.webp"
     },
     {
       "nome": "UF-16 Inspector",
       "warbond": "Truth Enforcers",
       "id": "helmet-uf-16-inspector",
-      "imagem": "equipment/helmet-uf-16-inspector.png"
+      "imagem": "equipment/helmet-uf-16-inspector.webp"
     },
     {
       "nome": "UF-50 Bloodhound",
       "warbond": "Truth Enforcers",
       "id": "helmet-uf-50-bloodhound",
-      "imagem": "equipment/helmet-uf-50-bloodhound.png"
+      "imagem": "equipment/helmet-uf-50-bloodhound.webp"
     },
     {
       "nome": "UF-84 Doubt Killer",
       "warbond": "Superstore",
       "id": "helmet-uf-84-doubt-killer",
-      "imagem": "equipment/helmet-uf-84-doubt-killer.png"
+      "imagem": "equipment/helmet-uf-84-doubt-killer.webp"
     }
   ],
   "cape": [
@@ -2695,523 +2706,523 @@
       "nome": "Against the Tyrant Cloud",
       "warbond": "Oshaune",
       "id": "cape-against-the-tyrant-cloud",
-      "imagem": "equipment/cape-against-the-tyrant-cloud.png"
+      "imagem": "equipment/cape-against-the-tyrant-cloud.webp"
     },
     {
       "nome": "Agent of Oblivion",
       "warbond": "Cutting Edge",
       "id": "cape-agent-of-oblivion",
-      "imagem": "equipment/cape-agent-of-oblivion.png"
+      "imagem": "equipment/cape-agent-of-oblivion.webp"
     },
     {
       "nome": "Badge of Order",
       "warbond": "Superstore",
       "id": "cape-badge-of-order",
-      "imagem": "equipment/cape-badge-of-order.png"
+      "imagem": "equipment/cape-badge-of-order.webp"
     },
     {
       "nome": "Bastion of Integrity",
       "warbond": "Steeled Veterans",
       "id": "cape-bastion-of-integrity",
-      "imagem": "equipment/cape-bastion-of-integrity.png"
+      "imagem": "equipment/cape-bastion-of-integrity.webp"
     },
     {
       "nome": "Blazing Samaritan",
       "warbond": "Helldivers Mobilize!",
       "id": "cape-blazing-samaritan",
-      "imagem": "equipment/cape-blazing-samaritan.png"
+      "imagem": "equipment/cape-blazing-samaritan.webp"
     },
     {
       "nome": "Botslayer",
       "warbond": "Cutting Edge",
       "id": "cape-botslayer",
-      "imagem": "equipment/cape-botslayer.png"
+      "imagem": "equipment/cape-botslayer.webp"
     },
     {
       "nome": "Camo Cloak",
       "warbond": "Castellan’s Creed",
       "id": "cape-camo-cloak",
-      "imagem": "equipment/cape-camo-cloak.png"
+      "imagem": "equipment/cape-camo-cloak.webp"
     },
     {
       "nome": "City Fighter's Resolve",
       "warbond": "Castellan’s Creed",
       "id": "cape-city-fighter-s-resolve",
-      "imagem": "equipment/cape-city-fighter-s-resolve.png"
+      "imagem": "equipment/cape-city-fighter-s-resolve.webp"
     },
     {
       "nome": "Cloak of Posterity's Gratitude (Cape)",
       "warbond": "Steeled Veterans",
       "id": "cape-cloak-of-posterity-s-gratitude-cape",
-      "imagem": "equipment/cape-cloak-of-posterity-s-gratitude-cape.png"
+      "imagem": "equipment/cape-cloak-of-posterity-s-gratitude-cape.webp"
     },
     {
       "nome": "Conductor of Brilliance",
       "warbond": "Control Group",
       "id": "cape-conductor-of-brilliance",
-      "imagem": "equipment/cape-conductor-of-brilliance.png"
+      "imagem": "equipment/cape-conductor-of-brilliance.webp"
     },
     {
       "nome": "Cover of Darkness",
       "warbond": "Superstore",
       "id": "cape-cover-of-darkness",
-      "imagem": "equipment/cape-cover-of-darkness.png"
+      "imagem": "equipment/cape-cover-of-darkness.webp"
     },
     {
       "nome": "Crest of the Unsullied",
       "warbond": "Entrenched Division",
       "id": "cape-crest-of-the-unsullied",
-      "imagem": "equipment/cape-crest-of-the-unsullied.png"
+      "imagem": "equipment/cape-crest-of-the-unsullied.webp"
     },
     {
       "nome": "Cresting Honor",
       "warbond": "Helldivers Mobilize!",
       "id": "cape-cresting-honor",
-      "imagem": "equipment/cape-cresting-honor.png"
+      "imagem": "equipment/cape-cresting-honor.webp"
     },
     {
       "nome": "De-Forester's Sailcloth",
       "warbond": "Superstore",
       "id": "cape-de-forester-s-sailcloth",
-      "imagem": "equipment/cape-de-forester-s-sailcloth.png"
+      "imagem": "equipment/cape-de-forester-s-sailcloth.webp"
     },
     {
       "nome": "Defender of Our Dream",
       "warbond": "Righteous Revenants",
       "id": "cape-defender-of-our-dream",
-      "imagem": "equipment/cape-defender-of-our-dream.png"
+      "imagem": "equipment/cape-defender-of-our-dream.webp"
     },
     {
       "nome": "Diagram of the Noblest Payload",
       "warbond": "Superstore",
       "id": "cape-diagram-of-the-noblest-payload",
-      "imagem": "equipment/cape-diagram-of-the-noblest-payload.png"
+      "imagem": "equipment/cape-diagram-of-the-noblest-payload.webp"
     },
     {
       "nome": "Dignity of Toil",
       "warbond": "Entrenched Division",
       "id": "cape-dignity-of-toil",
-      "imagem": "equipment/cape-dignity-of-toil.png"
+      "imagem": "equipment/cape-dignity-of-toil.webp"
     },
     {
       "nome": "Dissident's Nightmare",
       "warbond": "Polar Patriots",
       "id": "cape-dissident-s-nightmare",
-      "imagem": "equipment/cape-dissident-s-nightmare.png"
+      "imagem": "equipment/cape-dissident-s-nightmare.webp"
     },
     {
       "nome": "Drape of Glory",
       "warbond": "Steeled Veterans",
       "id": "cape-drape-of-glory",
-      "imagem": "equipment/cape-drape-of-glory.png"
+      "imagem": "equipment/cape-drape-of-glory.webp"
     },
     {
       "nome": "Eagle's Fury",
       "warbond": "Democratic Detonation",
       "id": "cape-eagle-s-fury",
-      "imagem": "equipment/cape-eagle-s-fury.png"
+      "imagem": "equipment/cape-eagle-s-fury.webp"
     },
     {
       "nome": "Emblem of Freedom",
       "warbond": "Social Media MO",
       "id": "cape-emblem-of-freedom",
-      "imagem": "equipment/cape-emblem-of-freedom.png"
+      "imagem": "equipment/cape-emblem-of-freedom.webp"
     },
     {
       "nome": "Eternal Corona",
       "warbond": "Superstore",
       "id": "cape-eternal-corona",
-      "imagem": "equipment/cape-eternal-corona.png"
+      "imagem": "equipment/cape-eternal-corona.webp"
     },
     {
       "nome": "Executioner's Canopy",
       "warbond": "Viper Commandos",
       "id": "cape-executioner-s-canopy",
-      "imagem": "equipment/cape-executioner-s-canopy.png"
+      "imagem": "equipment/cape-executioner-s-canopy.webp"
     },
     {
       "nome": "Eye of Freedom",
       "warbond": "Anniversary Gift",
       "id": "cape-eye-of-freedom",
-      "imagem": "equipment/cape-eye-of-freedom.png"
+      "imagem": "equipment/cape-eye-of-freedom.webp"
     },
     {
       "nome": "Eye of Liberty",
       "warbond": "Anniversary Gift",
       "id": "cape-eye-of-liberty",
-      "imagem": "equipment/cape-eye-of-liberty.png"
+      "imagem": "equipment/cape-eye-of-liberty.webp"
     },
     {
       "nome": "Eye of the Clandestine",
       "warbond": "Halo: ODST",
       "id": "cape-eye-of-the-clandestine",
-      "imagem": "equipment/cape-eye-of-the-clandestine.png"
+      "imagem": "equipment/cape-eye-of-the-clandestine.webp"
     },
     {
       "nome": "Fallen Hero's Vengeance",
       "warbond": "Malevelon Creek Memorial Day",
       "id": "cape-fallen-hero-s-vengeance",
-      "imagem": "equipment/cape-fallen-hero-s-vengeance.png"
+      "imagem": "equipment/cape-fallen-hero-s-vengeance.webp"
     },
     {
       "nome": "Federation's Embrace",
       "warbond": "Masters of Ceremony",
       "id": "cape-federation-s-embrace",
-      "imagem": "equipment/cape-federation-s-embrace.png"
+      "imagem": "equipment/cape-federation-s-embrace.webp"
     },
     {
       "nome": "Foe Rent Asunder",
       "warbond": "Python Commandos",
       "id": "cape-foe-rent-asunder",
-      "imagem": "equipment/cape-foe-rent-asunder.png"
+      "imagem": "equipment/cape-foe-rent-asunder.webp"
     },
     {
       "nome": "Foesmasher",
       "warbond": "Starter Equipment",
       "id": "cape-foesmasher",
-      "imagem": "equipment/cape-foesmasher.png"
+      "imagem": "equipment/cape-foesmasher.webp"
     },
     {
       "nome": "Fre Liberam",
       "warbond": "Servants of Freedom",
       "id": "cape-fre-liberam",
-      "imagem": "equipment/cape-fre-liberam.png"
+      "imagem": "equipment/cape-fre-liberam.webp"
     },
     {
       "nome": "Free-Spirited Spangles",
       "warbond": "Exo Experts",
       "id": "cape-free-spirited-spangles",
-      "imagem": "equipment/cape-free-spirited-spangles.png"
+      "imagem": "equipment/cape-free-spirited-spangles.webp"
     },
     {
       "nome": "Freedom's Tapestry",
       "warbond": "Democratic Detonation",
       "id": "cape-freedom-s-tapestry",
-      "imagem": "equipment/cape-freedom-s-tapestry.png"
+      "imagem": "equipment/cape-freedom-s-tapestry.webp"
     },
     {
       "nome": "Gilded Quill",
       "warbond": "Superstore",
       "id": "cape-gilded-quill",
-      "imagem": "equipment/cape-gilded-quill.png"
+      "imagem": "equipment/cape-gilded-quill.webp"
     },
     {
       "nome": "Harbinger of True Equality",
       "warbond": "Democratic Detonation",
       "id": "cape-harbinger-of-true-equality",
-      "imagem": "equipment/cape-harbinger-of-true-equality.png"
+      "imagem": "equipment/cape-harbinger-of-true-equality.webp"
     },
     {
       "nome": "Holder of the Yellow Line",
       "warbond": "Urban Legends",
       "id": "cape-holder-of-the-yellow-line",
-      "imagem": "equipment/cape-holder-of-the-yellow-line.png"
+      "imagem": "equipment/cape-holder-of-the-yellow-line.webp"
     },
     {
       "nome": "Honored Heirloom",
       "warbond": "Halo: ODST",
       "id": "cape-honored-heirloom",
-      "imagem": "equipment/cape-honored-heirloom.png"
+      "imagem": "equipment/cape-honored-heirloom.webp"
     },
     {
       "nome": "Humble Regalia",
       "warbond": "Masters of Ceremony",
       "id": "cape-humble-regalia",
-      "imagem": "equipment/cape-humble-regalia.png"
+      "imagem": "equipment/cape-humble-regalia.webp"
     },
     {
       "nome": "Independence Bringer",
       "warbond": "Helldivers Mobilize!",
       "id": "cape-independence-bringer",
-      "imagem": "equipment/cape-independence-bringer.png"
+      "imagem": "equipment/cape-independence-bringer.webp"
     },
     {
       "nome": "Ingress-81",
       "warbond": "Station-81",
       "id": "cape-ingress-81",
-      "imagem": "equipment/cape-ingress-81.png"
+      "imagem": "equipment/cape-ingress-81.webp"
     },
     {
       "nome": "Judgment Day",
       "warbond": "Helldivers Mobilize!",
       "id": "cape-judgment-day",
-      "imagem": "equipment/cape-judgment-day.png"
+      "imagem": "equipment/cape-judgment-day.webp"
     },
     {
       "nome": "Liberty's Herald",
       "warbond": "Helldivers Mobilize!",
       "id": "cape-liberty-s-herald",
-      "imagem": "equipment/cape-liberty-s-herald.png"
+      "imagem": "equipment/cape-liberty-s-herald.webp"
     },
     {
       "nome": "Light of Eternal Liberty",
       "warbond": "Helldivers Mobilize!",
       "id": "cape-light-of-eternal-liberty",
-      "imagem": "equipment/cape-light-of-eternal-liberty.png"
+      "imagem": "equipment/cape-light-of-eternal-liberty.webp"
     },
     {
       "nome": "Mantle of True Citizenship",
       "warbond": "Helldivers Mobilize!",
       "id": "cape-mantle-of-true-citizenship",
-      "imagem": "equipment/cape-mantle-of-true-citizenship.png"
+      "imagem": "equipment/cape-mantle-of-true-citizenship.webp"
     },
     {
       "nome": "Mark of the Constrictor",
       "warbond": "Python Commandos",
       "id": "cape-mark-of-the-constrictor",
-      "imagem": "equipment/cape-mark-of-the-constrictor.png"
+      "imagem": "equipment/cape-mark-of-the-constrictor.webp"
     },
     {
       "nome": "Mark of the Crimson Fang",
       "warbond": "Viper Commandos",
       "id": "cape-mark-of-the-crimson-fang",
-      "imagem": "equipment/cape-mark-of-the-crimson-fang.png"
+      "imagem": "equipment/cape-mark-of-the-crimson-fang.webp"
     },
     {
       "nome": "Martyris Rex",
       "warbond": "Cutting Edge",
       "id": "cape-martyris-rex",
-      "imagem": "equipment/cape-martyris-rex.png"
+      "imagem": "equipment/cape-martyris-rex.webp"
     },
     {
       "nome": "Miranda's Legacy",
       "warbond": "Force of Law",
       "id": "cape-miranda-s-legacy",
-      "imagem": "equipment/cape-miranda-s-legacy.png"
+      "imagem": "equipment/cape-miranda-s-legacy.webp"
     },
     {
       "nome": "Mother Eagle's Wings",
       "warbond": "Force of Law",
       "id": "cape-mother-eagle-s-wings",
-      "imagem": "equipment/cape-mother-eagle-s-wings.png"
+      "imagem": "equipment/cape-mother-eagle-s-wings.webp"
     },
     {
       "nome": "Order of the Venerated Ballot",
       "warbond": "Polar Patriots",
       "id": "cape-order-of-the-venerated-ballot",
-      "imagem": "equipment/cape-order-of-the-venerated-ballot.png"
+      "imagem": "equipment/cape-order-of-the-venerated-ballot.webp"
     },
     {
       "nome": "Over Artifice Triumphant",
       "warbond": "Control Group",
       "id": "cape-over-artifice-triumphant",
-      "imagem": "equipment/cape-over-artifice-triumphant.png"
+      "imagem": "equipment/cape-over-artifice-triumphant.webp"
     },
     {
       "nome": "Patient Zero's Remembrance",
       "warbond": "Chemical Agents",
       "id": "cape-patient-zero-s-remembrance",
-      "imagem": "equipment/cape-patient-zero-s-remembrance.png"
+      "imagem": "equipment/cape-patient-zero-s-remembrance.webp"
     },
     {
       "nome": "Per Democrasum",
       "warbond": "Servants of Freedom",
       "id": "cape-per-democrasum",
-      "imagem": "equipment/cape-per-democrasum.png"
+      "imagem": "equipment/cape-per-democrasum.webp"
     },
     {
       "nome": "Pillar of the Abyss",
       "warbond": "Redacted Regiment",
       "id": "cape-pillar-of-the-abyss",
-      "imagem": "equipment/cape-pillar-of-the-abyss.png"
+      "imagem": "equipment/cape-pillar-of-the-abyss.webp"
     },
     {
       "nome": "Pillars of Freedom",
       "warbond": "Ministry of Prosperity",
       "id": "cape-pillars-of-freedom",
-      "imagem": "equipment/cape-pillars-of-freedom.png"
+      "imagem": "equipment/cape-pillars-of-freedom.webp"
     },
     {
       "nome": "Pinions of Everlasting Glory",
       "warbond": "Polar Patriots",
       "id": "cape-pinions-of-everlasting-glory",
-      "imagem": "equipment/cape-pinions-of-everlasting-glory.png"
+      "imagem": "equipment/cape-pinions-of-everlasting-glory.webp"
     },
     {
       "nome": "Pride of the Whistleblower",
       "warbond": "Truth Enforcers",
       "id": "cape-pride-of-the-whistleblower",
-      "imagem": "equipment/cape-pride-of-the-whistleblower.png"
+      "imagem": "equipment/cape-pride-of-the-whistleblower.webp"
     },
     {
       "nome": "Proof of Faultless Virtue",
       "warbond": "Truth Enforcers",
       "id": "cape-proof-of-faultless-virtue",
-      "imagem": "equipment/cape-proof-of-faultless-virtue.png"
+      "imagem": "equipment/cape-proof-of-faultless-virtue.webp"
     },
     {
       "nome": "Protector of the Heart",
       "warbond": "Heart of Democracy",
       "id": "cape-protector-of-the-heart",
-      "imagem": "equipment/cape-protector-of-the-heart.png"
+      "imagem": "equipment/cape-protector-of-the-heart.webp"
     },
     {
       "nome": "Purifying Eclipse",
       "warbond": "Freedom's Flame",
       "id": "cape-purifying-eclipse",
-      "imagem": "equipment/cape-purifying-eclipse.png"
+      "imagem": "equipment/cape-purifying-eclipse.webp"
     },
     {
       "nome": "Rags of the Fashionable",
       "warbond": "Siege Breakers",
       "id": "cape-rags-of-the-fashionable",
-      "imagem": "equipment/cape-rags-of-the-fashionable.png"
+      "imagem": "equipment/cape-rags-of-the-fashionable.webp"
     },
     {
       "nome": "Reaper of Bounties",
       "warbond": "Borderline Justice",
       "id": "cape-reaper-of-bounties",
-      "imagem": "equipment/cape-reaper-of-bounties.png"
+      "imagem": "equipment/cape-reaper-of-bounties.webp"
     },
     {
       "nome": "Rebar Resolve",
       "warbond": "Urban Legends",
       "id": "cape-rebar-resolve",
-      "imagem": "equipment/cape-rebar-resolve.png"
+      "imagem": "equipment/cape-rebar-resolve.webp"
     },
     {
       "nome": "Reckoning's Cheer",
       "warbond": "Festival of Reckoning",
       "id": "cape-reckoning-s-cheer",
-      "imagem": "equipment/cape-reckoning-s-cheer.png"
+      "imagem": "equipment/cape-reckoning-s-cheer.webp"
     },
     {
       "nome": "Rightful Occupier",
       "warbond": "Dust Devils",
       "id": "cape-rightful-occupier",
-      "imagem": "equipment/cape-rightful-occupier.png"
+      "imagem": "equipment/cape-rightful-occupier.webp"
     },
     {
       "nome": "Schema Laid Bare",
       "warbond": "Superstore",
       "id": "cape-schema-laid-bare",
-      "imagem": "equipment/cape-schema-laid-bare.png"
+      "imagem": "equipment/cape-schema-laid-bare.webp"
     },
     {
       "nome": "Seal of General Consensus",
       "warbond": "Superstore",
       "id": "cape-seal-of-general-consensus",
-      "imagem": "equipment/cape-seal-of-general-consensus.png"
+      "imagem": "equipment/cape-seal-of-general-consensus.webp"
     },
     {
       "nome": "Standard of Safe Distance",
       "warbond": "Chemical Agents",
       "id": "cape-standard-of-safe-distance",
-      "imagem": "equipment/cape-standard-of-safe-distance.png"
+      "imagem": "equipment/cape-standard-of-safe-distance.webp"
     },
     {
       "nome": "Stars and Suffrage",
       "warbond": "Helldivers Mobilize!",
       "id": "cape-stars-and-suffrage",
-      "imagem": "equipment/cape-stars-and-suffrage.png"
+      "imagem": "equipment/cape-stars-and-suffrage.webp"
     },
     {
       "nome": "Stone-Wrought Perseverance",
       "warbond": "Superstore",
       "id": "cape-stone-wrought-perseverance",
-      "imagem": "equipment/cape-stone-wrought-perseverance.png"
+      "imagem": "equipment/cape-stone-wrought-perseverance.webp"
     },
     {
       "nome": "Strength in Our Arms",
       "warbond": "Righteous Revenants",
       "id": "cape-strength-in-our-arms",
-      "imagem": "equipment/cape-strength-in-our-arms.png"
+      "imagem": "equipment/cape-strength-in-our-arms.webp"
     },
     {
       "nome": "Testament to Attrition",
       "warbond": "Superstore",
       "id": "cape-testament-to-attrition",
-      "imagem": "equipment/cape-testament-to-attrition.png"
+      "imagem": "equipment/cape-testament-to-attrition.webp"
     },
     {
       "nome": "The Breach",
       "warbond": "Freedom's Flame",
       "id": "cape-the-breach",
-      "imagem": "equipment/cape-the-breach.png"
+      "imagem": "equipment/cape-the-breach.webp"
     },
     {
       "nome": "Thundering Hooves of Loyalty",
       "warbond": "Superstore",
       "id": "cape-thundering-hooves-of-loyalty",
-      "imagem": "equipment/cape-thundering-hooves-of-loyalty.png"
+      "imagem": "equipment/cape-thundering-hooves-of-loyalty.webp"
     },
     {
       "nome": "Tideturner",
       "warbond": "Helldivers Mobilize!",
       "id": "cape-tideturner",
-      "imagem": "equipment/cape-tideturner.png"
+      "imagem": "equipment/cape-tideturner.webp"
     },
     {
       "nome": "Triangulation Veil",
       "warbond": "Redacted Regiment",
       "id": "cape-triangulation-veil",
-      "imagem": "equipment/cape-triangulation-veil.png"
+      "imagem": "equipment/cape-triangulation-veil.webp"
     },
     {
       "nome": "Tyrant Hunter",
       "warbond": "Steeled Veterans",
       "id": "cape-tyrant-hunter",
-      "imagem": "equipment/cape-tyrant-hunter.png"
+      "imagem": "equipment/cape-tyrant-hunter.webp"
     },
     {
       "nome": "Unblemished Allegiance",
       "warbond": "Helldivers Mobilize!",
       "id": "cape-unblemished-allegiance",
-      "imagem": "equipment/cape-unblemished-allegiance.png"
+      "imagem": "equipment/cape-unblemished-allegiance.webp"
     },
     {
-      "nome": "United in Equality (Cape)",
+      "nome": "United in Equality",
       "warbond": "Major Order A3-5-6",
-      "id": "cape-united-in-equality-cape",
-      "imagem": "equipment/cape-united-in-equality-cape.png"
+      "id": "cape-united-in-equality",
+      "imagem": "equipment/cape-united-in-equality.webp"
     },
     {
       "nome": "Veil of the Valorous Vagabond",
       "warbond": "Superstore",
       "id": "cape-veil-of-the-valorous-vagabond",
-      "imagem": "equipment/cape-veil-of-the-valorous-vagabond.png"
+      "imagem": "equipment/cape-veil-of-the-valorous-vagabond.webp"
     },
     {
       "nome": "Veridical Ideology",
       "warbond": "Liberty Day",
       "id": "cape-veridical-ideology",
-      "imagem": "equipment/cape-veridical-ideology.png"
+      "imagem": "equipment/cape-veridical-ideology.webp"
     },
     {
       "nome": "Vision of Freedom",
       "warbond": "Superstore",
       "id": "cape-vision-of-freedom",
-      "imagem": "equipment/cape-vision-of-freedom.png"
+      "imagem": "equipment/cape-vision-of-freedom.webp"
     },
     {
       "nome": "Watchful Compatriot",
       "warbond": "Exo Experts",
       "id": "cape-watchful-compatriot",
-      "imagem": "equipment/cape-watchful-compatriot.png"
+      "imagem": "equipment/cape-watchful-compatriot.webp"
     },
     {
       "nome": "Way of the Bandolier",
       "warbond": "Borderline Justice",
       "id": "cape-way-of-the-bandolier",
-      "imagem": "equipment/cape-way-of-the-bandolier.png"
+      "imagem": "equipment/cape-way-of-the-bandolier.webp"
     },
     {
       "nome": "Wedgeful Tricorn",
       "warbond": "Siege Breakers",
       "id": "cape-wedgeful-tricorn",
-      "imagem": "equipment/cape-wedgeful-tricorn.png"
+      "imagem": "equipment/cape-wedgeful-tricorn.webp"
     },
     {
       "nome": "Will of the People",
       "warbond": "Super Citizen Edition",
       "id": "cape-will-of-the-people",
-      "imagem": "equipment/cape-will-of-the-people.png"
+      "imagem": "equipment/cape-will-of-the-people.webp"
     },
     {
       "nome": "Windswept Wayfinder",
       "warbond": "Dust Devils",
       "id": "cape-windswept-wayfinder",
-      "imagem": "equipment/cape-windswept-wayfinder.png"
+      "imagem": "equipment/cape-windswept-wayfinder.webp"
     }
   ],
   "booster": [
@@ -3428,6 +3439,12 @@
       "imagem": "equipment/passives-integrated-explosives.svg"
     },
     {
+      "nome": "Kinetic Displacement Mitigation",
+      "descricao": "Provides 50% damage resistance to fire, allowing bearer to rest assured in their inflammability. Gives the wearer a 50% chance to avoid grievous limb injury. Reduces damage taken from impact and collisions by 30%.",
+      "id": "passives-kinetic-displacement-mitigation",
+      "imagem": "equipment/passives-kinetic-displacement-mitigation.svg"
+    },
+    {
       "nome": "Med-Kit",
       "descricao": "Increases initial inventory and holding capacity of stims by +2. Increases stim effect duration by 2.0s.",
       "id": "passives-med-kit",
@@ -3489,15 +3506,209 @@
     },
     {
       "nome": "True Grit",
-      "descricao": "Provides +20 Weapon Handling. Provides +30% Reload Speed for Support Weapons.",
+      "descricao": "Increases reload speed of support weapons by 30%. Slightly increases weapon ergonomics to reduce drag on weapon movement.",
       "id": "passives-true-grit",
-      "imagem": "equipment/passives-true-grit.png"
+      "imagem": "equipment/passives-true-grit.webp"
     },
     {
       "nome": "Unflinching",
       "descricao": "Helps prevent Helldivers from flinching when hit. Provides a higher armor rating. Markers placed on the map will generate radar scans every 2.0s.",
       "id": "passives-unflinching",
       "imagem": "equipment/passives-unflinching.svg"
+    }
+  ],
+  "warbond": [
+    {
+      "nome": "Helldivers Mobilize!",
+      "tipo": "Standard",
+      "data": "2024-02-08",
+      "custo": "Free",
+      "id": "warbond-helldivers-mobilize",
+      "imagem": "equipment/warbond-helldivers-mobilize.webp"
+    },
+    {
+      "nome": "Steeled Veterans",
+      "tipo": "Premium",
+      "data": "2024-02-08",
+      "custo": "1,000 Super Credits",
+      "id": "warbond-steeled-veterans",
+      "imagem": "equipment/warbond-steeled-veterans.webp"
+    },
+    {
+      "nome": "Cutting Edge",
+      "tipo": "Premium",
+      "data": "2024-03-14",
+      "custo": "1,000 Super Credits",
+      "id": "warbond-cutting-edge",
+      "imagem": "equipment/warbond-cutting-edge.webp"
+    },
+    {
+      "nome": "Democratic Detonation",
+      "tipo": "Premium",
+      "data": "2024-04-11",
+      "custo": "1,000 Super Credits",
+      "id": "warbond-democratic-detonation",
+      "imagem": "equipment/warbond-democratic-detonation.webp"
+    },
+    {
+      "nome": "Polar Patriots",
+      "tipo": "Premium",
+      "data": "2024-05-09",
+      "custo": "1,000 Super Credits",
+      "id": "warbond-polar-patriots",
+      "imagem": "equipment/warbond-polar-patriots.webp"
+    },
+    {
+      "nome": "Viper Commandos",
+      "tipo": "Premium",
+      "data": "2024-06-13",
+      "custo": "1,000 Super Credits",
+      "id": "warbond-viper-commandos",
+      "imagem": "equipment/warbond-viper-commandos.webp"
+    },
+    {
+      "nome": "Freedom's Flame",
+      "tipo": "Premium",
+      "data": "2024-08-08",
+      "custo": "1,000 Super Credits",
+      "id": "warbond-freedom-s-flame",
+      "imagem": "equipment/warbond-freedom-s-flame.webp"
+    },
+    {
+      "nome": "Chemical Agents",
+      "tipo": "Premium",
+      "data": "2024-09-19",
+      "custo": "1,000 Super Credits",
+      "id": "warbond-chemical-agents",
+      "imagem": "equipment/warbond-chemical-agents.webp"
+    },
+    {
+      "nome": "Truth Enforcers",
+      "tipo": "Premium",
+      "data": "2024-10-31",
+      "custo": "1,000 Super Credits",
+      "id": "warbond-truth-enforcers",
+      "imagem": "equipment/warbond-truth-enforcers.webp"
+    },
+    {
+      "nome": "Urban Legends",
+      "tipo": "Premium",
+      "data": "2024-12-13",
+      "custo": "1,000 Super Credits",
+      "id": "warbond-urban-legends",
+      "imagem": "equipment/warbond-urban-legends.webp"
+    },
+    {
+      "nome": "Servants of Freedom",
+      "tipo": "Premium",
+      "data": "2025-02-06",
+      "custo": "1,000 Super Credits",
+      "id": "warbond-servants-of-freedom",
+      "imagem": "equipment/warbond-servants-of-freedom.webp"
+    },
+    {
+      "nome": "Borderline Justice",
+      "tipo": "Premium",
+      "data": "2025-03-20",
+      "custo": "1,000 Super Credits",
+      "id": "warbond-borderline-justice",
+      "imagem": "equipment/warbond-borderline-justice.webp"
+    },
+    {
+      "nome": "Masters of Ceremony",
+      "tipo": "Premium",
+      "data": "2025-05-15",
+      "custo": "1,000 Super Credits",
+      "id": "warbond-masters-of-ceremony",
+      "imagem": "equipment/warbond-masters-of-ceremony.webp"
+    },
+    {
+      "nome": "Force of Law",
+      "tipo": "Premium",
+      "data": "2025-06-12",
+      "custo": "1,000 Super Credits",
+      "id": "warbond-force-of-law",
+      "imagem": "equipment/warbond-force-of-law.webp"
+    },
+    {
+      "nome": "Control Group",
+      "tipo": "Premium",
+      "data": "2025-07-17",
+      "custo": "1,000 Super Credits",
+      "id": "warbond-control-group",
+      "imagem": "equipment/warbond-control-group.webp"
+    },
+    {
+      "nome": "Obedient Democracy Support Troopers",
+      "tipo": "Legendary",
+      "data": "2025-08-26",
+      "custo": "1,500 Super Credits",
+      "id": "warbond-obedient-democracy-support-troopers",
+      "imagem": "equipment/warbond-obedient-democracy-support-troopers.webp"
+    },
+    {
+      "nome": "Dust Devils",
+      "tipo": "Premium",
+      "data": "2025-09-04",
+      "custo": "1,000 Super Credits",
+      "id": "warbond-dust-devils",
+      "imagem": "equipment/warbond-dust-devils.webp"
+    },
+    {
+      "nome": "Python Commandos",
+      "tipo": "Premium",
+      "data": "2025-12-02",
+      "custo": "1,000 Super Credits",
+      "id": "warbond-python-commandos",
+      "imagem": "equipment/warbond-python-commandos.webp"
+    },
+    {
+      "nome": "Righteous Revenants",
+      "tipo": "Legendary",
+      "data": "2025-12-18",
+      "custo": "1,500 Super Credits",
+      "id": "warbond-righteous-revenants",
+      "imagem": "equipment/warbond-righteous-revenants.webp"
+    },
+    {
+      "nome": "Redacted Regiment",
+      "tipo": "Premium",
+      "data": "2026-01-22",
+      "custo": "1,000 Super Credits",
+      "id": "warbond-redacted-regiment",
+      "imagem": "equipment/warbond-redacted-regiment.webp"
+    },
+    {
+      "nome": "Siege Breakers",
+      "tipo": "Premium",
+      "data": "2026-02-03",
+      "custo": "1,000 Super Credits",
+      "id": "warbond-siege-breakers",
+      "imagem": "equipment/warbond-siege-breakers.webp"
+    },
+    {
+      "nome": "Entrenched Division",
+      "tipo": "Premium",
+      "data": "2026-03-17",
+      "custo": "1,000 Super Credits",
+      "id": "warbond-entrenched-division",
+      "imagem": "equipment/warbond-entrenched-division.webp"
+    },
+    {
+      "nome": "Exo Experts",
+      "tipo": "Premium",
+      "data": "2026-04-28",
+      "custo": "1,000 Super Credits",
+      "id": "warbond-exo-experts",
+      "imagem": "equipment/warbond-exo-experts.webp"
+    },
+    {
+      "nome": "Castellan’s Creed",
+      "tipo": "Legendary",
+      "data": "2026-08-12",
+      "custo": "1500 Super Credits",
+      "id": "warbond-castellan-s-creed",
+      "imagem": "equipment/warbond-castellan-s-creed.webp"
     }
   ],
   "stratagemInfo": [
@@ -3807,7 +4018,7 @@
       "backpack": true
     },
     {
-      "nome": "M-102 Fast Recon Vehicle",
+      "nome": "M-102 Gunner FRV",
       "type": "Vehicle",
       "backpack": false
     },

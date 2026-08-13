@@ -597,7 +597,7 @@
   },
   {
     "nome": "MGX-42 Bullet Storm",
-    "imagem": "stratagems/Bullet_Storm_Stratagem_Icon.png",
+    "imagem": "stratagems/Bullet_Storm_Stratagem_Icon.webp",
     "tag": [
       "Supply"
     ],
@@ -878,7 +878,7 @@
   },
   {
     "id": 58,
-    "nome": "SH-20 Ballistic Shield Supply",
+    "nome": "SH-20 Ballistic Shield Backpack",
     "imagem": "stratagems/Ballistic_Shield_Backpack_Stratagem_Icon.webp",
     "tag": [
       "Supply"
@@ -894,7 +894,7 @@
   },
   {
     "id": 59,
-    "nome": "AX/ARC-3 \"Guard Dog\" K-9",
+    "nome": "AX/ARC-3 K-9",
     "imagem": "stratagems/AX_ARC-3__Guard_Dog__K-9_Stratagem_Icon.webp",
     "tag": [
       "Supply"
@@ -910,7 +910,7 @@
   },
   {
     "id": 60,
-    "nome": "AX/FLAM-75 \"Guard Dog\" Hot Dog",
+    "nome": "AX/FLAM-75 Hot Dog",
     "imagem": "stratagems/AX_FLAM-75_Guard_Dog_Hot_Dog_Stratagem_Icon.webp",
     "tag": [
       "Supply"
@@ -926,7 +926,7 @@
   },
   {
     "id": 61,
-    "nome": "AX/AR-23 \"Guard Dog\"",
+    "nome": "AX/AR-23 Guard Dog",
     "imagem": "stratagems/Guard_Dog_Stratagem_Icon.webp",
     "tag": [
       "Supply"
@@ -942,7 +942,7 @@
   },
   {
     "id": 62,
-    "nome": "AX/LAS-5 \"Guard Dog\" Rover",
+    "nome": "AX/LAS-5 Rover",
     "imagem": "stratagems/Guard_Dog_Rover_Stratagem_Icon.webp",
     "tag": [
       "Supply"
@@ -958,7 +958,7 @@
   },
   {
     "id": 63,
-    "nome": "AX/TX-13 \"Guard Dog\" Dog Breath",
+    "nome": "AX/TX-13 Dog Breath",
     "imagem": "stratagems/Guard_Dog_Dog_Breath_Stratagem_Icon.webp",
     "tag": [
       "Supply"
@@ -1029,7 +1029,7 @@
   },
   {
     "id": 65,
-    "nome": "M-102 Fast Recon Vehicle",
+    "nome": "M-102 Gunner FRV",
     "imagem": "stratagems/M-102_Fast_Recon_Vehicle_Stratagem_Icon.webp",
     "tag": [
       "Supply",
@@ -1084,7 +1084,7 @@
   {
     "id": 68,
     "nome": "EXO-55 Breakthrough Exosuit",
-    "imagem": "stratagems/Breakthrough_Exosuit_Stratagem_Icon.png",
+    "imagem": "stratagems/Breakthrough_Exosuit_Stratagem_Icon.webp",
     "tag": [
       "Supply",
       "Mecha"
@@ -1102,7 +1102,7 @@
   {
     "id": 69,
     "nome": "EXO-51 Lumberer Exosuit",
-    "imagem": "stratagems/Lumberer_Exosuit_Stratagem_Icon.png",
+    "imagem": "stratagems/Lumberer_Exosuit_Stratagem_Icon.webp",
     "tag": [
       "Supply",
       "Mecha"
@@ -1384,6 +1384,22 @@
     ],
     "codex": [
       "DOWN",
+      "LEFT",
+      "LEFT",
+      "DOWN"
+    ]
+  },
+  {
+    "id": 90,
+    "nome": "40-K Meltagun",
+    "imagem": "stratagems/Support_Weapon_Stratagem_Fallback_Icon.webp",
+    "tag": [
+      "Supply"
+    ],
+    "codex": [
+      "DOWN",
+      "LEFT",
+      "UP",
       "LEFT",
       "LEFT",
       "DOWN"

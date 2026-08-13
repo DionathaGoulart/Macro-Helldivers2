@@ -6,7 +6,7 @@ export const SUPPORT_CODEXES = [
 ]
 
 export const SUPPORT_STRATS = [
-  { nome: 'Reinforce', imagem: 'Reinforce_Stratagem_Icon.png', codex: SUPPORT_CODEXES[0] },
-  { nome: 'Resupply', imagem: 'Resupply_Stratagem_Icon.png', codex: SUPPORT_CODEXES[1] },
-  { nome: 'Eagle Rearm', imagem: 'Eagle_Rearm_Stratagem_Icon.png', codex: SUPPORT_CODEXES[2] }
+  { nome: 'Reinforce', imagem: 'Reinforce_Stratagem_Icon.webp', codex: SUPPORT_CODEXES[0] },
+  { nome: 'Resupply', imagem: 'Resupply_Stratagem_Icon.webp', codex: SUPPORT_CODEXES[1] },
+  { nome: 'Eagle Rearm', imagem: 'Eagle_Rearm_Stratagem_Icon.webp', codex: SUPPORT_CODEXES[2] }
 ]

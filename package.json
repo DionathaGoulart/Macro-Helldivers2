@@ -21,12 +21,17 @@
     "productName": "Macro Helldivers 2",
     "files": [
       "dist",
-      "dist-electron"
+      "dist-electron",
+      "!**/@nut-tree-fork/libnut-linux/**"
     ],
     "extraResources": [
       {
         "from": "public/icon.png",
         "to": "icon.png"
+      },
+      {
+        "from": "public/tray.png",
+        "to": "tray.png"
       }
     ],
     "asarUnpack": [
