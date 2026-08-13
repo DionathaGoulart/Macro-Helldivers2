@@ -93,9 +93,18 @@ npm run build
 # Reconstruir o banco de equipamentos a partir da wiki da comunidade
 npm run scrape
 
+# Sincronizar estratagemas e seus ícones com a wiki (requer ImageMagick)
+npm run sync-stratagems
+
 # Regenerar o mapeamento de estatísticas do helldive.live
 npm run stats-map
 ```
+
+> `sync-stratagems` converte os ícones SVG da wiki em WebP e precisa do ImageMagick
+> no PATH (`brew install imagemagick` no macOS, `winget install ImageMagick.ImageMagick`
+> no Windows). Depois de rodar `scrape` ou `sync-stratagems`, rode `stats-map` — ele
+> valida se os nomes ainda casam com os slugs do helldive.live e avisa o que sobrou
+> sem par.
 
 ---
 

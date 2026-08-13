@@ -10,7 +10,9 @@
     "dev": "vite",
     "lint": "eslint src/",
     "scrape": "node scripts/scrape-wiki.mjs",
+    "sync-stratagems": "node scripts/sync-stratagems.mjs",
     "stats-map": "node scripts/build-stats-map.mjs",
+    "optimize-images": "node scripts/optimize-images.mjs",
     "build": "npm run lint && vite build && electron-builder",
     "preview": "vite preview"
   },
