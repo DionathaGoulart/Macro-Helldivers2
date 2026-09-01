@@ -1,0 +1,21 @@
+[package]
+name = "macro-helldivers2"
+version = "2.0.0-dev"
+edition = "2021"
+rust-version = "1.85"
+description = "Ferramenta de macros otimizada para Helldivers 2"
+authors = ["DionathaGoulart"]
+license = "MIT"
+repository = "https://github.com/DionathaGoulart/Macro-Helldivers2"
+publish = false
+
+[dependencies]
+
+[profile.release]
+opt-level = 3
+lto = "thin"
+codegen-units = 1
+strip = true
+# Só em release: os guards RAII do engine dependem de unwind para soltar as teclas
+# em caso de panic, e os testes de lógica precisam de unwind para rodar.
+panic = "abort"

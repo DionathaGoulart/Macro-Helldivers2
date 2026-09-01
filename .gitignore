@@ -1,7 +1,10 @@
 # Dependências
 node_modules/
 
-# Pastas de Build (Electron/Vite)
+# Build do Rust
+target/
+
+# Pastas de Build (Electron/Vite — legacy/)
 dist/
 dist-electron/
 release/
