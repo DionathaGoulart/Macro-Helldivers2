@@ -71,6 +71,9 @@ pub enum EngineCmd {
 #[derive(Debug, Clone, PartialEq)]
 pub enum UiEvent {
     GameFocus(bool),
+    /// O painel do overlay mexeu nos slots; a janela principal mostra os mesmos
+    /// quatro e precisa se refazer (o valor já está no [`Shared`]).
+    SlotsChanged(Slots),
     MacroTriggered {
         slot: usize,
         support: bool,

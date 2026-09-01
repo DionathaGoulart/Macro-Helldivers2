@@ -64,7 +64,7 @@ fn grid_id() -> Id {
 
 /// Id do card de um estratagema. Vem do id do estratagema, não da posição: o
 /// hover não pula de card quando a busca reordena a grade.
-fn card_id(stratagem: u32) -> Id {
+pub fn card_id(stratagem: u32) -> Id {
     id_at("macro.card", stratagem as usize)
 }
 
@@ -118,6 +118,10 @@ pub struct MacroTab {
     /// A busca mudou (ou nunca foi agrupada): refazer as seções na próxima
     /// construção, e não a cada quadro.
     dirty: bool,
+    /// Campo de busca na tela. O painel do overlay não o tem: a janela é
+    /// `WS_EX_NOACTIVATE` — ela recebe o mouse mas nunca o teclado —, e a v1
+    /// escondia o campo lá pelo mesmo motivo (`{!isOverlay && ...}`).
+    searchable: bool,
 }
 
 impl Default for MacroTab {
@@ -133,6 +137,15 @@ impl MacroTab {
             search: String::new(),
             sections: Vec::new(),
             dirty: true,
+            searchable: true,
+        }
+    }
+
+    /// A mesma aba sem o campo de busca, para o painel do overlay.
+    pub fn for_overlay() -> MacroTab {
+        MacroTab {
+            searchable: false,
+            ..MacroTab::new()
         }
     }
 
@@ -194,12 +207,16 @@ impl MacroTab {
         let bar = area.cut_bottom(slot_bar_height());
         area.cut_bottom(SEARCH_GAP);
         let title = area.cut_top(TITLE_HEIGHT);
-        area.skip_top(8.0);
-        let search = area.cut_top(widgets::CONTROL_HEIGHT);
+        let search = self.searchable.then(|| {
+            area.skip_top(8.0);
+            area.cut_top(widgets::CONTROL_HEIGHT)
+        });
         area.skip_top(SEARCH_GAP);
 
         self.title(ui, measure, title, ctx);
-        self.search_field(ui, search, ctx);
+        if let Some(search) = search {
+            self.search_field(ui, search, ctx);
+        }
         if self.sections.is_empty() {
             self.no_results(ui, area, ctx);
         } else {
@@ -772,6 +789,27 @@ mod tests {
             cards < data.all().len(),
             "os 91 estratagemas não são desenhados de uma vez"
         );
+    }
+
+    #[test]
+    fn the_overlay_variant_drops_the_search_field() {
+        let data = data();
+        let settings = Settings::default();
+        let mut tab = MacroTab::for_overlay();
+        let mut ui = Ui::new();
+        build(&mut tab, &mut ui, &ctx(&data, &settings, Slots::default()));
+
+        assert!(
+            ui.frame().edits().is_empty(),
+            "o painel do overlay não recebe teclado: nada de EDIT nativo"
+        );
+        assert!(!ui.frame().has_hit(search_id()));
+        // O resto da aba continua inteiro.
+        assert!(ui.frame().has_hit(widgets::slot_id(0)));
+        assert!(data
+            .all()
+            .iter()
+            .any(|strat| ui.frame().has_hit(card_id(strat.id))));
     }
 
     #[test]

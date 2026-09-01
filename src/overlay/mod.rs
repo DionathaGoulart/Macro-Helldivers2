@@ -18,6 +18,7 @@
 //! Este módulo guarda a parte que não depende do Windows — a geometria dos
 //! estados e o que o atalho faz —, testada no host.
 
+pub mod panel;
 pub mod strip;
 
 use crate::shared::OverlayState;
@@ -112,27 +113,31 @@ mod platform {
     use windows::core::{w, PCWSTR};
     use windows::Win32::Foundation::{COLORREF, HWND, LPARAM, LRESULT, POINT, SIZE, WPARAM};
     use windows::Win32::Graphics::Gdi::{
-        GetMonitorInfoW, MonitorFromPoint, AC_SRC_ALPHA, AC_SRC_OVER, BLENDFUNCTION, MONITORINFO,
-        MONITOR_DEFAULTTOPRIMARY,
+        GetMonitorInfoW, MonitorFromPoint, ScreenToClient, AC_SRC_ALPHA, AC_SRC_OVER,
+        BLENDFUNCTION, MONITORINFO, MONITOR_DEFAULTTOPRIMARY,
     };
     use windows::Win32::System::LibraryLoader::GetModuleHandleW;
     use windows::Win32::System::SystemInformation::GetTickCount64;
     use windows::Win32::System::Threading::GetCurrentThreadId;
+    use windows::Win32::UI::Controls::WM_MOUSELEAVE;
     use windows::Win32::UI::HiDpi::{GetDpiForMonitor, MDT_EFFECTIVE_DPI};
+    use windows::Win32::UI::Input::KeyboardAndMouse::{
+        TrackMouseEvent, TME_LEAVE, TRACKMOUSEEVENT,
+    };
     use windows::Win32::UI::WindowsAndMessaging::*;
 
-    use super::{strip, Which};
+    use super::{panel, strip, Which};
     use crate::data::GameData;
-    use crate::focus;
     use crate::gfx::d2d::LayeredSurface;
     use crate::gfx::text::Text;
     use crate::shared::{
         FlashKind, OverlayCmd, OverlayState, Shared, Slots, UiEvent, WM_APP_OVERLAY,
     };
     use crate::ui::theme::{self, Scale};
-    use crate::ui::toolkit::{Rect, Ui};
+    use crate::ui::toolkit::{Input, Rect, Ui};
     use crate::ui::widgets;
     use crate::ui::window::Bounds;
+    use crate::{focus, hooks, loadouts};
 
     /// Uma classe só para as duas janelas: o que as diferencia é o estilo
     /// estendido, escolhido na criação.
@@ -294,10 +299,20 @@ mod platform {
     enum Event {
         /// Há comandos para drenar do canal.
         Commands,
-        /// Tique de animação da janela.
-        Animate,
+        /// Tique de animação de uma das janelas.
+        Animate(isize),
+        /// Mouse no painel, em pixels de cliente.
+        Pointer(Pointer),
         /// Monitor ou DPI mudou: recalcular bounds.
         Display,
+    }
+
+    enum Pointer {
+        Move { x: i32, y: i32 },
+        Leave,
+        Down { x: i32, y: i32 },
+        Up { x: i32, y: i32 },
+        Wheel { x: i32, y: i32, delta: f32 },
     }
 
     thread_local! {
@@ -408,6 +423,24 @@ mod platform {
                     bounds.height,
                     SWP_NOACTIVATE,
                 );
+            }
+        }
+
+        /// Liga ou desliga o `WS_EX_TRANSPARENT`. O painel só recebe mouse
+        /// quando é ele que está na tela; nos outros estados tudo atravessa para
+        /// o jogo.
+        fn set_click_through(&mut self, click_through: bool) {
+            // SAFETY: leitura e escrita do estilo da própria janela.
+            unsafe {
+                let current = GetWindowLongPtrW(self.hwnd, GWL_EXSTYLE) as u32;
+                let wanted = if click_through {
+                    current | WS_EX_TRANSPARENT.0
+                } else {
+                    current & !WS_EX_TRANSPARENT.0
+                };
+                if wanted != current {
+                    SetWindowLongPtrW(self.hwnd, GWL_EXSTYLE, wanted as isize);
+                }
             }
         }
 
@@ -533,7 +566,10 @@ mod platform {
         rx: Receiver<OverlayCmd>,
         text: Text,
         strip: Window,
+        panel: Window,
         strip_ui: Ui,
+        panel_ui: Ui,
+        panel_state: panel::Panel,
         state: OverlayState,
         slots: Slots,
         monitor: Bounds,
@@ -548,9 +584,12 @@ mod platform {
         ) -> anyhow::Result<App> {
             let text = Text::new()?;
             let (monitor, dpi) = primary_monitor();
+            let mut panel_state = panel::Panel::new();
+            panel_state.reload_loadouts();
 
             let mut app = App {
                 strip: Window::create(true, dpi)?,
+                panel: Window::create(false, dpi)?,
                 state: shared.overlay_state(),
                 slots: shared.slots(),
                 shared,
@@ -558,11 +597,14 @@ mod platform {
                 rx,
                 text,
                 strip_ui: Ui::new(),
+                panel_ui: Ui::new(),
+                panel_state,
                 monitor,
                 scale: Scale::from_dpi(dpi),
             };
 
-            // É o strip que recebe o `WM_APP_OVERLAY` e acorda o pump.
+            // É o strip que recebe o `WM_APP_OVERLAY`: basta uma das janelas
+            // para acordar o pump da thread.
             app.shared
                 .overlay_hwnd
                 .store(app.strip.hwnd.0 as isize, Ordering::Relaxed);
@@ -571,7 +613,7 @@ mod platform {
             // ninguém; drenar aqui evita que fiquem esperando o próximo.
             app.apply_layout();
             app.drain_commands();
-            app.redraw_strip();
+            app.redraw_all();
             Ok(app)
         }
 
@@ -591,10 +633,11 @@ mod platform {
                         Event::Commands => {
                             self.drain_commands();
                         }
-                        Event::Animate => self.redraw_strip(),
+                        Event::Animate(hwnd) => self.animate(hwnd),
+                        Event::Pointer(pointer) => self.on_pointer(pointer),
                         Event::Display => {
                             self.apply_layout();
-                            self.redraw_strip();
+                            self.redraw_all();
                         }
                     }
                 }
@@ -603,14 +646,14 @@ mod platform {
 
         fn drain_commands(&mut self) {
             let mut state = None;
-            let mut strip_dirty = false;
+            let (mut strip_dirty, mut panel_dirty) = (false, false);
 
             while let Ok(cmd) = self.rx.try_recv() {
                 match cmd {
                     OverlayCmd::SetState(next) => state = Some(next),
                     OverlayCmd::Toggle => {
-                        // Mesma condição da v1: sem jogo em foco o Ctrl+H não
-                        // faz nada.
+                        // Mesmas condições da v1: sem jogo em foco, o Ctrl+H (e
+                        // o × do painel) não fazem nada.
                         if self.shared.is_game_focused() {
                             let always = self.shared.settings_snapshot().always_show_slots;
                             state = Some(super::toggled(state.unwrap_or(self.state), always));
@@ -619,6 +662,11 @@ mod platform {
                     OverlayCmd::Slots(slots) => {
                         self.slots = slots;
                         strip_dirty = true;
+                        panel_dirty = true;
+                    }
+                    OverlayCmd::LoadoutsChanged => {
+                        self.panel_state.reload_loadouts();
+                        panel_dirty = true;
                     }
                     OverlayCmd::Flash {
                         slot,
@@ -630,6 +678,7 @@ mod platform {
                         if !support {
                             self.flash(slot, kind);
                             strip_dirty = true;
+                            panel_dirty = true;
                         }
                     }
                     // O jogo re-agarra o topo do z-order em alt-tab e em troca
@@ -637,19 +686,23 @@ mod platform {
                     // thread de hooks, que já revalida o foco no mesmo ritmo —
                     // um segundo timer aqui só repetiria o trabalho dela.
                     OverlayCmd::Reassert => self.reassert(),
-                    // As builds salvas e o aviso de tela cheia são conteúdo do
-                    // painel, que ainda não existe.
-                    OverlayCmd::LoadoutsChanged | OverlayCmd::FullscreenWarning(_) => {}
+                    OverlayCmd::FullscreenWarning(warning) => {
+                        self.panel_state.set_warning(warning);
+                        panel_dirty = true;
+                    }
                 }
             }
 
             if let Some(state) = state {
-                // A troca de estado já redesenha.
+                // A troca de estado já redesenha as duas janelas.
                 self.set_state(state);
                 return;
             }
             if strip_dirty {
                 self.redraw_strip();
+            }
+            if panel_dirty {
+                self.redraw_panel();
             }
         }
 
@@ -658,11 +711,83 @@ mod platform {
                 FlashKind::Triggered => widgets::FLASH_TRIGGERED_MS,
                 FlashKind::Blocked => widgets::FLASH_BLOCKED_MS,
             };
-            // O relógio do `Ui` parou na última passagem, que pode ser de
+            let id = widgets::flash_id(slot, false, kind);
+            let now = tick_ms();
+            // O relógio de cada `Ui` parou na última passagem, que pode ser de
             // minutos atrás: sem acertá-lo, o pulso nasceria vencido.
-            self.strip_ui.set_now(tick_ms());
-            self.strip_ui
-                .flash(widgets::flash_id(slot, false, kind), duration);
+            for ui in [&mut self.strip_ui, &mut self.panel_ui] {
+                ui.set_now(now);
+                ui.flash(id, duration);
+            }
+        }
+
+        fn animate(&mut self, hwnd: isize) {
+            if hwnd == self.strip.hwnd.0 as isize {
+                self.redraw_strip();
+            } else {
+                self.redraw_panel();
+            }
+        }
+
+        fn on_pointer(&mut self, pointer: Pointer) {
+            if self.state != OverlayState::Panel {
+                return;
+            }
+            let dip = |x: i32, y: i32| (self.scale.dip(x as f32), self.scale.dip(y as f32));
+            let input = match pointer {
+                Pointer::Move { x, y } => {
+                    let (x, y) = dip(x, y);
+                    Input::Move { x, y }
+                }
+                Pointer::Leave => Input::Leave,
+                Pointer::Down { x, y } => {
+                    let (x, y) = dip(x, y);
+                    Input::Down { x, y }
+                }
+                Pointer::Up { x, y } => {
+                    let (x, y) = dip(x, y);
+                    Input::Up { x, y }
+                }
+                Pointer::Wheel { x, y, delta } => {
+                    let (x, y) = dip(x, y);
+                    Input::Wheel { x, y, delta }
+                }
+            };
+
+            let response = self.panel_ui.input(input);
+            if let Some(clicked) = response.clicked {
+                self.on_panel_click(clicked);
+            } else if response.redraw {
+                self.redraw_panel();
+            }
+        }
+
+        fn on_panel_click(&mut self, clicked: crate::ui::toolkit::Id) {
+            let settings = self.shared.settings_snapshot();
+            let ctx = panel::Ctx {
+                data: &self.data,
+                settings: &settings,
+                slots: self.slots,
+            };
+            match self.panel_state.on_click(clicked, &ctx) {
+                Some(panel::Action::Close) => {
+                    let state = super::toggled(self.state, settings.always_show_slots);
+                    self.set_state(state);
+                }
+                Some(panel::Action::SlotsChanged(slots)) => self.apply_slots(slots),
+                _ => self.redraw_panel(),
+            }
+        }
+
+        /// Espalha os slots que o painel mudou: estado, disco, tabela de atalhos
+        /// e a janela principal, que mostra os mesmos quatro slots.
+        fn apply_slots(&mut self, slots: Slots) {
+            self.slots = slots;
+            self.shared.set_slots(slots);
+            loadouts::save_slots(&slots);
+            hooks::rebuild_bindings();
+            self.shared.send_ui(UiEvent::SlotsChanged(slots));
+            self.redraw_all();
         }
 
         // --- Estados e geometria ---
@@ -674,7 +799,7 @@ mod platform {
                 self.shared.send_ui(UiEvent::OverlayState(state));
             }
             self.apply_layout();
-            self.redraw_strip();
+            self.redraw_all();
             if super::is_visible(state) {
                 self.reassert();
             }
@@ -685,19 +810,36 @@ mod platform {
             self.monitor = monitor;
             self.scale = Scale::from_dpi(dpi);
             self.strip.set_dpi(dpi);
+            self.panel.set_dpi(dpi);
+
             self.strip.set_bounds(super::window_bounds(
                 self.state,
                 Which::Strip,
                 monitor,
                 self.scale,
             ));
+            self.panel.set_bounds(super::window_bounds(
+                self.state,
+                Which::Panel,
+                monitor,
+                self.scale,
+            ));
+            // O painel só é clicável quando é ele que está na tela.
+            self.panel
+                .set_click_through(self.state != OverlayState::Panel);
         }
 
         fn reassert(&self) {
             self.strip.reassert();
+            self.panel.reassert();
         }
 
         // --- Desenho ---
+
+        fn redraw_all(&mut self) {
+            self.redraw_strip();
+            self.redraw_panel();
+        }
 
         fn redraw_strip(&mut self) {
             if self.strip.is_collapsed() {
@@ -722,6 +864,31 @@ mod platform {
 
             self.strip.present(&mut self.text, &self.strip_ui);
             self.strip.sync_anim_timer(self.strip_ui.animating());
+        }
+
+        fn redraw_panel(&mut self) {
+            if self.panel.is_collapsed() {
+                self.panel.sync_anim_timer(false);
+                return;
+            }
+            let settings = self.shared.settings_snapshot();
+            let area = self.area(&self.panel);
+
+            self.panel_ui.begin(tick_ms());
+            self.panel_state.build(
+                &mut self.panel_ui,
+                &mut self.text,
+                area,
+                &panel::Ctx {
+                    data: &self.data,
+                    settings: &settings,
+                    slots: self.slots,
+                },
+            );
+            self.panel_ui.end();
+
+            self.panel.present(&mut self.text, &self.panel_ui);
+            self.panel.sync_anim_timer(self.panel_ui.animating());
         }
 
         /// Área de desenho de uma janela, em DIP.
@@ -762,7 +929,48 @@ mod platform {
                     LRESULT(0)
                 }
                 WM_TIMER if wparam.0 == TIMER_ANIM => {
-                    push(Event::Animate);
+                    push(Event::Animate(hwnd.0 as isize));
+                    LRESULT(0)
+                }
+                WM_MOUSEMOVE => {
+                    // Re-arma o aviso de saída a cada movimento: sem estado para
+                    // guardar, e o Windows ignora o pedido repetido.
+                    let mut track = TRACKMOUSEEVENT {
+                        cbSize: size_of::<TRACKMOUSEEVENT>() as u32,
+                        dwFlags: TME_LEAVE,
+                        hwndTrack: hwnd,
+                        dwHoverTime: 0,
+                    };
+                    let _ = TrackMouseEvent(&mut track);
+                    let (x, y) = mouse_point(lparam);
+                    push(Event::Pointer(Pointer::Move { x, y }));
+                    LRESULT(0)
+                }
+                WM_MOUSELEAVE => {
+                    push(Event::Pointer(Pointer::Leave));
+                    LRESULT(0)
+                }
+                WM_LBUTTONDOWN => {
+                    let (x, y) = mouse_point(lparam);
+                    push(Event::Pointer(Pointer::Down { x, y }));
+                    LRESULT(0)
+                }
+                WM_LBUTTONUP => {
+                    let (x, y) = mouse_point(lparam);
+                    push(Event::Pointer(Pointer::Up { x, y }));
+                    LRESULT(0)
+                }
+                WM_MOUSEWHEEL => {
+                    // A roda chega em coordenadas de tela.
+                    let (x, y) = mouse_point(lparam);
+                    let mut point = POINT { x, y };
+                    let _ = ScreenToClient(hwnd, &mut point);
+                    let delta = hiword(wparam.0 as u32) as i16 as f32 / WHEEL_DELTA as f32;
+                    push(Event::Pointer(Pointer::Wheel {
+                        x: point.x,
+                        y: point.y,
+                        delta,
+                    }));
                     LRESULT(0)
                 }
                 WM_DISPLAYCHANGE | WM_DPICHANGED => {
@@ -772,6 +980,9 @@ mod platform {
                 // A composição é toda do `UpdateLayeredWindow`; deixar o Windows
                 // apagar o fundo só produziria tremulação.
                 WM_ERASEBKGND => LRESULT(1),
+                // Uma janela `NOACTIVATE` ainda recebe o pedido de ativação por
+                // clique; recusá-lo é o que garante que o jogo não perca o foco.
+                WM_MOUSEACTIVATE => LRESULT(MA_NOACTIVATE as isize),
                 _ => DefWindowProcW(hwnd, message, wparam, lparam),
             }
         }
@@ -823,6 +1034,19 @@ mod platform {
     fn tick_ms() -> u64 {
         // SAFETY: leitura do relógio monotônico do sistema.
         unsafe { GetTickCount64() }
+    }
+
+    fn hiword(value: u32) -> u16 {
+        ((value >> 16) & 0xFFFF) as u16
+    }
+
+    /// Coordenadas de mouse que vêm no `lParam` (16 bits com sinal).
+    fn mouse_point(lparam: LPARAM) -> (i32, i32) {
+        let value = lparam.0 as u32;
+        (
+            (value & 0xFFFF) as u16 as i16 as i32,
+            hiword(value) as i16 as i32,
+        )
     }
 }
 

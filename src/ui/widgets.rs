@@ -1069,6 +1069,137 @@ pub fn dropdown_row(ui: &mut Ui, id: Id, rect: Rect, label: &str, selected: bool
     ui.hit(id, rect);
 }
 
+// --- Chips das builds salvas ---
+
+/// Chip de build salva (`py-2.5 px-4`).
+pub const CHIP_HEIGHT: f32 = 36.0;
+pub const CHIP_GAP: f32 = 8.0;
+const CHIP_PADDING: f32 = 16.0;
+/// × que exclui a build, no canto do chip.
+const CHIP_DELETE_SIZE: f32 = 20.0;
+
+/// Posição de um chip dentro da área que o recebe, em coordenadas relativas.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct Chip {
+    pub index: usize,
+    x: f32,
+    y: f32,
+    width: f32,
+}
+
+impl Chip {
+    /// Retângulo do chip dentro de `area`.
+    pub fn rect(self, area: Rect) -> Rect {
+        Rect::new(area.x + self.x, area.y + self.y, self.width, CHIP_HEIGHT)
+    }
+}
+
+/// As fileiras de chips já resolvidas, e a altura que elas ocupam.
+#[derive(Debug, Clone, Default, PartialEq)]
+pub struct ChipLayout {
+    pub chips: Vec<Chip>,
+    pub height: f32,
+}
+
+pub fn chip_style() -> TextStyle {
+    TextStyle::new(font::SIZE_LABEL, Weight::Black)
+        .tracking(font::TRACKING_LABEL)
+        .align(Align::Center)
+        .middle()
+}
+
+/// Onde cada chip cai numa faixa de `width` de largura: os nomes têm tamanhos
+/// diferentes e a fileira quebra como o `flex-wrap` do legado.
+pub fn chip_layout<'a>(
+    measure: &mut dyn Measure,
+    names: impl Iterator<Item = &'a str>,
+    width: f32,
+) -> ChipLayout {
+    let style = chip_style();
+    let mut chips = Vec::new();
+    let (mut x, mut y) = (0.0f32, 0.0f32);
+
+    for (index, name) in names.enumerate() {
+        let text = measure
+            .text_size(&name.to_uppercase(), style, f32::INFINITY)
+            .0;
+        let chip_width = (text + CHIP_PADDING * 2.0).min(width.max(1.0));
+        if x > 0.0 && x + chip_width > width {
+            x = 0.0;
+            y += CHIP_HEIGHT + CHIP_GAP;
+        }
+        chips.push(Chip {
+            index,
+            x,
+            y,
+            width: chip_width,
+        });
+        x += chip_width + CHIP_GAP;
+    }
+
+    ChipLayout {
+        chips,
+        height: y + CHIP_HEIGHT,
+    }
+}
+
+/// Chip de uma build salva: aplica no clique e, com `delete`, ganha o × que
+/// aparece sob o mouse. O overlay usa a mesma peça sem o × — lá a build é só
+/// aplicada (a gestão fica na janela principal).
+pub fn loadout_chip(ui: &mut Ui, id: Id, delete: Option<Id>, rect: Rect, name: &str, active: bool) {
+    let hovered = ui.is_hot(id) || delete.is_some_and(|delete| ui.is_hot(delete));
+    let hover = ui.fade(id, hovered, HOVER_MS);
+    let name = name.to_uppercase();
+
+    if active {
+        ui.fill(rect, theme::RADIUS_BUTTON, theme::YELLOW);
+        ui.glow(rect, theme::RADIUS_BUTTON, theme::YELLOW);
+        ui.text(rect, name, chip_style(), theme::TEXT_ON_ACCENT);
+    } else {
+        ui.fill(rect, theme::RADIUS_BUTTON, theme::SURFACE);
+        ui.stroke(
+            rect,
+            theme::RADIUS_BUTTON,
+            2.0,
+            theme::BORDER.mix(theme::YELLOW.alpha(0.5), hover),
+        );
+        ui.text(
+            rect,
+            name,
+            chip_style(),
+            theme::TEXT_DIM.mix(theme::TEXT, hover),
+        );
+    }
+    ui.hit(id, rect);
+
+    let Some(delete) = delete else {
+        return;
+    };
+    if hover <= 0.0 {
+        return;
+    }
+    let button = Rect::new(
+        rect.right() - CHIP_DELETE_SIZE / 2.0,
+        rect.y - CHIP_DELETE_SIZE / 2.0,
+        CHIP_DELETE_SIZE,
+        CHIP_DELETE_SIZE,
+    );
+    let strong = ui.is_hot(delete);
+    ui.ellipse(
+        button,
+        theme::RED.alpha(if strong { 1.0 } else { 0.8 * hover }),
+    );
+    ui.text(
+        button,
+        "×",
+        TextStyle::new(font::SIZE_BODY, Weight::Black)
+            .align(Align::Center)
+            .middle(),
+        theme::TEXT.alpha(hover),
+    );
+    ui.hit(delete, button);
+}
+
 // --- Card de item de build ---
 
 /// `p-3` do bloco de texto.

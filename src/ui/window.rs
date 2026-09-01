@@ -431,6 +431,9 @@ mod platform {
                         changed |= self.game_focused != focused;
                         self.game_focused = focused;
                     }
+                    // Veio do painel do overlay: o valor já está no `Shared`, e
+                    // a tela é montada a partir dele.
+                    UiEvent::SlotsChanged(_) => changed = true,
                     UiEvent::FullscreenWarning(warning) => {
                         changed |= self.fullscreen_warning != warning;
                         self.fullscreen_warning = warning;

@@ -27,7 +27,7 @@ use crate::ui::toolkit::{
     columns, grid_cell, grid_height, id, id_at, Align, Id, ImageStyle, Measure, Rect, TextStyle,
     Ui, Weight,
 };
-use crate::ui::widgets::{self, ButtonVariant, CardHeader, CardState, ItemCard};
+use crate::ui::widgets::{self, ButtonVariant, CardHeader, CardState, ChipLayout, ItemCard};
 
 /// `px-6` da coluna de conteúdo.
 const PAGE_PADDING: f32 = 24.0;
@@ -98,10 +98,8 @@ const META_PERCENT_WIDTH: f32 = 44.0;
 /// Período do pulso do aviso de carregando (`animate-pulse`).
 const META_PULSE_MS: u32 = 1_400;
 
-/// Chips das builds salvas (`py-2.5 px-4`) e a largura do campo de nome.
-const CHIP_HEIGHT: f32 = 36.0;
-const CHIP_PADDING: f32 = 16.0;
-const CHIP_GAP: f32 = 8.0;
+/// Largura do campo de nome da build e do botão de salvar. Os chips em si vêm
+/// de `widgets` — o painel do overlay mostra a mesma fileira.
 const NAME_WIDTH: f32 = 200.0;
 const SAVE_WIDTH: f32 = 120.0;
 /// `maxLength={24}` do campo de nome da v1.
@@ -1232,35 +1230,13 @@ impl BuildTab {
 
     // --- Builds salvas ---
 
-    /// Onde cada chip cai, respeitando a largura disponível: os nomes têm
-    /// tamanhos diferentes e a fileira quebra como o `flex-wrap` do legado.
+    /// Onde cada chip cai, respeitando a largura disponível.
     fn chip_layout(&self, measure: &mut dyn Measure, width: f32) -> ChipLayout {
-        let style = chip_style();
-        let mut chips = Vec::with_capacity(self.loadouts.len());
-        let (mut x, mut y) = (0.0f32, 0.0f32);
-
-        for (index, loadout) in self.loadouts.iter().enumerate() {
-            let text = measure
-                .text_size(&loadout.name.to_uppercase(), style, f32::INFINITY)
-                .0;
-            let chip_width = (text + CHIP_PADDING * 2.0).min(width.max(1.0));
-            if x > 0.0 && x + chip_width > width {
-                x = 0.0;
-                y += CHIP_HEIGHT + CHIP_GAP;
-            }
-            chips.push(Chip {
-                index,
-                x,
-                y,
-                width: chip_width,
-            });
-            x += chip_width + CHIP_GAP;
-        }
-
-        ChipLayout {
-            chips,
-            height: y + CHIP_HEIGHT,
-        }
+        widgets::chip_layout(
+            measure,
+            self.loadouts.iter().map(|loadout| loadout.name.as_str()),
+            width,
+        )
     }
 
     fn saved_card(&self, ui: &mut Ui, rect: Rect, layout: &ChipLayout, ctx: &Ctx) {
@@ -1277,7 +1253,7 @@ impl BuildTab {
         let area = content.cut_top(layout.height);
         if self.loadouts.is_empty() {
             ui.text(
-                area.with_h(CHIP_HEIGHT),
+                area.with_h(widgets::CHIP_HEIGHT),
                 tr.build.saved_empty.to_uppercase(),
                 label_style().middle(),
                 theme::TEXT_DIM,
@@ -1285,16 +1261,22 @@ impl BuildTab {
         } else {
             let active = builds::active_loadout(&self.loadouts, ctx.slots);
             for chip in &layout.chips {
-                let rect = Rect::new(area.x + chip.x, area.y + chip.y, chip.width, CHIP_HEIGHT);
-                self.chip(ui, chip.index, rect, active == Some(chip.index));
+                widgets::loadout_chip(
+                    ui,
+                    loadout_id(chip.index),
+                    Some(loadout_delete_id(chip.index)),
+                    chip.rect(area),
+                    &self.loadouts[chip.index].name,
+                    active == Some(chip.index),
+                );
             }
         }
-        content.skip_top(CHIP_GAP);
+        content.skip_top(widgets::CHIP_GAP);
 
         // Nome e botão, encostados à direita como o `ml-auto` da v1.
         let mut row = content.cut_top(widgets::CONTROL_HEIGHT);
         let save = row.cut_right(SAVE_WIDTH);
-        row.cut_right(CHIP_GAP);
+        row.cut_right(widgets::CHIP_GAP);
         let field = row.cut_right(NAME_WIDTH);
 
         let focused = ctx.focused_edit == Some(name_id());
@@ -1316,58 +1298,6 @@ impl BuildTab {
             },
             theme::YELLOW,
         );
-    }
-
-    /// Chip de uma build salva: aplica no clique, e o × aparece sob o mouse.
-    fn chip(&self, ui: &mut Ui, index: usize, rect: Rect, active: bool) {
-        let id = loadout_id(index);
-        let delete = loadout_delete_id(index);
-        let hover = ui.fade(id, ui.is_hot(id) || ui.is_hot(delete), HOVER_MS);
-        let name = self.loadouts[index].name.to_uppercase();
-
-        if active {
-            ui.fill(rect, theme::RADIUS_BUTTON, theme::YELLOW);
-            ui.glow(rect, theme::RADIUS_BUTTON, theme::YELLOW);
-            ui.text(rect, name, chip_style(), theme::TEXT_ON_ACCENT);
-        } else {
-            ui.fill(rect, theme::RADIUS_BUTTON, theme::SURFACE);
-            ui.stroke(
-                rect,
-                theme::RADIUS_BUTTON,
-                2.0,
-                theme::BORDER.mix(theme::YELLOW.alpha(0.5), hover),
-            );
-            ui.text(
-                rect,
-                name,
-                chip_style(),
-                theme::TEXT_DIM.mix(theme::TEXT, hover),
-            );
-        }
-        ui.hit(id, rect);
-
-        if hover > 0.0 {
-            let button = Rect::new(
-                rect.right() - CLEAR_SIZE / 2.0,
-                rect.y - CLEAR_SIZE / 2.0,
-                CLEAR_SIZE,
-                CLEAR_SIZE,
-            );
-            let strong = ui.is_hot(delete);
-            ui.ellipse(
-                button,
-                theme::RED.alpha(if strong { 1.0 } else { 0.8 * hover }),
-            );
-            ui.text(
-                button,
-                "×",
-                TextStyle::new(font::SIZE_BODY, Weight::Black)
-                    .align(Align::Center)
-                    .middle(),
-                theme::TEXT.alpha(hover),
-            );
-            ui.hit(delete, button);
-        }
     }
 
     // --- Build exibida ---
@@ -1798,27 +1728,6 @@ fn options<'a>(ctx: &Ctx<'a>) -> [Option_<'static>; 3] {
     ]
 }
 
-/// Posição de um chip de build salva dentro do card.
-struct Chip {
-    index: usize,
-    x: f32,
-    y: f32,
-    width: f32,
-}
-
-/// As fileiras de chips já resolvidas, e a altura que elas ocupam.
-struct ChipLayout {
-    chips: Vec<Chip>,
-    height: f32,
-}
-
-fn chip_style() -> TextStyle {
-    TextStyle::new(font::SIZE_LABEL, Weight::Black)
-        .tracking(font::TRACKING_LABEL)
-        .align(Align::Center)
-        .middle()
-}
-
 /// Card de equipamento já com os textos prontos — os `&str` do widget precisam
 /// de alguém que os mantenha vivos durante a construção.
 struct EquipCard {
@@ -2168,7 +2077,7 @@ fn random_height(measure: &mut dyn Measure, width: f32, ctx: &Ctx) -> f32 {
 }
 
 fn saved_height(layout: &ChipLayout) -> f32 {
-    widgets::card_chrome(true) + layout.height + CHIP_GAP + widgets::CONTROL_HEIGHT
+    widgets::card_chrome(true) + layout.height + widgets::CHIP_GAP + widgets::CONTROL_HEIGHT
 }
 
 fn equip_rows() -> f32 {
