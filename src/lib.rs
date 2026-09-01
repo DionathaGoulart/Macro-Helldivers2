@@ -4,6 +4,7 @@
 //! bancada (`src/bin/`) possam usar os mesmos módulos do app sem duplicar código.
 
 pub mod bench;
+pub mod builds;
 pub mod data;
 pub mod engine;
 pub mod focus;

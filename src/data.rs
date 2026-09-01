@@ -260,6 +260,262 @@ pub struct Equipment {
     pub stratagem_info: Vec<StratagemInfo>,
 }
 
+/// Categoria de equipamento de uma build, na ordem do `EQUIPMENT_SLOTS` da v1.
+/// A ordem importa: é a das chaves de `loadouts.json` e a da grade da tela.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum EquipSlot {
+    Primary,
+    Secondary,
+    Grenade,
+    Armor,
+    Helmet,
+    Cape,
+    Booster,
+}
+
+pub const EQUIP_SLOT_COUNT: usize = 7;
+
+impl EquipSlot {
+    pub const ALL: [EquipSlot; EQUIP_SLOT_COUNT] = [
+        EquipSlot::Primary,
+        EquipSlot::Secondary,
+        EquipSlot::Grenade,
+        EquipSlot::Armor,
+        EquipSlot::Helmet,
+        EquipSlot::Cape,
+        EquipSlot::Booster,
+    ];
+
+    /// Posição na ordem canônica — índice dos vetores de build e de locks.
+    pub fn index(self) -> usize {
+        self as usize
+    }
+
+    /// Chave usada em `equipment.json` e no `equip` das builds salvas.
+    pub fn key(self) -> &'static str {
+        match self {
+            EquipSlot::Primary => "primary",
+            EquipSlot::Secondary => "secondary",
+            EquipSlot::Grenade => "grenade",
+            EquipSlot::Armor => "armor",
+            EquipSlot::Helmet => "helmet",
+            EquipSlot::Cape => "cape",
+            EquipSlot::Booster => "booster",
+        }
+    }
+
+    pub fn from_key(key: &str) -> Option<EquipSlot> {
+        EquipSlot::ALL.into_iter().find(|slot| slot.key() == key)
+    }
+
+    /// Armas mostram tipo e dano; as demais categorias têm outra ficha.
+    pub fn is_weapon(self) -> bool {
+        matches!(
+            self,
+            EquipSlot::Primary | EquipSlot::Secondary | EquipSlot::Grenade
+        )
+    }
+}
+
+/// Um item de equipamento visto pela UI, seja qual for a categoria.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Item<'a> {
+    Weapon(&'a Weapon),
+    Armor(&'a Armor),
+    Cosmetic(&'a Cosmetic),
+    Described(&'a Described),
+}
+
+impl<'a> Item<'a> {
+    pub fn id(self) -> &'a str {
+        match self {
+            Item::Weapon(item) => &item.id,
+            Item::Armor(item) => &item.id,
+            Item::Cosmetic(item) => &item.id,
+            Item::Described(item) => &item.id,
+        }
+    }
+
+    pub fn nome(self) -> &'a str {
+        match self {
+            Item::Weapon(item) => &item.nome,
+            Item::Armor(item) => &item.nome,
+            Item::Cosmetic(item) => &item.nome,
+            Item::Described(item) => &item.nome,
+        }
+    }
+
+    /// Caminho relativo a `assets/icons/`.
+    pub fn imagem(self) -> &'a str {
+        match self {
+            Item::Weapon(item) => &item.imagem,
+            Item::Armor(item) => &item.imagem,
+            Item::Cosmetic(item) => &item.imagem,
+            Item::Described(item) => &item.imagem,
+        }
+    }
+
+    /// Warbond do item, onde ela existe — é o que casa a capa com a armadura.
+    pub fn warbond(self) -> Option<&'a str> {
+        match self {
+            Item::Armor(item) => Some(&item.warbond),
+            Item::Cosmetic(item) => Some(&item.warbond),
+            _ => None,
+        }
+    }
+}
+
+impl Equipment {
+    /// Quantos itens a categoria tem.
+    pub fn count(&self, slot: EquipSlot) -> usize {
+        match slot {
+            EquipSlot::Primary => self.primary.len(),
+            EquipSlot::Secondary => self.secondary.len(),
+            EquipSlot::Grenade => self.grenade.len(),
+            EquipSlot::Armor => self.armor.len(),
+            EquipSlot::Helmet => self.helmet.len(),
+            EquipSlot::Cape => self.cape.len(),
+            EquipSlot::Booster => self.booster.len(),
+        }
+    }
+
+    /// Item pela posição na lista — o que a lista rolável do dropdown e o
+    /// sorteio usam, sem montar vetor nenhum.
+    pub fn at(&self, slot: EquipSlot, index: usize) -> Option<Item<'_>> {
+        match slot {
+            EquipSlot::Primary => self.primary.get(index).map(Item::Weapon),
+            EquipSlot::Secondary => self.secondary.get(index).map(Item::Weapon),
+            EquipSlot::Grenade => self.grenade.get(index).map(Item::Weapon),
+            EquipSlot::Armor => self.armor.get(index).map(Item::Armor),
+            EquipSlot::Helmet => self.helmet.get(index).map(Item::Cosmetic),
+            EquipSlot::Cape => self.cape.get(index).map(Item::Cosmetic),
+            EquipSlot::Booster => self.booster.get(index).map(Item::Described),
+        }
+    }
+
+    /// Item pelo id gravado na build salva; `None` quando ele saiu do jogo.
+    pub fn find(&self, slot: EquipSlot, id: &str) -> Option<Item<'_>> {
+        (0..self.count(slot))
+            .filter_map(|index| self.at(slot, index))
+            .find(|item| item.id() == id)
+    }
+
+    /// Armadura pelo id — a ficha completa (peso, ARM/VEL/STA, passiva) só
+    /// existe nesta categoria.
+    pub fn armor_by_id(&self, id: &str) -> Option<&Armor> {
+        self.armor.iter().find(|armor| armor.id == id)
+    }
+
+    /// Passiva pelo nome, que é como a armadura a referencia.
+    pub fn passive(&self, nome: &str) -> Option<&Described> {
+        self.passives.iter().find(|passive| passive.nome == nome)
+    }
+}
+
+/// O que as regras de build precisam saber de um estratagema.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
+pub struct StratKind {
+    /// Arma de apoio (`type: "Support Weapon"` na wiki).
+    pub support: bool,
+    /// Ocupa o slot de mochila.
+    pub backpack: bool,
+    pub sentry: bool,
+}
+
+/// Classificação de cada estratagema, casada com o `stratagemInfo` da wiki.
+///
+/// O casamento é por nome normalizado e reproduz o do legado (~70–101): exato
+/// primeiro; substring só a partir de [`MIN_PARTIAL`] caracteres, ficando com o
+/// candidato mais longo (o mais específico); e, por último, a designação — o
+/// primeiro token do nome, que salva os apelidos que a wiki não registra.
+#[derive(Debug, Clone, Default)]
+pub struct StratMeta {
+    kinds: HashMap<u32, StratKind>,
+}
+
+/// Abaixo disto uma substring casaria itens sem parentesco ("EAT" em
+/// "Heat"), e o erro contamina as regras de apoio, mochila e sentinela.
+const MIN_PARTIAL: usize = 6;
+
+impl StratMeta {
+    pub fn build(data: &GameData, equipment: &Equipment) -> StratMeta {
+        let infos: Vec<(String, &StratagemInfo)> = equipment
+            .stratagem_info
+            .iter()
+            .map(|info| (match_key(&info.nome), info))
+            .collect();
+
+        let mut kinds = HashMap::with_capacity(data.all().len());
+        for strat in data.all() {
+            kinds.insert(strat.id, classify(&strat.nome, &infos));
+        }
+        StratMeta { kinds }
+    }
+
+    pub fn kind(&self, id: u32) -> StratKind {
+        self.kinds.get(&id).copied().unwrap_or_default()
+    }
+
+    pub fn is_support(&self, id: u32) -> bool {
+        self.kind(id).support
+    }
+
+    pub fn is_backpack(&self, id: u32) -> bool {
+        self.kind(id).backpack
+    }
+
+    pub fn is_sentry(&self, id: u32) -> bool {
+        self.kind(id).sentry
+    }
+}
+
+/// Nome reduzido a letras e dígitos minúsculos, como o `norm` do legado.
+fn match_key(name: &str) -> String {
+    normalize_text(name)
+        .chars()
+        .filter(char::is_ascii_alphanumeric)
+        .collect()
+}
+
+fn classify(nome: &str, infos: &[(String, &StratagemInfo)]) -> StratKind {
+    let key = match_key(nome);
+
+    let mut found = infos.iter().find(|(other, _)| *other == key);
+    if found.is_none() {
+        let mut best: Option<&(String, &StratagemInfo)> = None;
+        for candidate in infos {
+            let (other, _) = candidate;
+            if other.len().min(key.len()) < MIN_PARTIAL {
+                continue;
+            }
+            if !(key.contains(other.as_str()) || other.contains(key.as_str())) {
+                continue;
+            }
+            if best.is_none_or(|(chosen, _)| other.len() > chosen.len()) {
+                best = Some(candidate);
+            }
+        }
+        found = best;
+    }
+    if found.is_none() {
+        // Designação (ex.: "AX/ARC-3"): a wiki às vezes omite apelidos como
+        // "Guard Dog", e o prefixo técnico é o que sobra em comum.
+        let designation = match_key(nome.split(' ').next().unwrap_or_default());
+        if designation.len() >= 4 {
+            found = infos.iter().find(|(other, _)| other.contains(&designation));
+        }
+    }
+
+    let Some((_, info)) = found else {
+        return StratKind::default();
+    };
+    StratKind {
+        support: info.tipo.as_deref() == Some("Support Weapon"),
+        backpack: info.backpack,
+        sentry: info.tipo.as_deref() == Some("Sentry"),
+    }
+}
+
 /// Item de equipamento referenciado por um slug das estatísticas.
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 pub struct WeaponRef {
@@ -400,6 +656,133 @@ mod tests {
         for (slug, id) in &stats.strategem {
             assert!(data.by_id(*id).is_some(), "slug {slug} aponta pro id {id}");
         }
+    }
+
+    #[test]
+    fn equipment_slots_expose_every_category_by_key_and_index() {
+        let equipment = equipment().unwrap();
+        for (index, slot) in EquipSlot::ALL.iter().enumerate() {
+            assert_eq!(slot.index(), index);
+            assert_eq!(EquipSlot::from_key(slot.key()), Some(*slot));
+            assert!(equipment.count(*slot) > 0, "{} vazio", slot.key());
+
+            let first = equipment.at(*slot, 0).expect("primeiro item");
+            assert!(!first.nome().is_empty());
+            assert!(first.imagem().starts_with("equipment/"));
+            assert_eq!(equipment.find(*slot, first.id()), Some(first));
+        }
+        assert_eq!(EquipSlot::from_key("sprintModifier"), None);
+        assert_eq!(equipment.find(EquipSlot::Armor, "nao-existe"), None);
+    }
+
+    #[test]
+    fn only_armor_and_cosmetics_carry_a_warbond() {
+        let equipment = equipment().unwrap();
+        assert!(equipment
+            .at(EquipSlot::Armor, 0)
+            .unwrap()
+            .warbond()
+            .is_some());
+        assert!(equipment
+            .at(EquipSlot::Cape, 0)
+            .unwrap()
+            .warbond()
+            .is_some());
+        assert_eq!(equipment.at(EquipSlot::Primary, 0).unwrap().warbond(), None);
+        assert_eq!(equipment.at(EquipSlot::Booster, 0).unwrap().warbond(), None);
+    }
+
+    #[test]
+    fn armor_passives_all_resolve_to_a_description() {
+        let equipment = equipment().unwrap();
+        for armor in &equipment.armor {
+            assert!(
+                equipment.passive(&armor.passive).is_some(),
+                "{} usa a passiva desconhecida {}",
+                armor.nome,
+                armor.passive
+            );
+        }
+    }
+
+    #[test]
+    fn stratagem_metadata_matches_the_wiki_classification() {
+        let data = data();
+        let meta = StratMeta::build(&data, equipment().unwrap());
+
+        let by_name = |name: &str| {
+            data.all()
+                .iter()
+                .find(|strat| strat.nome.contains(name))
+                .unwrap_or_else(|| panic!("{name} não está no stratagems.json"))
+                .id
+        };
+
+        // Arma de apoio sem mochila, arma de apoio COM mochila e sentinela.
+        let recoilless = by_name("Recoilless Rifle");
+        assert!(meta.is_support(recoilless));
+        assert!(meta.is_backpack(recoilless), "o canhão vem com a mochila");
+        assert!(!meta.is_sentry(recoilless));
+
+        let machine_gun = by_name("MG-43");
+        assert!(meta.is_support(machine_gun));
+        assert!(!meta.is_backpack(machine_gun));
+
+        let sentry = by_name("Machine Gun Sentry");
+        assert!(meta.is_sentry(sentry));
+        assert!(!meta.is_support(sentry));
+
+        // Um estratagema orbital não é nada disso.
+        let orbital = by_name("Orbital Precision Strike");
+        assert_eq!(meta.kind(orbital), StratKind::default());
+        // E um id que não existe não entra em pânico.
+        assert_eq!(meta.kind(9_999), StratKind::default());
+    }
+
+    #[test]
+    fn most_stratagems_find_their_wiki_entry() {
+        let data = data();
+        let meta = StratMeta::build(&data, equipment().unwrap());
+        // O casamento é por nome, então alguns nomes de apelido sobram; o que
+        // não pode é o conjunto inteiro cair no padrão (regra de balanceado
+        // ficaria sem apoio nenhum para escolher).
+        let supports = data
+            .all()
+            .iter()
+            .filter(|strat| meta.is_support(strat.id))
+            .count();
+        let backpacks = data
+            .all()
+            .iter()
+            .filter(|strat| meta.is_backpack(strat.id))
+            .count();
+        let sentries = data
+            .all()
+            .iter()
+            .filter(|strat| meta.is_sentry(strat.id))
+            .count();
+        assert!(supports >= 10, "apoios encontrados: {supports}");
+        assert!(backpacks >= 5, "mochilas encontradas: {backpacks}");
+        assert!(sentries >= 5, "sentinelas encontradas: {sentries}");
+    }
+
+    #[test]
+    fn the_match_key_strips_everything_but_letters_and_digits() {
+        assert_eq!(match_key("A/G-16 Gatling"), "ag16gatling");
+        assert_eq!(match_key("Águia Metralhadora"), "aguiametralhadora");
+        assert_eq!(match_key("EAT-17"), "eat17");
+    }
+
+    #[test]
+    fn a_short_name_never_matches_by_substring() {
+        let info = StratagemInfo {
+            nome: "Heat Sink".to_string(),
+            tipo: Some("Support Weapon".to_string()),
+            backpack: false,
+        };
+        let infos = vec![(match_key(&info.nome), &info)];
+        // "eat17" tem 5 caracteres: abaixo do piso, então não casa com "heatsink".
+        assert_eq!(classify("EAT-17", &infos), StratKind::default());
     }
 
     #[test]

@@ -97,6 +97,16 @@ pub fn iso8601_now() -> String {
     iso8601(std::time::SystemTime::now())
 }
 
+/// Milissegundos desde a época. É o `Date.now()` que a v1 usava como id de
+/// build salva, e o formato precisa continuar o mesmo: os dois lados leem o
+/// mesmo `loadouts.json`.
+pub fn epoch_millis() -> u64 {
+    std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap_or_default()
+        .as_millis() as u64
+}
+
 fn iso8601(time: std::time::SystemTime) -> String {
     let since = time
         .duration_since(std::time::UNIX_EPOCH)
