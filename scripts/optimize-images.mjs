@@ -1,6 +1,6 @@
-// Converte os PNG de public/ para WebP e reescreve as referências nos dados.
+// Converte os PNG de assets/icons/ para WebP e reescreve as referências nos dados.
 //
-// Motivo: public/equipment tinha 423 PNG somando ~19 MB — que viram ~3,7 MB em WebP
+// Motivo: a pasta de equipamentos tinha 423 PNG somando ~19 MB — que viram ~3,7 MB em WebP
 // com as MESMAS dimensões (o app nunca reescala essas imagens pra cima). Isso é
 // instalador menor, menos I/O de disco e menos memória de imagem decodificada.
 //
@@ -15,20 +15,20 @@ import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
-const PUBLIC = path.join(ROOT, 'public')
+const ICONS = path.join(ROOT, 'assets/icons')
 const QUALITY = 82
 const DRY = process.argv.includes('--dry')
 
-// icon.png é o ícone da aplicação: o electron-builder exige um PNG grande pra gerar
-// .ico/.icns, então ele fica. Em troca geramos tray.png (64px), que é o que o Tray
+// icon.png é o ícone da aplicação: assets/icon.ico é gerado a partir dele, então o
+// PNG grande fica. Em troca geramos tray.png (64px), que é o que o ícone da bandeja
 // realmente desenha — decodificar um bitmap de 1024 pra 16px é desperdício puro.
 const KEEP_PNG = new Set(['icon.png'])
 
 // Arquivos que citam caminhos de imagem e precisam ser reescritos junto
 const REFERENCE_FILES = [
-  'src/renderer/data/equipment.json',
-  'src/renderer/data/stratagems.json',
-  'src/shared/constants.js'
+  'assets/data/equipment.json',
+  'assets/data/stratagems.json',
+  'legacy/src/shared/constants.js'
 ]
 
 function ensureTool(name, args) {
@@ -61,7 +61,7 @@ if (!ensureTool('cwebp', ['-version'])) {
   process.exit(1)
 }
 
-const pngs = listPngs(PUBLIC)
+const pngs = listPngs(ICONS)
 if (!pngs.length) {
   console.log('Nenhum PNG para converter — nada a fazer.')
   process.exit(0)
@@ -69,12 +69,12 @@ if (!pngs.length) {
 
 let before = 0
 let after = 0
-const renames = new Map() // caminho relativo a public/, com / como separador
+const renames = new Map() // caminho relativo a assets/icons/, com / como separador
 
 for (const png of pngs) {
   const webp = png.replace(/\.png$/i, '.webp')
-  const relPng = path.relative(PUBLIC, png).split(path.sep).join('/')
-  const relWebp = path.relative(PUBLIC, webp).split(path.sep).join('/')
+  const relPng = path.relative(ICONS, png).split(path.sep).join('/')
+  const relWebp = path.relative(ICONS, webp).split(path.sep).join('/')
   before += fs.statSync(png).size
 
   if (!DRY) {
@@ -85,10 +85,10 @@ for (const png of pngs) {
   renames.set(relPng, relWebp)
 }
 
-// Ícone do tray em 64px (cwebp não redimensiona PNG→PNG; usamos o próprio cwebp pra
-// gerar e o Electron aceita PNG, então mantemos PNG via sips/magick quando existir)
-const trayTarget = path.join(PUBLIC, 'tray.png')
-const iconSource = path.join(PUBLIC, 'icon.png')
+// Ícone da bandeja em 64px (cwebp não redimensiona PNG→PNG; mantemos PNG via
+// sips/magick quando existir, que é o que o decode → CreateIconIndirect consome)
+const trayTarget = path.join(ICONS, 'tray.png')
+const iconSource = path.join(ICONS, 'icon.png')
 if (!DRY && fs.existsSync(iconSource) && !fs.existsSync(trayTarget)) {
   const resizer =
     ensureTool('magick', ['-version']) ? ['magick', [iconSource, '-resize', '64x64', trayTarget]] :

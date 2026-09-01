@@ -1,4 +1,4 @@
-// Gera src/renderer/data/statsMap.json: mapeia os slugs da API do helldive.live
+// Gera assets/data/statsMap.json: mapeia os slugs da API do helldive.live
 // (ex.: "sentry_gatling", "coyote", "OXYGENATOR") para os itens do app.
 // Uso: npm run stats-map — iterar a tabela ALIAS até o log de não-casados zerar.
 
@@ -9,10 +9,10 @@ import { fileURLToPath } from 'node:url'
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const API = 'https://utm7j5pjvi.us-east-1.awsapprunner.com'
 const PATCH_ID = 12
-const OUT = path.join(ROOT, 'src/renderer/data/statsMap.json')
+const OUT = path.join(ROOT, 'assets/data/statsMap.json')
 
-const stratagems = JSON.parse(fs.readFileSync(path.join(ROOT, 'src/renderer/data/stratagems.json'), 'utf8'))
-const equipment = JSON.parse(fs.readFileSync(path.join(ROOT, 'src/renderer/data/equipment.json'), 'utf8'))
+const stratagems = JSON.parse(fs.readFileSync(path.join(ROOT, 'assets/data/stratagems.json'), 'utf8'))
+const equipment = JSON.parse(fs.readFileSync(path.join(ROOT, 'assets/data/equipment.json'), 'utf8'))
 
 const norm = (s) => s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]/g, '')
 

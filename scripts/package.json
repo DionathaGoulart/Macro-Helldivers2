@@ -1,0 +1,12 @@
+{
+  "name": "macro-helldivers2-data-pipeline",
+  "private": true,
+  "type": "module",
+  "description": "Ferramentas de desenvolvimento que geram assets/data e assets/icons a partir da wiki. Não faz parte do binário.",
+  "scripts": {
+    "scrape": "node scrape-wiki.mjs",
+    "sync-stratagems": "node sync-stratagems.mjs",
+    "stats-map": "node build-stats-map.mjs",
+    "optimize-images": "node optimize-images.mjs"
+  }
+}

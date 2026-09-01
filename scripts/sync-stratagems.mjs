@@ -1,4 +1,4 @@
-// Sincroniza src/renderer/data/stratagems.json e os ícones de public/stratagems/
+// Sincroniza assets/data/stratagems.json e os ícones de assets/icons/stratagems/
 // com a wiki (helldivers.wiki.gg) via API Cargo.
 // Uso: npm run sync-stratagems   (Node 18+ e ImageMagick `magick` no PATH)
 //
@@ -14,8 +14,8 @@ import { fileURLToPath } from 'node:url'
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const API = 'https://helldivers.wiki.gg/api.php'
 const FILEPATH_URL = 'https://helldivers.wiki.gg/wiki/Special:FilePath/'
-const OUT_JSON = path.join(ROOT, 'src/renderer/data/stratagems.json')
-const ICON_DIR = path.join(ROOT, 'public/stratagems')
+const OUT_JSON = path.join(ROOT, 'assets/data/stratagems.json')
+const ICON_DIR = path.join(ROOT, 'assets/icons/stratagems')
 const ICON_SIZE = 256
 
 // Permits e tipos que o jogador escolhe no loadout. Fora daqui ficam os de missão

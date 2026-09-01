@@ -1,5 +1,5 @@
 // Scraper de equipamentos do Helldivers 2 via API Cargo da wiki (helldivers.wiki.gg).
-// Gera src/renderer/data/equipment.json e baixa as imagens pra public/equipment/.
+// Gera assets/data/equipment.json e baixa as imagens pra assets/icons/equipment/.
 // Uso: npm run scrape   (Node 18+, sem dependências)
 
 import fs from 'node:fs'
@@ -9,8 +9,8 @@ import { fileURLToPath } from 'node:url'
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const API = 'https://helldivers.wiki.gg/api.php'
 const FILEPATH_URL = 'https://helldivers.wiki.gg/wiki/Special:FilePath/'
-const OUT_JSON = path.join(ROOT, 'src/renderer/data/equipment.json')
-const IMG_DIR = path.join(ROOT, 'public/equipment')
+const OUT_JSON = path.join(ROOT, 'assets/data/equipment.json')
+const IMG_DIR = path.join(ROOT, 'assets/icons/equipment')
 
 const sleep = (ms) => new Promise(r => setTimeout(r, ms))
 
