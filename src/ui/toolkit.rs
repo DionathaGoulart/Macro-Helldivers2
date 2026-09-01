@@ -322,16 +322,57 @@ pub enum Visual {
         color: Color,
     },
     /// Caminho relativo à raiz de `assets/`.
-    ///
-    /// `radius` recorta a imagem num retângulo arredondado (o `overflow-hidden`
-    /// dos cards) e `zoom` amplia o conteúdo em torno do centro sem mexer no
-    /// retângulo — juntos são o `object-cover` + `group-hover:scale-110` do CSS.
     Image {
         path: PathBuf,
-        opacity: f32,
-        radius: f32,
-        zoom: f32,
+        style: ImageStyle,
     },
+}
+
+/// Como a imagem ocupa o retângulo do nó.
+///
+/// `radius` recorta num retângulo arredondado (o `overflow-hidden` dos cards) e
+/// `zoom` amplia o conteúdo em torno do centro sem mexer no retângulo — juntos
+/// são o `object-cover` + `group-hover:scale-110` do CSS.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct ImageStyle {
+    pub opacity: f32,
+    pub radius: f32,
+    pub zoom: f32,
+    /// Cabe inteira no retângulo, preservando a proporção (`object-contain`).
+    /// Sem isso a imagem é esticada até preencher — o que só serve para os
+    /// ícones quadrados do jogo.
+    pub contain: bool,
+}
+
+impl ImageStyle {
+    /// Imagem opaca esticada no retângulo, sem recorte nem ampliação.
+    pub const FILL: ImageStyle = ImageStyle {
+        opacity: 1.0,
+        radius: 0.0,
+        zoom: 1.0,
+        contain: false,
+    };
+
+    pub const fn opacity(self, opacity: f32) -> ImageStyle {
+        ImageStyle { opacity, ..self }
+    }
+
+    pub const fn rounded(self, radius: f32) -> ImageStyle {
+        ImageStyle { radius, ..self }
+    }
+
+    pub const fn zoom(self, zoom: f32) -> ImageStyle {
+        ImageStyle { zoom, ..self }
+    }
+
+    /// Proporção preservada: a imagem cabe inteira e sobra espaço nas laterais
+    /// ou no topo, como o `object-contain` do legado.
+    pub const fn contain(self) -> ImageStyle {
+        ImageStyle {
+            contain: true,
+            ..self
+        }
+    }
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -405,7 +446,7 @@ pub trait Painter: Measure {
     fn ellipse(&mut self, rect: Rect, color: Color);
     fn line(&mut self, from: (f32, f32), to: (f32, f32), width: f32, color: Color);
     fn text(&mut self, rect: Rect, text: &str, style: TextStyle, color: Color);
-    fn image(&mut self, rect: Rect, path: &Path, opacity: f32, radius: f32, zoom: f32);
+    fn image(&mut self, rect: Rect, path: &Path, style: ImageStyle);
 }
 
 /// Percorre a lista de desenho. É tudo o que acontece num `WM_PAINT`.
@@ -430,12 +471,7 @@ pub fn paint(frame: &Frame, painter: &mut dyn Painter) {
                 color,
             } => painter.line(*from, *to, *width, *color),
             Visual::Text { text, style, color } => painter.text(node.rect, text, *style, *color),
-            Visual::Image {
-                path,
-                opacity,
-                radius,
-                zoom,
-            } => painter.image(node.rect, path, *opacity, *radius, *zoom),
+            Visual::Image { path, style } => painter.image(node.rect, path, *style),
         }
     }
     painter.set_clip(None);
@@ -670,26 +706,16 @@ impl Ui {
 
     /// `path` é relativo à raiz de `assets/` (ex.: `icons/stratagems/x.webp`).
     pub fn image(&mut self, rect: Rect, path: impl Into<PathBuf>, opacity: f32) {
-        self.image_rounded(rect, path, opacity, 0.0, 1.0);
+        self.image_styled(rect, path, ImageStyle::FILL.opacity(opacity));
     }
 
-    /// Imagem recortada num retângulo arredondado e, com `zoom > 1`, ampliada
-    /// em torno do centro — o que sobra para fora do recorte é cortado.
-    pub fn image_rounded(
-        &mut self,
-        rect: Rect,
-        path: impl Into<PathBuf>,
-        opacity: f32,
-        radius: f32,
-        zoom: f32,
-    ) {
+    /// Imagem com recorte, ampliação ou proporção preservada (ver [`ImageStyle`]).
+    pub fn image_styled(&mut self, rect: Rect, path: impl Into<PathBuf>, style: ImageStyle) {
         self.push_node(
             rect,
             Visual::Image {
                 path: path.into(),
-                opacity,
-                radius,
-                zoom,
+                style,
             },
         );
     }
@@ -987,7 +1013,7 @@ mod tests {
         fn text(&mut self, _rect: Rect, text: &str, _style: TextStyle, _color: Color) {
             self.calls.push(format!("text {text}"));
         }
-        fn image(&mut self, _rect: Rect, path: &Path, _opacity: f32, _radius: f32, _zoom: f32) {
+        fn image(&mut self, _rect: Rect, path: &Path, _style: ImageStyle) {
             self.calls.push(format!("image {}", path.display()));
         }
     }
@@ -1352,12 +1378,15 @@ mod tests {
         let mut ui = Ui::new();
         ui.begin(0);
         ui.image(Rect::new(0.0, 0.0, 10.0, 10.0), "icons/tray.png", 1.0);
-        ui.image_rounded(
+        ui.image_styled(
             Rect::new(0.0, 0.0, 10.0, 10.0),
             "icons/tray.png",
-            0.7,
-            16.0,
-            1.1,
+            ImageStyle::FILL.opacity(0.7).rounded(16.0).zoom(1.1),
+        );
+        ui.image_styled(
+            Rect::new(0.0, 0.0, 10.0, 10.0),
+            "icons/tray.png",
+            ImageStyle::FILL.contain(),
         );
         ui.end();
 
@@ -1365,17 +1394,26 @@ mod tests {
             ui.frame().nodes[0].visual,
             Visual::Image {
                 path: "icons/tray.png".into(),
-                opacity: 1.0,
-                radius: 0.0,
-                zoom: 1.0
+                style: ImageStyle::FILL,
             },
             "o atalho desenha a imagem inteira, sem recorte nem ampliação"
         );
         assert!(matches!(
             ui.frame().nodes[1].visual,
             Visual::Image {
-                radius: 16.0,
-                zoom: 1.1,
+                style: ImageStyle {
+                    opacity: 0.7,
+                    radius: 16.0,
+                    zoom: 1.1,
+                    contain: false,
+                },
+                ..
+            }
+        ));
+        assert!(matches!(
+            ui.frame().nodes[2].visual,
+            Visual::Image {
+                style: ImageStyle { contain: true, .. },
                 ..
             }
         ));

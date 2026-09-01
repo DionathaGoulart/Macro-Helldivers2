@@ -13,7 +13,7 @@
 use crate::data::{Dir, Stratagem, SupportStrat};
 use crate::shared::FlashKind;
 use crate::ui::theme::{self, font, Color};
-use crate::ui::toolkit::{id_at, Align, Id, Measure, Rect, TextStyle, Ui, Weight};
+use crate::ui::toolkit::{id_at, Align, Id, ImageStyle, Measure, Rect, TextStyle, Ui, Weight};
 
 /// Altura do header com as abas (`py-2` em volta de botões `py-5`).
 pub const TAB_BAR_HEIGHT: f32 = 68.0;
@@ -695,12 +695,13 @@ fn icon_card_body(
     let fade = |color: Color| color.alpha(color.a * dim);
 
     ui.fill(rect, theme::RADIUS_CARD, theme::CARD_BG);
-    ui.image_rounded(
+    ui.image_styled(
         rect,
         format!("icons/{image}"),
-        image_alpha,
-        theme::RADIUS_CARD,
-        zoom,
+        ImageStyle::FILL
+            .opacity(image_alpha)
+            .rounded(theme::RADIUS_CARD)
+            .zoom(zoom),
     );
 
     // Os dois gradientes terminam na cor do fundo da página, então o que passa
@@ -865,12 +866,13 @@ pub fn slot_square(
 
     match strat {
         Some(strat) => {
-            ui.image_rounded(
+            ui.image_styled(
                 rect,
                 format!("icons/{}", strat.imagem),
-                0.8,
-                theme::RADIUS_SLOT,
-                1.0 + CARD_ZOOM * triggered,
+                ImageStyle::FILL
+                    .opacity(0.8)
+                    .rounded(theme::RADIUS_SLOT)
+                    .zoom(1.0 + CARD_ZOOM * triggered),
             );
             // Escurece o topo para o atalho continuar legível sobre o ícone.
             ui.gradient(
@@ -991,17 +993,338 @@ fn shortcut_tag(ui: &mut Ui, measure: &mut dyn Measure, rect: Rect, shortcut: &s
     );
 }
 
+// --- Dropdown ---
+
+/// Altura de uma linha da lista aberta.
+pub const DROPDOWN_ROW: f32 = 28.0;
+/// A lista para de crescer aqui e passa a rolar.
+pub const DROPDOWN_MAX_HEIGHT: f32 = 240.0;
+/// Lado do triângulo que indica o dropdown fechado.
+const CHEVRON_SIZE: f32 = 10.0;
+
+/// Campo fechado do dropdown: o valor atual e a seta. É o `<select>` do legado,
+/// que aqui não pode ser um controle nativo — a lista precisa do mesmo tema.
+pub fn dropdown_field(ui: &mut Ui, id: Id, rect: Rect, value: &str, open: bool) {
+    let hover = ui.fade(id, ui.is_hot(id), HOVER_MS);
+    ui.fill(rect, theme::RADIUS_BUTTON, theme::SURFACE);
+    ui.stroke(
+        rect,
+        theme::RADIUS_BUTTON,
+        CHOICE_BORDER,
+        if open {
+            theme::CYAN.alpha(0.5)
+        } else {
+            theme::BORDER.mix(theme::CYAN.alpha(0.5), hover)
+        },
+    );
+
+    let mut inner = rect.inset_xy(12.0, 0.0);
+    let chevron = inner
+        .cut_right(CHEVRON_SIZE + 4.0)
+        .middle_row(CHEVRON_SIZE)
+        .with_w(CHEVRON_SIZE);
+    chevron_down(ui, chevron, theme::TEXT_DIM.mix(theme::TEXT, hover));
+    ui.text(
+        inner,
+        value.to_uppercase(),
+        TextStyle::new(font::SIZE_TINY, Weight::Black).middle(),
+        theme::TEXT_DIM.mix(theme::TEXT, hover),
+    );
+    ui.hit(id, rect);
+}
+
+/// Só a ponta da seta, sem haste: o `<select>` do sistema não desenha uma seta
+/// inteira, e a do codex ficaria pesada demais neste tamanho.
+fn chevron_down(ui: &mut Ui, rect: Rect, color: Color) {
+    let width = (rect.w / 6.0).max(1.0);
+    let top = rect.y + rect.h * 0.35;
+    let bottom = rect.y + rect.h * 0.65;
+    ui.line((rect.x, top), (rect.center_x(), bottom), width, color);
+    ui.line((rect.center_x(), bottom), (rect.right(), top), width, color);
+}
+
+/// Fundo da lista aberta. As linhas e a rolagem ficam com quem chama — só ela
+/// sabe quantos itens a categoria tem.
+pub fn dropdown_panel(ui: &mut Ui, rect: Rect) {
+    ui.fill(rect, theme::RADIUS_BUTTON, theme::BG_DEEP);
+    ui.stroke(rect, theme::RADIUS_BUTTON, CHOICE_BORDER, theme::BORDER);
+}
+
+/// Uma linha da lista: acesa sob o mouse, amarela quando é a escolhida.
+pub fn dropdown_row(ui: &mut Ui, id: Id, rect: Rect, label: &str, selected: bool) {
+    let hover = ui.fade(id, ui.is_hot(id), HOVER_MS);
+    if hover > 0.0 {
+        ui.fill(rect, 6.0, theme::SURFACE_HOVER.alpha(0.8 * hover));
+    }
+    ui.text(
+        rect.inset_xy(10.0, 0.0),
+        label.to_uppercase(),
+        TextStyle::new(font::SIZE_TINY, Weight::Black).middle(),
+        if selected {
+            theme::YELLOW
+        } else {
+            theme::TEXT_DIM.mix(theme::TEXT, hover)
+        },
+    );
+    ui.hit(id, rect);
+}
+
+// --- Card de item de build ---
+
+/// `p-3` do bloco de texto.
+const ITEM_TEXT_PADDING: f32 = 12.0;
+/// `min-h-[52px]` do bloco de texto.
+const ITEM_TEXT_MIN_HEIGHT: f32 = 52.0;
+/// `mt-1` entre nome, subtítulo e descrição.
+const ITEM_TEXT_GAP: f32 = 4.0;
+/// `w-7 h-7` do botão de cadeado, encostado no canto (`top-1.5 right-1.5`).
+const LOCK_SIZE: f32 = 28.0;
+const LOCK_INSET: f32 = 6.0;
+/// `p-4 pt-8` em volta da imagem: a folga maior no topo é do rótulo.
+const ITEM_IMAGE_PADDING: f32 = 16.0;
+const ITEM_IMAGE_TOP: f32 = 32.0;
+
+/// Um item da build exibida — estratagema ou equipamento.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct ItemCard<'a> {
+    /// Categoria ("ESTRATAGEMA 1", "ARMADURA").
+    pub label: &'a str,
+    pub name: &'a str,
+    /// Caminho relativo a `assets/icons/`; `None` desenha o marcador vazio.
+    pub image: Option<&'a str>,
+    pub subtitle: Option<&'a str>,
+    pub description: Option<&'a str>,
+    /// Etiqueta do canto ("SET").
+    pub badge: Option<&'a str>,
+    pub locked: bool,
+}
+
+fn item_name_style() -> TextStyle {
+    TextStyle::new(font::SIZE_LABEL, Weight::Black)
+        .align(Align::Center)
+        .wrap()
+}
+
+fn item_subtitle_style() -> TextStyle {
+    TextStyle::new(font::SIZE_TINY, Weight::Black)
+        .align(Align::Center)
+        .wrap()
+}
+
+fn item_description_style() -> TextStyle {
+    TextStyle::new(font::SIZE_TINY, Weight::Regular)
+        .align(Align::Center)
+        .wrap()
+}
+
+/// Altura do bloco de texto do card, que depende do que o item tem a dizer
+/// (a ficha da armadura e a descrição do booster ocupam várias linhas).
+pub fn item_card_text_height(measure: &mut dyn Measure, card: &ItemCard, width: f32) -> f32 {
+    let inner = (width - ITEM_TEXT_PADDING * 2.0).max(1.0);
+    let mut height = measure
+        .text_size(&card.name.to_uppercase(), item_name_style(), inner)
+        .1;
+    if let Some(subtitle) = card.subtitle {
+        height += ITEM_TEXT_GAP
+            + measure
+                .text_size(&subtitle.to_uppercase(), item_subtitle_style(), inner)
+                .1;
+    }
+    if let Some(description) = card.description {
+        height += ITEM_TEXT_GAP
+            + measure
+                .text_size(description, item_description_style(), inner)
+                .1;
+    }
+    (height + ITEM_TEXT_PADDING).max(ITEM_TEXT_MIN_HEIGHT)
+}
+
+/// Altura total do card: a imagem é quadrada e o texto vem embaixo.
+pub fn item_card_height(measure: &mut dyn Measure, card: &ItemCard, width: f32) -> f32 {
+    width + item_card_text_height(measure, card, width)
+}
+
+/// Card de um item da build, com o cadeado que o mantém no próximo sorteio.
+pub fn build_item_card(
+    ui: &mut Ui,
+    measure: &mut dyn Measure,
+    lock: Id,
+    rect: Rect,
+    card: &ItemCard,
+) {
+    ui.fill(rect, theme::RADIUS_CARD, theme::CARD_BG);
+
+    // Imagem quadrada no topo, com proporção preservada: os renders de arma são
+    // bem mais largos que altos e esticá-los deformaria a silhueta.
+    let square = Rect::new(rect.x, rect.y, rect.w, rect.w.min(rect.h));
+    let picture = Rect::new(
+        square.x + ITEM_IMAGE_PADDING,
+        square.y + ITEM_IMAGE_TOP,
+        (square.w - ITEM_IMAGE_PADDING * 2.0).max(0.0),
+        (square.h - ITEM_IMAGE_TOP - ITEM_IMAGE_PADDING).max(0.0),
+    );
+    match card.image {
+        Some(path) => ui.image_styled(picture, format!("icons/{path}"), ImageStyle::FILL.contain()),
+        // O mesmo marcador da v1 para item vazio (e para os ícones vetoriais,
+        // que o decodificador não lê).
+        None => ui.text(
+            picture,
+            "\u{25A3}",
+            TextStyle::new(28.0, Weight::Regular)
+                .align(Align::Center)
+                .middle(),
+            theme::BORDER,
+        ),
+    }
+
+    item_card_text(ui, measure, rect, square.bottom(), card);
+    item_card_header(ui, rect, card);
+
+    let border = if card.locked {
+        theme::YELLOW.alpha(0.6)
+    } else {
+        theme::BORDER.alpha(0.5)
+    };
+    ui.stroke(rect, theme::RADIUS_CARD, CARD_BORDER, border);
+    if card.locked {
+        ui.glow(rect, theme::RADIUS_CARD, theme::YELLOW);
+    }
+    lock_button(ui, lock, rect, card.locked);
+}
+
+fn item_card_text(ui: &mut Ui, measure: &mut dyn Measure, rect: Rect, top: f32, card: &ItemCard) {
+    let mut text = Rect::new(
+        rect.x + ITEM_TEXT_PADDING,
+        top,
+        (rect.w - ITEM_TEXT_PADDING * 2.0).max(0.0),
+        (rect.bottom() - top).max(0.0),
+    );
+    let name = card.name.to_uppercase();
+    let height = measure.text_size(&name, item_name_style(), text.w).1;
+    ui.text(text.cut_top(height), name, item_name_style(), theme::TEXT);
+
+    if let Some(subtitle) = card.subtitle {
+        text.skip_top(ITEM_TEXT_GAP);
+        let subtitle = subtitle.to_uppercase();
+        let height = measure
+            .text_size(&subtitle, item_subtitle_style(), text.w)
+            .1;
+        ui.text(
+            text.cut_top(height),
+            subtitle,
+            item_subtitle_style(),
+            theme::CYAN.alpha(0.8),
+        );
+    }
+    if let Some(description) = card.description {
+        text.skip_top(ITEM_TEXT_GAP);
+        let height = measure
+            .text_size(description, item_description_style(), text.w)
+            .1;
+        ui.text(
+            text.cut_top(height),
+            description,
+            item_description_style(),
+            theme::TEXT_DIM,
+        );
+    }
+}
+
+/// Faixa do topo: categoria em ciano e, quando o item fecha o set, a etiqueta.
+fn item_card_header(ui: &mut Ui, rect: Rect, card: &ItemCard) {
+    let row = Rect::new(rect.x + 10.0, rect.y + 8.0, rect.w - 20.0, 12.0);
+    let style = TextStyle::new(8.0, Weight::Black)
+        .tracking(font::TRACKING_WIDE)
+        .middle();
+    ui.text(
+        row,
+        card.label.to_uppercase(),
+        style,
+        theme::CYAN.alpha(0.9),
+    );
+
+    let Some(badge) = card.badge else {
+        return;
+    };
+    // A etiqueta fica à direita, entre o texto da categoria e o cadeado.
+    let chip = Rect::new(
+        rect.right() - LOCK_SIZE - LOCK_INSET - 34.0,
+        rect.y + 8.0,
+        30.0,
+        12.0,
+    );
+    ui.fill(chip, 3.0, theme::YELLOW);
+    ui.text(
+        chip,
+        badge.to_uppercase(),
+        TextStyle::new(7.0, Weight::Black)
+            .align(Align::Center)
+            .middle(),
+        theme::TEXT_ON_ACCENT,
+    );
+}
+
+/// Cadeado do canto: amarelo travado, escuro destravado.
+fn lock_button(ui: &mut Ui, id: Id, rect: Rect, locked: bool) {
+    let hover = ui.fade(id, ui.is_hot(id), HOVER_MS);
+    let button = Rect::new(
+        rect.right() - LOCK_SIZE - LOCK_INSET,
+        rect.y + LOCK_INSET,
+        LOCK_SIZE,
+        LOCK_SIZE,
+    );
+    ui.fill(
+        button,
+        8.0,
+        if locked {
+            theme::YELLOW
+        } else {
+            theme::SURFACE.over(theme::CARD_BG)
+        },
+    );
+    ui.stroke(
+        button,
+        8.0,
+        theme::HAIRLINE_WIDTH,
+        if locked {
+            theme::YELLOW.mix(theme::BG_DEEP, 0.25)
+        } else {
+            theme::BORDER.mix(theme::TEXT_DIM, hover)
+        },
+    );
+    ui.text(
+        button,
+        if locked { "\u{1F512}" } else { "\u{1F513}" },
+        TextStyle::new(font::SIZE_BODY, Weight::Regular)
+            .align(Align::Center)
+            .middle(),
+        if locked {
+            theme::TEXT_ON_ACCENT
+        } else {
+            theme::TEXT_DIM.mix(theme::TEXT, hover)
+        },
+    );
+    ui.hit(id, button);
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::ui::toolkit::{id, Input, Visual};
 
-    /// Medidor de largura fixa: o suficiente para conferir o layout das abas.
+    /// Medidor de largura fixa, com quebra de linha grosseira: o suficiente para
+    /// conferir o layout das abas e a altura dos cards de item.
     struct Fixed;
 
     impl Measure for Fixed {
-        fn text_size(&mut self, text: &str, style: TextStyle, _max: f32) -> (f32, f32) {
-            (text.chars().count() as f32 * style.size * 0.6, style.size)
+        fn text_size(&mut self, text: &str, style: TextStyle, max: f32) -> (f32, f32) {
+            let width = text.chars().count() as f32 * style.size * 0.6;
+            if style.wrap && max.is_finite() && width > max {
+                let lines = (width / max).ceil();
+                (max, style.size * 1.3 * lines)
+            } else {
+                (width, style.size)
+            }
         }
     }
 
@@ -1407,6 +1730,140 @@ mod tests {
                 assert_ne!(a, b);
             }
         }
+    }
+
+    #[test]
+    fn a_dropdown_field_and_its_rows_answer_the_mouse() {
+        let mut ui = Ui::new();
+        let field = Rect::new(0.0, 0.0, 200.0, CONTROL_HEIGHT);
+        let list = Rect::new(0.0, 40.0, 200.0, DROPDOWN_ROW * 3.0);
+
+        ui.begin(0);
+        dropdown_field(&mut ui, id("armor"), field, "A-35 Recon", true);
+        dropdown_panel(&mut ui, list);
+        for index in 0..3 {
+            let row = Rect::new(
+                list.x,
+                list.y + DROPDOWN_ROW * index as f32,
+                list.w,
+                DROPDOWN_ROW,
+            );
+            dropdown_row(&mut ui, id_at("armor.row", index), row, "Item", index == 1);
+        }
+        ui.end();
+
+        assert_eq!(ui.frame().hit_at(10.0, 10.0), Some(id("armor")));
+        assert_eq!(
+            ui.frame().hit_at(10.0, 40.0 + DROPDOWN_ROW * 1.5),
+            Some(id_at("armor.row", 1))
+        );
+        // A escolhida sai em amarelo, e só ela.
+        let yellow = ui
+            .frame()
+            .nodes
+            .iter()
+            .filter(|node| {
+                matches!(&node.visual, Visual::Text { color, .. } if *color == theme::YELLOW)
+            })
+            .count();
+        assert_eq!(yellow, 1);
+    }
+
+    #[test]
+    fn an_item_card_grows_with_what_it_has_to_say() {
+        let plain = ItemCard {
+            label: "Estratagema 1",
+            name: "Orbital Precision Strike",
+            image: None,
+            subtitle: None,
+            description: None,
+            badge: None,
+            locked: false,
+        };
+        let detailed = ItemCard {
+            subtitle: Some("Média · ARM 100 · VEL 500 · STA 100"),
+            description: Some(
+                "Acclimated: Provides 50% resistance to fire, gas, acid, and electrical damage.",
+            ),
+            ..plain
+        };
+
+        let width = 180.0;
+        let short = item_card_height(&mut Fixed, &plain, width);
+        let tall = item_card_height(&mut Fixed, &detailed, width);
+        assert!(
+            short >= width + ITEM_TEXT_MIN_HEIGHT,
+            "a altura mínima vale"
+        );
+        assert!(tall > short, "a ficha da armadura empurra o card");
+    }
+
+    #[test]
+    fn a_locked_item_card_is_outlined_and_the_lock_takes_the_click() {
+        let card = ItemCard {
+            label: "Armadura",
+            name: "A-35 Recon",
+            image: Some("equipment/armor-a-35-recon.webp"),
+            subtitle: None,
+            description: None,
+            badge: Some("SET"),
+            locked: true,
+        };
+        let rect = Rect::new(0.0, 0.0, 180.0, 240.0);
+        let mut ui = Ui::new();
+
+        ui.begin(0);
+        build_item_card(&mut ui, &mut Fixed, id("lock"), rect, &card);
+        ui.end();
+
+        // O cadeado fica no canto superior direito e é a única área clicável.
+        assert_eq!(
+            ui.frame().hit_at(rect.right() - 20.0, 20.0),
+            Some(id("lock"))
+        );
+        assert_eq!(ui.frame().hit_at(rect.center_x(), rect.center_y()), None);
+        assert!(ui.frame().nodes.iter().any(|node| matches!(
+            node.visual,
+            Visual::Stroke { width, color, .. } if width == CARD_BORDER && color == theme::YELLOW.alpha(0.6)
+        )));
+        // A etiqueta de set aparece com o texto do tema.
+        assert!(ui.frame().nodes.iter().any(|node| matches!(
+            &node.visual,
+            Visual::Text { text, .. } if text == "SET"
+        )));
+    }
+
+    #[test]
+    fn an_item_card_without_an_image_draws_the_empty_marker() {
+        let card = ItemCard {
+            label: "Booster",
+            name: "—",
+            image: None,
+            subtitle: None,
+            description: None,
+            badge: None,
+            locked: false,
+        };
+        let mut ui = Ui::new();
+        ui.begin(0);
+        build_item_card(
+            &mut ui,
+            &mut Fixed,
+            id("lock"),
+            Rect::new(0.0, 0.0, 180.0, 240.0),
+            &card,
+        );
+        ui.end();
+
+        assert!(!ui
+            .frame()
+            .nodes
+            .iter()
+            .any(|node| matches!(node.visual, Visual::Image { .. })));
+        assert!(ui.frame().nodes.iter().any(|node| matches!(
+            &node.visual,
+            Visual::Text { text, .. } if text == "\u{25A3}"
+        )));
     }
 
     #[test]

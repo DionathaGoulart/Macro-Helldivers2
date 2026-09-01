@@ -42,7 +42,7 @@ use windows::Win32::Graphics::Gdi::{
 use crate::gfx::images::BitmapCache;
 use crate::gfx::text::Text;
 use crate::ui::theme::{Color, BASE_DPI};
-use crate::ui::toolkit::{self, Frame, Measure, Painter, Rect, TextStyle};
+use crate::ui::toolkit::{self, Frame, ImageStyle, Measure, Painter, Rect, TextStyle};
 
 /// Fábrica do processo. Multi-threaded porque a thread do overlay (Fase 9) cria
 /// o próprio target a partir dela.
@@ -648,10 +648,35 @@ impl toolkit::Painter for D2dPainter<'_> {
         self.text.draw(self.target, rect, text, style, brush);
     }
 
-    fn image(&mut self, rect: Rect, path: &Path, opacity: f32, radius: f32, zoom: f32) {
+    fn image(&mut self, rect: Rect, path: &Path, style: ImageStyle) {
         let Some(bitmap) = self.images.get(self.target, path) else {
             return;
         };
+        let (opacity, radius, zoom) = (style.opacity, style.radius, style.zoom);
+
+        if style.contain {
+            // Proporção preservada: a imagem cabe inteira e é centralizada, então
+            // não há o que recortar nem que ampliar.
+            // SAFETY: leitura do tamanho de um bitmap vivo.
+            let size = unsafe { bitmap.GetSize() };
+            if size.width <= 0.0 || size.height <= 0.0 {
+                return;
+            }
+            let scale = (rect.w / size.width).min(rect.h / size.height);
+            let dest = rect.centered(size.width * scale, size.height * scale);
+            // SAFETY: bitmap do mesmo target; o retângulo vive durante a chamada.
+            unsafe {
+                self.target.DrawBitmap(
+                    &bitmap,
+                    Some(&rect_f(dest)),
+                    opacity,
+                    D2D1_BITMAP_INTERPOLATION_MODE_LINEAR,
+                    None,
+                );
+            }
+            return;
+        }
+
         if radius <= 0.0 && zoom == 1.0 {
             // SAFETY: bitmap do mesmo target; o retângulo vive durante a chamada.
             unsafe {
