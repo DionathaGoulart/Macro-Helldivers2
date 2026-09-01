@@ -635,13 +635,8 @@ impl toolkit::Painter for D2dPainter<'_> {
         let point = |(x, y): (f32, f32)| windows_numerics::Vector2 { X: x, Y: y };
         // SAFETY: pincel e estilo vivos durante a chamada.
         unsafe {
-            self.target.DrawLine(
-                point(from),
-                point(to),
-                &brush,
-                width,
-                round_stroke(),
-            );
+            self.target
+                .DrawLine(point(from), point(to), &brush, width, round_stroke());
         }
     }
 

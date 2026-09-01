@@ -99,20 +99,16 @@ mod platform {
     use windows::Win32::UI::WindowsAndMessaging::*;
 
     use super::{Bounds, DEFAULT_HEIGHT, DEFAULT_WIDTH, MIN_HEIGHT, MIN_WIDTH};
-    use crate::data::{self, GameData, Stratagem};
-    use crate::focus;
+    use crate::data::GameData;
     use crate::gfx::d2d::{window_dpi, WindowTarget};
     use crate::gfx::text::{register_gdi_fonts, Text};
-    use crate::i18n;
-    use crate::settings::Language;
-    use crate::shared::{Shared, UiEvent, WM_APP_UI_EVENT};
+    use crate::settings::{Language, Settings};
+    use crate::shared::{OverlayCmd, Shared, Slots, UiEvent, WM_APP_UI_EVENT};
+    use crate::ui::macro_tab::{self, Action, MacroTab};
     use crate::ui::theme::{self, font, Color, Scale};
-    use crate::ui::toolkit::{
-        self, grid_cell, grid_height, id, Align, Id, Input, Rect, TextStyle, Ui, Weight,
-    };
-    use crate::ui::widgets::{
-        self, ButtonVariant, CardHeader, Tab, CONTROL_HEIGHT, TAB_BAR_HEIGHT,
-    };
+    use crate::ui::toolkit::{self, Align, Id, Input, Rect, TextStyle, Ui, Weight};
+    use crate::ui::widgets::{self, CardHeader, Tab, TAB_BAR_HEIGHT};
+    use crate::{focus, hooks, i18n};
 
     const CLASS_NAME: PCWSTR = w!("MacroHelldivers2Main");
 
@@ -130,16 +126,7 @@ mod platform {
     const PAGE_PADDING: f32 = 24.0;
     const FOOTER_HEIGHT: f32 = 40.0;
     const GAP: f32 = 12.0;
-    const GRID_COLS: usize = 4;
     const WARNING_HEIGHT: f32 = 56.0;
-
-    fn search_id() -> Id {
-        id("window.search")
-    }
-
-    fn clear_id() -> Id {
-        id("window.search.clear")
-    }
 
     /// Sobe a janela e roda o message loop até o app encerrar.
     pub fn run(shared: Arc<Shared>, data: Arc<GameData>, ui_rx: Receiver<UiEvent>) -> Result<()> {
@@ -366,9 +353,7 @@ mod platform {
         size: (f32, f32),
         tab: usize,
         language: Language,
-        search: String,
-        /// Ids dos estratagemas que passam pelo filtro da busca.
-        filtered: Vec<u32>,
+        macro_tab: MacroTab,
         edits: Vec<EditChild>,
         edit_font: HFONT,
         /// Fonte da escala anterior, viva até os filhos trocarem para a nova.
@@ -388,7 +373,7 @@ mod platform {
             let settings = boot.shared.settings_snapshot();
             let game_focused = boot.shared.is_game_focused();
 
-            let mut app = App {
+            let app = App {
                 hwnd,
                 shared: boot.shared,
                 data: boot.data,
@@ -400,8 +385,7 @@ mod platform {
                 size: (DEFAULT_WIDTH, DEFAULT_HEIGHT),
                 tab: 0,
                 language: settings.language,
-                search: String::new(),
-                filtered: Vec::new(),
+                macro_tab: MacroTab::new(),
                 edits: Vec::new(),
                 edit_font: create_edit_font(dpi),
                 retired_font: None,
@@ -415,24 +399,10 @@ mod platform {
                 tracking_mouse: false,
                 anim_timer: false,
             };
-            app.refilter();
             Ok(app)
         }
 
         // --- Estado ---
-
-        fn refilter(&mut self) {
-            let needle = data::normalize_text(&self.search);
-            let data = Arc::clone(&self.data);
-            self.filtered = data
-                .all()
-                .iter()
-                .filter(|strat| {
-                    needle.is_empty() || data::normalize_text(&strat.nome).contains(&needle)
-                })
-                .map(|strat| strat.id)
-                .collect();
-        }
 
         /// Drena os avisos das outras threads (`WM_APP_UI_EVENT`).
         fn drain_events(&mut self) {
@@ -447,14 +417,23 @@ mod platform {
                         changed |= self.fullscreen_warning != warning;
                         self.fullscreen_warning = warning;
                     }
-                    // Slots, overlay e updater ganham tela nas fases seguintes;
-                    // até lá o aviso é só registrado.
+                    // Overlay, updater e as piscadas de slot ganham tela nas
+                    // fases seguintes.
                     other => log::debug!("evento de UI ainda sem tela: {other:?}"),
                 }
             }
             if changed {
                 self.rebuild();
             }
+        }
+
+        /// Espalha os slots novos: tabela de atalhos e overlay. É o caminho
+        /// único de toda alteração vinda da aba de macros.
+        fn update_slots(&mut self, slots: Slots) {
+            self.shared.set_slots(slots);
+            hooks::rebuild_bindings();
+            self.shared.send_overlay(OverlayCmd::Slots(slots));
+            self.rebuild();
         }
 
         // --- Ciclo de desenho ---
@@ -534,29 +513,59 @@ mod platform {
                 self.rebuild();
                 return;
             }
-            if clicked == search_id() {
-                self.focus_search();
-                return;
-            }
-            if clicked == clear_id() {
-                self.search.clear();
-                self.refilter();
-                self.focused_edit = None;
-                self.rebuild();
-                return;
+            if self.tab == 0 {
+                let settings = self.shared.settings_snapshot();
+                // O contexto é montado campo a campo: `macro_tab` precisa ser
+                // emprestado mutável ao mesmo tempo que `data` é lido.
+                let ctx = macro_tab::Ctx {
+                    data: &self.data,
+                    settings: &settings,
+                    slots: self.shared.slots(),
+                    focused_edit: self.focused_edit,
+                };
+                if let Some(action) = self.macro_tab.on_click(clicked, &ctx) {
+                    self.apply(action);
+                    return;
+                }
             }
             self.rebuild();
+        }
+
+        fn apply(&mut self, action: Action) {
+            match action {
+                Action::Redraw => self.rebuild(),
+                Action::SlotsChanged(slots) => self.update_slots(slots),
+                Action::FocusSearch => self.focus_search(),
+                Action::ClearSearch => self.clear_search(),
+            }
         }
 
         /// O `EDIT` da busca só existe quando tem foco ou texto; o clique na
         /// moldura é o que o traz à tona.
         fn focus_search(&mut self) {
-            self.focused_edit = Some(search_id());
+            let id = macro_tab::search_id();
+            self.focused_edit = Some(id);
             self.rebuild();
-            if let Some(child) = self.edits.iter().find(|edit| edit.id == search_id()) {
+            if let Some(child) = self.edits.iter().find(|edit| edit.id == id) {
                 // SAFETY: filho vivo, criado por `sync_edits` na reconstrução.
                 unsafe {
                     let _ = SetFocus(Some(child.hwnd));
+                }
+            }
+        }
+
+        /// Esvaziar o campo é mexer no filho nativo; o `EN_CHANGE` que isso
+        /// dispara é quem avisa a aba.
+        fn clear_search(&mut self) {
+            let id = macro_tab::search_id();
+            match self.edits.iter().find(|edit| edit.id == id) {
+                // SAFETY: filho vivo; a string vive durante a chamada.
+                Some(child) => unsafe {
+                    let _ = SetWindowTextW(child.hwnd, w!(""));
+                },
+                None => {
+                    self.macro_tab.set_search(String::new());
+                    self.rebuild();
                 }
             }
         }
@@ -688,11 +697,11 @@ mod platform {
             else {
                 return;
             };
-            if id != search_id() {
+            if id != macro_tab::search_id() {
                 return;
             }
-            self.search = self.edit_text(ctrl_hwnd);
-            self.refilter();
+            let text = self.edit_text(ctrl_hwnd);
+            self.macro_tab.set_search(text);
             self.rebuild();
         }
 
@@ -778,6 +787,7 @@ mod platform {
         fn build(&mut self) {
             let now = tick_ms();
             self.ui.begin(now);
+            let settings = self.shared.settings_snapshot();
 
             let mut body = Rect::new(0.0, 0.0, self.size.0, self.size.1);
             let header = body.cut_top(TAB_BAR_HEIGHT);
@@ -806,9 +816,18 @@ mod platform {
             }
 
             match self.tab {
-                0 => self.macro_tab(body),
+                0 => {
+                    let ctx = macro_tab::Ctx {
+                        data: &self.data,
+                        settings: &settings,
+                        slots: self.shared.slots(),
+                        focused_edit: self.focused_edit,
+                    };
+                    self.macro_tab
+                        .build(&mut self.ui, &mut self.text, body, &ctx);
+                }
                 1 => self.build_tab(body),
-                _ => self.settings_tab(body),
+                _ => self.settings_tab(body, &settings),
             }
             self.footer(footer);
             self.ui.end();
@@ -829,100 +848,6 @@ mod platform {
                 message,
                 TextStyle::new(font::SIZE_TINY, Weight::Regular).wrap(),
                 theme::YELLOW,
-            );
-        }
-
-        /// Aba de macros: busca funcionando sobre a grade de estratagemas. A
-        /// atribuição a slots é da Fase 5.
-        fn macro_tab(&mut self, area: Rect) {
-            let tr = i18n::tr(self.language);
-            let mut area = area.inset_xy(PAGE_PADDING, 16.0);
-
-            let mut row = area.cut_top(CONTROL_HEIGHT);
-            let focused = self.focused_edit == Some(search_id());
-            if !self.search.is_empty() {
-                let clear = row.cut_right(120.0);
-                widgets::button(
-                    &mut self.ui,
-                    clear_id(),
-                    clear,
-                    tr.macros.clear_slot,
-                    ButtonVariant::Ghost,
-                    theme::CYAN,
-                );
-                row.cut_right(GAP);
-            }
-            let placeholder =
-                (self.search.is_empty() && !focused).then_some(tr.macros.search_placeholder);
-            widgets::edit_host(&mut self.ui, search_id(), row, focused, placeholder);
-            area.skip_top(16.0);
-
-            if self.filtered.is_empty() {
-                self.ui.text(
-                    area.with_h(60.0),
-                    format!("{} \"{}\"", tr.macros.search_no_results, self.search),
-                    TextStyle::new(font::SIZE_LABEL, Weight::Black)
-                        .tracking(font::TRACKING_LABEL)
-                        .align(Align::Center),
-                    theme::TEXT_DIM,
-                );
-                return;
-            }
-
-            let list = id("window.macros.grid");
-            let cell = (area.w - GAP * (GRID_COLS - 1) as f32) / GRID_COLS as f32;
-            let content = grid_height(self.filtered.len(), GRID_COLS, cell, GAP);
-            let offset = self.ui.scroll_begin(list, area);
-
-            let data = Arc::clone(&self.data);
-            let origin = Rect::new(area.x, area.y - offset, area.w, content);
-            for index in 0..self.filtered.len() {
-                let rect = grid_cell(origin, GRID_COLS, cell, GAP, index);
-                // Fora da janela visível não há o que desenhar — é o que segura
-                // o custo de uma grade de 91 ícones.
-                if rect.bottom() < area.y || rect.y > area.bottom() {
-                    continue;
-                }
-                if let Some(strat) = data.by_id(self.filtered[index]) {
-                    self.stratagem_tile(rect, strat);
-                }
-            }
-            self.ui.scroll_end(list, area, content);
-        }
-
-        /// Versão simples do card de estratagema: ícone e nome. O card completo,
-        /// com estados e setas do codex, é da Fase 5.
-        fn stratagem_tile(&mut self, rect: Rect, strat: &Stratagem) {
-            let accent = match strat.primary_tag() {
-                Some("Offensive") => theme::RED,
-                Some("Supply") => theme::CYAN,
-                Some("Defensive") => theme::GREEN,
-                _ => theme::BORDER,
-            };
-            self.ui.fill(rect, theme::RADIUS_CARD, theme::CARD_BG);
-            self.ui.stroke(
-                rect,
-                theme::RADIUS_CARD,
-                theme::HAIRLINE_WIDTH,
-                accent.alpha(0.35),
-            );
-
-            let mut inner = rect.inset(10.0);
-            let label = inner.cut_bottom(28.0);
-            let side = inner.w.min(inner.h);
-            self.ui.image(
-                inner.centered(side, side),
-                format!("icons/{}", strat.imagem),
-                0.9,
-            );
-            self.ui.text(
-                label,
-                strat.nome.to_uppercase(),
-                TextStyle::new(font::SIZE_TINY, Weight::Black)
-                    .tracking(font::TRACKING_LABEL)
-                    .align(Align::Center)
-                    .middle(),
-                theme::TEXT,
             );
         }
 
@@ -948,9 +873,8 @@ mod platform {
 
         /// Placeholder da aba de configurações (Fase 6): mostra o que está
         /// valendo agora, sem controles editáveis.
-        fn settings_tab(&mut self, area: Rect) {
+        fn settings_tab(&mut self, area: Rect, settings: &Settings) {
             let tr = i18n::tr(self.language);
-            let settings = self.shared.settings_snapshot();
             let area = area.inset_xy(PAGE_PADDING, 16.0);
             let columns = toolkit::columns(area.with_h(260.0), 2, GAP);
 

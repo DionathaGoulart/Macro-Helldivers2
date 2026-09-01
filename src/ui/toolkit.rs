@@ -379,6 +379,12 @@ impl Frame {
     pub fn edits(&self) -> &[EditHost] {
         &self.edits
     }
+
+    /// O widget existe nesta passagem? É o que a poda de hover pergunta quando
+    /// a tela muda debaixo do cursor.
+    pub fn has_hit(&self, id: Id) -> bool {
+        self.hits.iter().any(|hit| hit.id == id)
+    }
 }
 
 /// Mede texto. Separado de [`Painter`] porque a construção precisa medir (para
@@ -549,10 +555,7 @@ impl Ui {
     pub fn end(&mut self) {
         self.scrolls.retain(|(_, state)| state.touched);
         self.anims.retain(|(_, state)| state.touched);
-        if self
-            .hot
-            .is_some_and(|id| self.frame.hit_at_id(id).is_none())
-        {
+        if self.hot.is_some_and(|id| !self.frame.has_hit(id)) {
             self.hot = None;
         }
     }
@@ -884,13 +887,6 @@ impl Ui {
                 }
             }
         }
-    }
-}
-
-impl Frame {
-    /// Só para a poda de hover: o widget ainda existe nesta passagem?
-    fn hit_at_id(&self, id: Id) -> Option<&Hit> {
-        self.hits.iter().find(|hit| hit.id == id)
     }
 }
 
