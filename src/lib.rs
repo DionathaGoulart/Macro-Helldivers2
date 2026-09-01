@@ -14,6 +14,7 @@ pub mod i18n;
 pub mod keys;
 pub mod loadouts;
 pub mod meta_stats;
+pub mod overlay;
 pub mod settings;
 pub mod shared;
 pub mod ui;

@@ -12,7 +12,7 @@ use anyhow::Result;
 use macro_helldivers2::data::GameData;
 use macro_helldivers2::settings::Settings;
 use macro_helldivers2::shared::Shared;
-use macro_helldivers2::{engine, hooks, i18n, loadouts, ui, util};
+use macro_helldivers2::{engine, hooks, i18n, loadouts, overlay, ui, util};
 
 fn main() -> Result<()> {
     util::init_logging();
@@ -46,6 +46,11 @@ fn main() -> Result<()> {
 
     hooks::init(Arc::clone(&shared), Arc::clone(&data));
     let _hooks = hooks::spawn()?;
+
+    // A thread do overlay só existe enquanto o recurso estiver ligado; a aba de
+    // configurações a sobe e derruba pelo mesmo caminho.
+    overlay::init(Arc::clone(&shared), Arc::clone(&data), receivers.overlay);
+    overlay::set_enabled(settings.enable_overlay);
 
     log::info!(
         "config em {} · {} estratagemas carregados",

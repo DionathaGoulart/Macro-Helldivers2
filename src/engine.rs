@@ -368,6 +368,7 @@ fn reject(shared: &Shared, slot: usize, support: bool) {
     shared.send_ui(UiEvent::MacroBlocked { slot, support });
     shared.send_overlay(OverlayCmd::Flash {
         slot,
+        support,
         kind: FlashKind::Blocked,
     });
 }
@@ -395,6 +396,7 @@ impl Hooks for EngineHooks<'_> {
         });
         self.shared.send_overlay(OverlayCmd::Flash {
             slot,
+            support,
             kind: FlashKind::Triggered,
         });
     }
@@ -875,6 +877,7 @@ mod tests {
             rx.overlay.try_recv().unwrap(),
             OverlayCmd::Flash {
                 slot: 1,
+                support: false,
                 kind: FlashKind::Blocked
             }
         );

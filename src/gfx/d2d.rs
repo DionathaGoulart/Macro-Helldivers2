@@ -319,6 +319,14 @@ impl LayeredSurface {
         }
     }
 
+    /// Novo DPI do monitor. O desenho continua em DIP: quem multiplica é o
+    /// render target, então só ele precisa saber da troca.
+    pub fn set_dpi(&mut self, dpi: u32) {
+        let target: &ID2D1RenderTarget = &self.target;
+        // SAFETY: target vivo; `SetDpi` não falha.
+        unsafe { target.SetDpi(dpi as f32, dpi as f32) };
+    }
+
     pub fn hdc(&self) -> HDC {
         self.dc
     }

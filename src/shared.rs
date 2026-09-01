@@ -7,7 +7,7 @@
 use std::sync::atomic::{AtomicBool, AtomicIsize, Ordering};
 use std::sync::{Arc, RwLock};
 
-use crossbeam_channel::{unbounded, Receiver, Sender};
+use crossbeam_channel::{bounded, unbounded, Receiver, Sender};
 
 use crate::data::Dir;
 use crate::keys::Scan;
@@ -100,12 +100,22 @@ pub enum OverlayCmd {
     LoadoutsChanged,
     Flash {
         slot: usize,
+        /// Apoio fixo, e não slot de macro. O overlay só mostra os quatro slots,
+        /// então descarta esses — sem a marca, um Reforço acenderia o slot 1.
+        support: bool,
         kind: FlashKind,
     },
     /// Reafirma o z-order acima do jogo (alt-tab, troca de modo de vídeo).
     Reassert,
     FullscreenWarning(bool),
 }
+
+/// Teto da fila do overlay. Com a thread desligada (`enableOverlay` off)
+/// ninguém lê o canal, e comando de overlay velho não tem valor nenhum: em vez
+/// de guardar lixo para sempre, a fila para de crescer e o excedente é
+/// descartado. Sessenta e quatro é folga de sobra para as rajadas reais — uma
+/// piscada por macro disparado.
+const OVERLAY_QUEUE: usize = 64;
 
 /// Pontas de recepção dos canais, entregues às threads donas de cada um.
 pub struct Receivers {
@@ -133,7 +143,7 @@ pub struct Shared {
 impl Shared {
     pub fn new(settings: Settings, slots: Slots) -> (Arc<Shared>, Receivers) {
         let (engine_tx, engine_rx) = unbounded();
-        let (overlay_tx, overlay_rx) = unbounded();
+        let (overlay_tx, overlay_rx) = bounded(OVERLAY_QUEUE);
         let (ui_tx, ui_rx) = unbounded();
 
         let shared = Arc::new(Shared {
@@ -212,8 +222,12 @@ impl Shared {
         let _ = self.engine_tx.send(cmd);
     }
 
+    /// Fila cheia significa overlay desligado (ninguém drena): o comando é
+    /// descartado em vez de esperar por um leitor que talvez nunca volte.
     pub fn send_overlay(&self, cmd: OverlayCmd) {
-        let _ = self.overlay_tx.send(cmd);
+        if self.overlay_tx.try_send(cmd).is_err() {
+            return;
+        }
         wake(&self.overlay_hwnd, WM_APP_OVERLAY);
     }
 
@@ -285,18 +299,36 @@ mod tests {
 
         shared.send_overlay(OverlayCmd::Flash {
             slot: 1,
+            support: false,
             kind: FlashKind::Blocked,
         });
         assert_eq!(
             rx.overlay.try_recv().unwrap(),
             OverlayCmd::Flash {
                 slot: 1,
+                support: false,
                 kind: FlashKind::Blocked
             }
         );
 
         shared.send_ui(UiEvent::GameFocus(true));
         assert_eq!(rx.ui.try_recv().unwrap(), UiEvent::GameFocus(true));
+    }
+
+    #[test]
+    fn overlay_commands_stop_piling_up_when_nobody_drains_them() {
+        // É o que acontece com o overlay desligado: a thread não existe, e a
+        // fila não pode crescer até o fim da sessão.
+        let (shared, rx) = shared();
+        for _ in 0..OVERLAY_QUEUE * 2 {
+            shared.send_overlay(OverlayCmd::Reassert);
+        }
+        assert_eq!(rx.overlay.len(), OVERLAY_QUEUE);
+
+        // E volta a aceitar assim que alguém lê.
+        assert!(rx.overlay.try_recv().is_ok());
+        shared.send_overlay(OverlayCmd::Reassert);
+        assert_eq!(rx.overlay.len(), OVERLAY_QUEUE);
     }
 
     #[test]
