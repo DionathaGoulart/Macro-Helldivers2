@@ -12,4 +12,5 @@ pub mod i18n;
 pub mod keys;
 pub mod settings;
 pub mod shared;
+pub mod ui;
 pub mod util;
