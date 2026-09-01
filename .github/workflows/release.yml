@@ -1,0 +1,113 @@
+name: Release
+
+# Uma tag `vX.Y.Z` (ou `vX.Y.Z-beta.N`) publica o instalador. Nada de release
+# manual: a tag é a única fonte da versão, inclusive para o updater, que compara
+# o `tag_name` do GitHub com a versão compilada no exe.
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+env:
+  CARGO_TERM_COLOR: always
+  RUST_BACKTRACE: 1
+
+jobs:
+  release:
+    name: build · installer · release
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # rust-toolchain.toml pina o canal, os componentes e o alvo msvc
+      - name: Show toolchain
+        run: |
+          rustup show
+          cargo --version
+
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Version from tag
+        id: version
+        shell: pwsh
+        run: |
+          $version = '${{ github.ref_name }}' -replace '^v', ''
+          $prerelease = if ($version -match '-') { 'true' } else { 'false' }
+          "version=$version"                                    >> $env:GITHUB_OUTPUT
+          "installer=Macro-Helldivers-2-Setup-$version.exe"      >> $env:GITHUB_OUTPUT
+          "prerelease=$prerelease"                              >> $env:GITHUB_OUTPUT
+
+      # A versão do crate vira a da tag antes do build: o updater compara
+      # `CARGO_PKG_VERSION` com a tag do release, e um exe publicado com a
+      # versão de desenvolvimento se acharia mais novo (ou mais velho) que ele
+      # mesmo. O arquivo só muda dentro do runner — nada volta para o repo.
+      - name: Sync crate version with the tag
+        shell: pwsh
+        run: |
+          $version = '${{ steps.version.outputs.version }}'
+          $content = Get-Content Cargo.toml -Raw
+          $pattern = [regex]::new('(?m)^version = ".*"$')
+          if (-not $pattern.IsMatch($content)) {
+            throw 'Cargo.toml sem linha de versão'
+          }
+          $pattern.Replace($content, "version = ""$version""", 1) |
+            Set-Content Cargo.toml -NoNewline
+          cargo metadata --no-deps --format-version 1 |
+            ConvertFrom-Json |
+            ForEach-Object { $_.packages[0].version }
+
+      - name: Build
+        run: cargo build --release --target x86_64-pc-windows-msvc
+
+      - name: Build installer
+        id: installer
+        shell: pwsh
+        run: |
+          $makensis = "${env:ProgramFiles(x86)}\NSIS\makensis.exe"
+          if (-not (Test-Path $makensis)) {
+            choco install nsis -y --no-progress
+            $makensis = "${env:ProgramFiles(x86)}\NSIS\makensis.exe"
+          }
+
+          $out = Join-Path (Resolve-Path target) '${{ steps.version.outputs.installer }}'
+          & $makensis /V3 `
+            "/DVERSION=${{ steps.version.outputs.version }}" `
+            "/DEXE_SOURCE=..\target\x86_64-pc-windows-msvc\release\macro-helldivers2.exe" `
+            "/DOUTFILE=$out" `
+            installer\installer.nsi
+          if ($LASTEXITCODE -ne 0) { throw "makensis falhou ($LASTEXITCODE)" }
+
+          "path=$out" >> $env:GITHUB_OUTPUT
+          '{0:N2} MB' -f ((Get-Item $out).Length / 1MB)
+
+      - name: Checksum
+        id: checksum
+        shell: pwsh
+        run: |
+          $installer = '${{ steps.installer.outputs.path }}'
+          $hash = (Get-FileHash $installer -Algorithm SHA256).Hash.ToLower()
+          $line = "$hash  $(Split-Path $installer -Leaf)"
+          $file = "$installer.sha256"
+          # ASCII sem BOM: é o que o `sha256sum -c` espera.
+          [System.IO.File]::WriteAllText($file, "$line`n")
+          "path=$file" >> $env:GITHUB_OUTPUT
+          $line
+
+      - name: Publish release
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $ghArgs = @(
+            'release', 'create', '${{ github.ref_name }}',
+            '${{ steps.installer.outputs.path }}',
+            '${{ steps.checksum.outputs.path }}',
+            '--title', '${{ steps.version.outputs.version }}',
+            '--generate-notes'
+          )
+          if ('${{ steps.version.outputs.prerelease }}' -eq 'true') {
+            $ghArgs += '--prerelease'
+          }
+          gh @ghArgs

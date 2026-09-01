@@ -35,3 +35,9 @@ jobs:
 
       - name: Test
         run: cargo test
+
+      # O `check` acima nunca chega no linker, e é lá que aparecem os erros que
+      # só o perfil de release tem (LTO, `panic = "abort"`, recursos do
+      # `build.rs`). É esse binário que o instalador empacota no release.
+      - name: Release build
+        run: cargo build --release --target x86_64-pc-windows-msvc
