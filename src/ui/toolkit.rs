@@ -550,6 +550,16 @@ impl Ui {
         }
     }
 
+    /// Acerta o relógio fora de uma passagem de construção.
+    ///
+    /// A janela parada não constrói nada, então `now_ms` fica no valor da última
+    /// passagem — que pode ser de minutos atrás. Um pulso disparado por um
+    /// evento nasceria com todo esse tempo já decorrido e morreria antes do
+    /// primeiro quadro; acertar o relógio antes é o que o faz aparecer.
+    pub fn set_now(&mut self, now_ms: u64) {
+        self.now_ms = now_ms;
+    }
+
     /// Fecha a passagem e descarta o estado de widgets que sumiram da tela
     /// (troca de aba, item filtrado pela busca).
     pub fn end(&mut self) {
@@ -1211,6 +1221,24 @@ mod tests {
         assert_eq!(ui.anim(id("slot"), 500), 0.0);
         ui.end();
         assert!(!ui.animating());
+    }
+
+    #[test]
+    fn a_flash_fired_while_the_window_slept_still_shows_up() {
+        let mut ui = Ui::new();
+        ui.begin(0);
+        ui.end();
+
+        // Meia hora parada e então um atalho dispara: sem acertar o relógio o
+        // pulso já nasceria vencido.
+        let now = 30 * 60 * 1_000;
+        ui.set_now(now);
+        ui.flash(id("slot"), 500);
+
+        ui.begin(now);
+        assert_eq!(ui.anim(id("slot"), 500), 1.0);
+        ui.end();
+        assert!(ui.animating());
     }
 
     #[test]

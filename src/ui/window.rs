@@ -442,6 +442,9 @@ mod platform {
                 FlashKind::Triggered => widgets::FLASH_TRIGGERED_MS,
                 FlashKind::Blocked => widgets::FLASH_BLOCKED_MS,
             };
+            // O evento chega com a janela parada, e o relógio do toolkit parou
+            // com ela na última pintura.
+            self.ui.set_now(tick_ms());
             self.ui
                 .flash(widgets::flash_id(slot, support, kind), duration);
         }
