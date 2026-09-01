@@ -1,4 +1,5 @@
-//! Aba de configurações: atalhos dos slots, modificadores do jogo e idioma.
+//! Aba de configurações: atalhos dos slots, modificadores do jogo, idioma e os
+//! três estratagemas de apoio fixo.
 //!
 //! Como a aba de macros, a tela é uma função do estado: entram os settings, saem
 //! nós e áreas clicáveis. Um clique (ou uma tecla capturada) devolve uma
@@ -10,9 +11,10 @@
 //! "modificador de sprint" (removido: o hook dispara com qualquer modificador
 //! seguro) e a seção do updater, que chega na Fase 10.
 
+use crate::data::SUPPORT_STRATS;
 use crate::i18n::{self, Tr};
 use crate::keys::{self, Vk};
-use crate::settings::{Language, Settings, Speed, SLOT_COUNT};
+use crate::settings::{Language, Settings, Speed, SLOT_COUNT, SUPPORT_COUNT};
 use crate::ui::theme::{self, font};
 use crate::ui::toolkit::{columns, grid_cell, id, id_at, Id, Measure, Rect, TextStyle, Ui, Weight};
 use crate::ui::widgets::{self, CardHeader};
@@ -43,16 +45,20 @@ const TOGGLE_H: f32 = 52.0;
 const TOGGLE_GAP: f32 = 12.0;
 /// Espaço entre blocos dentro do card de controles (`space-y-6`).
 const ROW_GAP: f32 = 20.0;
+/// `gap-5` entre as três colunas de apoio, e entre o card e o seu botão.
+const SUPPORT_GAP: f32 = 16.0;
 /// Onde a próxima tecla capturada vai parar.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Capture {
     Slot(usize),
+    Support(usize),
 }
 
 /// Uma preferência mudou. A janela aplica, grava e espalha os efeitos.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Change {
     Shortcut { index: usize, key: String },
+    SupportShortcut { index: usize, key: String },
     Modifier(String),
     Speed(Speed),
     UseArrows(bool),
@@ -68,6 +74,11 @@ impl Change {
         match self {
             Change::Shortcut { index, key } => {
                 if let Some(slot) = settings.shortcuts.get_mut(*index) {
+                    *slot = Some(key.clone());
+                }
+            }
+            Change::SupportShortcut { index, key } => {
+                if let Some(slot) = settings.support_shortcuts.get_mut(*index) {
                     *slot = Some(key.clone());
                 }
             }
@@ -115,6 +126,10 @@ fn scroll_id() -> Id {
 
 fn shortcut_id(index: usize) -> Id {
     id_at("settings.shortcut", index)
+}
+
+fn support_shortcut_id(index: usize) -> Id {
+    id_at("settings.support", index)
 }
 
 fn modifier_id(index: usize) -> Id {
@@ -186,6 +201,10 @@ impl SettingsTab {
 
         let height = language_height();
         self.language_card(ui, Rect::new(view.x, y, half, height), ctx);
+        y += height + SECTION_GAP;
+
+        let height = support_height(width);
+        self.support_card(ui, Rect::new(view.x, y, width, height), ctx);
         y += height;
 
         ui.scroll_end(scroll_id(), view, y - (view.y - offset));
@@ -399,6 +418,37 @@ impl SettingsTab {
         }
     }
 
+    /// Card "Estratagemas de Apoio Fixo": três cards quadrados, cada um com o
+    /// seu botão de atalho.
+    fn support_card(&self, ui: &mut Ui, rect: Rect, ctx: &Ctx) {
+        let content = widgets::card(
+            ui,
+            rect,
+            Some(CardHeader {
+                title: ctx.tr().settings.support,
+                accent: theme::YELLOW,
+            }),
+        );
+        let cols = columns(content, SUPPORT_COUNT, SUPPORT_GAP);
+
+        for (index, support) in SUPPORT_STRATS.iter().enumerate() {
+            let mut col = cols[index];
+            // O card é quadrado (`aspect-square` da v1), então a coluna manda
+            // na altura dele.
+            let card = col.cut_top(col.w);
+            widgets::support_card(ui, index, card, support);
+            col.skip_top(SUPPORT_GAP);
+            self.key_button(
+                ui,
+                support_shortcut_id(index),
+                col.with_h(KEY_BUTTON_H),
+                ctx.settings.support_shortcut(index),
+                Capture::Support(index),
+                ctx,
+            );
+        }
+    }
+
     // --- Cliques e teclas ---
 
     /// Trata um clique da aba. `None` quando o id não é daqui.
@@ -406,6 +456,12 @@ impl SettingsTab {
         for index in 0..SLOT_COUNT {
             if clicked == shortcut_id(index) {
                 self.capturing = Some(Capture::Slot(index));
+                return Some(Action::Redraw);
+            }
+        }
+        for index in 0..SUPPORT_COUNT {
+            if clicked == support_shortcut_id(index) {
+                self.capturing = Some(Capture::Support(index));
                 return Some(Action::Redraw);
             }
         }
@@ -462,10 +518,15 @@ impl SettingsTab {
         };
 
         self.capturing = None;
-        let Capture::Slot(index) = capture;
-        Some(Action::Setting(Change::Shortcut {
-            index,
-            key: name.to_string(),
+        Some(Action::Setting(match capture {
+            Capture::Slot(index) => Change::Shortcut {
+                index,
+                key: name.to_string(),
+            },
+            Capture::Support(index) => Change::SupportShortcut {
+                index,
+                key: name.to_string(),
+            },
         }))
     }
 }
@@ -495,10 +556,16 @@ fn language_height() -> f32 {
     widgets::card_chrome(true) + CHOICE_H
 }
 
+fn support_height(width: f32) -> f32 {
+    let inner = width - widgets::CARD_PADDING * 2.0;
+    let column = (inner - SUPPORT_GAP * (SUPPORT_COUNT - 1) as f32) / SUPPORT_COUNT as f32;
+    widgets::card_chrome(true) + column + SUPPORT_GAP + KEY_BUTTON_H
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::ui::toolkit::Visual;
+    use crate::ui::toolkit::{Input, Visual};
 
     /// Medidor de largura fixa: o layout só precisa de uma medida plausível.
     struct Fixed;
@@ -562,6 +629,7 @@ mod tests {
 
         let mut expected: Vec<Id> = Vec::new();
         expected.extend((0..SLOT_COUNT).map(shortcut_id));
+        expected.extend((0..SUPPORT_COUNT).map(support_shortcut_id));
         expected.extend((0..keys::MODIFIER_KEYS.len()).map(modifier_id));
         expected.extend((0..Speed::ALL.len()).map(speed_id));
         expected.extend((0..Language::ALL.len()).map(language_id));
@@ -626,6 +694,66 @@ mod tests {
     }
 
     #[test]
+    fn support_shortcuts_capture_into_their_own_list() {
+        let mut tab = SettingsTab::new();
+        let settings = Settings::default();
+
+        tab.on_click(support_shortcut_id(1), &ctx(&settings));
+        assert_eq!(tab.capturing(), Some(Capture::Support(1)));
+
+        let action = tab.on_key(vk("F6"));
+        assert_eq!(
+            action,
+            Some(Action::Setting(Change::SupportShortcut {
+                index: 1,
+                key: "F6".to_string()
+            }))
+        );
+
+        let mut applied = settings.clone();
+        let Some(Action::Setting(change)) = action else {
+            panic!("mudança esperada");
+        };
+        change.apply(&mut applied);
+        assert_eq!(applied.support_shortcut(1), Some("F6"));
+        assert_eq!(applied.shortcuts, settings.shortcuts, "slots intocados");
+    }
+
+    #[test]
+    fn an_unbound_support_offers_the_bind_label() {
+        let settings = Settings::default();
+        let mut tab = SettingsTab::new();
+        let mut ui = Ui::new();
+        build_settled(&mut tab, &mut ui, &settings);
+
+        let bind = i18n::tr(settings.language).macros.bind;
+        assert_eq!(
+            texts(&ui).iter().filter(|text| *text == bind).count(),
+            SUPPORT_COUNT,
+            "os três apoios começam sem atalho"
+        );
+    }
+
+    #[test]
+    fn the_content_scrolls_because_it_is_taller_than_the_window() {
+        let settings = Settings::default();
+        let mut tab = SettingsTab::new();
+        let mut ui = Ui::new();
+        build(&mut tab, &mut ui, &settings);
+
+        // A roda só mexe num container cujo conteúdo transborda.
+        assert!(
+            ui.input(Input::Wheel {
+                x: 400.0,
+                y: 300.0,
+                delta: -1.0,
+            })
+            .redraw,
+            "a aba inteira não cabe em 532 DIP e precisa rolar"
+        );
+    }
+
+    #[test]
     fn choice_buttons_report_the_value_they_carry() {
         let settings = Settings::default();
         let mut tab = SettingsTab::new();
@@ -676,6 +804,10 @@ mod tests {
                 index: 0,
                 key: "F9".into(),
             },
+            Change::SupportShortcut {
+                index: 2,
+                key: "Home".into(),
+            },
             Change::Modifier("Minus".into()),
             Change::Speed(Speed::Fast),
             Change::UseArrows(true),
@@ -688,6 +820,7 @@ mod tests {
         }
 
         assert_eq!(settings.shortcut(0), Some("F9"));
+        assert_eq!(settings.support_shortcut(2), Some("Home"));
         assert_eq!(settings.modifier_key, "Minus");
         assert_eq!(settings.macro_speed, Speed::Fast);
         assert!(settings.use_arrows);

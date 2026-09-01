@@ -10,7 +10,7 @@
 //! As medidas vêm das classes Tailwind da v1 (`legacy/src/renderer/index.css` e
 //! o JSX), convertidas para DIP.
 
-use crate::data::{Dir, Stratagem};
+use crate::data::{Dir, Stratagem, SupportStrat};
 use crate::shared::FlashKind;
 use crate::ui::theme::{self, font, Color};
 use crate::ui::toolkit::{id_at, Align, Id, Measure, Rect, TextStyle, Ui, Weight};
@@ -642,66 +642,21 @@ pub fn stratagem_card(ui: &mut Ui, id: Id, rect: Rect, strat: &Stratagem, state:
     } else {
         ui.fade(id, ui.is_hot(id), CARD_HOVER_MS)
     };
-    let fade = |color: Color| {
-        if state.disabled {
-            color.alpha(color.a * CARD_DISABLED_ALPHA)
-        } else {
-            color
-        }
+    let dim = if state.disabled {
+        CARD_DISABLED_ALPHA
+    } else {
+        1.0
     };
-
-    let image_alpha = (CARD_IMAGE_ALPHA + (1.0 - CARD_IMAGE_ALPHA) * hover)
-        * if state.disabled {
-            CARD_DISABLED_ALPHA
-        } else {
-            1.0
-        };
-
-    ui.fill(rect, theme::RADIUS_CARD, theme::CARD_BG);
-    ui.image_rounded(
-        rect,
-        format!("icons/{}", strat.imagem),
-        image_alpha,
-        theme::RADIUS_CARD,
-        1.0 + CARD_ZOOM * hover,
-    );
-
-    // Os dois gradientes terminam na cor do fundo da página, então o que passa
-    // dos cantos arredondados se confunde com ela — não precisam de recorte.
-    let name_area = rect.with_h(CARD_NAME_FADE);
-    ui.gradient(
-        name_area,
-        0.0,
-        fade(theme::BG_DEEP),
-        theme::BG_DEEP.alpha(0.0),
-    );
-    ui.text(
-        name_area.inset_xy(10.0, 12.0),
-        strat.nome.to_uppercase(),
-        TextStyle::new(font::SIZE_LABEL, Weight::Black)
-            .align(Align::Center)
-            .wrap(),
-        fade(theme::TEXT),
-    );
-
-    let codex_area = Rect::new(
-        rect.x,
-        rect.bottom() - CARD_CODEX_FADE,
-        rect.w,
-        CARD_CODEX_FADE,
-    );
-    ui.gradient(
-        codex_area,
-        0.0,
-        theme::BG_DEEP.alpha(0.0),
-        fade(theme::BG_DEEP),
-    );
-    let size = codex_size(strat.codex.len());
-    arrow_row(
+    let image_alpha = (CARD_IMAGE_ALPHA + (1.0 - CARD_IMAGE_ALPHA) * hover) * dim;
+    icon_card_body(
         ui,
-        Rect::new(rect.x, rect.bottom() - 16.0 - size, rect.w, size),
+        rect,
+        &strat.imagem,
+        &strat.nome,
         &strat.codex,
-        fade(theme::CYAN),
+        image_alpha,
+        1.0 + CARD_ZOOM * hover,
+        dim,
     );
 
     let border = if state.disabled {
@@ -720,6 +675,109 @@ pub fn stratagem_card(ui: &mut Ui, id: Id, rect: Rect, strat: &Stratagem, state:
 
     if !state.disabled {
         ui.hit(id, rect);
+    }
+}
+
+/// Corpo comum dos cards quadrados com ícone: o ícone sangrando até a borda, o
+/// nome sobre o gradiente do topo e o codex sobre o do rodapé. `dim` apaga o
+/// card inteiro (estado desabilitado da grade); a borda fica com quem chamou.
+#[allow(clippy::too_many_arguments)]
+fn icon_card_body(
+    ui: &mut Ui,
+    rect: Rect,
+    image: &str,
+    name: &str,
+    codex: &[Dir],
+    image_alpha: f32,
+    zoom: f32,
+    dim: f32,
+) {
+    let fade = |color: Color| color.alpha(color.a * dim);
+
+    ui.fill(rect, theme::RADIUS_CARD, theme::CARD_BG);
+    ui.image_rounded(
+        rect,
+        format!("icons/{image}"),
+        image_alpha,
+        theme::RADIUS_CARD,
+        zoom,
+    );
+
+    // Os dois gradientes terminam na cor do fundo da página, então o que passa
+    // dos cantos arredondados se confunde com ela — não precisam de recorte.
+    let name_area = rect.with_h(CARD_NAME_FADE);
+    ui.gradient(
+        name_area,
+        0.0,
+        fade(theme::BG_DEEP),
+        theme::BG_DEEP.alpha(0.0),
+    );
+    ui.text(
+        name_area.inset_xy(10.0, 12.0),
+        name.to_uppercase(),
+        TextStyle::new(font::SIZE_LABEL, Weight::Black)
+            .align(Align::Center)
+            .wrap(),
+        fade(theme::TEXT),
+    );
+
+    let codex_area = Rect::new(
+        rect.x,
+        rect.bottom() - CARD_CODEX_FADE,
+        rect.w,
+        CARD_CODEX_FADE,
+    );
+    ui.gradient(
+        codex_area,
+        0.0,
+        theme::BG_DEEP.alpha(0.0),
+        fade(theme::BG_DEEP),
+    );
+    let size = codex_size(codex.len());
+    arrow_row(
+        ui,
+        Rect::new(rect.x, rect.bottom() - 16.0 - size, rect.w, size),
+        codex,
+        fade(theme::CYAN),
+    );
+}
+
+// --- Card de apoio fixo ---
+
+/// Opacidade do ícone de apoio parado (`opacity-80` do legado).
+const SUPPORT_IMAGE_ALPHA: f32 = 0.80;
+
+/// Card de um apoio fixo (Reforço, Ressuprimento, Rearme da Águia). Não é
+/// clicável — quem responde é o botão de atalho embaixo dele —, mas recebe as
+/// mesmas piscadas de disparo e bloqueio dos slots de macro.
+pub fn support_card(ui: &mut Ui, index: usize, rect: Rect, support: &SupportStrat) {
+    let triggered = ui.anim(
+        flash_id(index, true, FlashKind::Triggered),
+        FLASH_TRIGGERED_MS,
+    );
+    let blocked = ui.anim(flash_id(index, true, FlashKind::Blocked), FLASH_BLOCKED_MS);
+
+    icon_card_body(
+        ui,
+        rect,
+        support.imagem,
+        support.nome,
+        support.codex,
+        SUPPORT_IMAGE_ALPHA + (1.0 - SUPPORT_IMAGE_ALPHA) * triggered,
+        1.0 + CARD_ZOOM * triggered,
+        1.0,
+    );
+
+    let (border, glow) = if triggered > 0.0 {
+        (theme::YELLOW, Some(theme::YELLOW.alpha(triggered)))
+    } else if blocked > 0.0 {
+        (theme::RED.alpha(0.7), Some(theme::RED.alpha(0.7 * blocked)))
+    } else {
+        (theme::BORDER.alpha(0.5), None)
+    };
+    ui.stroke(rect, theme::RADIUS_CARD, CARD_BORDER, border);
+    if let Some(glow) = glow {
+        ui.glow(rect, theme::RADIUS_CARD, glow);
     }
 }
 
