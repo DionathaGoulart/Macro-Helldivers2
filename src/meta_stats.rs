@@ -14,7 +14,6 @@ use std::time::Duration;
 
 use anyhow::{Context, Result};
 use serde::{Deserialize, Serialize};
-use ureq::tls::{RootCerts, TlsConfig, TlsProvider};
 
 use crate::shared::{Shared, UiEvent};
 use crate::util;
@@ -174,18 +173,7 @@ pub fn request(shared: &Arc<Shared>, faction: Faction, difficulty: u8) -> Option
 /// Consulta os três endpoints em sequência. Qualquer um deles falhando derruba a
 /// consulta inteira, como o `for` da v1.
 pub fn fetch(faction: Faction, difficulty: u8) -> Result<Stats> {
-    // Raízes do sistema (Schannel no Windows): é o que respeita um certificado
-    // corporativo instalado na máquina do usuário, coisa que a lista embutida
-    // do webpki recusaria.
-    let tls = TlsConfig::builder()
-        .provider(TlsProvider::NativeTls)
-        .root_certs(RootCerts::PlatformVerifier)
-        .build();
-    let agent: ureq::Agent = ureq::Agent::config_builder()
-        .timeout_global(Some(TIMEOUT))
-        .tls_config(tls)
-        .build()
-        .into();
+    let agent = util::http_agent(Some(TIMEOUT));
 
     let mut sections = Vec::with_capacity(KINDS.len());
     for kind in KINDS {

@@ -151,6 +151,38 @@ fn civil_from_days(days: i64) -> (i64, u32, u32) {
     (if month <= 2 { year + 1 } else { year }, month, day)
 }
 
+/// Teto para abrir a conexão. Servidor fora do ar não pode segurar um worker
+/// para sempre, mesmo quando a chamada inteira não tem prazo (um download).
+const CONNECT_TIMEOUT: std::time::Duration = std::time::Duration::from_secs(15);
+/// Teto entre o pedido e a primeira linha da resposta.
+const RESPONSE_TIMEOUT: std::time::Duration = std::time::Duration::from_secs(30);
+
+/// Agente HTTP dos dois clientes do app (estatísticas da comunidade e updater).
+///
+/// `global` limita a chamada inteira — conexão, TLS e corpo — e é o que serve
+/// para respostas pequenas. Um download de instalador passa `None`, porque o
+/// tamanho do arquivo é que manda no tempo; ele fica protegido pelos prazos de
+/// conexão e de resposta, que valem sempre.
+///
+/// O TLS usa as raízes do sistema (Schannel no Windows): é o que respeita um
+/// certificado corporativo instalado na máquina do usuário, coisa que a lista
+/// embutida do webpki recusaria.
+pub fn http_agent(global: Option<std::time::Duration>) -> ureq::Agent {
+    use ureq::tls::{RootCerts, TlsConfig, TlsProvider};
+
+    let tls = TlsConfig::builder()
+        .provider(TlsProvider::NativeTls)
+        .root_certs(RootCerts::PlatformVerifier)
+        .build();
+    ureq::Agent::config_builder()
+        .timeout_global(global)
+        .timeout_connect(Some(CONNECT_TIMEOUT))
+        .timeout_recv_response(Some(RESPONSE_TIMEOUT))
+        .tls_config(tls)
+        .build()
+        .into()
+}
+
 /// Tipo de arquivo oferecido num diálogo (`{ name, extensions }` da v1).
 #[derive(Debug, Clone, Copy)]
 pub struct FileFilter<'a> {

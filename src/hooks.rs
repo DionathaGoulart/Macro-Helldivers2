@@ -551,9 +551,9 @@ fn apply(runtime: &Runtime, window: focus::Window, title: &str, effects: focus::
                 .send_overlay(OverlayCmd::FullscreenWarning(warning));
         }
         if effects.check_updates {
-            // A Fase 10 pluga o updater aqui: a v1 adiava o check enquanto o
-            // jogo estava em foco e disparava na primeira perda de foco.
-            log::debug!("foco perdido: janela livre para checar atualizações (Fase 10)");
+            // O check que o boot adiou por causa do jogo em foco acontece
+            // agora, na primeira perda de foco (semântica da v1).
+            crate::updater::auto_check(&runtime.shared);
         }
     }
 

@@ -109,15 +109,16 @@ mod platform {
     use crate::meta_stats::{self, MetaResult};
     use crate::settings::{Language, Settings};
     use crate::shared::{
-        FlashKind, OverlayCmd, OverlayState, Shared, Slots, UiEvent, WM_APP_UI_EVENT,
+        FlashKind, OverlayCmd, OverlayState, Shared, Slots, UiEvent, UpdateStatus, WM_APP_UI_EVENT,
     };
     use crate::ui::build_tab::{self, BuildTab};
     use crate::ui::macro_tab::{self, Action, MacroTab};
+    use crate::ui::modal::{self, Modal};
     use crate::ui::settings_tab::{self, BackupStatus, Change, SettingsTab};
     use crate::ui::theme::{self, font, Color, Scale};
-    use crate::ui::toolkit::{Align, Id, Input, Rect, TextStyle, Ui, Weight};
-    use crate::ui::widgets::{self, Tab, TAB_BAR_HEIGHT};
-    use crate::{focus, hooks, i18n, loadouts, overlay, tray, util};
+    use crate::ui::toolkit::{id, Id, Input, Measure, Rect, TextStyle, Ui, Weight};
+    use crate::ui::widgets::{self, ButtonVariant, Tab, TAB_BAR_HEIGHT};
+    use crate::{focus, hooks, i18n, loadouts, overlay, tray, updater, util};
 
     use tray::Tray;
 
@@ -132,6 +133,11 @@ mod platform {
     /// Só existe enquanto uma animação está correndo (R14).
     const TIMER_ANIM: usize = 2;
     const ANIM_INTERVAL_MS: u32 = 16;
+    /// Check de atualização do boot, disparado uma vez só.
+    const TIMER_UPDATE: usize = 3;
+    /// Fora do caminho crítico do boot, como na v1: rede e disco não competem
+    /// com a primeira pintura da janela.
+    const UPDATE_CHECK_DELAY_MS: u32 = 1_500;
 
     /// Pedido de backup adiado, na faixa `WM_APP` reservada em `shared.rs`.
     /// É só desta janela: nenhuma outra thread a envia.
@@ -139,6 +145,8 @@ mod platform {
     /// Callback do ícone da bandeja: o Windows manda o evento de mouse no
     /// `lParam`.
     const WM_APP_TRAY: u32 = 0x8000 + 4;
+    /// Pedido de encerramento adiado (ver [`App::install_update`]).
+    const WM_APP_QUIT: u32 = 0x8000 + 5;
 
     /// Id de controle do primeiro `EDIT` filho; os seguintes vêm em sequência.
     const FIRST_EDIT_CTRL: usize = 1000;
@@ -146,6 +154,11 @@ mod platform {
     const PAGE_PADDING: f32 = 24.0;
     const FOOTER_HEIGHT: f32 = 40.0;
     const WARNING_HEIGHT: f32 = 56.0;
+    /// Botão do updater no rodapé (`px-3 py-1` da v1).
+    const FOOTER_BUTTON_H: f32 = 24.0;
+    const FOOTER_BUTTON_PADDING: f32 = 24.0;
+    /// Espaço entre os pedaços do rodapé.
+    const FOOTER_GAP: f32 = 10.0;
 
     /// Sobe a janela e roda o message loop até o app encerrar.
     pub fn run(shared: Arc<Shared>, data: Arc<GameData>, ui_rx: Receiver<UiEvent>) -> Result<()> {
@@ -389,6 +402,8 @@ mod platform {
         fullscreen_warning: bool,
         tracking_mouse: bool,
         anim_timer: bool,
+        /// Andamento do ciclo de atualização, mostrado no rodapé.
+        update: UpdateStatus,
         /// `None` quando o ícone não pôde ser criado — e aí fechar a janela
         /// encerra o app, porque não haveria como trazê-la de volta.
         tray: Option<Tray>,
@@ -432,9 +447,15 @@ mod platform {
                 fullscreen_warning: false,
                 tracking_mouse: false,
                 anim_timer: false,
+                update: UpdateStatus::Idle,
                 tray: Tray::new(hwnd, WM_APP_TRAY, focus::APP_WINDOW_TITLE),
                 quitting: false,
             };
+
+            // SAFETY: timer da própria janela, morto no primeiro tique.
+            unsafe {
+                SetTimer(Some(hwnd), TIMER_UPDATE, UPDATE_CHECK_DELAY_MS, None);
+            }
             Ok(app)
         }
 
@@ -468,9 +489,13 @@ mod platform {
                         self.build_tab.set_meta(result, &self.data);
                         changed = true;
                     }
-                    // Overlay e updater ganham tela nas fases seguintes; o
-                    // andamento da sequência não tem indicador próprio na v1.
-                    other => log::debug!("evento de UI ainda sem tela: {other:?}"),
+                    UiEvent::UpdateStatus(status) => {
+                        changed |= self.update != status;
+                        self.update = status;
+                    }
+                    // O estado do overlay é dele; o andamento de uma sequência
+                    // não tem indicador próprio na v1.
+                    other => log::debug!("evento de UI sem tela na janela principal: {other:?}"),
                 }
             }
             if changed {
@@ -596,6 +621,9 @@ mod platform {
         }
 
         fn on_click(&mut self, clicked: Id) {
+            if self.on_update_click(clicked) {
+                return;
+            }
             if let Some(index) = (0..3).find(|index| widgets::tab_id(*index) == clicked) {
                 if self.tab != index {
                     self.tab = index;
@@ -649,6 +677,56 @@ mod platform {
                 _ => {}
             }
             self.rebuild();
+        }
+
+        /// Cliques do updater: o botão do rodapé e os do modal. `true` quando o
+        /// clique era de lá e as abas não devem vê-lo.
+        fn on_update_click(&mut self, clicked: Id) -> bool {
+            if clicked == update_action_id() || clicked == modal::primary_id() {
+                match &self.update {
+                    UpdateStatus::Available { .. } => updater::download(&self.shared),
+                    UpdateStatus::Ready { .. } => self.install_update(),
+                    // O botão só existe nesses dois estados; um clique que
+                    // chegue aqui é de um quadro que já mudou.
+                    _ => {}
+                }
+                self.rebuild();
+                return true;
+            }
+            if clicked == modal::secondary_id() {
+                // "Depois": o modal sai e o rodapé volta ao texto de repouso,
+                // como na v1. O instalador continua no disco para o próximo
+                // check encontrar.
+                self.update = UpdateStatus::Idle;
+                self.rebuild();
+                return true;
+            }
+            // O véu come o clique sem fazer nada — é o que impede a tela de
+            // trás de reagir com o modal aberto.
+            if clicked == modal::scrim_id() {
+                return true;
+            }
+            false
+        }
+
+        /// Executa o instalador baixado e encerra o app.
+        ///
+        /// O encerramento é adiado por mensagem: `DestroyWindow` libera o
+        /// próprio `App` de dentro dela, e este método roda com um `&mut App`
+        /// vivo (o clique que veio do `WndProc`).
+        fn install_update(&mut self) {
+            if let Err(err) = updater::install() {
+                log::error!("instalador não pôde ser executado: {err:#}");
+                self.update = UpdateStatus::Error {
+                    message: err.to_string(),
+                };
+                return;
+            }
+            // SAFETY: `PostMessageW` é assíncrono; a mensagem cai na fila desta
+            // própria janela.
+            unsafe {
+                let _ = PostMessageW(Some(self.hwnd), WM_APP_QUIT, WPARAM(0), LPARAM(0));
+            }
         }
 
         fn apply(&mut self, action: Action) {
@@ -1113,6 +1191,13 @@ mod platform {
                 }
             }
             self.footer(footer);
+
+            // Por último, sobre tudo: enquanto o modal está aberto, o véu é
+            // quem responde a qualquer clique fora do cartão.
+            if let UpdateStatus::Ready { version } = self.update.clone() {
+                let area = Rect::new(0.0, 0.0, self.size.0, self.size.1);
+                self.update_modal(area, &version);
+            }
             self.ui.end();
         }
 
@@ -1134,41 +1219,166 @@ mod platform {
             );
         }
 
+        /// Rodapé: versão e estado do jogo à esquerda, updater à direita — o
+        /// mesmo agrupamento do rodapé da v1.
         fn footer(&mut self, rect: Rect) {
-            let tr = i18n::tr(self.language);
             self.ui.fill(rect, 0.0, theme::BG_DEEP);
             self.ui
                 .fill(rect.with_h(theme::HAIRLINE_WIDTH), 0.0, theme::HAIRLINE);
 
             let mut row = rect.inset_xy(PAGE_PADDING, 0.0);
-            self.ui.text(
-                row.middle_row(16.0),
-                format!("{} {}", tr.settings.version, env!("CARGO_PKG_VERSION")),
-                TextStyle::new(font::SIZE_TINY, Weight::Black).tracking(font::TRACKING_LABEL),
-                theme::TEXT_DIM,
+            self.update_footer(&mut row);
+            self.status_footer(&mut row);
+        }
+
+        /// Versão do app e a bolinha de "jogo detectado".
+        fn status_footer(&mut self, row: &mut Rect) {
+            let tr = i18n::tr(self.language);
+            let style =
+                TextStyle::new(font::SIZE_TINY, Weight::Black).tracking(font::TRACKING_LABEL);
+
+            let version = format!(
+                "{} v{}",
+                tr.settings.version.to_uppercase(),
+                env!("CARGO_PKG_VERSION")
             );
+            let width = self.text.text_size(&version, style, f32::INFINITY).0;
+            let label = row.cut_left(width).middle_row(16.0);
+            self.ui.text(label, version, style, theme::TEXT_DIM);
+            row.cut_left(FOOTER_GAP);
+
+            let divider = row.cut_left(theme::HAIRLINE_WIDTH).middle_row(12.0);
+            self.ui.fill(divider, 0.0, theme::BORDER);
+            row.cut_left(FOOTER_GAP);
+
+            let dot = row.cut_left(8.0).middle_row(8.0);
+            widgets::status_dot(&mut self.ui, dot, self.game_focused);
+            row.cut_left(6.0);
 
             let status = if self.game_focused {
                 tr.settings.game_active
             } else {
                 tr.settings.game_inactive
-            };
-            let label = row.cut_right(180.0).middle_row(16.0);
+            }
+            .to_uppercase();
+            let width = self.text.text_size(&status, style, f32::INFINITY).0;
+            let label = row.cut_left(width).middle_row(16.0);
             self.ui.text(
                 label,
-                status.to_uppercase(),
-                TextStyle::new(font::SIZE_TINY, Weight::Black)
-                    .tracking(font::TRACKING_LABEL)
-                    .align(Align::End),
+                status,
+                style,
                 if self.game_focused {
                     theme::GREEN
                 } else {
                     theme::TEXT_DIM
                 },
             );
-            row.cut_right(8.0);
-            let dot = row.cut_right(8.0).middle_row(8.0);
-            widgets::status_dot(&mut self.ui, dot, self.game_focused);
+        }
+
+        /// Canto direito do rodapé: o andamento do updater e, quando há o que
+        /// fazer, o botão que baixa ou instala. Montado da direita para a
+        /// esquerda, então o botão vem antes do texto.
+        fn update_footer(&mut self, row: &mut Rect) {
+            let tr = i18n::tr(self.language);
+
+            // Pronto para instalar: só o botão, pulsando como na v1.
+            if let UpdateStatus::Ready { .. } = self.update {
+                let rect = row
+                    .cut_right(self.button_width(tr.settings.update_ready))
+                    .middle_row(FOOTER_BUTTON_H);
+                widgets::button(
+                    &mut self.ui,
+                    update_action_id(),
+                    rect,
+                    tr.settings.update_ready,
+                    ButtonVariant::Primary,
+                    theme::YELLOW,
+                );
+                return;
+            }
+
+            // O download deixou de ser automático para não puxar o instalador
+            // no meio de uma partida: quem manda é o botão.
+            if let UpdateStatus::Available { .. } = self.update {
+                let rect = row
+                    .cut_right(self.button_width(tr.settings.update_download))
+                    .middle_row(FOOTER_BUTTON_H);
+                widgets::button(
+                    &mut self.ui,
+                    update_action_id(),
+                    rect,
+                    tr.settings.update_download,
+                    ButtonVariant::Secondary,
+                    theme::YELLOW,
+                );
+                row.cut_right(FOOTER_GAP);
+            }
+
+            let style =
+                TextStyle::new(font::SIZE_TINY, Weight::Black).tracking(font::TRACKING_LABEL);
+            let text = update_label(&self.update, tr);
+            let width = self.text.text_size(&text, style, f32::INFINITY).0;
+            let label = row.cut_right(width).middle_row(16.0);
+            self.ui.text(label, text, style, theme::TEXT_DIM);
+            row.cut_right(6.0);
+
+            let color = match self.update {
+                UpdateStatus::Error { .. } => theme::RED,
+                _ => theme::YELLOW,
+            };
+            let dot = row.cut_right(6.0).middle_row(6.0);
+            self.ui.ellipse(dot, color);
+            self.ui.glow(dot, dot.w / 2.0, color);
+        }
+
+        fn button_width(&mut self, label: &str) -> f32 {
+            let style =
+                TextStyle::new(font::SIZE_LABEL, Weight::Black).tracking(font::TRACKING_WIDE);
+            let text = self
+                .text
+                .text_size(&label.to_uppercase(), style, f32::INFINITY)
+                .0;
+            text + FOOTER_BUTTON_PADDING
+        }
+
+        /// Modal de "atualização baixada" (porte do modal da v1).
+        fn update_modal(&mut self, area: Rect, version: &str) {
+            let tr = i18n::tr(self.language);
+            let subtitle = format!("v{version}");
+            let modal = Modal {
+                title: tr.update.title,
+                subtitle: &subtitle,
+                body: tr.update.body,
+                primary: tr.update.restart_now,
+                secondary: tr.update.later,
+                accent: theme::YELLOW,
+            };
+            modal::show(&mut self.ui, &mut self.text, area, &modal);
+        }
+    }
+
+    /// Botão do updater no rodapé: baixa quando há novidade, instala quando o
+    /// arquivo já está no disco.
+    fn update_action_id() -> Id {
+        id("footer.update")
+    }
+
+    /// Texto do andamento, com os mesmos estados da v1.
+    fn update_label(status: &UpdateStatus, tr: &i18n::Tr) -> String {
+        let text = &tr.settings;
+        match status {
+            UpdateStatus::Checking => text.update_checking.to_uppercase(),
+            UpdateStatus::Available { .. } => text.update_available.to_uppercase(),
+            UpdateStatus::Downloading { percent } => format!(
+                "{} {}%",
+                text.update_downloading.to_uppercase(),
+                percent.round()
+            ),
+            UpdateStatus::UpToDate => text.update_up_to_date.to_uppercase(),
+            UpdateStatus::Error { .. } => text.update_error.to_uppercase(),
+            // "Atualizado" é o texto de repouso da v1, e também o que sobra
+            // depois de o usuário adiar a instalação.
+            UpdateStatus::Idle | UpdateStatus::Ready { .. } => text.updated.to_uppercase(),
         }
     }
 
@@ -1620,6 +1830,15 @@ mod platform {
                         }
                         LRESULT(0)
                     }
+                    TIMER_UPDATE => {
+                        let _ = KillTimer(Some(hwnd), TIMER_UPDATE);
+                        // Com o jogo em foco a checagem não acontece agora: ela
+                        // fica adiada para a primeira perda de foco (Fase 3).
+                        if let Some(app) = app_mut(hwnd) {
+                            updater::auto_check(&app.shared);
+                        }
+                        LRESULT(0)
+                    }
                     _ => DefWindowProcW(hwnd, message, wparam, lparam),
                 },
                 WM_APP_BACKUP => {
@@ -1665,6 +1884,10 @@ mod platform {
                     if let Some(app) = app_mut(hwnd) {
                         app.drain_events();
                     }
+                    LRESULT(0)
+                }
+                WM_APP_QUIT => {
+                    quit_app(hwnd);
                     LRESULT(0)
                 }
                 WM_DESTROY => {

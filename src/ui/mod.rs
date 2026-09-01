@@ -5,6 +5,7 @@
 
 pub mod build_tab;
 pub mod macro_tab;
+pub mod modal;
 pub mod settings_tab;
 pub mod theme;
 pub mod toolkit;
