@@ -24,11 +24,13 @@ const DRY = process.argv.includes('--dry')
 // realmente desenha — decodificar um bitmap de 1024 pra 16px é desperdício puro.
 const KEEP_PNG = new Set(['icon.png'])
 
-// Arquivos que citam caminhos de imagem e precisam ser reescritos junto
+// Arquivos que citam caminhos de imagem e precisam ser reescritos junto.
+// `src/data.rs` é onde moram os ícones dos três estratagemas de apoio fixos,
+// que não estão em nenhum JSON.
 const REFERENCE_FILES = [
   'assets/data/equipment.json',
   'assets/data/stratagems.json',
-  'legacy/src/shared/constants.js'
+  'src/data.rs'
 ]
 
 function ensureTool(name, args) {
