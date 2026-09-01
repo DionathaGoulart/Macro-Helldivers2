@@ -21,18 +21,25 @@ use std::thread::JoinHandle;
 use std::time::Duration;
 
 use crossbeam_channel::Receiver;
+use rand::RngExt;
 use spin_sleep::SpinSleeper;
 
 use crate::data::Dir;
 use crate::keys::{self, Scan};
+use crate::settings::Speed;
 use crate::shared::{EngineCmd, FlashKind, OverlayCmd, Shared, UiEvent};
 
-/// Intervalos da sequência, em milissegundos. São os do perfil normal da v1
-/// (`legacy/src/macro/stratagemRunner.js`); os outros perfis entram em seguida.
-const HOLD_MS: u32 = 34;
-const GAP_MS: u32 = 20;
-const LEAD_MS: u32 = 100;
-const TAIL_MS: u32 = 50;
+/// O jogo lê o teclado uma vez por frame: 16,7ms a 60fps, 33,3ms a 30fps. Uma
+/// tecla que desce e sobe entre dois polls não existe para ele, e a macro falha de
+/// forma intermitente. Por isso o `hold` de cada perfil é medido em frames e a
+/// velocidade vem de encurtar o `gap`, que não tem esse limite.
+pub const MIN_HOLD_MS: u32 = 20;
+
+/// Piso das esperas que não são `hold`. Herdado da v1: só impede espera zero.
+const MIN_WAIT_MS: u32 = 1;
+
+/// Amplitude do jitter humanizado, para cada lado, em ms.
+pub const JITTER_MS: f64 = 5.0;
 
 /// Margem que damos ao sono nativo: o `spin_sleep` dorme `duração - margem` no
 /// relógio do SO e gira o resto. Margem maior custa mais CPU dentro da sequência
@@ -47,6 +54,55 @@ const NATIVE_SLEEP_ACCURACY_NS: u32 = 500_000;
 /// Teclas simultaneamente seguradas numa sequência: modificador + uma direção.
 /// A folga é só defensiva.
 const MAX_HELD: usize = 4;
+
+/// Intervalos de um perfil de velocidade, em milissegundos.
+///
+/// Os números são os da v1 (`legacy/src/macro/stratagemRunner.js`). O campo
+/// `auto` de lá era o atraso interno do nut-js por press/release e morreu junto
+/// com ele: o `SendInput` não tem atraso próprio.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct Profile {
+    /// Tecla de direção segurada.
+    pub hold: u32,
+    /// Pausa entre uma direção e a próxima.
+    pub gap: u32,
+    /// Pausa depois de segurar o modificador, antes da primeira direção.
+    pub lead: u32,
+    /// Pausa depois da última direção, antes de soltar o modificador.
+    pub tail: u32,
+}
+
+impl Profile {
+    /// ~1 frame a 30fps.
+    pub const NORMAL: Profile = Profile {
+        hold: 34,
+        gap: 20,
+        lead: 100,
+        tail: 50,
+    };
+    /// ~1,5 frame a 60fps.
+    pub const FAST: Profile = Profile {
+        hold: 24,
+        gap: 12,
+        lead: 70,
+        tail: 40,
+    };
+    /// ~1,2 frame a 60fps.
+    pub const TURBO: Profile = Profile {
+        hold: 20,
+        gap: 6,
+        lead: 50,
+        tail: 30,
+    };
+
+    pub fn of(speed: Speed) -> Profile {
+        match speed {
+            Speed::Normal => Profile::NORMAL,
+            Speed::Fast => Profile::FAST,
+            Speed::Turbo => Profile::TURBO,
+        }
+    }
+}
 
 /// Em que ponto da sequência uma espera acontece. O sink de produção ignora; as
 /// bancadas usam para separar o desvio de `hold` do de `gap`.
@@ -79,10 +135,33 @@ pub struct KeyEvent {
 /// Para onde o engine manda teclas e como ele espera.
 ///
 /// Em produção é o teclado do Windows; nos testes, um [`Recorder`] que guarda a
-/// sequência inteira sem dormir de verdade.
+/// sequência inteira sem dormir de verdade; nas bancadas, um decorador que
+/// carimba o relógio a cada envio.
 pub trait InputSink {
     fn send(&mut self, event: KeyEvent);
     fn wait(&mut self, phase: Phase, duration: Duration);
+}
+
+/// Jitter humanizado, desligável para o teste conseguir prever cada intervalo.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Jitter {
+    Humanized,
+    Off,
+}
+
+impl Jitter {
+    fn offset_ms(self) -> f64 {
+        match self {
+            Jitter::Off => 0.0,
+            Jitter::Humanized => rand::rng().random_range(-JITTER_MS..JITTER_MS),
+        }
+    }
+}
+
+/// Aplica jitter e piso a um intervalo. Puro de propósito: é aqui que mora o
+/// risco de o turbo cair abaixo de um frame, e o teste cobre a faixa inteira.
+pub fn jittered_ms(base_ms: u32, floor_ms: u32, offset_ms: f64) -> f64 {
+    (f64::from(base_ms) + offset_ms).max(f64::from(floor_ms))
 }
 
 /// O que executar. Tudo já resolvido pelo remetente — o engine não consulta
@@ -92,6 +171,7 @@ pub struct Sequence {
     pub codex: Vec<Dir>,
     pub modifier: Scan,
     pub use_arrows: bool,
+    pub speed: Speed,
 }
 
 /// Ganchos da sequência com o resto do app, para `run_sequence` continuar
@@ -148,8 +228,9 @@ impl<'a, S: InputSink> Held<'a, S> {
         }
     }
 
-    fn wait(&mut self, phase: Phase, ms: u32) {
-        self.sink.wait(phase, Duration::from_millis(u64::from(ms)));
+    fn wait(&mut self, phase: Phase, base_ms: u32, floor_ms: u32, jitter: Jitter) {
+        let ms = jittered_ms(base_ms, floor_ms, jitter.offset_ms());
+        self.sink.wait(phase, Duration::from_secs_f64(ms / 1000.0));
     }
 }
 
@@ -170,14 +251,16 @@ impl<S: InputSink> Drop for Held<'_, S> {
 pub fn run_sequence<S: InputSink>(
     sink: &mut S,
     sequence: &Sequence,
+    jitter: Jitter,
     hooks: &mut dyn Hooks,
 ) -> Outcome {
+    let profile = Profile::of(sequence.speed);
     let _timer = TimerResolution::acquire();
     let mut held = Held::new(sink);
 
     held.press(sequence.modifier);
     hooks.started();
-    held.wait(Phase::Lead, LEAD_MS);
+    held.wait(Phase::Lead, profile.lead, MIN_WAIT_MS, jitter);
 
     for dir in &sequence.codex {
         // Perdeu o foco no meio: para agora; o guard solta modificador e direção.
@@ -186,12 +269,12 @@ pub fn run_sequence<S: InputSink>(
         }
         let scan = keys::direction_scan(*dir, sequence.use_arrows);
         held.press(scan);
-        held.wait(Phase::Hold, HOLD_MS);
+        held.wait(Phase::Hold, profile.hold, MIN_HOLD_MS, jitter);
         held.release(scan);
-        held.wait(Phase::Gap, GAP_MS);
+        held.wait(Phase::Gap, profile.gap, MIN_WAIT_MS, jitter);
     }
 
-    held.wait(Phase::Tail, TAIL_MS);
+    held.wait(Phase::Tail, profile.tail, MIN_WAIT_MS, jitter);
     held.release(sequence.modifier);
     Outcome::Completed
 }
@@ -232,8 +315,7 @@ fn handle<S: InputSink>(
         codex,
         modifier,
         use_arrows,
-        // O perfil de velocidade só passa a valer quando os perfis existirem.
-        speed: _,
+        speed,
         slot,
         support,
     } = cmd;
@@ -258,13 +340,14 @@ fn handle<S: InputSink>(
         codex,
         modifier,
         use_arrows,
+        speed,
     };
     let mut hooks = EngineHooks {
         shared,
         slot,
         support,
     };
-    let outcome = run_sequence(sink, &sequence, &mut hooks);
+    let outcome = run_sequence(sink, &sequence, Jitter::Humanized, &mut hooks);
     shared.send_ui(UiEvent::MacroStatus {
         slot,
         support,
@@ -366,7 +449,7 @@ impl Recorder {
         self.events.iter().map(|(_, event)| *event).collect()
     }
 
-    /// Esperas em milissegundos.
+    /// Esperas em milissegundos, arredondadas — sem jitter elas são exatas.
     pub fn wait_ms(&self) -> Vec<(Phase, u64)> {
         self.waits
             .iter()
@@ -427,7 +510,7 @@ fn send_scan(scan: Scan, up: bool) {
 #[cfg(not(windows))]
 fn send_scan(scan: Scan, up: bool) {
     // No host de desenvolvimento não há teclado para onde mandar; o resto do
-    // motor continua exercitável pelos testes.
+    // motor continua exercitável pelos testes e pelas bancadas em modo seco.
     log::trace!(
         "send_scan ignorado fora do Windows: {:#04X} {}",
         scan.code,
@@ -504,11 +587,12 @@ mod tests {
         extended: false,
     };
 
-    fn sequence(codex: &[Dir], use_arrows: bool) -> Sequence {
+    fn sequence(codex: &[Dir], speed: Speed, use_arrows: bool) -> Sequence {
         Sequence {
             codex: codex.to_vec(),
             modifier: CTRL,
             use_arrows,
+            speed,
         }
     }
 
@@ -530,11 +614,23 @@ mod tests {
     }
 
     #[test]
+    fn speed_profiles_match_the_reference_table() {
+        assert_eq!(Profile::of(Speed::Normal), Profile::NORMAL);
+        assert_eq!(Profile::of(Speed::Fast), Profile::FAST);
+        assert_eq!(Profile::of(Speed::Turbo), Profile::TURBO);
+        // O turbo é o perfil no limite: o hold já está no piso de um frame.
+        assert_eq!(Profile::TURBO.hold, MIN_HOLD_MS);
+    }
+
+    #[test]
     fn sequence_follows_the_reference_order() {
         let mut sink = Recorder::new();
-        let seq = sequence(&[Dir::Up, Dir::Left], false);
+        let seq = sequence(&[Dir::Up, Dir::Left], Speed::Normal, false);
 
-        assert_eq!(run_sequence(&mut sink, &seq, &mut ()), Outcome::Completed);
+        assert_eq!(
+            run_sequence(&mut sink, &seq, Jitter::Off, &mut ()),
+            Outcome::Completed
+        );
 
         // Modificador segurado do começo ao fim, uma direção por vez dentro dele.
         assert_eq!(
@@ -564,8 +660,12 @@ mod tests {
     #[test]
     fn arrow_mode_sends_the_extended_scancodes() {
         let mut sink = Recorder::new();
-        let seq = sequence(&[Dir::Up, Dir::Down, Dir::Left, Dir::Right], true);
-        run_sequence(&mut sink, &seq, &mut ());
+        let seq = sequence(
+            &[Dir::Up, Dir::Down, Dir::Left, Dir::Right],
+            Speed::Turbo,
+            true,
+        );
+        run_sequence(&mut sink, &seq, Jitter::Off, &mut ());
 
         let presses: Vec<Scan> = sink
             .key_events()
@@ -583,6 +683,26 @@ mod tests {
             ]
         );
         assert!(presses.iter().all(|scan| scan.extended));
+    }
+
+    #[test]
+    fn turbo_waits_come_from_the_turbo_profile() {
+        let mut sink = Recorder::new();
+        run_sequence(
+            &mut sink,
+            &sequence(&[Dir::Right], Speed::Turbo, false),
+            Jitter::Off,
+            &mut (),
+        );
+        assert_eq!(
+            sink.wait_ms(),
+            vec![
+                (Phase::Lead, 50),
+                (Phase::Hold, 20),
+                (Phase::Gap, 6),
+                (Phase::Tail, 30),
+            ]
+        );
     }
 
     /// Aborta na direção de índice `at`.
@@ -612,9 +732,12 @@ mod tests {
             seen: 0,
             started: false,
         };
-        let seq = sequence(&[Dir::Up, Dir::Down, Dir::Left], false);
+        let seq = sequence(&[Dir::Up, Dir::Down, Dir::Left], Speed::Fast, false);
 
-        assert_eq!(run_sequence(&mut sink, &seq, &mut hooks), Outcome::Aborted);
+        assert_eq!(
+            run_sequence(&mut sink, &seq, Jitter::Off, &mut hooks),
+            Outcome::Aborted
+        );
         assert!(
             hooks.started,
             "o aviso de disparo sai antes do primeiro passo"
@@ -644,6 +767,35 @@ mod tests {
         );
     }
 
+    #[test]
+    fn hold_never_falls_below_a_frame_even_with_the_worst_jitter() {
+        let mut offset = -JITTER_MS;
+        while offset <= JITTER_MS {
+            for profile in [Profile::NORMAL, Profile::FAST, Profile::TURBO] {
+                let hold = jittered_ms(profile.hold, MIN_HOLD_MS, offset);
+                assert!(
+                    hold >= f64::from(MIN_HOLD_MS),
+                    "hold {hold} com offset {offset}"
+                );
+            }
+            offset += 0.25;
+        }
+    }
+
+    #[test]
+    fn jitter_only_moves_an_interval_five_milliseconds_each_way() {
+        // O piso não interfere quando o valor base já está bem acima dele.
+        assert_eq!(jittered_ms(34, MIN_HOLD_MS, -JITTER_MS), 29.0);
+        assert_eq!(jittered_ms(34, MIN_HOLD_MS, JITTER_MS), 39.0);
+        assert_eq!(jittered_ms(34, MIN_HOLD_MS, 0.0), 34.0);
+        // E esperas curtas nunca chegam a zero.
+        assert_eq!(jittered_ms(6, MIN_WAIT_MS, -JITTER_MS), 1.0);
+
+        let drawn = Jitter::Humanized.offset_ms();
+        assert!((-JITTER_MS..JITTER_MS).contains(&drawn), "offset {drawn}");
+        assert_eq!(Jitter::Off.offset_ms(), 0.0);
+    }
+
     fn engine_shared() -> (Arc<Shared>, Receivers) {
         let (shared, receivers) = Shared::new(Settings::default(), Slots::default());
         shared.set_game_focused(true);
@@ -655,7 +807,7 @@ mod tests {
             codex: vec![Dir::Up, Dir::Down],
             modifier: CTRL,
             use_arrows: false,
-            speed: crate::settings::Speed::Normal,
+            speed: Speed::Turbo,
             slot,
             support: false,
         }
