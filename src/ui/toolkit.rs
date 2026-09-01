@@ -769,6 +769,21 @@ impl Ui {
         state.touched = true;
     }
 
+    /// Oscilação contínua 0→1→0 no período dado, sem estado por widget: sai do
+    /// relógio da passagem. É o `animate-pulse-hd` do legado, usado no botão que
+    /// espera uma tecla. Enquanto for chamada, [`Ui::animating`] fica ligado — o
+    /// pulso não tem fim próprio, quem o encerra é a tela deixando de pedi-lo.
+    pub fn pulse(&mut self, period_ms: u32) -> f32 {
+        self.animating = true;
+        let period = period_ms.max(1) as u64;
+        let phase = (self.now_ms % period) as f32 / period as f32;
+        if phase < 0.5 {
+            phase * 2.0
+        } else {
+            2.0 - phase * 2.0
+        }
+    }
+
     /// Valor atual de um pulso, 1 no disparo e 0 quando acaba.
     pub fn anim(&mut self, id: Id, duration_ms: u32) -> f32 {
         let now = self.now_ms;
@@ -1239,6 +1254,29 @@ mod tests {
         assert_eq!(ui.anim(id("slot"), 500), 1.0);
         ui.end();
         assert!(ui.animating());
+    }
+
+    #[test]
+    fn a_pulse_oscillates_and_keeps_the_timer_alive() {
+        let mut ui = Ui::new();
+
+        ui.begin(0);
+        assert_eq!(ui.pulse(1_000), 0.0);
+        ui.end();
+        assert!(ui.animating(), "o pulso não termina sozinho");
+
+        ui.begin(500);
+        assert_eq!(ui.pulse(1_000), 1.0, "meio período: topo");
+        ui.end();
+
+        ui.begin(1_000);
+        assert_eq!(ui.pulse(1_000), 0.0, "período fechado: voltou ao início");
+        ui.end();
+
+        // Sem ninguém pedindo o pulso, o timer pode morrer.
+        ui.begin(1_200);
+        ui.end();
+        assert!(!ui.animating());
     }
 
     #[test]

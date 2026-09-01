@@ -103,10 +103,13 @@ mod platform {
     use crate::gfx::d2d::{window_dpi, WindowTarget};
     use crate::gfx::text::{register_gdi_fonts, Text};
     use crate::settings::{Language, Settings};
-    use crate::shared::{FlashKind, OverlayCmd, Shared, Slots, UiEvent, WM_APP_UI_EVENT};
+    use crate::shared::{
+        FlashKind, OverlayCmd, OverlayState, Shared, Slots, UiEvent, WM_APP_UI_EVENT,
+    };
     use crate::ui::macro_tab::{self, Action, MacroTab};
+    use crate::ui::settings_tab::{self, Change, SettingsTab};
     use crate::ui::theme::{self, font, Color, Scale};
-    use crate::ui::toolkit::{self, Align, Id, Input, Rect, TextStyle, Ui, Weight};
+    use crate::ui::toolkit::{Align, Id, Input, Rect, TextStyle, Ui, Weight};
     use crate::ui::widgets::{self, CardHeader, Tab, TAB_BAR_HEIGHT};
     use crate::{focus, hooks, i18n, loadouts};
 
@@ -125,7 +128,6 @@ mod platform {
 
     const PAGE_PADDING: f32 = 24.0;
     const FOOTER_HEIGHT: f32 = 40.0;
-    const GAP: f32 = 12.0;
     const WARNING_HEIGHT: f32 = 56.0;
 
     /// Sobe a janela e roda o message loop até o app encerrar.
@@ -354,6 +356,7 @@ mod platform {
         tab: usize,
         language: Language,
         macro_tab: MacroTab,
+        settings_tab: SettingsTab,
         edits: Vec<EditChild>,
         edit_font: HFONT,
         /// Fonte da escala anterior, viva até os filhos trocarem para a nova.
@@ -361,6 +364,8 @@ mod platform {
         edit_brush: HBRUSH,
         focused_edit: Option<Id>,
         game_focused: bool,
+        /// Aba de configurações esperando uma tecla: o hook fica desarmado.
+        recording: bool,
         fullscreen_warning: bool,
         tracking_mouse: bool,
         anim_timer: bool,
@@ -386,6 +391,7 @@ mod platform {
                 tab: 0,
                 language: settings.language,
                 macro_tab: MacroTab::new(),
+                settings_tab: SettingsTab::new(),
                 edits: Vec::new(),
                 edit_font: create_edit_font(dpi),
                 retired_font: None,
@@ -395,6 +401,7 @@ mod platform {
                 },
                 focused_edit: None,
                 game_focused,
+                recording: false,
                 fullscreen_warning: false,
                 tracking_mouse: false,
                 anim_timer: false,
@@ -532,24 +539,41 @@ mod platform {
             if let Some(index) = (0..3).find(|index| widgets::tab_id(*index) == clicked) {
                 if self.tab != index {
                     self.tab = index;
+                    // Sair da aba desiste da captura em curso: o hook não pode
+                    // ficar desarmado por uma tela que não está mais na frente.
+                    self.settings_tab.cancel_capture();
+                    self.sync_recording();
                 }
                 self.rebuild();
                 return;
             }
-            if self.tab == 0 {
-                let settings = self.shared.settings_snapshot();
-                // O contexto é montado campo a campo: `macro_tab` precisa ser
-                // emprestado mutável ao mesmo tempo que `data` é lido.
-                let ctx = macro_tab::Ctx {
-                    data: &self.data,
-                    settings: &settings,
-                    slots: self.shared.slots(),
-                    focused_edit: self.focused_edit,
-                };
-                if let Some(action) = self.macro_tab.on_click(clicked, &ctx) {
-                    self.apply(action);
-                    return;
+            match self.tab {
+                0 => {
+                    let settings = self.shared.settings_snapshot();
+                    // O contexto é montado campo a campo: `macro_tab` precisa ser
+                    // emprestado mutável ao mesmo tempo que `data` é lido.
+                    let ctx = macro_tab::Ctx {
+                        data: &self.data,
+                        settings: &settings,
+                        slots: self.shared.slots(),
+                        focused_edit: self.focused_edit,
+                    };
+                    if let Some(action) = self.macro_tab.on_click(clicked, &ctx) {
+                        self.apply(action);
+                        return;
+                    }
                 }
+                2 => {
+                    let settings = self.shared.settings_snapshot();
+                    let ctx = settings_tab::Ctx {
+                        settings: &settings,
+                    };
+                    if let Some(action) = self.settings_tab.on_click(clicked, &ctx) {
+                        self.apply_settings(action);
+                        return;
+                    }
+                }
+                _ => {}
             }
             self.rebuild();
         }
@@ -561,6 +585,97 @@ mod platform {
                 Action::FocusSearch => self.focus_search(),
                 Action::ClearSearch => self.clear_search(),
             }
+        }
+
+        fn apply_settings(&mut self, action: settings_tab::Action) {
+            self.sync_recording();
+            match action {
+                settings_tab::Action::Redraw => self.rebuild(),
+                settings_tab::Action::Setting(change) => self.apply_change(change),
+            }
+        }
+
+        /// Grava a preferência nova e espalha o que ela afeta: tabela de
+        /// atalhos, overlay e idioma da interface.
+        fn apply_change(&mut self, change: Change) {
+            let previous = self.shared.settings_snapshot();
+            let mut settings = previous.clone();
+            change.apply(&mut settings);
+            if settings == previous {
+                self.rebuild();
+                return;
+            }
+
+            self.shared.set_settings(settings.clone());
+            if let Err(err) = settings.save() {
+                log::warn!("configurações não foram salvas: {err:#}");
+            }
+            hooks::rebuild_bindings();
+            self.language = settings.language;
+            self.overlay_effects(&previous, &settings);
+            self.rebuild();
+        }
+
+        /// O que uma mudança de preferência faz com o overlay (portado de
+        /// `legacy/src/main/index.js` ~737–746).
+        ///
+        /// A thread do overlay em si só existe a partir da Fase 9; até lá o
+        /// comando fica no canal e o estado compartilhado já reflete a escolha.
+        fn overlay_effects(&self, previous: &Settings, settings: &Settings) {
+            if !settings.enable_overlay && previous.enable_overlay {
+                self.shared
+                    .send_overlay(OverlayCmd::SetState(OverlayState::Hidden));
+                return;
+            }
+
+            // Com o jogo na frente, o HUD persistente aparece e some na hora —
+            // menos com o painel aberto, que manda no estado.
+            let hud_changed = settings.always_show_slots != previous.always_show_slots
+                || (settings.enable_overlay && !previous.enable_overlay);
+            if hud_changed
+                && settings.enable_overlay
+                && self.game_focused
+                && self.shared.overlay_state() != OverlayState::Panel
+            {
+                let state = if settings.always_show_slots {
+                    OverlayState::Minimal
+                } else {
+                    OverlayState::Hidden
+                };
+                self.shared.send_overlay(OverlayCmd::SetState(state));
+            }
+        }
+
+        /// Liga o modo de gravação enquanto a aba espera uma tecla: com ele o
+        /// hook repassa tudo em vez de disparar macros.
+        fn sync_recording(&mut self) {
+            let capturing = self.settings_tab.capturing().is_some();
+            if capturing == self.recording {
+                return;
+            }
+            self.recording = capturing;
+            self.shared.set_recording(capturing);
+            if capturing {
+                // O `EDIT` da busca pode estar com o teclado; sem trazer o foco
+                // de volta, a tecla capturada nunca chegaria ao `WndProc`.
+                // SAFETY: janela viva, na própria thread dela.
+                unsafe {
+                    let _ = SetFocus(Some(self.hwnd));
+                }
+            }
+        }
+
+        /// Tecla recebida pela janela. `true` quando a aba de configurações a
+        /// consumiu, e ela não deve seguir para o tratamento padrão.
+        fn on_key(&mut self, vk: u16) -> bool {
+            if self.tab != 2 {
+                return false;
+            }
+            let Some(action) = self.settings_tab.on_key(vk) else {
+                return false;
+            };
+            self.apply_settings(action);
+            true
         }
 
         /// O `EDIT` da busca só existe quando tem foco ou texto; o clique na
@@ -851,7 +966,13 @@ mod platform {
                         .build(&mut self.ui, &mut self.text, body, &ctx);
                 }
                 1 => self.build_tab(body),
-                _ => self.settings_tab(body, &settings),
+                _ => {
+                    let ctx = settings_tab::Ctx {
+                        settings: &settings,
+                    };
+                    self.settings_tab
+                        .build(&mut self.ui, &mut self.text, body, &ctx);
+                }
             }
             self.footer(footer);
             self.ui.end();
@@ -892,93 +1013,6 @@ mod platform {
                 tr.build.hint,
                 TextStyle::new(font::SIZE_BODY, Weight::Regular).wrap(),
                 theme::TEXT_DIM,
-            );
-        }
-
-        /// Placeholder da aba de configurações (Fase 6): mostra o que está
-        /// valendo agora, sem controles editáveis.
-        fn settings_tab(&mut self, area: Rect, settings: &Settings) {
-            let tr = i18n::tr(self.language);
-            let area = area.inset_xy(PAGE_PADDING, 16.0);
-            let columns = toolkit::columns(area.with_h(260.0), 2, GAP);
-
-            let mut left = widgets::card(
-                &mut self.ui,
-                columns[0],
-                Some(CardHeader {
-                    title: tr.settings.keybinding,
-                    accent: theme::YELLOW,
-                }),
-            );
-            for slot in 0..settings.shortcuts.len() {
-                let row = left.cut_top(28.0);
-                let value = settings.shortcut(slot).unwrap_or("—").to_string();
-                self.info_row(
-                    row,
-                    &format!("{} {}", tr.settings.shortcut_label, slot + 1),
-                    &value,
-                );
-            }
-
-            let mut right = widgets::card(
-                &mut self.ui,
-                columns[1],
-                Some(CardHeader {
-                    title: tr.settings.controller,
-                    accent: theme::YELLOW,
-                }),
-            );
-            let rows = [
-                (tr.settings.ingame_key, settings.modifier_key.clone()),
-                (
-                    tr.settings.macro_speed,
-                    tr.settings.speed(settings.macro_speed).to_string(),
-                ),
-                (
-                    tr.settings.arrow_mode,
-                    if settings.use_arrows {
-                        tr.settings.arrow_active
-                    } else {
-                        tr.settings.wasd_active
-                    }
-                    .to_string(),
-                ),
-                (
-                    tr.settings.overlay_shortcut,
-                    if settings.enable_overlay {
-                        tr.settings.overlay_enabled
-                    } else {
-                        tr.settings.overlay_disabled
-                    }
-                    .to_string(),
-                ),
-                (
-                    tr.settings.language,
-                    i18n::language_name(settings.language).to_string(),
-                ),
-            ];
-            for (label, value) in rows {
-                let row = right.cut_top(28.0);
-                self.info_row(row, label, &value);
-            }
-        }
-
-        fn info_row(&mut self, rect: Rect, label: &str, value: &str) {
-            let mut rect = rect;
-            let value_rect = rect.cut_right(rect.w * 0.5);
-            self.ui.text(
-                rect.middle_row(14.0),
-                label.to_uppercase(),
-                TextStyle::new(font::SIZE_TINY, Weight::Black).tracking(font::TRACKING_LABEL),
-                theme::TEXT_DIM,
-            );
-            self.ui.text(
-                value_rect.middle_row(14.0),
-                value,
-                TextStyle::new(font::SIZE_LABEL, Weight::Black)
-                    .tracking(font::TRACKING_LABEL)
-                    .align(Align::End),
-                theme::TEXT,
             );
         }
 
@@ -1111,6 +1145,16 @@ mod platform {
                         SWP_NOZORDER | SWP_NOACTIVATE,
                     );
                     LRESULT(0)
+                }
+                WM_KEYDOWN | WM_SYSKEYDOWN => {
+                    // Só a captura de atalho consome tecla; o resto segue para
+                    // o tratamento padrão da janela.
+                    let captured = app_mut(hwnd).is_some_and(|app| app.on_key(wparam.0 as u16));
+                    if captured {
+                        LRESULT(0)
+                    } else {
+                        DefWindowProcW(hwnd, message, wparam, lparam)
+                    }
                 }
                 WM_MOUSEMOVE => {
                     if let Some(app) = app_mut(hwnd) {

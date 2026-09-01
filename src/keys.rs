@@ -153,6 +153,18 @@ pub fn is_modifier_vk(vk: Vk) -> bool {
 /// Teclas de estratagema aceitas pelo jogo, na ordem em que a UI as mostra.
 pub const MODIFIER_KEYS: [&str; 4] = ["LeftControl", "LeftAlt", "Equal", "Minus"];
 
+/// Rótulo curto do modificador na tela de configurações. Não é traduzido — na
+/// v1 também era o mesmo nos dois idiomas.
+pub fn modifier_label(name: &str) -> &str {
+    match name {
+        "LeftControl" => "CTRL",
+        "LeftAlt" => "ALT",
+        "Equal" => "=",
+        "Minus" => "-",
+        other => other,
+    }
+}
+
 /// Scancode do modificador in-game. Nome inválido cai no padrão do jogo (Ctrl).
 pub fn modifier_scan(name: &str) -> Scan {
     match name {
@@ -239,6 +251,16 @@ mod tests {
         for name in MODIFIER_KEYS {
             assert!(vk_from_name(name).is_some(), "{name}");
         }
+    }
+
+    #[test]
+    fn every_modifier_has_the_short_label_of_the_v1_buttons() {
+        assert_eq!(modifier_label("LeftControl"), "CTRL");
+        assert_eq!(modifier_label("LeftAlt"), "ALT");
+        assert_eq!(modifier_label("Equal"), "=");
+        assert_eq!(modifier_label("Minus"), "-");
+        // Um nome fora da lista aparece como está, em vez de sumir do botão.
+        assert_eq!(modifier_label("F5"), "F5");
     }
 
     #[test]

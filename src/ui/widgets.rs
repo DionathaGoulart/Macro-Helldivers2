@@ -176,6 +176,17 @@ pub struct CardHeader<'a> {
     pub accent: Color,
 }
 
+/// Altura que o card consome fora do conteúdo — o que uma tela precisa somar
+/// para saber de quanto card ela precisa.
+pub fn card_chrome(header: bool) -> f32 {
+    CARD_PADDING * 2.0
+        + if header {
+            CARD_HEADER_HEIGHT + CARD_HEADER_GAP
+        } else {
+            0.0
+        }
+}
+
 /// Card do tema (`hd-card`): fundo, borda, raio 16 e um filete de acento no
 /// topo. Devolve o retângulo interno, já descontados padding e header.
 pub fn card(ui: &mut Ui, rect: Rect, header: Option<CardHeader<'_>>) -> Rect {
@@ -300,6 +311,102 @@ pub fn button(ui: &mut Ui, id: Id, rect: Rect, label: &str, variant: ButtonVaria
                 theme::TEXT_DIM.mix(theme::TEXT, hover),
             );
         }
+    }
+    ui.hit(id, rect);
+}
+
+/// Borda dos botões de escolha e de captura (`border-2` do legado).
+const CHOICE_BORDER: f32 = 2.0;
+/// Período do `animate-pulse-hd`, usado pelo botão que espera uma tecla.
+const PULSE_MS: u32 = 1_400;
+
+/// Botão de uma escolha exclusiva (modificador in-game, velocidade, idioma):
+/// amarelo sólido quando é o escolhido, escuro com borda quando não.
+pub fn choice_button(ui: &mut Ui, id: Id, rect: Rect, label: &str, selected: bool) {
+    let hover = ui.fade(id, ui.is_hot(id), HOVER_MS);
+    let rect = if ui.is_pressed(id) {
+        rect.inset(BUTTON_PRESS_INSET)
+    } else {
+        rect
+    };
+    let style = TextStyle::new(font::SIZE_LABEL, Weight::Black)
+        .tracking(font::TRACKING_LABEL)
+        .align(Align::Center)
+        .middle();
+
+    if selected {
+        ui.fill(rect, theme::RADIUS_BUTTON, theme::YELLOW);
+        ui.stroke(
+            rect,
+            theme::RADIUS_BUTTON,
+            CHOICE_BORDER,
+            theme::YELLOW.mix(theme::BG_DEEP, 0.25),
+        );
+        ui.glow(rect, theme::RADIUS_BUTTON, theme::YELLOW);
+        ui.text(rect, label.to_uppercase(), style, theme::TEXT_ON_ACCENT);
+    } else {
+        ui.fill(rect, theme::RADIUS_BUTTON, theme::SURFACE);
+        if hover > 0.0 {
+            ui.fill(
+                rect,
+                theme::RADIUS_BUTTON,
+                theme::YELLOW.alpha(0.05 * hover),
+            );
+        }
+        ui.stroke(
+            rect,
+            theme::RADIUS_BUTTON,
+            CHOICE_BORDER,
+            theme::BORDER.mix(theme::YELLOW.alpha(0.5), hover),
+        );
+        ui.text(
+            rect,
+            label.to_uppercase(),
+            style,
+            theme::TEXT_DIM.mix(theme::TEXT, hover),
+        );
+    }
+    ui.hit(id, rect);
+}
+
+/// Botão de atalho: mostra a tecla ligada e, enquanto espera uma nova, pulsa em
+/// amarelo com o "OUVINDO..." do legado.
+pub fn key_button(ui: &mut Ui, id: Id, rect: Rect, label: &str, capturing: bool) {
+    let style = TextStyle::new(font::SIZE_BODY, Weight::Black)
+        .tracking(font::TRACKING_LABEL)
+        .align(Align::Center)
+        .middle();
+
+    if capturing {
+        // O pulso nunca chega a apagar de vez: a borda continua legível no vale.
+        let intensity = 0.45 + 0.55 * ui.pulse(PULSE_MS);
+        ui.fill(
+            rect,
+            theme::RADIUS_BUTTON,
+            theme::YELLOW.alpha(0.10 * intensity),
+        );
+        ui.stroke(
+            rect,
+            theme::RADIUS_BUTTON,
+            CHOICE_BORDER,
+            theme::YELLOW.alpha(intensity),
+        );
+        ui.text(rect, label.to_uppercase(), style, theme::YELLOW);
+    } else {
+        let hover = ui.fade(id, ui.is_hot(id), HOVER_MS);
+        ui.fill(rect, theme::RADIUS_BUTTON, theme::SURFACE);
+        ui.stroke(
+            rect,
+            theme::RADIUS_BUTTON,
+            CHOICE_BORDER,
+            theme::BORDER.mix(theme::YELLOW.alpha(0.5), hover),
+        );
+        ui.text(
+            rect,
+            label.to_uppercase(),
+            style,
+            theme::TEXT_HOVER.mix(theme::TEXT, hover),
+        );
     }
     ui.hit(id, rect);
 }
