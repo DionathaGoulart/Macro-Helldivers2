@@ -6,6 +6,7 @@
 pub mod bench;
 pub mod data;
 pub mod engine;
+pub mod focus;
 pub mod hooks;
 pub mod i18n;
 pub mod keys;

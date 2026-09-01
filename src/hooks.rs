@@ -38,6 +38,11 @@ use crate::data::{Dir, GameData, SUPPORT_STRATS};
 use crate::keys::{self, Scan, Vk};
 use crate::settings::{Settings, Speed};
 use crate::shared::{EngineCmd, OverlayCmd, Shared, Slots};
+#[cfg(windows)]
+use crate::{
+    focus,
+    shared::{OverlayState, UiEvent},
+};
 
 /// Virtual-key do atalho do overlay (`Ctrl+H`, o mesmo da v1). O Ctrl vem do
 /// estado real do teclado, não da tabela.
@@ -290,8 +295,10 @@ fn run() {
 fn run() {
     use windows::Win32::Foundation::HINSTANCE;
     use windows::Win32::System::LibraryLoader::GetModuleHandleW;
+    use windows::Win32::UI::Accessibility::{SetWinEventHook, UnhookWinEvent, HWINEVENTHOOK};
     use windows::Win32::UI::WindowsAndMessaging::{
-        SetWindowsHookExW, UnhookWindowsHookEx, HHOOK, WH_KEYBOARD_LL,
+        SetWindowsHookExW, UnhookWindowsHookEx, EVENT_SYSTEM_FOREGROUND, HHOOK, WH_KEYBOARD_LL,
+        WINEVENT_OUTOFCONTEXT, WINEVENT_SKIPOWNPROCESS,
     };
 
     if RUNTIME.get().is_none() {
@@ -310,7 +317,7 @@ fn run() {
 
     // SAFETY: o callback é uma `extern "system"` do próprio módulo e o hook é
     // removido pelo guard antes de a thread morrer.
-    let hook =
+    let _hook =
         match unsafe { SetWindowsHookExW(WH_KEYBOARD_LL, Some(keyboard_proc), Some(module), 0) } {
             Ok(hook) => KeyboardHook(hook),
             Err(err) => {
@@ -320,10 +327,40 @@ fn run() {
         };
     log::info!("hook de teclado instalado");
 
-    pump();
-    drop(hook);
+    // `SKIPOWNPROCESS` corta os eventos das nossas próprias janelas, e isso é
+    // seguro: janela principal e overlay classificam como "em foco" (R10), então
+    // não ver a troca entre elas e o jogo dá exatamente o mesmo estado. O que
+    // interessa — o foco indo para um app de terceiros — sempre chega.
+    //
+    // SAFETY: callback do próprio módulo; o guard desfaz o registro.
+    let win_event = unsafe {
+        SetWinEventHook(
+            EVENT_SYSTEM_FOREGROUND,
+            EVENT_SYSTEM_FOREGROUND,
+            None,
+            Some(win_event_proc),
+            0,
+            0,
+            WINEVENT_OUTOFCONTEXT | WINEVENT_SKIPOWNPROCESS,
+        )
+    };
+    let _win_event = if win_event.is_invalid() {
+        // Sem o evento sobra o timer: mais lento para reagir, mas o app continua
+        // correto — nenhum estado depende de o evento ter chegado.
+        log::warn!("SetWinEventHook recusado; o foco passa a depender só do timer");
+        None
+    } else {
+        log::info!("hook de foreground instalado");
+        Some(ForegroundHook(win_event))
+    };
 
-    /// Desinstala o hook aconteça o que acontecer com a thread.
+    // Quem está na frente agora, antes de qualquer evento chegar.
+    refresh_focus(None);
+    let timer = FocusTimer::start();
+
+    pump(timer.id());
+
+    /// Desinstala o hook de teclado aconteça o que acontecer com a thread.
     struct KeyboardHook(HHOOK);
 
     impl Drop for KeyboardHook {
@@ -334,13 +371,65 @@ fn run() {
             }
         }
     }
+
+    struct ForegroundHook(HWINEVENTHOOK);
+
+    impl Drop for ForegroundHook {
+        fn drop(&mut self) {
+            // SAFETY: handle devolvido pelo `SetWinEventHook` desta thread.
+            let _ = unsafe { UnhookWinEvent(self.0) };
+        }
+    }
 }
 
-/// Fila de mensagens da thread: é ela que entrega as chamadas do hook.
+/// Rede de segurança do foco: um evento perdido (janela que troca sem gerar
+/// `EVENT_SYSTEM_FOREGROUND`, hook recusado) se corrige no próximo tique. É
+/// também o batimento que reafirma o overlay no topo do z-order — os mesmos ~5s
+/// que a v1 usava, lá contados em tiques de polling.
 #[cfg(windows)]
-fn pump() {
+const FOCUS_TIMER_MS: u32 = 5_000;
+
+/// Timer de thread (sem janela): as mensagens caem direto no pump.
+#[cfg(windows)]
+struct FocusTimer(usize);
+
+#[cfg(windows)]
+impl FocusTimer {
+    fn start() -> FocusTimer {
+        use windows::Win32::UI::WindowsAndMessaging::SetTimer;
+
+        // SAFETY: timer de thread; sem janela e sem `TIMERPROC` não há ponteiro
+        // em jogo. O id é escolhido pelo sistema quando `hwnd` é nulo.
+        let id = unsafe { SetTimer(None, 0, FOCUS_TIMER_MS, None) };
+        if id == 0 {
+            log::warn!("SetTimer recusado; o foco passa a depender só dos eventos");
+        }
+        FocusTimer(id)
+    }
+
+    fn id(&self) -> usize {
+        self.0
+    }
+}
+
+#[cfg(windows)]
+impl Drop for FocusTimer {
+    fn drop(&mut self) {
+        use windows::Win32::UI::WindowsAndMessaging::KillTimer;
+
+        if self.0 != 0 {
+            // SAFETY: par do `SetTimer` desta thread.
+            let _ = unsafe { KillTimer(None, self.0) };
+        }
+    }
+}
+
+/// Fila de mensagens da thread: é por ela que chegam as chamadas do hook de
+/// foreground e os tiques do timer.
+#[cfg(windows)]
+fn pump(timer_id: usize) {
     use windows::Win32::UI::WindowsAndMessaging::{
-        DispatchMessageW, GetMessageW, TranslateMessage, MSG,
+        DispatchMessageW, GetMessageW, TranslateMessage, MSG, WM_TIMER,
     };
 
     let mut msg = MSG::default();
@@ -354,6 +443,12 @@ fn pump() {
                 break;
             }
             _ => {
+                // Timer de thread não tem janela para despachar: é aqui que ele
+                // vira trabalho.
+                if msg.message == WM_TIMER && timer_id != 0 && msg.wParam.0 == timer_id {
+                    refresh_focus(None);
+                    continue;
+                }
                 // SAFETY: mensagem recém-preenchida pelo `GetMessageW`.
                 unsafe {
                     let _ = TranslateMessage(&msg);
@@ -362,6 +457,125 @@ fn pump() {
             }
         }
     }
+}
+
+/// Callback do `SetWinEventHook`. Chega pela fila desta thread
+/// (`WINEVENT_OUTOFCONTEXT`), então pode trabalhar à vontade.
+#[cfg(windows)]
+unsafe extern "system" fn win_event_proc(
+    _hook: windows::Win32::UI::Accessibility::HWINEVENTHOOK,
+    event: u32,
+    hwnd: windows::Win32::Foundation::HWND,
+    id_object: i32,
+    id_child: i32,
+    _thread: u32,
+    _time: u32,
+) {
+    use windows::Win32::UI::WindowsAndMessaging::{
+        CHILDID_SELF, EVENT_SYSTEM_FOREGROUND, OBJID_WINDOW,
+    };
+
+    // Só a janela em si; menus, cursores e outros objetos da mesma janela geram
+    // o evento com outro `idObject`.
+    if event != EVENT_SYSTEM_FOREGROUND
+        || id_object != OBJID_WINDOW.0
+        || id_child != CHILDID_SELF as i32
+    {
+        return;
+    }
+    refresh_focus(Some(hwnd));
+}
+
+/// Reclassifica a janela em foco e aplica o que a troca provoca.
+#[cfg(windows)]
+fn refresh_focus(hwnd: Option<windows::Win32::Foundation::HWND>) {
+    use windows::Win32::Foundation::HWND;
+    use windows::Win32::UI::WindowsAndMessaging::{GetForegroundWindow, GetWindowTextW};
+
+    let Some(runtime) = RUNTIME.get() else {
+        return;
+    };
+
+    // SAFETY: leitura de estado global, sem ponteiros nossos.
+    let hwnd = hwnd.unwrap_or_else(|| unsafe { GetForegroundWindow() });
+    if hwnd == HWND::default() {
+        // Acontece em transições rápidas; a v1 também ignorava a leitura vazia.
+        return;
+    }
+
+    // Títulos longos são truncados: as três palavras que a regra R10 procura
+    // vivem no começo, e um buffer de pilha evita alocar a cada troca de janela.
+    let mut buffer = [0u16; 256];
+    // SAFETY: `GetWindowTextW` recebe o buffer e o próprio tamanho dele.
+    let len = unsafe { GetWindowTextW(hwnd, &mut buffer) };
+    if len <= 0 {
+        // Janela sem título ou que sumiu no meio da leitura: a v1 devolvia sem
+        // mexer no estado, para não desarmar os macros por engano.
+        return;
+    }
+    let title = String::from_utf16_lossy(&buffer[..len as usize]);
+
+    let settings = runtime.shared.settings_snapshot();
+    let context = focus::Context {
+        enable_overlay: settings.enable_overlay,
+        always_show_slots: settings.always_show_slots,
+        overlay_visible: runtime.shared.overlay_state() != OverlayState::Hidden,
+    };
+
+    let window = focus::classify(&title);
+    let effects = WATCHER.with(|watcher| watcher.borrow_mut().observe(window, context));
+    apply(runtime, window, &title, effects);
+}
+
+// A máquina de estados só é tocada pela thread de hooks — o evento de
+// foreground e o timer chegam os dois pela fila dela.
+#[cfg(windows)]
+thread_local! {
+    static WATCHER: std::cell::RefCell<focus::Watcher> =
+        std::cell::RefCell::new(focus::Watcher::new());
+}
+
+#[cfg(windows)]
+fn apply(runtime: &Runtime, window: focus::Window, title: &str, effects: focus::Effects) {
+    if effects.focus_changed {
+        // Primeiro a flag: é ela que arma o hook e o que uma sequência em
+        // andamento consulta para abortar. Os avisos vêm depois.
+        runtime.shared.set_game_focused(effects.focused);
+        log::debug!(
+            "foco {}: {window:?} · \"{title}\"",
+            if effects.focused { "ativo" } else { "inativo" }
+        );
+        runtime.shared.send_ui(UiEvent::GameFocus(effects.focused));
+
+        if let Some(state) = effects.overlay {
+            runtime.shared.send_overlay(OverlayCmd::SetState(state));
+        }
+        if effects.check_fullscreen {
+            let warning = exclusive_fullscreen();
+            runtime.shared.send_ui(UiEvent::FullscreenWarning(warning));
+            runtime
+                .shared
+                .send_overlay(OverlayCmd::FullscreenWarning(warning));
+        }
+        if effects.check_updates {
+            // A Fase 10 pluga o updater aqui: a v1 adiava o check enquanto o
+            // jogo estava em foco e disparava na primeira perda de foco.
+            log::debug!("foco perdido: janela livre para checar atualizações (Fase 10)");
+        }
+    }
+
+    if effects.reassert {
+        runtime.shared.send_overlay(OverlayCmd::Reassert);
+    }
+}
+
+/// O HD2 em "Tela Cheia" exclusiva se auto-minimiza quando qualquer janela
+/// desenha por cima, então o app avisa em vez de deixar o overlay quebrar o
+/// jogo. A leitura de `user_settings.config` é da Fase 9 (`game_config.rs`,
+/// R11); até lá o app se comporta como a v1 quando não conseguia ler o arquivo.
+#[cfg(windows)]
+fn exclusive_fullscreen() -> bool {
+    false
 }
 
 /// Callback do `WH_KEYBOARD_LL`. Roda em toda tecla do sistema: compara, manda
