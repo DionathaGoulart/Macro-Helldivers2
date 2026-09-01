@@ -5,6 +5,7 @@
 //! chaves da intro de boot (a animação foi cortada: o app abre direto) e as do
 //! modificador de corrida (removido junto com a feature).
 
+use crate::data::EquipSlot;
 use crate::settings::{Language, Speed};
 
 pub struct Tr {
@@ -146,6 +147,30 @@ pub struct Update {
     pub body: &'static str,
     pub restart_now: &'static str,
     pub later: &'static str,
+}
+
+impl Build {
+    /// Rótulo da categoria de equipamento.
+    pub fn equip_label(&self, slot: EquipSlot) -> &'static str {
+        match slot {
+            EquipSlot::Primary => self.primary,
+            EquipSlot::Secondary => self.secondary,
+            EquipSlot::Grenade => self.grenade,
+            EquipSlot::Armor => self.armor,
+            EquipSlot::Helmet => self.helmet,
+            EquipSlot::Cape => self.cape,
+            EquipSlot::Booster => self.booster,
+        }
+    }
+
+    /// Peso da armadura, como o `peso` vem do `equipment.json`.
+    pub fn weight(&self, peso: &str) -> &'static str {
+        match peso {
+            "Light" => self.weight_light,
+            "Heavy" => self.weight_heavy,
+            _ => self.weight_medium,
+        }
+    }
 }
 
 impl SettingsText {
@@ -479,6 +504,22 @@ mod tests {
                 assert!(!text.speed(speed).is_empty(), "{language} {speed}");
             }
         }
+    }
+
+    #[test]
+    fn equipment_and_weight_labels_cover_every_value() {
+        for language in Language::ALL {
+            let text = &tr(language).build;
+            for slot in EquipSlot::ALL {
+                assert!(!text.equip_label(slot).is_empty(), "{language} {slot:?}");
+            }
+        }
+        let pt = &tr(Language::Pt).build;
+        assert_eq!(pt.weight("Light"), "Leve");
+        assert_eq!(pt.weight("Heavy"), "Pesada");
+        // Peso desconhecido cai em "Média", como o ternário da v1.
+        assert_eq!(pt.weight("Medium"), "Média");
+        assert_eq!(pt.weight("Exosuit"), "Média");
     }
 
     #[test]

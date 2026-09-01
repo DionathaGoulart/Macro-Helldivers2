@@ -106,11 +106,12 @@ mod platform {
     use crate::shared::{
         FlashKind, OverlayCmd, OverlayState, Shared, Slots, UiEvent, WM_APP_UI_EVENT,
     };
+    use crate::ui::build_tab::{self, BuildTab};
     use crate::ui::macro_tab::{self, Action, MacroTab};
     use crate::ui::settings_tab::{self, BackupStatus, Change, SettingsTab};
     use crate::ui::theme::{self, font, Color, Scale};
     use crate::ui::toolkit::{Align, Id, Input, Rect, TextStyle, Ui, Weight};
-    use crate::ui::widgets::{self, CardHeader, Tab, TAB_BAR_HEIGHT};
+    use crate::ui::widgets::{self, Tab, TAB_BAR_HEIGHT};
     use crate::{focus, hooks, i18n, loadouts, util};
 
     const CLASS_NAME: PCWSTR = w!("MacroHelldivers2Main");
@@ -360,6 +361,7 @@ mod platform {
         tab: usize,
         language: Language,
         macro_tab: MacroTab,
+        build_tab: BuildTab,
         settings_tab: SettingsTab,
         /// Diálogo de backup pedido e ainda não aberto (ver [`App::request_backup`]).
         pending_backup: Option<BackupRequest>,
@@ -397,6 +399,7 @@ mod platform {
                 tab: 0,
                 language: settings.language,
                 macro_tab: MacroTab::new(),
+                build_tab: BuildTab::new(),
                 settings_tab: SettingsTab::new(),
                 pending_backup: None,
                 edits: Vec::new(),
@@ -570,6 +573,19 @@ mod platform {
                         return;
                     }
                 }
+                1 => {
+                    let settings = self.shared.settings_snapshot();
+                    let ctx = build_tab::Ctx {
+                        data: &self.data,
+                        settings: &settings,
+                        slots: self.shared.slots(),
+                        focused_edit: self.focused_edit,
+                    };
+                    if let Some(action) = self.build_tab.on_click(clicked, &ctx) {
+                        self.apply_build(action);
+                        return;
+                    }
+                }
                 2 => {
                     let settings = self.shared.settings_snapshot();
                     let ctx = settings_tab::Ctx {
@@ -589,8 +605,18 @@ mod platform {
             match action {
                 Action::Redraw => self.rebuild(),
                 Action::SlotsChanged(slots) => self.update_slots(slots),
-                Action::FocusSearch => self.focus_search(),
-                Action::ClearSearch => self.clear_search(),
+                Action::FocusSearch => self.focus_edit(macro_tab::search_id()),
+                Action::ClearSearch => self.clear_edit(macro_tab::search_id()),
+            }
+        }
+
+        fn apply_build(&mut self, action: build_tab::Action) {
+            match action {
+                build_tab::Action::Redraw => self.rebuild(),
+                build_tab::Action::Setting(change) => self.apply_change(change),
+                build_tab::Action::SlotsChanged(slots) => self.update_slots(slots),
+                build_tab::Action::FocusSearch => self.focus_edit(build_tab::search_id()),
+                build_tab::Action::ClearSearch => self.clear_edit(build_tab::search_id()),
             }
         }
 
@@ -687,23 +713,31 @@ mod platform {
             }
         }
 
-        /// Tecla recebida pela janela. `true` quando a aba de configurações a
-        /// consumiu, e ela não deve seguir para o tratamento padrão.
+        /// Tecla recebida pela janela. `true` quando a aba da frente a consumiu,
+        /// e ela não deve seguir para o tratamento padrão.
         fn on_key(&mut self, vk: u16) -> bool {
-            if self.tab != 2 {
-                return false;
+            match self.tab {
+                1 => match self.build_tab.on_key(vk) {
+                    Some(action) => {
+                        self.apply_build(action);
+                        true
+                    }
+                    None => false,
+                },
+                2 => match self.settings_tab.on_key(vk) {
+                    Some(action) => {
+                        self.apply_settings(action);
+                        true
+                    }
+                    None => false,
+                },
+                _ => false,
             }
-            let Some(action) = self.settings_tab.on_key(vk) else {
-                return false;
-            };
-            self.apply_settings(action);
-            true
         }
 
-        /// O `EDIT` da busca só existe quando tem foco ou texto; o clique na
+        /// Um `EDIT` de busca só existe quando tem foco ou texto; o clique na
         /// moldura é o que o traz à tona.
-        fn focus_search(&mut self) {
-            let id = macro_tab::search_id();
+        fn focus_edit(&mut self, id: Id) {
             self.focused_edit = Some(id);
             self.rebuild();
             if let Some(child) = self.edits.iter().find(|edit| edit.id == id) {
@@ -714,21 +748,29 @@ mod platform {
             }
         }
 
-        /// Esvazia o campo de busca: o filho nativo e o estado da aba.
+        /// Esvazia um campo de busca: o filho nativo e o estado da aba.
         ///
         /// Os dois lados são acertados de propósito — o `EN_CHANGE` de uma
         /// escrita programática não é garantido, e quando ele vem a aba já está
         /// com o mesmo texto e ignora o aviso.
-        fn clear_search(&mut self) {
-            let id = macro_tab::search_id();
+        fn clear_edit(&mut self, id: Id) {
             if let Some(child) = self.edits.iter().find(|edit| edit.id == id) {
                 // SAFETY: filho vivo; a string vive durante a chamada.
                 unsafe {
                     let _ = SetWindowTextW(child.hwnd, w!(""));
                 }
             }
-            self.macro_tab.set_search(String::new());
+            self.set_edit_text(id, String::new());
             self.rebuild();
+        }
+
+        /// Entrega o texto novo à aba dona do campo.
+        fn set_edit_text(&mut self, id: Id, text: String) {
+            if id == macro_tab::search_id() {
+                self.macro_tab.set_search(text);
+            } else if id == build_tab::search_id() {
+                self.build_tab.set_search(text);
+            }
         }
 
         // --- Filhos nativos ---
@@ -858,11 +900,8 @@ mod platform {
             else {
                 return;
             };
-            if id != macro_tab::search_id() {
-                return;
-            }
             let text = self.edit_text(ctrl_hwnd);
-            self.macro_tab.set_search(text);
+            self.set_edit_text(id, text);
             self.rebuild();
         }
 
@@ -987,7 +1026,16 @@ mod platform {
                     self.macro_tab
                         .build(&mut self.ui, &mut self.text, body, &ctx);
                 }
-                1 => self.build_tab(body),
+                1 => {
+                    let ctx = build_tab::Ctx {
+                        data: &self.data,
+                        settings: &settings,
+                        slots: self.shared.slots(),
+                        focused_edit: self.focused_edit,
+                    };
+                    self.build_tab
+                        .build(&mut self.ui, &mut self.text, body, &ctx);
+                }
                 _ => {
                     let ctx = settings_tab::Ctx {
                         settings: &settings,
@@ -1015,26 +1063,6 @@ mod platform {
                 message,
                 TextStyle::new(font::SIZE_TINY, Weight::Regular).wrap(),
                 theme::YELLOW,
-            );
-        }
-
-        /// Placeholder da aba de builds (Fases 7 e 8).
-        fn build_tab(&mut self, area: Rect) {
-            let tr = i18n::tr(self.language);
-            let rect = area.inset_xy(PAGE_PADDING, 16.0).with_h(200.0);
-            let content = widgets::card(
-                &mut self.ui,
-                rect,
-                Some(CardHeader {
-                    title: tr.tabs.build,
-                    accent: theme::CYAN,
-                }),
-            );
-            self.ui.text(
-                content,
-                tr.build.hint,
-                TextStyle::new(font::SIZE_BODY, Weight::Regular).wrap(),
-                theme::TEXT_DIM,
             );
         }
 

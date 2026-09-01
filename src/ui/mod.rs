@@ -3,6 +3,7 @@
 //! Tudo o que decide layout, cor e reação a clique é lógica pura e roda no host;
 //! só a janela em si (`window`) precisa do Windows.
 
+pub mod build_tab;
 pub mod macro_tab;
 pub mod settings_tab;
 pub mod theme;

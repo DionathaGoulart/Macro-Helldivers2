@@ -81,6 +81,11 @@ pub enum Change {
     EnableOverlay(bool),
     AlwaysShowSlots(bool),
     Language(Language),
+    // As três opções de sorteio moram na aba de Builds, mas são preferências
+    // como as outras: gravam no mesmo arquivo e pelo mesmo caminho.
+    BuildMatchSet(bool),
+    BuildBalanced(bool),
+    BuildMaxOneSentry(bool),
 }
 
 impl Change {
@@ -104,6 +109,9 @@ impl Change {
             Change::EnableOverlay(on) => settings.enable_overlay = *on,
             Change::AlwaysShowSlots(on) => settings.always_show_slots = *on,
             Change::Language(language) => settings.language = *language,
+            Change::BuildMatchSet(on) => settings.build_match_set = *on,
+            Change::BuildBalanced(on) => settings.build_balanced = *on,
+            Change::BuildMaxOneSentry(on) => settings.build_max_one_sentry = *on,
         }
     }
 }
@@ -948,6 +956,9 @@ mod tests {
             Change::EnableOverlay(false),
             Change::AlwaysShowSlots(true),
             Change::Language(Language::En),
+            Change::BuildMatchSet(false),
+            Change::BuildBalanced(true),
+            Change::BuildMaxOneSentry(true),
         ];
         for change in &changes {
             change.apply(&mut settings);
@@ -961,6 +972,9 @@ mod tests {
         assert!(!settings.enable_overlay);
         assert!(settings.always_show_slots);
         assert_eq!(settings.language, Language::En);
+        assert!(!settings.build_match_set);
+        assert!(settings.build_balanced);
+        assert!(settings.build_max_one_sentry);
 
         // Índice fora da faixa não pode entrar em pânico nem inventar slot.
         Change::Shortcut {
