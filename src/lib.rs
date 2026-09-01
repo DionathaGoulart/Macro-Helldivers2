@@ -4,6 +4,7 @@
 //! bancada (`src/bin/`) possam usar os mesmos módulos do app sem duplicar código.
 
 pub mod data;
+pub mod engine;
 pub mod i18n;
 pub mod keys;
 pub mod settings;
