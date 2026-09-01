@@ -308,15 +308,29 @@ pub enum Visual {
     Ellipse {
         color: Color,
     },
+    /// Segmento com pontas arredondadas. É o traço das setas do codex, que os
+    /// ícones do legado desenhavam como linha + chevron.
+    Line {
+        from: (f32, f32),
+        to: (f32, f32),
+        width: f32,
+        color: Color,
+    },
     Text {
         text: String,
         style: TextStyle,
         color: Color,
     },
     /// Caminho relativo à raiz de `assets/`.
+    ///
+    /// `radius` recorta a imagem num retângulo arredondado (o `overflow-hidden`
+    /// dos cards) e `zoom` amplia o conteúdo em torno do centro sem mexer no
+    /// retângulo — juntos são o `object-cover` + `group-hover:scale-110` do CSS.
     Image {
         path: PathBuf,
         opacity: f32,
+        radius: f32,
+        zoom: f32,
     },
 }
 
@@ -383,8 +397,9 @@ pub trait Painter: Measure {
     fn gradient(&mut self, rect: Rect, radius: f32, from: Color, to: Color);
     fn stroke(&mut self, rect: Rect, radius: f32, width: f32, color: Color);
     fn ellipse(&mut self, rect: Rect, color: Color);
+    fn line(&mut self, from: (f32, f32), to: (f32, f32), width: f32, color: Color);
     fn text(&mut self, rect: Rect, text: &str, style: TextStyle, color: Color);
-    fn image(&mut self, rect: Rect, path: &Path, opacity: f32);
+    fn image(&mut self, rect: Rect, path: &Path, opacity: f32, radius: f32, zoom: f32);
 }
 
 /// Percorre a lista de desenho. É tudo o que acontece num `WM_PAINT`.
@@ -402,8 +417,19 @@ pub fn paint(frame: &Frame, painter: &mut dyn Painter) {
                 color,
             } => painter.stroke(node.rect, *radius, *width, *color),
             Visual::Ellipse { color } => painter.ellipse(node.rect, *color),
+            Visual::Line {
+                from,
+                to,
+                width,
+                color,
+            } => painter.line(*from, *to, *width, *color),
             Visual::Text { text, style, color } => painter.text(node.rect, text, *style, *color),
-            Visual::Image { path, opacity } => painter.image(node.rect, path, *opacity),
+            Visual::Image {
+                path,
+                opacity,
+                radius,
+                zoom,
+            } => painter.image(node.rect, path, *opacity, *radius, *zoom),
         }
     }
     painter.set_clip(None);
@@ -599,6 +625,28 @@ impl Ui {
         self.push_node(rect, Visual::Ellipse { color });
     }
 
+    /// Segmento entre dois pontos. O retângulo do nó é a caixa que o traço
+    /// ocupa — um segmento vertical tem largura zero, e sem a folga da espessura
+    /// ele seria descartado como vazio.
+    pub fn line(&mut self, from: (f32, f32), to: (f32, f32), width: f32, color: Color) {
+        let half = width / 2.0;
+        let rect = Rect {
+            x: from.0.min(to.0) - half,
+            y: from.1.min(to.1) - half,
+            w: (from.0 - to.0).abs() + width,
+            h: (from.1 - to.1).abs() + width,
+        };
+        self.push_node(
+            rect,
+            Visual::Line {
+                from,
+                to,
+                width,
+                color,
+            },
+        );
+    }
+
     pub fn text(&mut self, rect: Rect, text: impl Into<String>, style: TextStyle, color: Color) {
         let text = text.into();
         if text.is_empty() {
@@ -609,11 +657,26 @@ impl Ui {
 
     /// `path` é relativo à raiz de `assets/` (ex.: `icons/stratagems/x.webp`).
     pub fn image(&mut self, rect: Rect, path: impl Into<PathBuf>, opacity: f32) {
+        self.image_rounded(rect, path, opacity, 0.0, 1.0);
+    }
+
+    /// Imagem recortada num retângulo arredondado e, com `zoom > 1`, ampliada
+    /// em torno do centro — o que sobra para fora do recorte é cortado.
+    pub fn image_rounded(
+        &mut self,
+        rect: Rect,
+        path: impl Into<PathBuf>,
+        opacity: f32,
+        radius: f32,
+        zoom: f32,
+    ) {
         self.push_node(
             rect,
             Visual::Image {
                 path: path.into(),
                 opacity,
+                radius,
+                zoom,
             },
         );
     }
@@ -896,10 +959,14 @@ mod tests {
         fn ellipse(&mut self, _rect: Rect, _color: Color) {
             self.calls.push("ellipse".into());
         }
+        fn line(&mut self, from: (f32, f32), to: (f32, f32), _width: f32, _color: Color) {
+            self.calls
+                .push(format!("line {} {} {} {}", from.0, from.1, to.0, to.1));
+        }
         fn text(&mut self, _rect: Rect, text: &str, _style: TextStyle, _color: Color) {
             self.calls.push(format!("text {text}"));
         }
-        fn image(&mut self, _rect: Rect, path: &Path, _opacity: f32) {
+        fn image(&mut self, _rect: Rect, path: &Path, _opacity: f32, _radius: f32, _zoom: f32) {
             self.calls.push(format!("image {}", path.display()));
         }
     }
@@ -1200,6 +1267,56 @@ mod tests {
             vec!["fill 1 2", "text MACROS", "image icons/tray.png"]
         );
         assert_eq!(painter.clip, None, "o recorte é solto no fim");
+    }
+
+    #[test]
+    fn a_line_keeps_its_endpoints_and_gets_a_box_with_the_stroke_width() {
+        let mut ui = Ui::new();
+        ui.begin(0);
+        // Vertical: sem a folga da espessura o retângulo sairia vazio.
+        ui.line((10.0, 4.0), (10.0, 20.0), 2.0, theme::CYAN);
+        ui.end();
+
+        let node = &ui.frame().nodes[0];
+        assert_eq!(node.rect, Rect::new(9.0, 3.0, 2.0, 18.0));
+
+        let mut painter = Recorder::default();
+        paint(ui.frame(), &mut painter);
+        assert_eq!(painter.calls, vec!["line 10 4 10 20"]);
+    }
+
+    #[test]
+    fn an_image_carries_its_corner_radius_and_zoom() {
+        let mut ui = Ui::new();
+        ui.begin(0);
+        ui.image(Rect::new(0.0, 0.0, 10.0, 10.0), "icons/tray.png", 1.0);
+        ui.image_rounded(
+            Rect::new(0.0, 0.0, 10.0, 10.0),
+            "icons/tray.png",
+            0.7,
+            16.0,
+            1.1,
+        );
+        ui.end();
+
+        assert_eq!(
+            ui.frame().nodes[0].visual,
+            Visual::Image {
+                path: "icons/tray.png".into(),
+                opacity: 1.0,
+                radius: 0.0,
+                zoom: 1.0
+            },
+            "o atalho desenha a imagem inteira, sem recorte nem ampliação"
+        );
+        assert!(matches!(
+            ui.frame().nodes[1].visual,
+            Visual::Image {
+                radius: 16.0,
+                zoom: 1.1,
+                ..
+            }
+        ));
     }
 
     #[test]

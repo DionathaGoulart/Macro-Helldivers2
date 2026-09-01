@@ -103,6 +103,8 @@ pub const HAIRLINE: Color = Color::rgba(0xFFFFFF, 0.05);
 pub const SURFACE: Color = Color::rgba(0x020617, 0.60);
 /// `hover:bg-slate-900/50` das abas inativas.
 pub const SURFACE_HOVER: Color = Color::rgba(0x0F172A, 0.50);
+/// `bg-slate-800/80`: fundo do slot em edição.
+pub const SURFACE_ACTIVE: Color = Color::rgba(0x1E293B, 0.80);
 /// Trilho e polegar da barra de rolagem (`scrollbar-hd`, 5px).
 pub const SCROLL_THUMB: Color = Color::rgba(0x1E293B, 0.80);
 
