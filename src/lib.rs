@@ -3,5 +3,7 @@
 //! O crate expõe uma biblioteca além do binário para que os utilitários de
 //! bancada (`src/bin/`) possam usar os mesmos módulos do app sem duplicar código.
 
+pub mod data;
+pub mod keys;
 pub mod settings;
 pub mod util;
