@@ -88,6 +88,58 @@ pub fn write_atomic(path: &Path, bytes: &[u8]) -> Result<()> {
     Ok(())
 }
 
+/// Nome do mutex global que marca "já existe um app rodando".
+#[cfg(windows)]
+const INSTANCE_MUTEX: windows::core::PCWSTR = windows::core::w!("Global\\MacroHelldivers2");
+
+/// Marca desta instância no sistema. Enquanto o guard existir, uma segunda
+/// execução enxerga o mutex e sabe que chegou depois.
+///
+/// A Fase 10 completa o comportamento: trazer a janela da primeira instância
+/// para a frente e encerrar a segunda. Aqui o mutex já existe para que o
+/// instalador e o updater possam detectar o app em execução.
+#[cfg(windows)]
+pub struct InstanceLock {
+    handle: windows::Win32::Foundation::HANDLE,
+    /// Já havia outra instância quando esta subiu.
+    pub already_running: bool,
+}
+
+#[cfg(windows)]
+impl InstanceLock {
+    pub fn acquire() -> Option<InstanceLock> {
+        use windows::Win32::Foundation::ERROR_ALREADY_EXISTS;
+        use windows::Win32::System::Threading::CreateMutexW;
+
+        // SAFETY: nome estático; o handle é fechado no `Drop`.
+        let handle = unsafe { CreateMutexW(None, true, INSTANCE_MUTEX) };
+        // O erro tem que ser lido logo depois da chamada: é ele, e não o
+        // handle, que diz se o mutex já existia.
+        let already_running =
+            windows::core::Error::from_thread().code() == ERROR_ALREADY_EXISTS.to_hresult();
+        match handle {
+            Ok(handle) => Some(InstanceLock {
+                handle,
+                already_running,
+            }),
+            Err(err) => {
+                log::warn!("CreateMutexW falhou ({err}); seguindo sem instância única");
+                None
+            }
+        }
+    }
+}
+
+#[cfg(windows)]
+impl Drop for InstanceLock {
+    fn drop(&mut self) {
+        use windows::Win32::Foundation::CloseHandle;
+
+        // SAFETY: handle criado por `acquire`, fechado uma vez só.
+        let _ = unsafe { CloseHandle(self.handle) };
+    }
+}
+
 /// Liga o logger. Sem console em release, então isto serve principalmente para
 /// rodar o app a partir de um terminal com `RUST_LOG=debug` durante o diagnóstico.
 pub fn init_logging() {

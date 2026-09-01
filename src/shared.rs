@@ -16,6 +16,11 @@ use crate::settings::{Settings, Speed, SLOT_COUNT};
 /// Ids de estratagema equipados nos 4 slots.
 pub type Slots = [Option<u32>; SLOT_COUNT];
 
+/// Mensagens `WM_APP` que acordam cada pump (R3). O canal carrega o dado; a
+/// mensagem só avisa a thread dona da janela de que há algo para drenar.
+pub const WM_APP_UI_EVENT: u32 = 0x8000 + 1;
+pub const WM_APP_OVERLAY: u32 = 0x8000 + 2;
+
 /// O overlay nunca é escondido de verdade (mostrar janela rouba foco do jogo);
 /// o que muda é o estado, e com ele os bounds das janelas.
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
@@ -206,12 +211,41 @@ impl Shared {
 
     pub fn send_overlay(&self, cmd: OverlayCmd) {
         let _ = self.overlay_tx.send(cmd);
+        wake(&self.overlay_hwnd, WM_APP_OVERLAY);
     }
 
     pub fn send_ui(&self, event: UiEvent) {
         let _ = self.ui_tx.send(event);
+        wake(&self.main_hwnd, WM_APP_UI_EVENT);
     }
 }
+
+/// Acorda o pump da janela alvo. Sem janela registrada (boot, overlay
+/// desligado) não há o que acordar, e o evento fica no canal para quando ela
+/// aparecer.
+#[cfg(windows)]
+fn wake(hwnd: &AtomicIsize, message: u32) {
+    use windows::Win32::Foundation::{HWND, LPARAM, WPARAM};
+    use windows::Win32::UI::WindowsAndMessaging::PostMessageW;
+
+    let raw = hwnd.load(Ordering::Relaxed);
+    if raw == 0 {
+        return;
+    }
+    // SAFETY: `PostMessageW` é assíncrono e seguro de qualquer thread; uma
+    // janela que morreu no meio devolve erro, que é o que a fila do app faria.
+    let _ = unsafe {
+        PostMessageW(
+            Some(HWND(raw as *mut std::ffi::c_void)),
+            message,
+            WPARAM(0),
+            LPARAM(0),
+        )
+    };
+}
+
+#[cfg(not(windows))]
+fn wake(_hwnd: &AtomicIsize, _message: u32) {}
 
 #[cfg(test)]
 mod tests {
