@@ -13,22 +13,15 @@
 //!
 //! ## Teste manual (Windows)
 //!
-//! Sem janela ainda (Fase 4) e sem `slots.json` (Fase 5), o caminho testável é o
-//! atalho de apoio fixo. Edite `%APPDATA%\Macro Helldivers 2\settings.json`:
-//!
-//! ```json
-//! { "supportShortcuts": ["F5", null, null] }
-//! ```
-//!
-//! 1. Abra o Notepad e renomeie o arquivo para `HELLDIVERS 2 test.txt`, de modo
+//! 1. Rode `cargo run` e equipe um estratagema no slot 1 pela aba de macros.
+//! 2. Abra o Notepad e renomeie o arquivo para `HELLDIVERS 2 test.txt`, de modo
 //!    que o título da janela contenha "HELLDIVERS" (R10 classifica por título).
-//! 2. Rode `cargo run` num terminal e volte pro Notepad.
-//! 3. `F5` digita a sequência do Reforço (Ctrl + ↑↓→←↑ em WASD) e **não** deixa
-//!    o `F5` chegar no Notepad.
-//! 4. `Shift+F5` e `Ctrl+F5` disparam igual — qualquer modificador seguro serve,
+//! 3. Com o Notepad em foco, `F1` digita a sequência do estratagema (Ctrl mais
+//!    as direções em WASD) e **não** deixa o `F1` chegar no Notepad.
+//! 4. `Shift+F1` e `Ctrl+F1` disparam igual — qualquer modificador seguro serve,
 //!    que é o motivo de o "modificador de sprint" da v1 ter sido removido.
-//! 5. Segurar `F5` dispara uma vez só: o auto-repeat do teclado é engolido.
-//! 6. Alt-tab pro terminal e `F5` não dispara mais nada (foco perdido).
+//! 5. Segurar `F1` dispara uma vez só: o auto-repeat do teclado é engolido.
+//! 6. Alt-tab pro terminal e `F1` não dispara mais nada (foco perdido).
 
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{Arc, OnceLock, RwLock};

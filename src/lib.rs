@@ -11,6 +11,7 @@ pub mod gfx;
 pub mod hooks;
 pub mod i18n;
 pub mod keys;
+pub mod loadouts;
 pub mod settings;
 pub mod shared;
 pub mod ui;

@@ -103,12 +103,12 @@ mod platform {
     use crate::gfx::d2d::{window_dpi, WindowTarget};
     use crate::gfx::text::{register_gdi_fonts, Text};
     use crate::settings::{Language, Settings};
-    use crate::shared::{OverlayCmd, Shared, Slots, UiEvent, WM_APP_UI_EVENT};
+    use crate::shared::{FlashKind, OverlayCmd, Shared, Slots, UiEvent, WM_APP_UI_EVENT};
     use crate::ui::macro_tab::{self, Action, MacroTab};
     use crate::ui::theme::{self, font, Color, Scale};
     use crate::ui::toolkit::{self, Align, Id, Input, Rect, TextStyle, Ui, Weight};
     use crate::ui::widgets::{self, CardHeader, Tab, TAB_BAR_HEIGHT};
-    use crate::{focus, hooks, i18n};
+    use crate::{focus, hooks, i18n, loadouts};
 
     const CLASS_NAME: PCWSTR = w!("MacroHelldivers2Main");
 
@@ -417,8 +417,16 @@ mod platform {
                         changed |= self.fullscreen_warning != warning;
                         self.fullscreen_warning = warning;
                     }
-                    // Overlay, updater e as piscadas de slot ganham tela nas
-                    // fases seguintes.
+                    UiEvent::MacroTriggered { slot, support } => {
+                        self.flash(slot, support, FlashKind::Triggered);
+                        changed = true;
+                    }
+                    UiEvent::MacroBlocked { slot, support } => {
+                        self.flash(slot, support, FlashKind::Blocked);
+                        changed = true;
+                    }
+                    // Overlay e updater ganham tela nas fases seguintes; o
+                    // andamento da sequência não tem indicador próprio na v1.
                     other => log::debug!("evento de UI ainda sem tela: {other:?}"),
                 }
             }
@@ -427,10 +435,22 @@ mod platform {
             }
         }
 
-        /// Espalha os slots novos: tabela de atalhos e overlay. É o caminho
-        /// único de toda alteração vinda da aba de macros.
+        /// Acende a piscada de um slot: amarela no disparo, vermelha quando o
+        /// engine recusa por já haver uma sequência rodando.
+        fn flash(&mut self, slot: usize, support: bool, kind: FlashKind) {
+            let duration = match kind {
+                FlashKind::Triggered => widgets::FLASH_TRIGGERED_MS,
+                FlashKind::Blocked => widgets::FLASH_BLOCKED_MS,
+            };
+            self.ui
+                .flash(widgets::flash_id(slot, support, kind), duration);
+        }
+
+        /// Espalha os slots novos: disco, tabela de atalhos e overlay. É o
+        /// caminho único de toda alteração vinda da aba de macros.
         fn update_slots(&mut self, slots: Slots) {
             self.shared.set_slots(slots);
+            loadouts::save_slots(&slots);
             hooks::rebuild_bindings();
             self.shared.send_overlay(OverlayCmd::Slots(slots));
             self.rebuild();

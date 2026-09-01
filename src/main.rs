@@ -11,8 +11,8 @@ use anyhow::Result;
 
 use macro_helldivers2::data::GameData;
 use macro_helldivers2::settings::Settings;
-use macro_helldivers2::shared::{Shared, Slots};
-use macro_helldivers2::{engine, hooks, i18n, ui, util};
+use macro_helldivers2::shared::Shared;
+use macro_helldivers2::{engine, hooks, i18n, loadouts, ui, util};
 
 fn main() -> Result<()> {
     util::init_logging();
@@ -33,10 +33,10 @@ fn main() -> Result<()> {
     let text = i18n::tr(settings.language);
     let data = Arc::new(GameData::load()?);
 
-    // Slots ainda saem vazios: `slots.json` chega com a aba de macros (Fase 5).
-    // Até lá só os atalhos de apoio fixo, configurados à mão no settings.json,
-    // resolvem para um binding.
-    let (shared, receivers) = Shared::new(settings, Slots::default());
+    // Os slots são resolvidos contra os dados atuais já na leitura: id que sumiu
+    // do jogo e conflito de exclusividade herdado saem antes de virarem atalho.
+    let slots = loadouts::load_slots(&data);
+    let (shared, receivers) = Shared::new(settings, slots);
     let settings = shared.settings_snapshot();
 
     // O motor fica bloqueado no canal até um atalho chegar. Ele segura uma
