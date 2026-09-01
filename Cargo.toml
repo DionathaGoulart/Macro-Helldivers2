@@ -16,6 +16,9 @@ directories = "6.0.0"
 # Sem features padrão: o app não tem console em release, então cor de terminal e
 # formatação de timestamp (regex + jiff) só engordariam o binário.
 env_logger = { version = "0.11.11", default-features = false }
+# Só os dois formatos que existem em `assets/icons/`: WebP para os ícones do jogo
+# e PNG para o ícone do app. Cada formato extra é um decodificador a mais no exe.
+image = { version = "0.25.9", default-features = false, features = ["webp", "png"] }
 log = "0.4.34"
 rand = "0.10.2"
 serde = { version = "1.0.229", features = ["derive"] }
@@ -27,13 +30,22 @@ spin_sleep = "1.3.3"
 [target.'cfg(windows)'.dependencies]
 windows = { version = "0.62.2", features = [
   "Win32_Foundation",
+  "Win32_Graphics_Direct2D",
+  "Win32_Graphics_Direct2D_Common",
+  "Win32_Graphics_DirectWrite",
+  "Win32_Graphics_Dxgi_Common",
+  "Win32_Graphics_Gdi",
   "Win32_Media",
   "Win32_System_LibraryLoader",
   "Win32_System_Threading",
   "Win32_UI_Accessibility",
+  "Win32_UI_HiDpi",
   "Win32_UI_Input_KeyboardAndMouse",
   "Win32_UI_WindowsAndMessaging",
 ] }
+# `Vector2`/`Matrix3x2` das assinaturas do Direct2D moram aqui: a crate `windows`
+# referencia os tipos, mas não os reexporta.
+windows-numerics = "0.3.1"
 
 [profile.release]
 opt-level = 3
