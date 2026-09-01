@@ -199,11 +199,10 @@ fn dropdown_id(slot: EquipSlot) -> Id {
     id_at("build.dropdown", slot.index())
 }
 
+/// Linha `index` da lista de `slot`. As categorias ficam em faixas separadas do
+/// contador — nenhuma delas chega perto de mil itens.
 fn dropdown_row_id(slot: EquipSlot, index: usize) -> Id {
-    id_at(
-        "build.dropdown.row",
-        slot.index() * data::EQUIP_SLOT_COUNT.pow(3) + index,
-    )
+    id_at("build.dropdown.row", slot.index() * 1_000 + index)
 }
 
 fn dropdown_scroll_id() -> Id {
@@ -389,7 +388,7 @@ impl BuildTab {
         }
 
         // As builds salvas ficam entre o sorteio e a build exibida, como na v1.
-        let chips = self.chip_layout(measure, width - widgets::CARD_PADDING * 2.0, ctx);
+        let chips = self.chip_layout(measure, width - widgets::CARD_PADDING * 2.0);
         let height = saved_height(&chips);
         self.saved_card(ui, Rect::new(view.x, y, width, height), &chips, ctx);
         y += height + SECTION_GAP;
@@ -929,8 +928,7 @@ impl BuildTab {
 
     /// Onde cada chip cai, respeitando a largura disponível: os nomes têm
     /// tamanhos diferentes e a fileira quebra como o `flex-wrap` do legado.
-    fn chip_layout(&self, measure: &mut dyn Measure, width: f32, ctx: &Ctx) -> ChipLayout {
-        let _ = ctx;
+    fn chip_layout(&self, measure: &mut dyn Measure, width: f32) -> ChipLayout {
         let style = chip_style();
         let mut chips = Vec::with_capacity(self.loadouts.len());
         let (mut x, mut y) = (0.0f32, 0.0f32);
