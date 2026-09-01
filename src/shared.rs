@@ -11,6 +11,7 @@ use crossbeam_channel::{unbounded, Receiver, Sender};
 
 use crate::data::Dir;
 use crate::keys::Scan;
+use crate::meta_stats::MetaResult;
 use crate::settings::{Settings, Speed, SLOT_COUNT};
 
 /// Ids de estratagema equipados nos 4 slots.
@@ -86,6 +87,8 @@ pub enum UiEvent {
     FullscreenWarning(bool),
     OverlayState(OverlayState),
     UpdateStatus(UpdateStatus),
+    /// Resposta de uma consulta ao helldive.live, pedida pela aba de builds.
+    MetaStats(MetaResult),
 }
 
 /// Ordem para a thread do overlay.

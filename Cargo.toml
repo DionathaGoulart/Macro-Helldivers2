@@ -26,6 +26,12 @@ serde_json = "1.0.151"
 # Dorme no relógio do SO até onde ele é confiável e gira o resto: é o que segura
 # o desvio das esperas do engine abaixo de 1ms.
 spin_sleep = "1.3.3"
+# Cliente HTTP bloqueante para as estatísticas da comunidade: três GETs num
+# worker efêmero não pagam um runtime assíncrono. TLS pelo `native-tls`, que no
+# Windows é o Schannel do próprio sistema — o rustls padrão arrastaria o `ring`,
+# com criptografia em C que precisa de um compilador C até para o `cargo check`
+# do alvo Windows a partir do macOS.
+ureq = { version = "3.4.0", default-features = false, features = ["json", "native-tls"] }
 
 [target.'cfg(windows)'.dependencies]
 windows = { version = "0.62.2", features = [
