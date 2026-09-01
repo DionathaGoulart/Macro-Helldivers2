@@ -16,6 +16,7 @@ pub struct Tr {
     pub settings: SettingsText,
     pub overlay: Overlay,
     pub update: Update,
+    pub tray: Tray,
 }
 
 pub struct Tabs {
@@ -148,6 +149,13 @@ pub struct Update {
     pub body: &'static str,
     pub restart_now: &'static str,
     pub later: &'static str,
+}
+
+/// Menu do ícone da bandeja. A v1 escrevia os dois em português direto no
+/// `Menu.buildFromTemplate`; aqui eles seguem o idioma escolhido, como o resto.
+pub struct Tray {
+    pub open: &'static str,
+    pub exit: &'static str,
 }
 
 impl Build {
@@ -356,6 +364,10 @@ pub static PT: Tr = Tr {
         restart_now: "Reiniciar Agora",
         later: "Depois",
     },
+    tray: Tray {
+        open: "Abrir Macro Helldivers 2",
+        exit: "Sair",
+    },
 };
 
 pub static EN: Tr = Tr {
@@ -492,6 +504,10 @@ pub static EN: Tr = Tr {
         restart_now: "Restart Now",
         later: "Later",
     },
+    tray: Tray {
+        open: "Open Macro Helldivers 2",
+        exit: "Exit",
+    },
 };
 
 #[cfg(test)]
@@ -594,6 +610,8 @@ mod tests {
                 t.update.body,
                 t.update.restart_now,
                 t.update.later,
+                t.tray.open,
+                t.tray.exit,
             ];
             assert!(strings.iter().all(|s| !s.trim().is_empty()), "{language}");
         }

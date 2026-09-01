@@ -18,5 +18,6 @@ pub mod meta_stats;
 pub mod overlay;
 pub mod settings;
 pub mod shared;
+pub mod tray;
 pub mod ui;
 pub mod util;

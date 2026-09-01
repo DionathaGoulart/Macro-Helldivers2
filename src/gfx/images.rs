@@ -35,8 +35,25 @@ impl Decoded {
     }
 }
 
-/// Decodifica um arquivo do disco. O formato vem do conteúdo, não da extensão.
+/// Como o alfa sai do decodificador.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Alpha {
+    /// Canais já multiplicados pelo alfa, que é o que os render targets do
+    /// Direct2D e as janelas layered esperam.
+    Premultiplied,
+    /// Canais independentes do alfa — o formato dos ícones do Win32
+    /// (`CreateIconIndirect`), que fazem a composição eles mesmos.
+    Straight,
+}
+
+/// Decodifica um arquivo do disco em BGRA pré-multiplicado. O formato vem do
+/// conteúdo, não da extensão.
 pub fn decode(path: &Path) -> Result<Decoded> {
+    decode_alpha(path, Alpha::Premultiplied)
+}
+
+/// Decodifica escolhendo como o alfa entra nos canais.
+pub fn decode_alpha(path: &Path, alpha: Alpha) -> Result<Decoded> {
     let reader = ImageReader::open(path)
         .with_context(|| format!("não foi possível abrir {}", path.display()))?
         .with_guessed_format()
@@ -63,13 +80,17 @@ pub fn decode(path: &Path) -> Result<Decoded> {
     let (width, height) = (rgba.width(), rgba.height());
     let mut bgra = rgba.into_raw();
     for pixel in bgra.chunks_exact_mut(4) {
-        let alpha = pixel[3] as u32;
-        // RGBA direto → BGRA pré-multiplicado, numa passada só.
-        let premultiply = |channel: u8| ((channel as u32 * alpha + 127) / 255) as u8;
+        let a = pixel[3] as u32;
+        // RGBA → BGRA numa passada só, pré-multiplicando pelo caminho quando é
+        // esse o formato pedido.
+        let scale = |channel: u8| match alpha {
+            Alpha::Premultiplied => ((channel as u32 * a + 127) / 255) as u8,
+            Alpha::Straight => channel,
+        };
         let (r, g, b) = (pixel[0], pixel[1], pixel[2]);
-        pixel[0] = premultiply(b);
-        pixel[1] = premultiply(g);
-        pixel[2] = premultiply(r);
+        pixel[0] = scale(b);
+        pixel[1] = scale(g);
+        pixel[2] = scale(r);
     }
 
     Ok(Decoded {
@@ -246,6 +267,36 @@ mod tests {
     fn png_assets_decode_too() {
         let decoded = decode(&util::asset_path("icons/tray.png")).expect("tray.png");
         assert!(decoded.width > 0);
+    }
+
+    /// O ícone da bandeja vira `HICON`, e o Win32 compõe alfa direto — o
+    /// contrário do Direct2D. Nenhum asset do repositório tem transparência
+    /// parcial hoje, então a diferença é medida num arquivo escrito na hora.
+    #[test]
+    fn straight_alpha_leaves_the_channels_independent_of_the_alpha() {
+        let path = std::env::temp_dir().join(format!("mh2-alpha-{}.png", std::process::id()));
+        let mut half = image::RgbaImage::new(2, 2);
+        for pixel in half.pixels_mut() {
+            *pixel = image::Rgba([200, 100, 40, 128]);
+        }
+        half.save(&path).expect("png de teste");
+
+        let straight = decode_alpha(&path, Alpha::Straight).unwrap();
+        let premultiplied = decode(&path).unwrap();
+        let _ = std::fs::remove_file(&path);
+
+        // BGRA: o vermelho do original vai para o terceiro canal.
+        assert_eq!(&straight.bgra[..4], &[40, 100, 200, 128]);
+        assert_eq!(&premultiplied.bgra[..4], &[20, 50, 100, 128]);
+    }
+
+    #[test]
+    fn the_two_alpha_formats_agree_on_an_opaque_icon() {
+        let path = util::asset_path("icons/tray.png");
+        assert_eq!(
+            decode_alpha(&path, Alpha::Straight).unwrap(),
+            decode(&path).unwrap()
+        );
     }
 
     #[test]

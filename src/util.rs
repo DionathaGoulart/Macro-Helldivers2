@@ -327,11 +327,9 @@ pub fn open_dialog(_title: &str, _filter: FileFilter<'_>) -> Result<Option<PathB
 const INSTANCE_MUTEX: windows::core::PCWSTR = windows::core::w!("Global\\MacroHelldivers2");
 
 /// Marca desta instância no sistema. Enquanto o guard existir, uma segunda
-/// execução enxerga o mutex e sabe que chegou depois.
-///
-/// A Fase 10 completa o comportamento: trazer a janela da primeira instância
-/// para a frente e encerrar a segunda. Aqui o mutex já existe para que o
-/// instalador e o updater possam detectar o app em execução.
+/// execução enxerga o mutex, traz a janela da primeira para a frente
+/// ([`focus_running_instance`]) e encerra. O mutex também é o que deixa o
+/// instalador e o updater detectarem o app em execução.
 #[cfg(windows)]
 pub struct InstanceLock {
     handle: windows::Win32::Foundation::HANDLE,
@@ -372,6 +370,40 @@ impl Drop for InstanceLock {
         // SAFETY: handle criado por `acquire`, fechado uma vez só.
         let _ = unsafe { CloseHandle(self.handle) };
     }
+}
+
+/// Traz a janela da instância que já está rodando para a frente.
+///
+/// É o que a segunda execução faz antes de sair (a v1 fazia o mesmo no evento
+/// `second-instance` do Electron). A janela pode estar escondida na bandeja ou
+/// minimizada, então os dois casos são desfeitos antes de pedir o foco.
+///
+/// `false` quando não há janela com essa classe — a primeira instância pode
+/// estar no meio do boot, ainda sem tê-la criado.
+#[cfg(windows)]
+pub fn focus_running_instance(class_name: &str) -> bool {
+    use windows::Win32::UI::WindowsAndMessaging::{
+        FindWindowW, IsIconic, SetForegroundWindow, ShowWindow, SW_RESTORE, SW_SHOW,
+    };
+
+    let class = wide(class_name);
+    // SAFETY: a string vive durante a chamada; `None` procura por qualquer título.
+    let Ok(hwnd) = (unsafe { FindWindowW(windows::core::PCWSTR(class.as_ptr()), None) }) else {
+        return false;
+    };
+
+    // SAFETY: janela recém-encontrada; no pior caso ela morreu no meio e as
+    // chamadas devolvem erro.
+    unsafe {
+        let command = if IsIconic(hwnd).as_bool() {
+            SW_RESTORE
+        } else {
+            SW_SHOW
+        };
+        let _ = ShowWindow(hwnd, command);
+        let _ = SetForegroundWindow(hwnd);
+    }
+    true
 }
 
 /// Liga o logger. Sem console em release, então isto serve principalmente para

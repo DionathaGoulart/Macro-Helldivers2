@@ -18,13 +18,16 @@ fn main() -> Result<()> {
     util::init_logging();
 
     // O guard vive até o fim do `main`: enquanto o app roda, uma segunda
-    // execução encontra o mutex. (Trazer a janela da primeira para a frente é
-    // da Fase 10.)
+    // execução encontra o mutex, devolve o foco para a janela que já existe e
+    // sai — abrir dois processos instalaria dois hooks de teclado, e cada
+    // atalho dispararia a sequência duas vezes.
     #[cfg(windows)]
     let _instance = {
         let lock = util::InstanceLock::acquire();
         if lock.as_ref().is_some_and(|lock| lock.already_running) {
-            log::warn!("já existe uma instância do Macro Helldivers 2 em execução");
+            log::info!("já existe uma instância em execução; trazendo a janela dela para a frente");
+            util::focus_running_instance(ui::window::CLASS_NAME);
+            return Ok(());
         }
         lock
     };

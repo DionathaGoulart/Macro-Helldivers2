@@ -16,6 +16,10 @@ use crate::util;
 /// Arquivo com a última posição da janela (R9).
 pub const BOUNDS_FILE: &str = "window-bounds.json";
 
+/// Classe da janela principal. É por ela que uma segunda instância encontra a
+/// primeira (`util::focus_running_instance`).
+pub const CLASS_NAME: &str = "MacroHelldivers2Main";
+
 /// Tamanho inicial, em DIP — o mesmo da v1.
 pub const DEFAULT_WIDTH: f32 = 820.0;
 pub const DEFAULT_HEIGHT: f32 = 640.0;
@@ -113,9 +117,13 @@ mod platform {
     use crate::ui::theme::{self, font, Color, Scale};
     use crate::ui::toolkit::{Align, Id, Input, Rect, TextStyle, Ui, Weight};
     use crate::ui::widgets::{self, Tab, TAB_BAR_HEIGHT};
-    use crate::{focus, hooks, i18n, loadouts, overlay, util};
+    use crate::{focus, hooks, i18n, loadouts, overlay, tray, util};
 
-    const CLASS_NAME: PCWSTR = w!("MacroHelldivers2Main");
+    use tray::Tray;
+
+    /// A mesma classe de [`super::CLASS_NAME`], como literal estático: o
+    /// `RegisterClassW` quer um ponteiro que viva por toda a sessão.
+    const CLASS: PCWSTR = w!("MacroHelldivers2Main");
 
     /// Salvamento de posição com atraso: arrastar a janela dispara dezenas de
     /// `WM_MOVE`, e só o último interessa.
@@ -128,6 +136,9 @@ mod platform {
     /// Pedido de backup adiado, na faixa `WM_APP` reservada em `shared.rs`.
     /// É só desta janela: nenhuma outra thread a envia.
     const WM_APP_BACKUP: u32 = 0x8000 + 3;
+    /// Callback do ícone da bandeja: o Windows manda o evento de mouse no
+    /// `lParam`.
+    const WM_APP_TRAY: u32 = 0x8000 + 4;
 
     /// Id de controle do primeiro `EDIT` filho; os seguintes vêm em sequência.
     const FIRST_EDIT_CTRL: usize = 1000;
@@ -151,7 +162,7 @@ mod platform {
             hCursor: unsafe { LoadCursorW(None, IDC_ARROW) }.context("LoadCursorW")?,
             // O ícone do executável entra como recurso na Fase 10; até lá a
             // janela usa o padrão do sistema.
-            lpszClassName: CLASS_NAME,
+            lpszClassName: CLASS,
             ..Default::default()
         };
         // SAFETY: a classe vive durante a chamada e não é registrada duas vezes
@@ -177,7 +188,7 @@ mod platform {
         let hwnd = unsafe {
             CreateWindowExW(
                 WINDOW_EX_STYLE::default(),
-                CLASS_NAME,
+                CLASS,
                 PCWSTR(title.as_ptr()),
                 WS_OVERLAPPEDWINDOW,
                 bounds.x,
@@ -378,6 +389,11 @@ mod platform {
         fullscreen_warning: bool,
         tracking_mouse: bool,
         anim_timer: bool,
+        /// `None` quando o ícone não pôde ser criado — e aí fechar a janela
+        /// encerra o app, porque não haveria como trazê-la de volta.
+        tray: Option<Tray>,
+        /// O usuário pediu "Sair": o próximo `WM_CLOSE` encerra de verdade.
+        quitting: bool,
     }
 
     impl App {
@@ -416,6 +432,8 @@ mod platform {
                 fullscreen_warning: false,
                 tracking_mouse: false,
                 anim_timer: false,
+                tray: Tray::new(hwnd, WM_APP_TRAY, focus::APP_WINDOW_TITLE),
+                quitting: false,
             };
             Ok(app)
         }
@@ -1322,6 +1340,73 @@ mod platform {
         }
     }
 
+    // --- Bandeja (fora do `App`) ---
+
+    /// Traz a janela de volta: da bandeja, da barra de tarefas ou de trás de
+    /// outra janela.
+    fn restore_window(hwnd: HWND) {
+        // SAFETY: janela viva; no pior caso as chamadas devolvem erro.
+        unsafe {
+            let command = if IsIconic(hwnd).as_bool() {
+                SW_RESTORE
+            } else {
+                SW_SHOW
+            };
+            let _ = ShowWindow(hwnd, command);
+            let _ = SetForegroundWindow(hwnd);
+        }
+    }
+
+    /// Recolhe para a bandeja. O processo continua de pé com os hooks e o
+    /// motor, que é o ponto do app.
+    fn hide_window(hwnd: HWND) {
+        // A posição é gravada antes de esconder: escondida, a janela reporta
+        // coordenadas que não servem para a próxima abertura.
+        save_bounds(hwnd);
+        // SAFETY: janela viva.
+        unsafe {
+            let _ = ShowWindow(hwnd, SW_HIDE);
+        }
+    }
+
+    /// Abre o menu do ícone e executa a escolha.
+    ///
+    /// Como o diálogo de backup, o menu roda o **próprio** loop de mensagens e
+    /// reentra neste `WndProc`: nenhum empréstimo do `App` pode estar vivo
+    /// enquanto ele está aberto.
+    fn run_tray_menu(hwnd: HWND) {
+        // SAFETY: empréstimo curto, só para copiar o idioma, e solto aqui.
+        let Some(language) = (unsafe { app_mut(hwnd).map(|app| app.language) }) else {
+            return;
+        };
+        let tr = i18n::tr(language);
+        let labels = tray::MenuLabels {
+            open: tr.tray.open,
+            exit: tr.tray.exit,
+        };
+        match tray::show_menu(hwnd, labels) {
+            Some(tray::Command::Open) => restore_window(hwnd),
+            Some(tray::Command::Exit) => quit_app(hwnd),
+            None => {}
+        }
+    }
+
+    /// Encerra o app de verdade: destrói a janela, o que solta o ícone da
+    /// bandeja (no `Drop` do `App`) e fecha o loop de mensagens.
+    fn quit_app(hwnd: HWND) {
+        // SAFETY: empréstimo curto, solto antes do `DestroyWindow` — que chama
+        // `WM_DESTROY` e `WM_NCDESTROY` de dentro dele mesmo.
+        unsafe {
+            if let Some(app) = app_mut(hwnd) {
+                app.quitting = true;
+            }
+        }
+        // SAFETY: janela viva, na própria thread dela.
+        unsafe {
+            let _ = DestroyWindow(hwnd);
+        }
+    }
+
     // --- WndProc ---
 
     /// Empresta o estado da janela. Cada handler cria o empréstimo no menor
@@ -1541,6 +1626,41 @@ mod platform {
                     run_pending_backup(hwnd);
                     LRESULT(0)
                 }
+                // Sem `NIM_SETVERSION`, o evento de mouse do ícone vem na parte
+                // baixa do `lParam` — o formato clássico da bandeja.
+                WM_APP_TRAY => {
+                    match loword(lparam.0 as u32) as u32 {
+                        WM_LBUTTONUP | WM_LBUTTONDBLCLK => restore_window(hwnd),
+                        WM_RBUTTONUP | WM_CONTEXTMENU => run_tray_menu(hwnd),
+                        _ => {}
+                    }
+                    LRESULT(0)
+                }
+                WM_SYSCOMMAND => {
+                    // Minimizar recolhe pra bandeja: o app segue rodando os
+                    // macros em segundo plano (regra da v1).
+                    let minimizing = wparam.0 & 0xFFF0 == SC_MINIMIZE as usize;
+                    let to_tray = minimizing && app_mut(hwnd).is_some_and(|app| app.tray.is_some());
+                    if to_tray {
+                        hide_window(hwnd);
+                        LRESULT(0)
+                    } else {
+                        DefWindowProcW(hwnd, message, wparam, lparam)
+                    }
+                }
+                WM_CLOSE => {
+                    // Fechar também esconde — menos quando o pedido veio do
+                    // "Sair" do menu, ou quando não há ícone na bandeja: aí a
+                    // janela escondida seria irrecuperável.
+                    let to_tray =
+                        app_mut(hwnd).is_some_and(|app| !app.quitting && app.tray.is_some());
+                    if to_tray {
+                        hide_window(hwnd);
+                        LRESULT(0)
+                    } else {
+                        DefWindowProcW(hwnd, message, wparam, lparam)
+                    }
+                }
                 WM_APP_UI_EVENT => {
                     if let Some(app) = app_mut(hwnd) {
                         app.drain_events();
@@ -1593,6 +1713,16 @@ mod platform {
             height: rect.bottom - rect.top,
         }
         .save();
+    }
+
+    #[cfg(test)]
+    mod tests {
+        #[test]
+        fn the_registered_class_matches_the_name_a_second_instance_looks_for() {
+            // SAFETY: literal estático terminado em nulo.
+            let registered = unsafe { super::CLASS.to_string() }.expect("classe em UTF-16");
+            assert_eq!(registered, crate::ui::window::CLASS_NAME);
+        }
     }
 }
 
