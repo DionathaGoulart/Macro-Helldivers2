@@ -1,6 +1,6 @@
 [package]
 name = "macro-helldivers2"
-version = "2.0.0-dev"
+version = "2.0.0"
 edition = "2021"
 rust-version = "1.85"
 description = "Ferramenta de macros otimizada para Helldivers 2"
