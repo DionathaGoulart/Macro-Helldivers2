@@ -13,6 +13,7 @@
 use crate::builds::{self, Build, Locks, Rules};
 use crate::data::{self, EquipSlot, Equipment, GameData, Item, StratMeta, Stratagem};
 use crate::i18n::{self, Tr};
+use crate::loadouts::{self, Loadout};
 use crate::settings::{Settings, SLOT_COUNT};
 use crate::shared::Slots;
 use crate::ui::settings_tab::Change;
@@ -65,6 +66,15 @@ const EQUIP_COLS: usize = 4;
 const CLEAR_SIZE: f32 = 20.0;
 const HOVER_MS: u32 = 180;
 
+/// Chips das builds salvas (`py-2.5 px-4`) e a largura do campo de nome.
+const CHIP_HEIGHT: f32 = 36.0;
+const CHIP_PADDING: f32 = 16.0;
+const CHIP_GAP: f32 = 8.0;
+const NAME_WIDTH: f32 = 200.0;
+const SAVE_WIDTH: f32 = 120.0;
+/// `maxLength={24}` do campo de nome da v1.
+const NAME_MAX_CHARS: usize = 24;
+
 /// Sub-abas da tela, na ordem da v1.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum SubTab {
@@ -94,10 +104,14 @@ pub enum Action {
     Setting(Change),
     /// Slots novos: gravar, refazer a tabela de atalhos e avisar o overlay.
     SlotsChanged(Slots),
-    /// Trazer o `EDIT` da busca para a frente.
-    FocusSearch,
-    /// Esvaziar o `EDIT` da busca.
-    ClearSearch,
+    /// As builds salvas mudaram: gravar `loadouts.json` e avisar o overlay.
+    LoadoutsChanged,
+    /// Uma build foi salva: além de gravar, o campo de nome é esvaziado.
+    Saved,
+    /// Trazer um `EDIT` da aba para a frente.
+    FocusEdit(Id),
+    /// Esvaziar um `EDIT` da aba.
+    ClearEdit(Id),
 }
 
 /// O que a aba precisa saber do resto do app.
@@ -201,6 +215,24 @@ fn scrim_id() -> Id {
     id("build.dropdown.scrim")
 }
 
+fn loadout_id(index: usize) -> Id {
+    id_at("build.loadout", index)
+}
+
+fn loadout_delete_id(index: usize) -> Id {
+    id_at("build.loadout.delete", index)
+}
+
+/// Id do campo com o nome da build. A janela precisa dele para reconhecer o
+/// `EDIT` nativo.
+pub fn name_id() -> Id {
+    id("build.name")
+}
+
+fn save_id() -> Id {
+    id("build.save")
+}
+
 // --- Estilos ---
 
 fn label_style() -> TextStyle {
@@ -228,6 +260,11 @@ pub struct BuildTab {
     field: Rect,
     /// Classificação da wiki, montada na primeira visita (com o `equipment.json`).
     meta: Option<StratMeta>,
+    /// Builds salvas, lidas do disco na primeira visita à aba.
+    loadouts: Vec<Loadout>,
+    loaded: bool,
+    /// Nome digitado para a próxima build salva.
+    name: String,
 }
 
 impl Default for BuildTab {
@@ -249,6 +286,9 @@ impl BuildTab {
             open: None,
             field: Rect::ZERO,
             meta: None,
+            loadouts: Vec::new(),
+            loaded: false,
+            name: String::new(),
         }
     }
 
@@ -263,6 +303,30 @@ impl BuildTab {
         }
         self.search = text;
         self.dirty = true;
+    }
+
+    /// Nome novo vindo do `EDIT` nativo.
+    pub fn set_name(&mut self, text: String) {
+        // O campo da v1 tinha `maxLength={24}`.
+        self.name = text.chars().take(NAME_MAX_CHARS).collect();
+    }
+
+    /// Builds salvas, para a janela gravá-las depois de uma mudança.
+    pub fn loadouts(&self) -> &[Loadout] {
+        &self.loadouts
+    }
+
+    /// Relê o `loadouts.json` — a importação de backup o reescreve por fora.
+    pub fn reload_loadouts(&mut self) {
+        self.loadouts = loadouts::load_loadouts();
+        self.loaded = true;
+    }
+
+    /// Primeira visita à aba: as builds salvas saem do disco.
+    fn ensure_loaded(&mut self) {
+        if !self.loaded {
+            self.reload_loadouts();
+        }
     }
 
     /// Tecla recebida pela janela. Só o Esc interessa, e só com a lista aberta.
@@ -281,6 +345,7 @@ impl BuildTab {
             self.list = builds::custom_list(ctx.data, &self.search);
             self.dirty = false;
         }
+        self.ensure_loaded();
         // Primeira visita à aba: é aqui que `equipment.json` sai do disco (R1).
         let equipment = data::equipment();
 
@@ -322,6 +387,12 @@ impl BuildTab {
                 y += height + SECTION_GAP;
             }
         }
+
+        // As builds salvas ficam entre o sorteio e a build exibida, como na v1.
+        let chips = self.chip_layout(measure, width - widgets::CARD_PADDING * 2.0, ctx);
+        let height = saved_height(&chips);
+        self.saved_card(ui, Rect::new(view.x, y, width, height), &chips, ctx);
+        y += height + SECTION_GAP;
 
         if let Some(build) = self.build.clone() {
             let height = stratagems_height(measure, width, &build, ctx);
@@ -854,6 +925,147 @@ impl BuildTab {
         ui.scroll_end(dropdown_scroll_id(), view, content - 8.0);
     }
 
+    // --- Builds salvas ---
+
+    /// Onde cada chip cai, respeitando a largura disponível: os nomes têm
+    /// tamanhos diferentes e a fileira quebra como o `flex-wrap` do legado.
+    fn chip_layout(&self, measure: &mut dyn Measure, width: f32, ctx: &Ctx) -> ChipLayout {
+        let _ = ctx;
+        let style = chip_style();
+        let mut chips = Vec::with_capacity(self.loadouts.len());
+        let (mut x, mut y) = (0.0f32, 0.0f32);
+
+        for (index, loadout) in self.loadouts.iter().enumerate() {
+            let text = measure
+                .text_size(&loadout.name.to_uppercase(), style, f32::INFINITY)
+                .0;
+            let chip_width = (text + CHIP_PADDING * 2.0).min(width.max(1.0));
+            if x > 0.0 && x + chip_width > width {
+                x = 0.0;
+                y += CHIP_HEIGHT + CHIP_GAP;
+            }
+            chips.push(Chip {
+                index,
+                x,
+                y,
+                width: chip_width,
+            });
+            x += chip_width + CHIP_GAP;
+        }
+
+        ChipLayout {
+            chips,
+            height: y + CHIP_HEIGHT,
+        }
+    }
+
+    fn saved_card(&self, ui: &mut Ui, rect: Rect, layout: &ChipLayout, ctx: &Ctx) {
+        let tr = ctx.tr();
+        let mut content = widgets::card(
+            ui,
+            rect,
+            Some(CardHeader {
+                title: tr.build.saved,
+                accent: theme::YELLOW,
+            }),
+        );
+
+        let area = content.cut_top(layout.height);
+        if self.loadouts.is_empty() {
+            ui.text(
+                area.with_h(CHIP_HEIGHT),
+                tr.build.saved_empty.to_uppercase(),
+                label_style().middle(),
+                theme::TEXT_DIM,
+            );
+        } else {
+            let active = builds::active_loadout(&self.loadouts, ctx.slots);
+            for chip in &layout.chips {
+                let rect = Rect::new(area.x + chip.x, area.y + chip.y, chip.width, CHIP_HEIGHT);
+                self.chip(ui, chip.index, rect, active == Some(chip.index));
+            }
+        }
+        content.skip_top(CHIP_GAP);
+
+        // Nome e botão, encostados à direita como o `ml-auto` da v1.
+        let mut row = content.cut_top(widgets::CONTROL_HEIGHT);
+        let save = row.cut_right(SAVE_WIDTH);
+        row.cut_right(CHIP_GAP);
+        let field = row.cut_right(NAME_WIDTH);
+
+        let focused = ctx.focused_edit == Some(name_id());
+        let placeholder = (self.name.is_empty() && !focused).then_some(tr.build.save_placeholder);
+        widgets::edit_host(ui, name_id(), field, focused, placeholder);
+
+        // Sem build na tela não há o que salvar: o botão fica só com o texto
+        // apagado, que é como o `disabled:opacity-30` da v1 se lia.
+        let can_save = self.build.as_ref().is_some_and(Build::has_stratagem);
+        widgets::button(
+            ui,
+            save_id(),
+            save,
+            tr.build.save_build,
+            if can_save {
+                ButtonVariant::Secondary
+            } else {
+                ButtonVariant::Ghost
+            },
+            theme::YELLOW,
+        );
+    }
+
+    /// Chip de uma build salva: aplica no clique, e o × aparece sob o mouse.
+    fn chip(&self, ui: &mut Ui, index: usize, rect: Rect, active: bool) {
+        let id = loadout_id(index);
+        let delete = loadout_delete_id(index);
+        let hover = ui.fade(id, ui.is_hot(id) || ui.is_hot(delete), HOVER_MS);
+        let name = self.loadouts[index].name.to_uppercase();
+
+        if active {
+            ui.fill(rect, theme::RADIUS_BUTTON, theme::YELLOW);
+            ui.glow(rect, theme::RADIUS_BUTTON, theme::YELLOW);
+            ui.text(rect, name, chip_style(), theme::TEXT_ON_ACCENT);
+        } else {
+            ui.fill(rect, theme::RADIUS_BUTTON, theme::SURFACE);
+            ui.stroke(
+                rect,
+                theme::RADIUS_BUTTON,
+                2.0,
+                theme::BORDER.mix(theme::YELLOW.alpha(0.5), hover),
+            );
+            ui.text(
+                rect,
+                name,
+                chip_style(),
+                theme::TEXT_DIM.mix(theme::TEXT, hover),
+            );
+        }
+        ui.hit(id, rect);
+
+        if hover > 0.0 {
+            let button = Rect::new(
+                rect.right() - CLEAR_SIZE / 2.0,
+                rect.y - CLEAR_SIZE / 2.0,
+                CLEAR_SIZE,
+                CLEAR_SIZE,
+            );
+            let strong = ui.is_hot(delete);
+            ui.ellipse(
+                button,
+                theme::RED.alpha(if strong { 1.0 } else { 0.8 * hover }),
+            );
+            ui.text(
+                button,
+                "×",
+                TextStyle::new(font::SIZE_BODY, Weight::Black)
+                    .align(Align::Center)
+                    .middle(),
+                theme::TEXT.alpha(hover),
+            );
+            ui.hit(delete, button);
+        }
+    }
+
     // --- Build exibida ---
 
     fn stratagems_card(
@@ -1058,13 +1270,43 @@ impl BuildTab {
             self.custom_slot = 0;
             self.locks = Locks::default();
             self.set_search(String::new());
-            return Some(Action::ClearSearch);
+            return Some(Action::ClearEdit(search_id()));
         }
         if clicked == search_id() {
-            return Some(Action::FocusSearch);
+            return Some(Action::FocusEdit(search_id()));
         }
         if clicked == clear_search_id() {
-            return Some(Action::ClearSearch);
+            return Some(Action::ClearEdit(search_id()));
+        }
+        if clicked == name_id() {
+            return Some(Action::FocusEdit(name_id()));
+        }
+        if clicked == save_id() {
+            // Sem estratagema nenhum não há build para salvar — o botão fica
+            // apagado, e o clique não faz nada (a v1 o desabilitava).
+            let build = self.build.clone()?;
+            if !builds::save(&mut self.loadouts, &self.name, &build) {
+                return Some(Action::Redraw);
+            }
+            self.name.clear();
+            return Some(Action::Saved);
+        }
+
+        for index in 0..self.loadouts.len() {
+            if clicked == loadout_id(index) {
+                let applied = builds::apply(
+                    &self.loadouts[index],
+                    self.build.as_ref(),
+                    ctx.data,
+                    data::equipment(),
+                );
+                self.build = Some(applied.build);
+                return Some(Action::SlotsChanged(applied.slots));
+            }
+            if clicked == loadout_delete_id(index) {
+                self.loadouts.remove(index);
+                return Some(Action::LoadoutsChanged);
+            }
         }
 
         for index in 0..SLOT_COUNT {
@@ -1206,6 +1448,27 @@ fn options<'a>(ctx: &Ctx<'a>) -> [Option_<'static>; 3] {
     ]
 }
 
+/// Posição de um chip de build salva dentro do card.
+struct Chip {
+    index: usize,
+    x: f32,
+    y: f32,
+    width: f32,
+}
+
+/// As fileiras de chips já resolvidas, e a altura que elas ocupam.
+struct ChipLayout {
+    chips: Vec<Chip>,
+    height: f32,
+}
+
+fn chip_style() -> TextStyle {
+    TextStyle::new(font::SIZE_LABEL, Weight::Black)
+        .tracking(font::TRACKING_LABEL)
+        .align(Align::Center)
+        .middle()
+}
+
 /// Card de equipamento já com os textos prontos — os `&str` do widget precisam
 /// de alguém que os mantenha vivos durante a construção.
 struct EquipCard {
@@ -1294,6 +1557,10 @@ fn random_height(measure: &mut dyn Measure, width: f32, ctx: &Ctx) -> f32 {
         .text_size(ctx.tr().build.hint, hint_style(), inner)
         .1;
     widgets::card_chrome(false) + GENERATE_HEIGHT + LABEL_GAP + hint
+}
+
+fn saved_height(layout: &ChipLayout) -> f32 {
+    widgets::card_chrome(true) + layout.height + CHIP_GAP + widgets::CONTROL_HEIGHT
 }
 
 fn equip_rows() -> f32 {
@@ -1549,7 +1816,7 @@ mod tests {
         tab.set_search("orbital".into());
         assert_eq!(
             tab.on_click(reset_id(), &context),
-            Some(Action::ClearSearch)
+            Some(Action::ClearEdit(search_id()))
         );
         assert!(tab.build.is_none());
         assert_eq!(tab.custom_slot, 0);
@@ -1569,11 +1836,11 @@ mod tests {
         assert!(tab.list.len() < data.all().len());
         assert_eq!(
             tab.on_click(search_id(), &ctx(&data, &settings)),
-            Some(Action::FocusSearch)
+            Some(Action::FocusEdit(search_id()))
         );
         assert_eq!(
             tab.on_click(clear_search_id(), &ctx(&data, &settings)),
-            Some(Action::ClearSearch)
+            Some(Action::ClearEdit(search_id()))
         );
 
         tab.set_search("zzzz".into());
@@ -1679,6 +1946,143 @@ mod tests {
             })
             .redraw
         );
+    }
+
+    /// Aba com builds salvas em memória: `loaded` já marcado para o teste não
+    /// depender do que houver no `loadouts.json` da máquina.
+    fn with_loadouts(data: &GameData) -> BuildTab {
+        let mut tab = BuildTab::new();
+        tab.loaded = true;
+        tab.loadouts = vec![
+            Loadout {
+                id: "1".into(),
+                name: "Bug Sweep".into(),
+                slot_ids: vec![Some(data.all()[0].id), None, None, None],
+                equip: None,
+            },
+            Loadout {
+                id: "2".into(),
+                name: "Bot Drop".into(),
+                slot_ids: vec![Some(data.all()[1].id), Some(data.all()[2].id), None, None],
+                equip: None,
+            },
+        ];
+        tab
+    }
+
+    #[test]
+    fn saved_builds_show_up_as_chips_and_apply_to_the_slots() {
+        let data = data();
+        let settings = Settings::default();
+        let mut tab = with_loadouts(&data);
+        let mut ui = Ui::new();
+        build(&mut tab, &mut ui, &ctx(&data, &settings));
+
+        assert!(texts(&ui).iter().any(|text| text == "BUG SWEEP"));
+        assert!(ui.frame().has_hit(loadout_id(0)));
+        assert!(ui.frame().has_hit(loadout_id(1)));
+
+        let expected: Slots = [Some(data.all()[1].id), Some(data.all()[2].id), None, None];
+        assert_eq!(
+            tab.on_click(loadout_id(1), &ctx(&data, &settings)),
+            Some(Action::SlotsChanged(expected))
+        );
+        // A build aplicada também volta para a tela.
+        assert_eq!(tab.build.as_ref().unwrap().stratagems, expected);
+        // E o chip da build que bate com os slots é o destacado.
+        assert_eq!(builds::active_loadout(tab.loadouts(), expected), Some(1));
+    }
+
+    #[test]
+    fn the_delete_button_only_exists_under_the_mouse() {
+        let data = data();
+        let settings = Settings::default();
+        let mut tab = with_loadouts(&data);
+        let mut ui = Ui::new();
+        // Janela alta: os chips ficam abaixo da dobra numa janela padrão, e o
+        // hover não alcança o que está fora do recorte da página.
+        let tall = Rect::new(0.0, 0.0, 820.0, 1_200.0);
+        let build = |tab: &mut BuildTab, ui: &mut Ui, now: u64| {
+            ui.begin(now);
+            tab.build(ui, &mut Fixed, tall, &ctx(&data, &settings));
+            ui.end();
+        };
+        build(&mut tab, &mut ui, 0);
+
+        let chip = ui
+            .frame()
+            .nodes
+            .iter()
+            .find(|node| matches!(&node.visual, Visual::Text { text, .. } if text == "BUG SWEEP"))
+            .expect("chip")
+            .rect;
+        assert!(!ui.frame().has_hit(loadout_delete_id(0)));
+
+        // O fade de hover precisa de tempo para abrir.
+        ui.input(Input::Move {
+            x: chip.center_x(),
+            y: chip.center_y(),
+        });
+        build(&mut tab, &mut ui, 0);
+        build(&mut tab, &mut ui, 1_000);
+        assert!(ui.frame().has_hit(loadout_delete_id(0)));
+
+        assert_eq!(
+            tab.on_click(loadout_delete_id(0), &ctx(&data, &settings)),
+            Some(Action::LoadoutsChanged)
+        );
+        assert_eq!(tab.loadouts().len(), 1);
+        assert_eq!(tab.loadouts()[0].name, "Bot Drop");
+    }
+
+    #[test]
+    fn saving_needs_a_build_and_takes_the_typed_name() {
+        let data = data();
+        let settings = Settings::default();
+        let mut tab = with_loadouts(&data);
+
+        // Sem build na tela o botão não salva nada.
+        assert_eq!(tab.on_click(save_id(), &ctx(&data, &settings)), None);
+        assert_eq!(tab.loadouts().len(), 2);
+
+        tab.on_click(generate_id(), &ctx(&data, &settings));
+        tab.set_name("Minha Build".into());
+        assert_eq!(
+            tab.on_click(save_id(), &ctx(&data, &settings)),
+            Some(Action::Saved)
+        );
+        assert_eq!(tab.loadouts().len(), 3);
+        assert_eq!(tab.loadouts()[2].name, "Minha Build");
+        assert!(tab.name.is_empty(), "o campo é esvaziado depois de salvar");
+
+        // O mesmo nome sobrescreve em vez de duplicar.
+        tab.on_click(generate_id(), &ctx(&data, &settings));
+        tab.set_name("minha build".into());
+        tab.on_click(save_id(), &ctx(&data, &settings));
+        assert_eq!(tab.loadouts().len(), 3);
+    }
+
+    #[test]
+    fn the_name_field_is_capped_like_the_legacy_input() {
+        let mut tab = BuildTab::new();
+        tab.set_name("x".repeat(40));
+        assert_eq!(tab.name.chars().count(), NAME_MAX_CHARS);
+    }
+
+    #[test]
+    fn an_empty_list_says_so_instead_of_showing_chips() {
+        let data = data();
+        let settings = Settings::default();
+        let mut tab = BuildTab::new();
+        tab.loaded = true;
+        let mut ui = Ui::new();
+        build(&mut tab, &mut ui, &ctx(&data, &settings));
+
+        let empty = i18n::tr(settings.language).build.saved_empty.to_uppercase();
+        assert!(texts(&ui).contains(&empty));
+        assert!(!ui.frame().has_hit(loadout_id(0)));
+        // O campo de nome continua lá, com a dica no lugar do filho nativo.
+        assert!(ui.frame().has_hit(name_id()));
     }
 
     #[test]

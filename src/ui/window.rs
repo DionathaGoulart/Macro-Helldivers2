@@ -615,9 +615,22 @@ mod platform {
                 build_tab::Action::Redraw => self.rebuild(),
                 build_tab::Action::Setting(change) => self.apply_change(change),
                 build_tab::Action::SlotsChanged(slots) => self.update_slots(slots),
-                build_tab::Action::FocusSearch => self.focus_edit(build_tab::search_id()),
-                build_tab::Action::ClearSearch => self.clear_edit(build_tab::search_id()),
+                build_tab::Action::LoadoutsChanged => self.save_loadouts(),
+                build_tab::Action::Saved => {
+                    self.save_loadouts();
+                    // O campo de nome é esvaziado depois de salvar, como na v1.
+                    self.clear_edit(build_tab::name_id());
+                }
+                build_tab::Action::FocusEdit(id) => self.focus_edit(id),
+                build_tab::Action::ClearEdit(id) => self.clear_edit(id),
             }
+        }
+
+        /// Grava as builds salvas e avisa o overlay, que também as mostra.
+        fn save_loadouts(&mut self) {
+            loadouts::save_loadouts(self.build_tab.loadouts());
+            self.shared.send_overlay(OverlayCmd::LoadoutsChanged);
+            self.rebuild();
         }
 
         fn apply_settings(&mut self, action: settings_tab::Action) {
@@ -652,6 +665,9 @@ mod platform {
         fn finish_backup(&mut self, outcome: BackupOutcome) {
             if outcome.imported {
                 self.language = self.shared.settings_snapshot().language;
+                // O arquivo pode ter trazido builds salvas, gravadas por fora da
+                // aba: ela precisa reler o que está no disco agora.
+                self.build_tab.reload_loadouts();
                 match outcome.slots {
                     // `update_slots` grava, refaz a tabela de atalhos e avisa o
                     // overlay; sem slots no arquivo, a tabela ainda precisa dos
@@ -770,6 +786,8 @@ mod platform {
                 self.macro_tab.set_search(text);
             } else if id == build_tab::search_id() {
                 self.build_tab.set_search(text);
+            } else if id == build_tab::name_id() {
+                self.build_tab.set_name(text);
             }
         }
 
