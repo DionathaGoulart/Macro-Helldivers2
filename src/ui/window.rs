@@ -113,7 +113,7 @@ mod platform {
     use crate::ui::theme::{self, font, Color, Scale};
     use crate::ui::toolkit::{Align, Id, Input, Rect, TextStyle, Ui, Weight};
     use crate::ui::widgets::{self, Tab, TAB_BAR_HEIGHT};
-    use crate::{focus, hooks, i18n, loadouts, util};
+    use crate::{focus, hooks, i18n, loadouts, overlay, util};
 
     const CLASS_NAME: PCWSTR = w!("MacroHelldivers2Main");
 
@@ -1257,28 +1257,28 @@ mod platform {
     /// O que uma mudança de preferência faz com o overlay (portado de
     /// `legacy/src/main/index.js` ~737–746).
     ///
-    /// A thread do overlay em si só existe a partir da Fase 9; até lá o comando
-    /// fica no canal e o estado compartilhado já reflete a escolha.
+    /// Desligar o recurso derruba a thread inteira, com as duas janelas: é o que
+    /// zera de verdade o custo do overlay, e não só o que ele desenha.
     fn overlay_effects(
         shared: &Shared,
         game_focused: bool,
         previous: &Settings,
         settings: &Settings,
     ) {
-        if !settings.enable_overlay && previous.enable_overlay {
-            shared.send_overlay(OverlayCmd::SetState(OverlayState::Hidden));
+        if settings.enable_overlay != previous.enable_overlay {
+            overlay::set_enabled(settings.enable_overlay);
+        }
+        if !settings.enable_overlay {
             return;
         }
+        // Atalhos e idioma aparecem no strip e no painel.
+        shared.send_overlay(OverlayCmd::SettingsChanged);
 
         // Com o jogo na frente, o HUD persistente aparece e some na hora —
         // menos com o painel aberto, que manda no estado.
-        let hud_changed = settings.always_show_slots != previous.always_show_slots
-            || (settings.enable_overlay && !previous.enable_overlay);
-        if hud_changed
-            && settings.enable_overlay
-            && game_focused
-            && shared.overlay_state() != OverlayState::Panel
-        {
+        let hud_changed =
+            settings.always_show_slots != previous.always_show_slots || !previous.enable_overlay;
+        if hud_changed && game_focused && shared.overlay_state() != OverlayState::Panel {
             let state = if settings.always_show_slots {
                 OverlayState::Minimal
             } else {

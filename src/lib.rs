@@ -8,6 +8,7 @@ pub mod builds;
 pub mod data;
 pub mod engine;
 pub mod focus;
+pub mod game_config;
 pub mod gfx;
 pub mod hooks;
 pub mod i18n;

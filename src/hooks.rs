@@ -564,11 +564,10 @@ fn apply(runtime: &Runtime, window: focus::Window, title: &str, effects: focus::
 
 /// O HD2 em "Tela Cheia" exclusiva se auto-minimiza quando qualquer janela
 /// desenha por cima, então o app avisa em vez de deixar o overlay quebrar o
-/// jogo. A leitura de `user_settings.config` é da Fase 9 (`game_config.rs`,
-/// R11); até lá o app se comporta como a v1 quando não conseguia ler o arquivo.
+/// jogo (R11).
 #[cfg(windows)]
 fn exclusive_fullscreen() -> bool {
-    false
+    crate::game_config::is_exclusive_fullscreen()
 }
 
 /// Callback do `WH_KEYBOARD_LL`. Roda em toda tecla do sistema: compara, manda

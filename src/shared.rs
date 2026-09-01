@@ -101,6 +101,9 @@ pub enum OverlayCmd {
     Toggle,
     Slots(Slots),
     LoadoutsChanged,
+    /// Preferências novas (atalhos, idioma): o overlay lê os settings do
+    /// [`Shared`] ao desenhar, então basta o aviso de que mudaram.
+    SettingsChanged,
     Flash {
         slot: usize,
         /// Apoio fixo, e não slot de macro. O overlay só mostra os quatro slots,

@@ -20,7 +20,9 @@ const LEGACY_SUBDIR: &str = "Helldivers Macro";
 /// quando não; tentamos os dois porque o instalador antigo circulou nas duas formas.
 const LEGACY_APP_DIRS: [&str; 2] = ["Macro Helldivers 2", "helldivers-macro"];
 
-fn base_config_dir() -> PathBuf {
+/// Raiz da configuração do usuário — no Windows, `%APPDATA%`. É onde moram
+/// tanto a pasta do app quanto a do jogo (`Arrowhead\Helldivers2`).
+pub fn appdata_dir() -> PathBuf {
     BaseDirs::new()
         .map(|dirs| dirs.config_dir().to_path_buf())
         .unwrap_or_else(|| PathBuf::from("."))
@@ -29,7 +31,7 @@ fn base_config_dir() -> PathBuf {
 /// Diretório onde ficam `settings.json`, `slots.json`, `loadouts.json` e caches.
 pub fn config_dir() -> &'static Path {
     static DIR: OnceLock<PathBuf> = OnceLock::new();
-    DIR.get_or_init(|| base_config_dir().join(APP_DIR_NAME))
+    DIR.get_or_init(|| appdata_dir().join(APP_DIR_NAME))
 }
 
 /// Caminho de um arquivo de configuração do app.
@@ -39,7 +41,7 @@ pub fn config_path(file: &str) -> PathBuf {
 
 /// Caminhos onde a v1 pode ter deixado o mesmo arquivo, em ordem de preferência.
 pub fn legacy_config_paths(file: &str) -> Vec<PathBuf> {
-    let base = base_config_dir();
+    let base = appdata_dir();
     LEGACY_APP_DIRS
         .iter()
         .map(|dir| base.join(dir).join(LEGACY_SUBDIR).join(file))

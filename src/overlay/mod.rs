@@ -668,6 +668,10 @@ mod platform {
                         self.panel_state.reload_loadouts();
                         panel_dirty = true;
                     }
+                    OverlayCmd::SettingsChanged => {
+                        strip_dirty = true;
+                        panel_dirty = true;
+                    }
                     OverlayCmd::Flash {
                         slot,
                         support,
