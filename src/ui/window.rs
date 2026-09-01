@@ -577,20 +577,21 @@ mod platform {
             }
         }
 
-        /// Esvaziar o campo é mexer no filho nativo; o `EN_CHANGE` que isso
-        /// dispara é quem avisa a aba.
+        /// Esvazia o campo de busca: o filho nativo e o estado da aba.
+        ///
+        /// Os dois lados são acertados de propósito — o `EN_CHANGE` de uma
+        /// escrita programática não é garantido, e quando ele vem a aba já está
+        /// com o mesmo texto e ignora o aviso.
         fn clear_search(&mut self) {
             let id = macro_tab::search_id();
-            match self.edits.iter().find(|edit| edit.id == id) {
+            if let Some(child) = self.edits.iter().find(|edit| edit.id == id) {
                 // SAFETY: filho vivo; a string vive durante a chamada.
-                Some(child) => unsafe {
+                unsafe {
                     let _ = SetWindowTextW(child.hwnd, w!(""));
-                },
-                None => {
-                    self.macro_tab.set_search(String::new());
-                    self.rebuild();
                 }
             }
+            self.macro_tab.set_search(String::new());
+            self.rebuild();
         }
 
         // --- Filhos nativos ---
