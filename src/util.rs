@@ -88,6 +88,228 @@ pub fn write_atomic(path: &Path, bytes: &[u8]) -> Result<()> {
     Ok(())
 }
 
+/// Instante atual em ISO-8601 UTC com milissegundos.
+///
+/// É o formato que o `Date.prototype.toISOString()` da v1 gravava no
+/// `exportedAt` do backup, e um arquivo exportado aqui precisa continuar
+/// parecendo o de lá.
+pub fn iso8601_now() -> String {
+    iso8601(std::time::SystemTime::now())
+}
+
+fn iso8601(time: std::time::SystemTime) -> String {
+    let since = time
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap_or_default();
+    let seconds = since.as_secs() as i64;
+    let (days, rest) = (seconds.div_euclid(86_400), seconds.rem_euclid(86_400));
+    let (year, month, day) = civil_from_days(days);
+    format!(
+        "{year:04}-{month:02}-{day:02}T{:02}:{:02}:{:02}.{:03}Z",
+        rest / 3_600,
+        (rest % 3_600) / 60,
+        rest % 60,
+        since.subsec_millis(),
+    )
+}
+
+/// Dias desde a época → data civil. Algoritmo de Howard Hinnant, o mesmo que
+/// as bibliotecas de data usam; vale mais que arrastar uma dependência inteira
+/// para formatar um campo.
+fn civil_from_days(days: i64) -> (i64, u32, u32) {
+    // Move a origem para 1º de março de 0000, onde o ano bissexto cai no fim.
+    let shifted = days + 719_468;
+    let era = if shifted >= 0 {
+        shifted
+    } else {
+        shifted - 146_096
+    } / 146_097;
+    let day_of_era = shifted - era * 146_097;
+    let year_of_era =
+        (day_of_era - day_of_era / 1_460 + day_of_era / 36_524 - day_of_era / 146_096) / 365;
+    let year = year_of_era + era * 400;
+    let day_of_year = day_of_era - (365 * year_of_era + year_of_era / 4 - year_of_era / 100);
+    let month_prime = (5 * day_of_year + 2) / 153;
+    let day = (day_of_year - (153 * month_prime + 2) / 5 + 1) as u32;
+    let month = if month_prime < 10 {
+        month_prime + 3
+    } else {
+        month_prime - 9
+    } as u32;
+    (if month <= 2 { year + 1 } else { year }, month, day)
+}
+
+/// Tipo de arquivo oferecido num diálogo (`{ name, extensions }` da v1).
+#[derive(Debug, Clone, Copy)]
+pub struct FileFilter<'a> {
+    pub label: &'a str,
+    /// Máscara no formato do shell, ex.: `*.json`.
+    pub spec: &'a str,
+    /// Extensão acrescentada quando o usuário não digita nenhuma.
+    pub extension: &'a str,
+}
+
+/// Filtro dos arquivos de backup.
+pub const JSON_FILTER: FileFilter<'static> = FileFilter {
+    label: "JSON",
+    spec: "*.json",
+    extension: "json",
+};
+
+/// Diálogo "salvar como". `Ok(None)` quando o usuário cancela — que não é erro
+/// e não vira aviso na tela.
+#[cfg(windows)]
+pub fn save_dialog(
+    title: &str,
+    default_name: &str,
+    filter: FileFilter<'_>,
+) -> Result<Option<PathBuf>> {
+    use windows::core::Interface;
+    use windows::Win32::System::Com::{CoCreateInstance, CLSCTX_INPROC_SERVER};
+    use windows::Win32::UI::Shell::{FileSaveDialog, IFileDialog, IFileSaveDialog};
+
+    let _com = ComScope::enter()?;
+    // SAFETY: CLSID do diálogo do próprio shell, criado no processo.
+    let dialog: IFileSaveDialog =
+        unsafe { CoCreateInstance(&FileSaveDialog, None, CLSCTX_INPROC_SERVER) }
+            .context("CoCreateInstance(FileSaveDialog)")?;
+    let dialog: IFileDialog = dialog.cast().context("IFileDialog")?;
+
+    let name = wide(default_name);
+    // SAFETY: a string vive durante a chamada.
+    unsafe { dialog.SetFileName(windows::core::PCWSTR(name.as_ptr())) }.context("SetFileName")?;
+    show_dialog(&dialog, title, filter)
+}
+
+/// Diálogo "abrir". `Ok(None)` quando o usuário cancela.
+#[cfg(windows)]
+pub fn open_dialog(title: &str, filter: FileFilter<'_>) -> Result<Option<PathBuf>> {
+    use windows::core::Interface;
+    use windows::Win32::System::Com::{CoCreateInstance, CLSCTX_INPROC_SERVER};
+    use windows::Win32::UI::Shell::{FileOpenDialog, IFileDialog, IFileOpenDialog};
+
+    let _com = ComScope::enter()?;
+    // SAFETY: CLSID do diálogo do próprio shell, criado no processo.
+    let dialog: IFileOpenDialog =
+        unsafe { CoCreateInstance(&FileOpenDialog, None, CLSCTX_INPROC_SERVER) }
+            .context("CoCreateInstance(FileOpenDialog)")?;
+    let dialog: IFileDialog = dialog.cast().context("IFileDialog")?;
+    show_dialog(&dialog, title, filter)
+}
+
+/// Configura, mostra e lê o caminho escolhido.
+#[cfg(windows)]
+fn show_dialog(
+    dialog: &windows::Win32::UI::Shell::IFileDialog,
+    title: &str,
+    filter: FileFilter<'_>,
+) -> Result<Option<PathBuf>> {
+    use windows::core::PCWSTR;
+    use windows::Win32::Foundation::ERROR_CANCELLED;
+    use windows::Win32::System::Com::CoTaskMemFree;
+    use windows::Win32::UI::Shell::Common::COMDLG_FILTERSPEC;
+    use windows::Win32::UI::Shell::SIGDN_FILESYSPATH;
+
+    let (title_w, label, spec, extension) = (
+        wide(title),
+        wide(filter.label),
+        wide(filter.spec),
+        wide(filter.extension),
+    );
+    let types = [COMDLG_FILTERSPEC {
+        pszName: PCWSTR(label.as_ptr()),
+        pszSpec: PCWSTR(spec.as_ptr()),
+    }];
+
+    // SAFETY: todas as strings vivem até o fim da função, depois do `Show`.
+    unsafe {
+        dialog
+            .SetTitle(PCWSTR(title_w.as_ptr()))
+            .context("SetTitle")?;
+        dialog.SetFileTypes(&types).context("SetFileTypes")?;
+        dialog
+            .SetDefaultExtension(PCWSTR(extension.as_ptr()))
+            .context("SetDefaultExtension")?;
+
+        if let Err(err) = dialog.Show(None) {
+            // Cancelar não é falha: a v1 também separava os dois casos para não
+            // mostrar "arquivo inválido" a quem só desistiu.
+            return if err.code() == ERROR_CANCELLED.to_hresult() {
+                Ok(None)
+            } else {
+                Err(err).context("diálogo de arquivo")
+            };
+        }
+
+        let item = dialog.GetResult().context("GetResult")?;
+        let raw = item
+            .GetDisplayName(SIGDN_FILESYSPATH)
+            .context("GetDisplayName")?;
+        let path = raw.to_string().context("caminho não é UTF-16 válido");
+        CoTaskMemFree(Some(raw.0 as *const std::ffi::c_void));
+        Ok(Some(PathBuf::from(path?)))
+    }
+}
+
+/// COM inicializado enquanto o diálogo está de pé.
+///
+/// A thread da janela não inicializa COM no boot — só os diálogos precisam
+/// dele —, então cada abertura entra e sai do apartamento.
+#[cfg(windows)]
+struct ComScope {
+    /// Falso quando a thread já estava em outro apartamento: aí o
+    /// `CoUninitialize` seria de um `CoInitializeEx` que não é nosso.
+    owned: bool,
+}
+
+#[cfg(windows)]
+impl ComScope {
+    fn enter() -> Result<ComScope> {
+        use windows::Win32::Foundation::RPC_E_CHANGED_MODE;
+        use windows::Win32::System::Com::{CoInitializeEx, COINIT_APARTMENTTHREADED};
+
+        // SAFETY: chamada por thread; o par sai no `Drop`.
+        let result = unsafe { CoInitializeEx(None, COINIT_APARTMENTTHREADED) };
+        if result == RPC_E_CHANGED_MODE {
+            return Ok(ComScope { owned: false });
+        }
+        if result.is_err() {
+            anyhow::bail!("CoInitializeEx falhou: {result:?}");
+        }
+        Ok(ComScope { owned: true })
+    }
+}
+
+#[cfg(windows)]
+impl Drop for ComScope {
+    fn drop(&mut self) {
+        if self.owned {
+            // SAFETY: par do `CoInitializeEx` bem-sucedido desta thread.
+            unsafe { windows::Win32::System::Com::CoUninitialize() };
+        }
+    }
+}
+
+#[cfg(windows)]
+fn wide(text: &str) -> Vec<u16> {
+    text.encode_utf16().chain(std::iter::once(0)).collect()
+}
+
+/// Fora do Windows não há diálogo de arquivo; o backup só existe no app real.
+#[cfg(not(windows))]
+pub fn save_dialog(
+    _title: &str,
+    _default_name: &str,
+    _filter: FileFilter<'_>,
+) -> Result<Option<PathBuf>> {
+    anyhow::bail!("diálogos de arquivo só existem no Windows")
+}
+
+#[cfg(not(windows))]
+pub fn open_dialog(_title: &str, _filter: FileFilter<'_>) -> Result<Option<PathBuf>> {
+    anyhow::bail!("diálogos de arquivo só existem no Windows")
+}
+
 /// Nome do mutex global que marca "já existe um app rodando".
 #[cfg(windows)]
 const INSTANCE_MUTEX: windows::core::PCWSTR = windows::core::w!("Global\\MacroHelldivers2");
@@ -180,6 +402,26 @@ mod tests {
     #[test]
     fn assets_dir_resolves_to_repo_in_debug() {
         assert!(asset_path("data/stratagems.json").exists());
+    }
+
+    #[test]
+    fn timestamps_come_out_in_the_shape_javascript_wrote() {
+        use std::time::{Duration, UNIX_EPOCH};
+
+        assert_eq!(iso8601(UNIX_EPOCH), "1970-01-01T00:00:00.000Z");
+        assert_eq!(
+            iso8601(UNIX_EPOCH + Duration::from_millis(1_700_000_000_123)),
+            "2023-11-14T22:13:20.123Z"
+        );
+        // 29 de fevereiro de 2024: o ano bissexto tem que aparecer inteiro.
+        assert_eq!(
+            iso8601(UNIX_EPOCH + Duration::from_secs(1_709_208_000)),
+            "2024-02-29T12:00:00.000Z"
+        );
+
+        let now = iso8601_now();
+        assert_eq!(now.len(), 24, "{now}");
+        assert!(now.ends_with('Z'), "{now}");
     }
 
     #[test]

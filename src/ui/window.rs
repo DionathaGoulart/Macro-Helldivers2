@@ -107,11 +107,11 @@ mod platform {
         FlashKind, OverlayCmd, OverlayState, Shared, Slots, UiEvent, WM_APP_UI_EVENT,
     };
     use crate::ui::macro_tab::{self, Action, MacroTab};
-    use crate::ui::settings_tab::{self, Change, SettingsTab};
+    use crate::ui::settings_tab::{self, BackupStatus, Change, SettingsTab};
     use crate::ui::theme::{self, font, Color, Scale};
     use crate::ui::toolkit::{Align, Id, Input, Rect, TextStyle, Ui, Weight};
     use crate::ui::widgets::{self, CardHeader, Tab, TAB_BAR_HEIGHT};
-    use crate::{focus, hooks, i18n, loadouts};
+    use crate::{focus, hooks, i18n, loadouts, util};
 
     const CLASS_NAME: PCWSTR = w!("MacroHelldivers2Main");
 
@@ -122,6 +122,10 @@ mod platform {
     /// Só existe enquanto uma animação está correndo (R14).
     const TIMER_ANIM: usize = 2;
     const ANIM_INTERVAL_MS: u32 = 16;
+
+    /// Pedido de backup adiado, na faixa `WM_APP` reservada em `shared.rs`.
+    /// É só desta janela: nenhuma outra thread a envia.
+    const WM_APP_BACKUP: u32 = 0x8000 + 3;
 
     /// Id de controle do primeiro `EDIT` filho; os seguintes vêm em sequência.
     const FIRST_EDIT_CTRL: usize = 1000;
@@ -357,6 +361,8 @@ mod platform {
         language: Language,
         macro_tab: MacroTab,
         settings_tab: SettingsTab,
+        /// Diálogo de backup pedido e ainda não aberto (ver [`App::request_backup`]).
+        pending_backup: Option<BackupRequest>,
         edits: Vec<EditChild>,
         edit_font: HFONT,
         /// Fonte da escala anterior, viva até os filhos trocarem para a nova.
@@ -392,6 +398,7 @@ mod platform {
                 language: settings.language,
                 macro_tab: MacroTab::new(),
                 settings_tab: SettingsTab::new(),
+                pending_backup: None,
                 edits: Vec::new(),
                 edit_font: create_edit_font(dpi),
                 retired_font: None,
@@ -592,7 +599,52 @@ mod platform {
             match action {
                 settings_tab::Action::Redraw => self.rebuild(),
                 settings_tab::Action::Setting(change) => self.apply_change(change),
+                settings_tab::Action::ExportBackup => self.request_backup(BackupRequest::Export),
+                settings_tab::Action::ImportBackup => self.request_backup(BackupRequest::Import),
             }
+        }
+
+        // --- Backup ---
+
+        /// Agenda o diálogo em vez de abri-lo aqui.
+        ///
+        /// Um diálogo do shell roda o **próprio** loop de mensagens, que reentra
+        /// neste `WndProc` — e neste ponto o empréstimo do `App` está vivo, no
+        /// meio do tratamento do clique. O pedido fica guardado e é executado
+        /// quando a mensagem chegar, com o empréstimo já solto.
+        fn request_backup(&mut self, request: BackupRequest) {
+            self.pending_backup = Some(request);
+            // SAFETY: `PostMessageW` é assíncrono; a mensagem cai na fila desta
+            // própria janela.
+            unsafe {
+                let _ = PostMessageW(Some(self.hwnd), WM_APP_BACKUP, WPARAM(0), LPARAM(0));
+            }
+            self.rebuild();
+        }
+
+        /// Aplica o que o diálogo deixou pronto.
+        fn finish_backup(&mut self, outcome: BackupOutcome) {
+            if outcome.imported {
+                self.language = self.shared.settings_snapshot().language;
+                match outcome.slots {
+                    // `update_slots` grava, refaz a tabela de atalhos e avisa o
+                    // overlay; sem slots no arquivo, a tabela ainda precisa dos
+                    // atalhos que vieram nas preferências.
+                    Some(slots) => self.update_slots(slots),
+                    None => hooks::rebuild_bindings(),
+                }
+            }
+            if let Some(status) = outcome.status {
+                self.settings_tab.set_backup_status(status);
+                // O diálogo segurou a janela parada, e o relógio do toolkit
+                // parou com ela: sem acertá-lo o aviso nasceria vencido.
+                self.ui.set_now(tick_ms());
+                self.ui.flash(
+                    settings_tab::backup_flash_id(),
+                    settings_tab::BACKUP_STATUS_MS,
+                );
+            }
+            self.rebuild();
         }
 
         /// Grava a preferência nova e espalha o que ela afeta: tabela de
@@ -612,38 +664,8 @@ mod platform {
             }
             hooks::rebuild_bindings();
             self.language = settings.language;
-            self.overlay_effects(&previous, &settings);
+            overlay_effects(&self.shared, self.game_focused, &previous, &settings);
             self.rebuild();
-        }
-
-        /// O que uma mudança de preferência faz com o overlay (portado de
-        /// `legacy/src/main/index.js` ~737–746).
-        ///
-        /// A thread do overlay em si só existe a partir da Fase 9; até lá o
-        /// comando fica no canal e o estado compartilhado já reflete a escolha.
-        fn overlay_effects(&self, previous: &Settings, settings: &Settings) {
-            if !settings.enable_overlay && previous.enable_overlay {
-                self.shared
-                    .send_overlay(OverlayCmd::SetState(OverlayState::Hidden));
-                return;
-            }
-
-            // Com o jogo na frente, o HUD persistente aparece e some na hora —
-            // menos com o painel aberto, que manda no estado.
-            let hud_changed = settings.always_show_slots != previous.always_show_slots
-                || (settings.enable_overlay && !previous.enable_overlay);
-            if hud_changed
-                && settings.enable_overlay
-                && self.game_focused
-                && self.shared.overlay_state() != OverlayState::Panel
-            {
-                let state = if settings.always_show_slots {
-                    OverlayState::Minimal
-                } else {
-                    OverlayState::Hidden
-                };
-                self.shared.send_overlay(OverlayCmd::SetState(state));
-            }
         }
 
         /// Liga o modo de gravação enquanto a aba espera uma tecla: com ele o
@@ -1054,6 +1076,174 @@ mod platform {
         }
     }
 
+    // --- Backup (fora do `App`) ---
+
+    /// Qual diálogo o usuário pediu.
+    #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+    enum BackupRequest {
+        Export,
+        Import,
+    }
+
+    /// O que sobra para a janela fazer depois que o diálogo fecha.
+    #[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
+    struct BackupOutcome {
+        /// Aviso a mostrar; `None` quando o usuário apenas cancelou.
+        status: Option<BackupStatus>,
+        /// Slots restaurados, quando a importação trouxe a lista.
+        slots: Option<Slots>,
+        /// Uma importação mexeu nas preferências.
+        imported: bool,
+    }
+
+    /// Escreve o backup no arquivo escolhido. Cancelar não é falha e não vira
+    /// aviso — a v1 separava os dois casos do mesmo jeito.
+    fn export_backup(shared: &Shared, language: Language) -> BackupOutcome {
+        let title = i18n::tr(language).settings.backup_export;
+        let write = || -> Result<bool> {
+            let Some(path) =
+                util::save_dialog(title, loadouts::BACKUP_FILE_NAME, util::JSON_FILTER)?
+            else {
+                return Ok(false);
+            };
+            loadouts::Backup::new(
+                &shared.settings_snapshot(),
+                &loadouts::load_loadouts(),
+                shared.slots(),
+            )?
+            .write(&path)?;
+            Ok(true)
+        };
+
+        let status = match write() {
+            Ok(true) => Some(BackupStatus::Exported),
+            Ok(false) => None,
+            Err(err) => {
+                log::warn!("backup não foi exportado: {err:#}");
+                Some(BackupStatus::Failed)
+            }
+        };
+        BackupOutcome {
+            status,
+            ..BackupOutcome::default()
+        }
+    }
+
+    /// Restaura o que o arquivo trouxer — o que ele não trouxer fica como está
+    /// (porte de `legacy/src/renderer/App.jsx` ~199–241).
+    fn import_backup(
+        shared: &Shared,
+        data: &GameData,
+        game_focused: bool,
+        language: Language,
+    ) -> BackupOutcome {
+        let title = i18n::tr(language).settings.backup_import;
+        let read = || -> Result<Option<Option<Slots>>> {
+            let Some(path) = util::open_dialog(title, util::JSON_FILTER)? else {
+                return Ok(None);
+            };
+            let backup = loadouts::Backup::read(&path)?;
+
+            let previous = shared.settings_snapshot();
+            let settings = backup.merged_settings(&previous)?;
+            shared.set_settings(settings.clone());
+            if let Err(err) = settings.save() {
+                log::warn!("configurações do backup não foram salvas: {err:#}");
+            }
+            overlay_effects(shared, game_focused, &previous, &settings);
+
+            if let Some(saved) = &backup.loadouts {
+                loadouts::save_loadouts(saved);
+                shared.send_overlay(OverlayCmd::LoadoutsChanged);
+            }
+            Ok(Some(backup.slots(data)))
+        };
+
+        match read() {
+            Ok(Some(slots)) => BackupOutcome {
+                status: Some(BackupStatus::Imported),
+                slots,
+                imported: true,
+            },
+            Ok(None) => BackupOutcome::default(),
+            Err(err) => {
+                log::warn!("backup não foi importado: {err:#}");
+                BackupOutcome {
+                    status: Some(BackupStatus::Failed),
+                    ..BackupOutcome::default()
+                }
+            }
+        }
+    }
+
+    /// O que uma mudança de preferência faz com o overlay (portado de
+    /// `legacy/src/main/index.js` ~737–746).
+    ///
+    /// A thread do overlay em si só existe a partir da Fase 9; até lá o comando
+    /// fica no canal e o estado compartilhado já reflete a escolha.
+    fn overlay_effects(
+        shared: &Shared,
+        game_focused: bool,
+        previous: &Settings,
+        settings: &Settings,
+    ) {
+        if !settings.enable_overlay && previous.enable_overlay {
+            shared.send_overlay(OverlayCmd::SetState(OverlayState::Hidden));
+            return;
+        }
+
+        // Com o jogo na frente, o HUD persistente aparece e some na hora —
+        // menos com o painel aberto, que manda no estado.
+        let hud_changed = settings.always_show_slots != previous.always_show_slots
+            || (settings.enable_overlay && !previous.enable_overlay);
+        if hud_changed
+            && settings.enable_overlay
+            && game_focused
+            && shared.overlay_state() != OverlayState::Panel
+        {
+            let state = if settings.always_show_slots {
+                OverlayState::Minimal
+            } else {
+                OverlayState::Hidden
+            };
+            shared.send_overlay(OverlayCmd::SetState(state));
+        }
+    }
+
+    /// Abre o diálogo pedido **sem** nenhum empréstimo do `App` vivo: o loop de
+    /// mensagens do próprio diálogo reentra no `WndProc`, e dois `&mut App` ao
+    /// mesmo tempo seriam UB.
+    fn run_pending_backup(hwnd: HWND) {
+        // SAFETY: empréstimo curto, só para tirar o pedido e copiar o que o
+        // diálogo precisa; solto antes de qualquer chamada bloqueante.
+        let taken = unsafe {
+            app_mut(hwnd).and_then(|app| {
+                app.pending_backup.take().map(|request| {
+                    (
+                        request,
+                        Arc::clone(&app.shared),
+                        Arc::clone(&app.data),
+                        app.game_focused,
+                        app.language,
+                    )
+                })
+            })
+        };
+        let Some((request, shared, data, game_focused, language)) = taken else {
+            return;
+        };
+
+        let outcome = match request {
+            BackupRequest::Export => export_backup(&shared, language),
+            BackupRequest::Import => import_backup(&shared, &data, game_focused, language),
+        };
+
+        // SAFETY: o diálogo já fechou; nenhum outro empréstimo está vivo.
+        if let Some(app) = unsafe { app_mut(hwnd) } {
+            app.finish_backup(outcome);
+        }
+    }
+
     // --- WndProc ---
 
     /// Empresta o estado da janela. Cada handler cria o empréstimo no menor
@@ -1269,6 +1459,10 @@ mod platform {
                     }
                     _ => DefWindowProcW(hwnd, message, wparam, lparam),
                 },
+                WM_APP_BACKUP => {
+                    run_pending_backup(hwnd);
+                    LRESULT(0)
+                }
                 WM_APP_UI_EVENT => {
                     if let Some(app) = app_mut(hwnd) {
                         app.drain_events();

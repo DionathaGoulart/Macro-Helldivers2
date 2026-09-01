@@ -1,11 +1,11 @@
-//! Aba de configurações: atalhos dos slots, modificadores do jogo, idioma e os
-//! três estratagemas de apoio fixo.
+//! Aba de configurações: atalhos dos slots, modificadores do jogo, idioma, os
+//! três estratagemas de apoio fixo e o backup.
 //!
 //! Como a aba de macros, a tela é uma função do estado: entram os settings, saem
 //! nós e áreas clicáveis. Um clique (ou uma tecla capturada) devolve uma
 //! [`Action`] para a janela executar — gravar, refazer a tabela de atalhos,
-//! avisar o overlay. A transformação em si mora em [`Change::apply`], que é
-//! lógica pura e roda nos testes do host.
+//! avisar o overlay, abrir um diálogo de arquivo. A transformação em si mora em
+//! [`Change::apply`], que é lógica pura e roda nos testes do host.
 //!
 //! Comportamento portado de `legacy/src/renderer/App.jsx` (~558–898), menos o
 //! "modificador de sprint" (removido: o hook dispara com qualquer modificador
@@ -15,9 +15,11 @@ use crate::data::SUPPORT_STRATS;
 use crate::i18n::{self, Tr};
 use crate::keys::{self, Vk};
 use crate::settings::{Language, Settings, Speed, SLOT_COUNT, SUPPORT_COUNT};
-use crate::ui::theme::{self, font};
-use crate::ui::toolkit::{columns, grid_cell, id, id_at, Id, Measure, Rect, TextStyle, Ui, Weight};
-use crate::ui::widgets::{self, CardHeader};
+use crate::ui::theme::{self, font, Color};
+use crate::ui::toolkit::{
+    columns, grid_cell, id, id_at, Align, Id, Measure, Rect, TextStyle, Ui, Weight,
+};
+use crate::ui::widgets::{self, ButtonVariant, CardHeader};
 
 /// `px-6` da coluna de conteúdo.
 const PAGE_PADDING: f32 = 24.0;
@@ -47,11 +49,25 @@ const TOGGLE_GAP: f32 = 12.0;
 const ROW_GAP: f32 = 20.0;
 /// `gap-5` entre as três colunas de apoio, e entre o card e o seu botão.
 const SUPPORT_GAP: f32 = 16.0;
+/// Linha do aviso de backup, reservada mesmo vazia.
+const STATUS_H: f32 = 16.0;
+const STATUS_GAP: f32 = 8.0;
+
+/// Quanto tempo o aviso de backup fica na tela (2,5s, como na v1).
+pub const BACKUP_STATUS_MS: u32 = 2_500;
 /// Onde a próxima tecla capturada vai parar.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Capture {
     Slot(usize),
     Support(usize),
+}
+
+/// Resultado da última operação de backup.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum BackupStatus {
+    Exported,
+    Imported,
+    Failed,
 }
 
 /// Uma preferência mudou. A janela aplica, grava e espalha os efeitos.
@@ -99,6 +115,8 @@ pub enum Action {
     Redraw,
     /// Gravar o settings novo, refazer a tabela de atalhos e avisar o overlay.
     Setting(Change),
+    ExportBackup,
+    ImportBackup,
 }
 
 /// O que a aba precisa saber do resto do app.
@@ -116,6 +134,7 @@ impl Ctx<'_> {
 #[derive(Debug, Default)]
 pub struct SettingsTab {
     capturing: Option<Capture>,
+    backup_status: Option<BackupStatus>,
 }
 
 // --- Ids ---
@@ -142,6 +161,20 @@ fn speed_id(index: usize) -> Id {
 
 fn language_id(index: usize) -> Id {
     id_at("settings.language", index)
+}
+
+fn export_id() -> Id {
+    id("settings.export")
+}
+
+fn import_id() -> Id {
+    id("settings.import")
+}
+
+/// Chave da animação que apaga o aviso de backup. A janela dispara o pulso ao
+/// terminar a operação; a aba só lê o valor.
+pub fn backup_flash_id() -> Id {
+    id("settings.backup.status")
 }
 
 fn arrows_id() -> Id {
@@ -182,6 +215,12 @@ impl SettingsTab {
         self.capturing = None;
     }
 
+    /// Resultado do último backup. A janela também dispara o pulso de
+    /// [`backup_flash_id`], que é quem apaga o aviso depois de 2,5s.
+    pub fn set_backup_status(&mut self, status: BackupStatus) {
+        self.backup_status = Some(status);
+    }
+
     // --- Construção ---
 
     pub fn build(&mut self, ui: &mut Ui, measure: &mut dyn Measure, area: Rect, ctx: &Ctx) {
@@ -205,6 +244,10 @@ impl SettingsTab {
 
         let height = support_height(width);
         self.support_card(ui, Rect::new(view.x, y, width, height), ctx);
+        y += height + SECTION_GAP;
+
+        let height = backup_height(measure, width, ctx);
+        self.backup_card(ui, measure, Rect::new(view.x, y, width, height), ctx);
         y += height;
 
         ui.scroll_end(scroll_id(), view, y - (view.y - offset));
@@ -449,6 +492,75 @@ impl SettingsTab {
         }
     }
 
+    /// Card "Backup": a explicação, os dois botões e o aviso do resultado.
+    fn backup_card(&self, ui: &mut Ui, measure: &mut dyn Measure, rect: Rect, ctx: &Ctx) {
+        let tr = ctx.tr();
+        let mut content = widgets::card(
+            ui,
+            rect,
+            Some(CardHeader {
+                title: tr.settings.backup,
+                accent: theme::YELLOW,
+            }),
+        );
+
+        let desc_h = measure
+            .text_size(tr.settings.backup_desc, hint_style(), content.w)
+            .1;
+        ui.text(
+            content.cut_top(desc_h),
+            tr.settings.backup_desc,
+            hint_style(),
+            theme::TEXT_DIM,
+        );
+        content.skip_top(LABEL_GAP);
+
+        let buttons = columns(content.cut_top(CHOICE_H), 2, CHOICE_GAP);
+        widgets::button(
+            ui,
+            export_id(),
+            buttons[0],
+            tr.settings.backup_export,
+            ButtonVariant::Secondary,
+            theme::YELLOW,
+        );
+        widgets::button(
+            ui,
+            import_id(),
+            buttons[1],
+            tr.settings.backup_import,
+            ButtonVariant::Secondary,
+            theme::YELLOW,
+        );
+
+        content.skip_top(STATUS_GAP);
+        self.backup_message(ui, content.with_h(STATUS_H), ctx);
+    }
+
+    /// Aviso do último backup, apagando com o pulso disparado pela janela.
+    fn backup_message(&self, ui: &mut Ui, rect: Rect, ctx: &Ctx) {
+        let Some(status) = self.backup_status else {
+            return;
+        };
+        let alpha = ui.anim(backup_flash_id(), BACKUP_STATUS_MS);
+        if alpha <= 0.0 {
+            return;
+        }
+
+        let tr = ctx.tr();
+        let (text, color): (&str, Color) = match status {
+            BackupStatus::Exported => (tr.settings.backup_exported, theme::GREEN),
+            BackupStatus::Imported => (tr.settings.backup_imported, theme::GREEN),
+            BackupStatus::Failed => (tr.settings.backup_error, theme::RED),
+        };
+        ui.text(
+            rect,
+            text.to_uppercase(),
+            label_style().align(Align::Center).middle(),
+            color.alpha(alpha),
+        );
+    }
+
     // --- Cliques e teclas ---
 
     /// Trata um clique da aba. `None` quando o id não é daqui.
@@ -494,6 +606,12 @@ impl SettingsTab {
             return Some(Action::Setting(Change::AlwaysShowSlots(
                 !settings.always_show_slots,
             )));
+        }
+        if clicked == export_id() {
+            return Some(Action::ExportBackup);
+        }
+        if clicked == import_id() {
+            return Some(Action::ImportBackup);
         }
         None
     }
@@ -554,6 +672,16 @@ fn controls_height(measure: &mut dyn Measure, width: f32, ctx: &Ctx) -> f32 {
 
 fn language_height() -> f32 {
     widgets::card_chrome(true) + CHOICE_H
+}
+
+fn backup_height(measure: &mut dyn Measure, width: f32, ctx: &Ctx) -> f32 {
+    let inner = width - widgets::CARD_PADDING * 2.0;
+    let desc_h = measure
+        .text_size(ctx.tr().settings.backup_desc, hint_style(), inner)
+        .1;
+    // A linha do aviso entra na conta mesmo vazia: sem isso o card mudaria de
+    // tamanho toda vez que um backup terminasse.
+    widgets::card_chrome(true) + desc_h + LABEL_GAP + CHOICE_H + STATUS_GAP + STATUS_H
 }
 
 fn support_height(width: f32) -> f32 {
@@ -633,7 +761,13 @@ mod tests {
         expected.extend((0..keys::MODIFIER_KEYS.len()).map(modifier_id));
         expected.extend((0..Speed::ALL.len()).map(speed_id));
         expected.extend((0..Language::ALL.len()).map(language_id));
-        expected.extend([arrows_id(), overlay_id(), hud_id()]);
+        expected.extend([
+            arrows_id(),
+            overlay_id(),
+            hud_id(),
+            export_id(),
+            import_id(),
+        ]);
 
         for id in expected {
             assert!(ui.frame().has_hit(id), "widget sem área clicável: {id}");
@@ -853,6 +987,47 @@ mod tests {
         assert!(texts(&ui)
             .iter()
             .any(|text| text.contains("ESCUTANDO") || text.contains("OUVINDO")));
+    }
+
+    #[test]
+    fn the_backup_buttons_ask_for_the_file_dialogs() {
+        let settings = Settings::default();
+        let mut tab = SettingsTab::new();
+        assert_eq!(
+            tab.on_click(export_id(), &ctx(&settings)),
+            Some(Action::ExportBackup)
+        );
+        assert_eq!(
+            tab.on_click(import_id(), &ctx(&settings)),
+            Some(Action::ImportBackup)
+        );
+    }
+
+    #[test]
+    fn the_backup_message_shows_up_and_fades_away() {
+        let settings = Settings::default();
+        let mut tab = SettingsTab::new();
+        let mut ui = Ui::new();
+
+        build_settled(&mut tab, &mut ui, &settings);
+        let quiet = texts(&ui);
+        assert!(!quiet.iter().any(|text| text.contains("EXPORTADO")));
+
+        tab.set_backup_status(BackupStatus::Exported);
+        ui.flash(backup_flash_id(), BACKUP_STATUS_MS);
+        build_at(&mut tab, &mut ui, &settings, 2_000);
+        assert!(texts(&ui)
+            .iter()
+            .any(|text| text.contains("BACKUP EXPORTADO")));
+
+        // Passado o tempo do aviso, ele sai da tela sozinho.
+        build_at(
+            &mut tab,
+            &mut ui,
+            &settings,
+            2_000 + BACKUP_STATUS_MS as u64 * 2,
+        );
+        assert_eq!(texts(&ui), quiet);
     }
 
     #[test]

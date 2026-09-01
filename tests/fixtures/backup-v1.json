@@ -1,0 +1,60 @@
+{
+  "app": "macro-helldivers2",
+  "exportedAt": "2025-03-14T18:42:07.311Z",
+  "settings": {
+    "shortcuts": [
+      "F1",
+      "F2",
+      "Numpad1",
+      "F4"
+    ],
+    "supportShortcuts": [
+      "F5",
+      null,
+      "F7"
+    ],
+    "modifierKey": "LeftAlt",
+    "sprintModifier": "Shift",
+    "macroSpeed": "turbo",
+    "buildMatchSet": true,
+    "buildBalanced": true,
+    "buildMaxOneSentry": false,
+    "useArrows": true,
+    "language": "en",
+    "enableOverlay": true,
+    "alwaysShowSlots": true
+  },
+  "loadouts": [
+    {
+      "id": "1741977727311",
+      "name": "Bug Sweep",
+      "slotIds": [
+        0,
+        3,
+        66,
+        12
+      ],
+      "equip": {
+        "primary": "ar-23-liberator",
+        "armor": "b-01-tactical",
+        "booster": "hellpod-space-optimization"
+      }
+    },
+    {
+      "id": "1741977801044",
+      "name": "Old Build",
+      "slotIds": [
+        1,
+        2,
+        null,
+        null
+      ]
+    }
+  ],
+  "slotIds": [
+    0,
+    66,
+    67,
+    3
+  ]
+}
