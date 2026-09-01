@@ -4,8 +4,9 @@ A partir da v2.0.0 o app é um binário nativo em Rust + Win32 puro. **Ele só r
 Windows.** Em macOS/Linux dá para compilar, checar e rodar os testes dos módulos de
 lógica pura — todo código de janela, hook e input vive atrás de `#[cfg(windows)]`.
 
-O app Electron/React da v1 está preservado em `legacy/` como referência de
-comportamento durante a reescrita, e é removido quando a paridade for validada.
+O app Electron/React da v1 serviu de referência de comportamento durante a reescrita
+e foi removido depois da validação de paridade. Ele segue acessível na tag
+[`v1.0.0`](https://github.com/DionathaGoulart/Macro-Helldivers2/releases/tag/v1.0.0).
 
 ## Setup
 

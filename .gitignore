@@ -1,19 +1,11 @@
-# Dependências
-node_modules/
-
 # Build do Rust
 target/
 
-# Pastas de Build (Electron/Vite — legacy/)
-dist/
-dist-electron/
-release/
-out/
+# Dependências dos scripts da wiki (dev-only, em scripts/)
+node_modules/
 
 # Logs
 npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
 *.log
 
 # Variáveis de ambiente
