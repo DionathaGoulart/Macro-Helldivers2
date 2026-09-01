@@ -70,3 +70,8 @@ strip = true
 # Só em release: os guards RAII do engine dependem de unwind para soltar as teclas
 # em caso de panic, e os testes de lógica precisam de unwind para rodar.
 panic = "abort"
+
+[build-dependencies]
+# Gera o `.rc` com ícone e manifesto e chama o compilador de recursos. Só faz
+# algo quando o alvo é Windows; fora dele o `build.rs` sai antes.
+winresource = "0.1.31"

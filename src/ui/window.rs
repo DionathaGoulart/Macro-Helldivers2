@@ -151,6 +151,9 @@ mod platform {
     /// Id de controle do primeiro `EDIT` filho; os seguintes vêm em sequência.
     const FIRST_EDIT_CTRL: usize = 1000;
 
+    /// Id do ícone que o `build.rs` embute no executável.
+    const ICON_RESOURCE_ID: usize = 1;
+
     const PAGE_PADDING: f32 = 24.0;
     const FOOTER_HEIGHT: f32 = 40.0;
     const WARNING_HEIGHT: f32 = 56.0;
@@ -173,8 +176,7 @@ mod platform {
             hInstance: instance.into(),
             // SAFETY: cursor padrão do sistema.
             hCursor: unsafe { LoadCursorW(None, IDC_ARROW) }.context("LoadCursorW")?,
-            // O ícone do executável entra como recurso na Fase 10; até lá a
-            // janela usa o padrão do sistema.
+            hIcon: app_icon(instance.into()),
             lpszClassName: CLASS,
             ..Default::default()
         };
@@ -253,6 +255,18 @@ mod platform {
                 }
             }
         }
+    }
+
+    /// Ícone do executável, embutido como recurso de id 1 pelo `build.rs`.
+    ///
+    /// Sem o recurso (build sem compilador de recursos) a janela fica com o
+    /// ícone padrão do sistema, que é o que o Windows já usaria.
+    fn app_icon(instance: windows::Win32::Foundation::HINSTANCE) -> HICON {
+        // Um recurso por id viaja no lugar do ponteiro do nome — é o
+        // `MAKEINTRESOURCE` do C, e não um endereço que alguém vá desreferenciar.
+        let by_id = PCWSTR(std::ptr::without_provenance(ICON_RESOURCE_ID));
+        // SAFETY: o módulo é o do próprio processo e o "ponteiro" é um id.
+        unsafe { LoadIconW(Some(instance), by_id) }.unwrap_or_default()
     }
 
     /// Per-monitor v2 antes de qualquer janela: sem isto o Windows esticaria a
