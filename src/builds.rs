@@ -14,8 +14,9 @@ use rand::seq::{IndexedRandom, SliceRandom};
 use rand::{Rng, RngExt};
 
 use crate::data::EQUIP_SLOT_COUNT;
-use crate::data::{self, EquipSlot, Equipment, GameData, Item, StratMeta, Stratagem};
+use crate::data::{self, EquipSlot, Equipment, GameData, Item, StatsMap, StratMeta, Stratagem};
 use crate::loadouts::Loadout;
+use crate::meta_stats::{ItemStat, Stats};
 use crate::settings::{Settings, SLOT_COUNT};
 use crate::shared::Slots;
 use crate::util;
@@ -173,12 +174,7 @@ pub fn generate<R: Rng + ?Sized>(
         ..Build::default()
     };
     for slot in EquipSlot::ALL {
-        let kept = locks
-            .equip(slot)
-            .then(|| prev.and_then(|build| build.equip(slot)))
-            .flatten()
-            .map(str::to_string);
-        let id = match kept {
+        let id = match kept_equip(prev, locks, slot) {
             Some(id) => Some(id),
             None => random_item(equipment, slot, rng).map(|item| item.id().to_string()),
         };
@@ -240,6 +236,15 @@ fn can_add(id: u32, strats: &Slots, rules: Rules, data: &GameData, meta: &StratM
     true
 }
 
+/// Item que o cadeado manda preservar, se houver um na build anterior.
+fn kept_equip(prev: Option<&Build>, locks: &Locks, slot: EquipSlot) -> Option<String> {
+    locks
+        .equip(slot)
+        .then(|| prev.and_then(|build| build.equip(slot)))
+        .flatten()
+        .map(str::to_string)
+}
+
 fn random_item<'a, R: Rng + ?Sized>(
     equipment: &'a Equipment,
     slot: EquipSlot,
@@ -291,6 +296,324 @@ fn apply_set_matching<R: Rng + ?Sized>(
             build.set_equip(EquipSlot::Cape, Some((*cape).to_string()));
         }
     }
+}
+
+// --- Build meta ---
+
+/// Quantos estratagemas do topo entram no sorteio meta — e são os mesmos que a
+/// tela lista (`TOP_STRATS` do legado).
+pub const META_TOP_STRATS: usize = 10;
+/// Armas exibidas (e sorteadas) por categoria.
+pub const META_TOP_WEAPONS: usize = 3;
+/// Passivas de armadura exibidas, e as únicas que a armadura sorteada pode ter.
+pub const META_TOP_PASSIVES: usize = 5;
+/// Quando as regras ativas exigem algo que não está no topo, o sorteio cai nos
+/// mais usados da lista inteira que atendam.
+const META_FALLBACK: usize = 3;
+
+/// Um item das estatísticas: o que ele referencia aqui e os números do site.
+#[derive(Debug, Clone, PartialEq)]
+pub struct Pick<T> {
+    /// Id do estratagema, id do equipamento ou nome da passiva.
+    pub item: T,
+    pub stat: ItemStat,
+}
+
+/// As listas da sub-aba Meta, resolvidas contra os nossos JSONs e ordenadas por
+/// pick rate (`metaLists` do legado, ~318–335).
+#[derive(Debug, Clone, Default, PartialEq)]
+pub struct MetaLists {
+    pub stratagems: Vec<Pick<u32>>,
+    /// Armas por categoria, indexadas por [`EquipSlot::index`] — primária,
+    /// secundária e granada são justamente as três primeiras.
+    weapons: [Vec<Pick<String>>; 3],
+    /// Passivas pelo nome com que a armadura as referencia.
+    pub passives: Vec<Pick<String>>,
+    /// Partidas analisadas, o número do crédito ao site.
+    pub games: u64,
+}
+
+impl MetaLists {
+    /// Armas de uma categoria; categoria que não é de arma responde vazio.
+    pub fn weapons(&self, slot: EquipSlot) -> &[Pick<String>] {
+        match slot.is_weapon() {
+            true => &self.weapons[slot.index()],
+            false => &[],
+        }
+    }
+
+    /// Sem nada resolvido não há o que mostrar nem o que sortear — é o caso de
+    /// uma resposta vazia ou de um `statsMap.json` defasado.
+    pub fn is_empty(&self) -> bool {
+        self.stratagems.is_empty()
+            && self.passives.is_empty()
+            && self.weapons.iter().all(Vec::is_empty)
+    }
+}
+
+/// Transforma as três respostas cruas nas listas da tela.
+pub fn meta_lists(
+    stats: &Stats,
+    data: &GameData,
+    equipment: &Equipment,
+    map: &StatsMap,
+) -> MetaLists {
+    let mut stratagems: Vec<Pick<u32>> = stats
+        .strategem
+        .items
+        .iter()
+        .filter_map(|(slug, stat)| {
+            // Slug desconhecido, ou apontando para um id que saiu do jogo, some
+            // da lista em vez de virar linha vazia.
+            let id = *map.strategem.get(slug)?;
+            data.by_id(id)?;
+            Some(Pick {
+                item: id,
+                stat: *stat,
+            })
+        })
+        .collect();
+    sort_picks(&mut stratagems);
+
+    let mut weapons: [Vec<Pick<String>>; 3] = Default::default();
+    for (slug, stat) in &stats.weapons.items {
+        let Some(reference) = map.weapons.get(slug) else {
+            continue;
+        };
+        let Some(slot) = EquipSlot::from_key(&reference.cat).filter(|slot| slot.is_weapon()) else {
+            continue;
+        };
+        if equipment.find(slot, &reference.id).is_none() {
+            continue;
+        }
+        weapons[slot.index()].push(Pick {
+            item: reference.id.clone(),
+            stat: *stat,
+        });
+    }
+    for list in &mut weapons {
+        sort_picks(list);
+    }
+
+    let mut passives: Vec<Pick<String>> = stats
+        .armor
+        .items
+        .iter()
+        .filter_map(|(key, stat)| {
+            Some(Pick {
+                item: map.armor.get(key)?.clone(),
+                stat: *stat,
+            })
+        })
+        .collect();
+    sort_picks(&mut passives);
+
+    MetaLists {
+        stratagems,
+        weapons,
+        passives,
+        games: stats.strategem.total.games,
+    }
+}
+
+/// Maior pick rate primeiro. O desempate pelo próprio item é acréscimo nosso: as
+/// respostas chegam num mapa, cuja ordem de iteração muda a cada execução, e sem
+/// ele dois empatados trocariam de lugar na tela sem motivo.
+fn sort_picks<T: Ord>(picks: &mut [Pick<T>]) {
+    picks.sort_by(|a, b| {
+        b.stat
+            .loadouts_percentage
+            .total_cmp(&a.stat.loadouts_percentage)
+            .then_with(|| a.item.cmp(&b.item))
+    });
+}
+
+/// Sorteio ponderado pelo pick rate (`weightedFrom` do legado, ~338–347).
+fn weighted<'a, T, R: Rng + ?Sized>(list: &[&'a Pick<T>], rng: &mut R) -> Option<&'a Pick<T>> {
+    let total: f64 = list.iter().map(|pick| pick.stat.loadouts_percentage).sum();
+    // Lista sem peso nenhum (site zerado, todos empatados em 0) devolve o
+    // primeiro, que é o que a v1 fazia.
+    if total <= 0.0 {
+        return list.first().copied();
+    }
+    let mut roll = rng.random_range(0.0..total);
+    for pick in list {
+        roll -= pick.stat.loadouts_percentage;
+        if roll <= 0.0 {
+            return Some(pick);
+        }
+    }
+    list.last().copied()
+}
+
+/// Sorteia uma build a partir das estatísticas.
+///
+/// Porte de `generateMetaBuild` (~349–424): mesmas regras da build aleatória,
+/// mas a pool é o topo exibido na tela, e o peso de cada item é o pick rate.
+#[allow(clippy::too_many_arguments)]
+pub fn generate_meta<R: Rng + ?Sized>(
+    prev: Option<&Build>,
+    locks: &Locks,
+    rules: Rules,
+    lists: &MetaLists,
+    data: &GameData,
+    equipment: &Equipment,
+    meta: &StratMeta,
+    rng: &mut R,
+) -> Build {
+    let mut strats = Slots::default();
+    for (index, slot) in strats.iter_mut().enumerate() {
+        if locks.stratagem(index) {
+            *slot = prev.and_then(|build| build.stratagems[index]);
+        }
+    }
+
+    if rules.balanced {
+        if !strats.iter().flatten().any(|id| meta.is_support(*id)) {
+            place_meta(
+                &mut strats,
+                lists,
+                rules,
+                data,
+                meta,
+                Some(&|id| meta.is_support(id)),
+                rng,
+            );
+        }
+        if !strats.iter().flatten().any(|id| meta.is_backpack(*id)) {
+            place_meta(
+                &mut strats,
+                lists,
+                rules,
+                data,
+                meta,
+                Some(&|id| meta.is_backpack(id)),
+                rng,
+            );
+        }
+    }
+    for index in 0..SLOT_COUNT {
+        if strats[index].is_some() {
+            continue;
+        }
+        if let Some(id) = pick_meta(&strats, lists, rules, data, meta, None, rng) {
+            strats[index] = Some(id);
+        }
+    }
+
+    let mut build = Build {
+        stratagems: strats,
+        ..Build::default()
+    };
+
+    // Armas: só o topo exibido de cada categoria, com peso maior para o nº 1.
+    // Categoria sem nenhuma arma resolvida cai no sorteio comum.
+    for slot in [EquipSlot::Primary, EquipSlot::Secondary, EquipSlot::Grenade] {
+        let id = match kept_equip(prev, locks, slot) {
+            Some(id) => Some(id),
+            None => {
+                let top: Vec<&Pick<String>> =
+                    lists.weapons(slot).iter().take(META_TOP_WEAPONS).collect();
+                match weighted(&top, rng) {
+                    Some(pick) => Some(pick.item.clone()),
+                    None => random_item(equipment, slot, rng).map(|item| item.id().to_string()),
+                }
+            }
+        };
+        build.set_equip(slot, id);
+    }
+
+    // Armadura: só as que carregam uma das passivas do topo.
+    let armor = match kept_equip(prev, locks, EquipSlot::Armor) {
+        Some(id) => Some(id),
+        None => {
+            let top: Vec<&Pick<String>> = lists.passives.iter().take(META_TOP_PASSIVES).collect();
+            let candidates: Vec<&str> = match weighted(&top, rng) {
+                Some(passive) => equipment
+                    .armor
+                    .iter()
+                    .filter(|armor| armor.passive == passive.item)
+                    .map(|armor| armor.id.as_str())
+                    .collect(),
+                None => Vec::new(),
+            };
+            match candidates.choose(rng) {
+                Some(id) => Some((*id).to_string()),
+                None => {
+                    random_item(equipment, EquipSlot::Armor, rng).map(|item| item.id().to_string())
+                }
+            }
+        }
+    };
+    build.set_equip(EquipSlot::Armor, armor);
+
+    // O resto não tem estatística: sai no sorteio comum, respeitando o cadeado.
+    for slot in [EquipSlot::Helmet, EquipSlot::Cape, EquipSlot::Booster] {
+        let id = match kept_equip(prev, locks, slot) {
+            Some(id) => Some(id),
+            None => random_item(equipment, slot, rng).map(|item| item.id().to_string()),
+        };
+        build.set_equip(slot, id);
+    }
+
+    apply_set_matching(&mut build, locks, rules, equipment, rng);
+    build
+}
+
+/// Preenche o primeiro slot vazio com um estratagema do topo que atenda ao
+/// predicado (`placeInEmptySlot` da build meta).
+fn place_meta<R: Rng + ?Sized>(
+    strats: &mut Slots,
+    lists: &MetaLists,
+    rules: Rules,
+    data: &GameData,
+    meta: &StratMeta,
+    predicate: Option<&dyn Fn(u32) -> bool>,
+    rng: &mut R,
+) {
+    let Some(index) = strats.iter().position(Option::is_none) else {
+        return;
+    };
+    if let Some(id) = pick_meta(strats, lists, rules, data, meta, predicate, rng) {
+        strats[index] = Some(id);
+    }
+}
+
+/// Escolhe um estratagema entre os mais usados que cabem na build.
+///
+/// Só o topo mostrado na tela entra. Se as regras ativas exigirem algo que não
+/// está lá — balanceado precisa de mochila e o top 10 não tem —, a escolha cai
+/// nos [`META_FALLBACK`] mais usados da lista inteira que atendam (~367–380).
+fn pick_meta<R: Rng + ?Sized>(
+    strats: &Slots,
+    lists: &MetaLists,
+    rules: Rules,
+    data: &GameData,
+    meta: &StratMeta,
+    predicate: Option<&dyn Fn(u32) -> bool>,
+    rng: &mut R,
+) -> Option<u32> {
+    let allowed = |pick: &&Pick<u32>| {
+        predicate.is_none_or(|check| check(pick.item))
+            && can_add(pick.item, strats, rules, data, meta)
+    };
+
+    let top: Vec<&Pick<u32>> = lists
+        .stratagems
+        .iter()
+        .take(META_TOP_STRATS)
+        .filter(allowed)
+        .collect();
+    let pool = match top.is_empty() {
+        false => top,
+        true => lists
+            .stratagems
+            .iter()
+            .filter(allowed)
+            .take(META_FALLBACK)
+            .collect(),
+    };
+    weighted(&pool, rng).map(|pick| pick.item)
 }
 
 // --- Build personalizada ---
@@ -724,6 +1047,339 @@ mod tests {
 
         let build = roll(rules(true, true), &data, &meta);
         assert!(build.stratagems.iter().all(Option::is_some));
+    }
+
+    // --- Meta ---
+
+    fn stat(percentage: f64) -> ItemStat {
+        ItemStat {
+            loadouts_percentage: percentage,
+            ..ItemStat::default()
+        }
+    }
+
+    fn pick<T>(item: T, percentage: f64) -> Pick<T> {
+        Pick {
+            item,
+            stat: stat(percentage),
+        }
+    }
+
+    fn section(items: &[(&str, f64)], games: u64) -> crate::meta_stats::Section {
+        crate::meta_stats::Section {
+            items: items
+                .iter()
+                .map(|(slug, percentage)| ((*slug).to_string(), stat(*percentage)))
+                .collect(),
+            total: crate::meta_stats::Total { games },
+        }
+    }
+
+    /// Listas com os estratagemas dados, em pick rate decrescente, e nada mais.
+    fn lists_of(ids: &[u32]) -> MetaLists {
+        MetaLists {
+            stratagems: ids
+                .iter()
+                .enumerate()
+                .map(|(rank, id)| pick(*id, 50.0 - rank as f64))
+                .collect(),
+            ..MetaLists::default()
+        }
+    }
+
+    fn roll_meta(lists: &MetaLists, rules: Rules, data: &GameData, meta: &StratMeta) -> Build {
+        generate_meta(
+            None,
+            &Locks::default(),
+            rules,
+            lists,
+            data,
+            equipment(),
+            meta,
+            &mut rand::rng(),
+        )
+    }
+
+    #[test]
+    fn the_lists_resolve_the_slugs_and_come_out_by_pick_rate() {
+        let data = data();
+        let equipment = equipment();
+        let map = data::stats_map().expect("statsMap.json do repositório");
+
+        // Slugs reais do mapa, escolhidos em ordem estável (o mapa é um hash).
+        let mut strat_slugs: Vec<&String> = map.strategem.keys().collect();
+        strat_slugs.sort();
+        let mut weapon_slugs: Vec<&String> = map.weapons.keys().collect();
+        weapon_slugs.sort();
+        let mut armor_slugs: Vec<&String> = map.armor.keys().collect();
+        armor_slugs.sort();
+
+        let stats = Stats {
+            // Fora de ordem de propósito: quem ordena é o `meta_lists`.
+            strategem: section(
+                &[
+                    (strat_slugs[0], 5.0),
+                    (strat_slugs[1], 40.0),
+                    ("slug-que-nao-existe", 99.0),
+                ],
+                4_009,
+            ),
+            weapons: section(&[(weapon_slugs[0], 12.0), (weapon_slugs[1], 30.0)], 0),
+            armor: section(&[(armor_slugs[0], 7.0), (armor_slugs[1], 18.0)], 0),
+        };
+
+        let lists = meta_lists(&stats, &data, equipment, map);
+        assert!(!lists.is_empty());
+        assert_eq!(lists.games, 4_009);
+
+        // Slug desconhecido não vira linha na tela.
+        assert_eq!(lists.stratagems.len(), 2);
+        assert_eq!(lists.stratagems[0].item, map.strategem[strat_slugs[1]]);
+        assert_eq!(lists.stratagems[0].stat.loadouts_percentage, 40.0);
+        assert!(lists
+            .stratagems
+            .iter()
+            .all(|pick| data.by_id(pick.item).is_some()));
+
+        // Cada arma cai na categoria que o mapa indica.
+        for slug in [weapon_slugs[0], weapon_slugs[1]] {
+            let reference = &map.weapons[slug];
+            let slot = EquipSlot::from_key(&reference.cat).expect("categoria conhecida");
+            assert!(lists
+                .weapons(slot)
+                .iter()
+                .any(|pick| pick.item == reference.id));
+        }
+        // Categoria que não é de arma nunca tem lista.
+        assert!(lists.weapons(EquipSlot::Armor).is_empty());
+
+        assert_eq!(lists.passives.len(), 2);
+        assert_eq!(lists.passives[0].item, map.armor[armor_slugs[1]]);
+        assert!(MetaLists::default().is_empty());
+    }
+
+    #[test]
+    fn a_weighted_pick_follows_the_pick_rate() {
+        let popular = pick(1u32, 90.0);
+        let rare = pick(2u32, 10.0);
+        let list = [&popular, &rare];
+
+        let mut rng = rand::rng();
+        let hits = (0..ROLLS)
+            .filter(|_| weighted(&list, &mut rng).unwrap().item == 1)
+            .count();
+        // Com 90/10 o esperado é 180 em 200; a folga cobre a variação do sorteio
+        // sem deixar passar uma lista virada ao contrário.
+        assert!(hits > ROLLS * 3 / 4, "o mais usado saiu só {hits} vezes");
+        assert!(hits < ROLLS, "o menos usado nunca saiu");
+
+        // Lista sem peso nenhum devolve o primeiro, como a v1.
+        let zeroed = [&pick(7u32, 0.0), &pick(8u32, 0.0)];
+        assert_eq!(weighted(&zeroed, &mut rng).unwrap().item, 7);
+        assert!(weighted::<u32, _>(&[], &mut rng).is_none());
+    }
+
+    #[test]
+    fn a_meta_build_only_takes_stratagems_from_the_top() {
+        let data = data();
+        let meta = meta(&data);
+        let top: Vec<u32> = data.all().iter().take(15).map(|strat| strat.id).collect();
+        let lists = lists_of(&top);
+
+        for _ in 0..ROLLS {
+            let build = roll_meta(&lists, rules(false, false), &data, &meta);
+            assert!(build.stratagems.iter().all(Option::is_some));
+            for id in build.stratagems.iter().flatten() {
+                assert!(
+                    top[..META_TOP_STRATS].contains(id),
+                    "{id} está fora do top exibido"
+                );
+            }
+            for index in 1..SLOT_COUNT {
+                assert!(!build.stratagems[..index].contains(&build.stratagems[index]));
+            }
+        }
+    }
+
+    #[test]
+    fn the_backpack_fallback_reaches_outside_the_top() {
+        let data = data();
+        let meta = meta(&data);
+
+        // Topo sem apoio nem mochila; o resto da lista tem os dois, lá no fim.
+        let plain: Vec<u32> = data
+            .all()
+            .iter()
+            .filter(|strat| !meta.is_support(strat.id) && !meta.is_backpack(strat.id))
+            .take(META_TOP_STRATS)
+            .map(|strat| strat.id)
+            .collect();
+        let support = data
+            .all()
+            .iter()
+            .find(|strat| meta.is_support(strat.id) && !meta.is_backpack(strat.id))
+            .expect("uma arma de apoio sem mochila")
+            .id;
+        let backpack = data
+            .all()
+            .iter()
+            .find(|strat| meta.is_backpack(strat.id) && !meta.is_support(strat.id))
+            .expect("um item de mochila que não é apoio")
+            .id;
+
+        let mut ids = plain.clone();
+        ids.extend([support, backpack]);
+        let lists = lists_of(&ids);
+
+        for _ in 0..ROLLS {
+            let build = roll_meta(&lists, rules(true, false), &data, &meta);
+            let equipped: Vec<u32> = build.stratagems.iter().flatten().copied().collect();
+            assert!(
+                equipped.iter().any(|id| meta.is_support(*id)),
+                "build balanceada sem arma de apoio"
+            );
+            assert!(
+                equipped.iter().any(|id| meta.is_backpack(*id)),
+                "build balanceada sem item de mochila"
+            );
+        }
+    }
+
+    #[test]
+    fn the_meta_gear_comes_from_the_top_of_each_list() {
+        let data = data();
+        let meta = meta(&data);
+        let equipment = equipment();
+
+        let weapon_ids = |slot: EquipSlot| -> Vec<String> {
+            (0..4)
+                .filter_map(|index| equipment.at(slot, index))
+                .map(|item| item.id().to_string())
+                .collect()
+        };
+        let mut weapons: [Vec<Pick<String>>; 3] = Default::default();
+        for slot in [EquipSlot::Primary, EquipSlot::Secondary, EquipSlot::Grenade] {
+            weapons[slot.index()] = weapon_ids(slot)
+                .into_iter()
+                .enumerate()
+                .map(|(rank, id)| pick(id, 40.0 - rank as f64))
+                .collect();
+        }
+
+        // Seis passivas reais: só as cinco primeiras podem sair na armadura.
+        let mut names: Vec<String> = Vec::new();
+        for armor in &equipment.armor {
+            if !names.contains(&armor.passive) {
+                names.push(armor.passive.clone());
+            }
+        }
+        let passives: Vec<Pick<String>> = names
+            .iter()
+            .take(META_TOP_PASSIVES + 1)
+            .enumerate()
+            .map(|(rank, name)| pick(name.clone(), 30.0 - rank as f64))
+            .collect();
+
+        let lists = MetaLists {
+            stratagems: lists_of(
+                &data
+                    .all()
+                    .iter()
+                    .take(12)
+                    .map(|strat| strat.id)
+                    .collect::<Vec<u32>>(),
+            )
+            .stratagems,
+            weapons,
+            passives,
+            games: 1,
+        };
+
+        for _ in 0..ROLLS {
+            let build = roll_meta(&lists, rules(false, false), &data, &meta);
+            for slot in [EquipSlot::Primary, EquipSlot::Secondary, EquipSlot::Grenade] {
+                let chosen = build.equip(slot).expect("arma sorteada");
+                let top: Vec<&str> = lists
+                    .weapons(slot)
+                    .iter()
+                    .take(META_TOP_WEAPONS)
+                    .map(|pick| pick.item.as_str())
+                    .collect();
+                assert!(
+                    top.contains(&chosen),
+                    "{chosen} fora do top de {}",
+                    slot.key()
+                );
+            }
+
+            let armor = build
+                .item(equipment, EquipSlot::Armor)
+                .expect("armadura sorteada");
+            let passive = &equipment.armor_by_id(armor.id()).unwrap().passive;
+            assert!(
+                names[..META_TOP_PASSIVES].contains(passive),
+                "{passive} não está entre as passivas do topo"
+            );
+            // Capacete, capa e booster não têm estatística: só não podem faltar.
+            for slot in [EquipSlot::Helmet, EquipSlot::Cape, EquipSlot::Booster] {
+                assert!(
+                    build.item(equipment, slot).is_some(),
+                    "{} vazio",
+                    slot.key()
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn a_meta_build_keeps_what_is_locked() {
+        let data = data();
+        let meta = meta(&data);
+        let ids: Vec<u32> = data.all().iter().take(12).map(|strat| strat.id).collect();
+        let lists = lists_of(&ids);
+        let first = roll_meta(&lists, rules(false, false), &data, &meta);
+
+        let mut locks = Locks::default();
+        locks.toggle_stratagem(2);
+        locks.toggle_equip(EquipSlot::Booster);
+
+        for _ in 0..ROLLS {
+            let next = generate_meta(
+                Some(&first),
+                &locks,
+                rules(false, false),
+                &lists,
+                &data,
+                equipment(),
+                &meta,
+                &mut rand::rng(),
+            );
+            assert_eq!(next.stratagems[2], first.stratagems[2]);
+            assert_eq!(
+                next.equip(EquipSlot::Booster),
+                first.equip(EquipSlot::Booster)
+            );
+            // E o travado não sai de novo noutro slot.
+            let kept = next.stratagems[2];
+            assert_eq!(
+                next.stratagems.iter().filter(|slot| **slot == kept).count(),
+                1
+            );
+        }
+    }
+
+    #[test]
+    fn without_lists_no_stratagem_is_picked_but_the_gear_still_rolls() {
+        // Resposta vazia, ou `statsMap.json` defasado: a tela nem oferece o
+        // botão, mas o sorteio não pode entrar em pânico se chamado.
+        let data = data();
+        let meta = meta(&data);
+        let build = roll_meta(&MetaLists::default(), rules(true, true), &data, &meta);
+
+        assert!(build.stratagems.iter().all(Option::is_none));
+        for slot in EquipSlot::ALL {
+            assert!(build.item(equipment(), slot).is_some(), "{}", slot.key());
+        }
     }
 
     // --- Personalizada ---
