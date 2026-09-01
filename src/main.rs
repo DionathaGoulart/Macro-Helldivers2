@@ -5,6 +5,12 @@
 // O app só é útil no Windows. No host de desenvolvimento (macOS/Linux) o crate
 // compila, roda os testes de lógica e este resumo de sanidade.
 
+// Subsistema "windows" só no build de release: sem ele o Explorer abre um
+// console preto junto da janela a cada execução. No build de debug o console
+// fica, que é por onde `RUST_LOG=debug cargo run` mostra os logs.
+#![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
+
+use std::process::ExitCode;
 use std::sync::Arc;
 
 use anyhow::Result;
@@ -14,10 +20,24 @@ use macro_helldivers2::settings::Settings;
 use macro_helldivers2::shared::Shared;
 use macro_helldivers2::{engine, hooks, i18n, loadouts, overlay, ui, util};
 
-fn main() -> Result<()> {
+fn main() -> ExitCode {
     util::init_logging();
 
-    // O guard vive até o fim do `main`: enquanto o app roda, uma segunda
+    match boot() {
+        Ok(()) => ExitCode::SUCCESS,
+        Err(err) => {
+            log::error!("falha no boot: {err:#}");
+            // Sem console em release, um `Err` devolvido do `main` sumiria: o
+            // processo morreria sem janela e sem uma linha de explicação. O
+            // caso real é a instalação sem a pasta `assets/`.
+            util::fatal_dialog(&format!("{err:#}"));
+            ExitCode::FAILURE
+        }
+    }
+}
+
+fn boot() -> Result<()> {
+    // O guard vive até o fim do `boot`: enquanto o app roda, uma segunda
     // execução encontra o mutex, devolve o foco para a janela que já existe e
     // sai — abrir dois processos instalaria dois hooks de teclado, e cada
     // atalho dispararia a sequência duas vezes.

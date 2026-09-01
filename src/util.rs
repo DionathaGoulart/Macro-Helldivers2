@@ -438,6 +438,34 @@ pub fn focus_running_instance(class_name: &str) -> bool {
     true
 }
 
+/// Mostra o erro que impediu o app de subir.
+///
+/// É o único aviso que sobra quando o boot falha: em release o exe não tem
+/// console, então `eprintln!` não chega a lugar nenhum.
+#[cfg(windows)]
+pub fn fatal_dialog(message: &str) {
+    use windows::Win32::UI::WindowsAndMessaging::{
+        MessageBoxW, MB_ICONERROR, MB_OK, MB_SETFOREGROUND, MB_SYSTEMMODAL,
+    };
+
+    let text = wide(message);
+    let caption = wide("Macro Helldivers 2");
+    // SAFETY: as duas strings vivem até o fim da chamada, que é modal.
+    unsafe {
+        MessageBoxW(
+            None,
+            windows::core::PCWSTR(text.as_ptr()),
+            windows::core::PCWSTR(caption.as_ptr()),
+            MB_OK | MB_ICONERROR | MB_SETFOREGROUND | MB_SYSTEMMODAL,
+        );
+    }
+}
+
+#[cfg(not(windows))]
+pub fn fatal_dialog(message: &str) {
+    eprintln!("erro: {message}");
+}
+
 /// Liga o logger. Sem console em release, então isto serve principalmente para
 /// rodar o app a partir de um terminal com `RUST_LOG=debug` durante o diagnóstico.
 pub fn init_logging() {
