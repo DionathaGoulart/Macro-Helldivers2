@@ -6,6 +6,7 @@
 //! modificador de corrida (removido junto com a feature).
 
 use crate::data::EquipSlot;
+use crate::meta_stats::Faction;
 use crate::settings::{Language, Speed};
 
 pub struct Tr {
@@ -160,6 +161,15 @@ impl Build {
             EquipSlot::Helmet => self.helmet,
             EquipSlot::Cape => self.cape,
             EquipSlot::Booster => self.booster,
+        }
+    }
+
+    /// Nome da facção na linha de escolha da sub-aba Meta.
+    pub fn faction(&self, faction: Faction) -> &'static str {
+        match faction {
+            Faction::Terminid => self.faction_terminid,
+            Faction::Automaton => self.faction_automaton,
+            Faction::Illuminate => self.faction_illuminate,
         }
     }
 

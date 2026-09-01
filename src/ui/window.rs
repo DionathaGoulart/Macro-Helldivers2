@@ -102,6 +102,7 @@ mod platform {
     use crate::data::GameData;
     use crate::gfx::d2d::{window_dpi, WindowTarget};
     use crate::gfx::text::{register_gdi_fonts, Text};
+    use crate::meta_stats::{self, MetaResult};
     use crate::settings::{Language, Settings};
     use crate::shared::{
         FlashKind, OverlayCmd, OverlayState, Shared, Slots, UiEvent, WM_APP_UI_EVENT,
@@ -442,6 +443,10 @@ mod platform {
                         self.flash(slot, support, FlashKind::Blocked);
                         changed = true;
                     }
+                    UiEvent::MetaStats(result) => {
+                        self.build_tab.set_meta(result, &self.data);
+                        changed = true;
+                    }
                     // Overlay e updater ganham tela nas fases seguintes; o
                     // andamento da sequência não tem indicador próprio na v1.
                     other => log::debug!("evento de UI ainda sem tela: {other:?}"),
@@ -482,12 +487,36 @@ mod platform {
         /// repintura. É o único caminho que leva a um `WM_PAINT`.
         fn rebuild(&mut self) {
             self.build();
+            self.start_meta_request();
             self.sync_edits();
             self.sync_anim_timer();
             // SAFETY: janela viva; `None` invalida o cliente inteiro.
             unsafe {
                 let _ = InvalidateRect(Some(self.hwnd), None, false);
             }
+        }
+
+        /// Dispara a consulta de estatísticas que a aba de builds registrou.
+        ///
+        /// A aba não fala com a rede: quem tem o `Shared` (e, portanto, o
+        /// caminho de volta do worker) é a janela. Cache fresco responde na
+        /// hora, e aí a tela é refeita já com os números.
+        fn start_meta_request(&mut self) {
+            let Some((faction, difficulty)) = self.build_tab.take_meta_request() else {
+                return;
+            };
+            let Some(stats) = meta_stats::request(&self.shared, faction, difficulty) else {
+                // Sem cache, a resposta chega por `UiEvent::MetaStats`.
+                return;
+            };
+            self.build_tab.set_meta(
+                MetaResult {
+                    key: meta_stats::cache_key(faction, difficulty),
+                    stats: Some(stats),
+                },
+                &self.data,
+            );
+            self.build();
         }
 
         fn paint(&mut self) {

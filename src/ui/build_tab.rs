@@ -6,15 +6,20 @@
 //! moram em `builds.rs` (lógica pura); aqui ficam só o layout e a tradução de
 //! clique em [`Action`].
 //!
-//! Comportamento portado de `legacy/src/renderer/components/BuildTab.jsx`. A
-//! sub-aba Meta chega na Fase 8 — até lá ela avisa que as estatísticas não estão
-//! disponíveis, que é literalmente o caso sem o cliente do helldive.live.
+//! Comportamento portado de `legacy/src/renderer/components/BuildTab.jsx`.
+//!
+//! A sub-aba Meta não fala com a rede: ela registra o que precisa e a janela
+//! dispara a consulta (`meta_stats.rs`), devolvendo a resposta por [`set_meta`].
+//! Assim a construção da tela continua sendo função pura do estado.
+//!
+//! [`set_meta`]: BuildTab::set_meta
 
-use crate::builds::{self, Build, Locks, Rules};
+use crate::builds::{self, Build, Locks, MetaLists, Rules};
 use crate::data::{self, EquipSlot, Equipment, GameData, Item, StratMeta, Stratagem};
 use crate::i18n::{self, Tr};
 use crate::loadouts::{self, Loadout};
-use crate::settings::{Settings, SLOT_COUNT};
+use crate::meta_stats::{self, Faction, ItemStat, MetaResult, DIFFICULTIES};
+use crate::settings::{Language, Settings, SLOT_COUNT};
 use crate::shared::Slots;
 use crate::ui::settings_tab::Change;
 use crate::ui::theme::{self, font, Color};
@@ -65,6 +70,33 @@ const EQUIP_COLS: usize = 4;
 /// × que esvazia um slot em edição.
 const CLEAR_SIZE: f32 = 20.0;
 const HOVER_MS: u32 = 180;
+
+/// Botões de facção (`py-3`) e de dificuldade (`py-2`) da sub-aba Meta.
+const META_FACTION_HEIGHT: f32 = 38.0;
+const META_DIFFICULTY_HEIGHT: f32 = 32.0;
+/// `gap-2` entre eles e `mb-4` depois das escolhas.
+const META_CHOICE_GAP: f32 = 8.0;
+const META_BLOCK_GAP: f32 = 16.0;
+/// `w-full py-4` do botão de gerar a build meta.
+const META_GENERATE_HEIGHT: f32 = 48.0;
+/// Altura do aviso de carregando/erro (`py-6`).
+const META_STATUS_HEIGHT: f32 = 48.0;
+/// `gap-6` entre a coluna dos estratagemas e a das armas.
+const META_COLUMN_GAP: f32 = 24.0;
+/// Linha de item das listas e o `space-y-1` entre elas.
+const META_ROW_HEIGHT: f32 = 24.0;
+const META_ROW_GAP: f32 = 4.0;
+/// `gap-2` entre as partes de uma linha.
+const META_CELL_GAP: f32 = 8.0;
+/// Ícone (`w-6 h-6`), barra proporcional (`w-14 h-1.5`) e as colunas de número.
+const META_ICON: f32 = 24.0;
+const META_BAR_WIDTH: f32 = 56.0;
+const META_BAR_HEIGHT: f32 = 6.0;
+const META_NEW_WIDTH: f32 = 34.0;
+const META_CHANGE_WIDTH: f32 = 38.0;
+const META_PERCENT_WIDTH: f32 = 44.0;
+/// Período do pulso do aviso de carregando (`animate-pulse`).
+const META_PULSE_MS: u32 = 1_400;
 
 /// Chips das builds salvas (`py-2.5 px-4`) e a largura do campo de nome.
 const CHIP_HEIGHT: f32 = 36.0;
@@ -145,6 +177,18 @@ fn option_id(index: usize) -> Id {
 
 fn generate_id() -> Id {
     id("build.generate")
+}
+
+fn faction_id(index: usize) -> Id {
+    id_at("build.meta.faction", index)
+}
+
+fn difficulty_id(index: usize) -> Id {
+    id_at("build.meta.difficulty", index)
+}
+
+fn meta_generate_id() -> Id {
+    id("build.meta.generate")
 }
 
 fn apply_id() -> Id {
@@ -242,6 +286,55 @@ fn hint_style() -> TextStyle {
     TextStyle::new(font::SIZE_TINY, Weight::Regular).wrap()
 }
 
+/// Em que pé está a consulta da sub-aba Meta.
+enum MetaState {
+    /// Combinação ainda não pedida — a próxima construção registra o pedido.
+    Idle,
+    Loading,
+    Ready(Box<MetaLists>),
+    Failed,
+}
+
+/// Estado da sub-aba Meta. A facção e a dificuldade são escolha de sessão: a v1
+/// também não as guardava.
+struct MetaView {
+    faction: Faction,
+    difficulty: u8,
+    state: MetaState,
+    /// Consulta que a janela ainda precisa disparar.
+    pending: Option<(Faction, u8)>,
+}
+
+impl MetaView {
+    fn new() -> MetaView {
+        MetaView {
+            faction: Faction::default(),
+            difficulty: DIFFICULTIES[0],
+            state: MetaState::Idle,
+            pending: None,
+        }
+    }
+
+    fn key(&self) -> String {
+        meta_stats::cache_key(self.faction, self.difficulty)
+    }
+
+    /// Troca de facção ou dificuldade: a consulta recomeça do zero.
+    fn reset(&mut self) {
+        self.state = MetaState::Idle;
+        self.pending = None;
+    }
+
+    fn lists(&self) -> Option<&MetaLists> {
+        match &self.state {
+            // Resposta que não casou com nada dos nossos JSONs não tem o que
+            // mostrar nem o que sortear: vale como indisponível.
+            MetaState::Ready(lists) if !lists.is_empty() => Some(lists),
+            _ => None,
+        }
+    }
+}
+
 /// Estado da aba entre passagens de construção.
 pub struct BuildTab {
     sub: SubTab,
@@ -259,6 +352,8 @@ pub struct BuildTab {
     field: Rect,
     /// Classificação da wiki, montada na primeira visita (com o `equipment.json`).
     meta: Option<StratMeta>,
+    /// Facção, dificuldade e estatísticas da sub-aba Meta.
+    stats: MetaView,
     /// Builds salvas, lidas do disco na primeira visita à aba.
     loadouts: Vec<Loadout>,
     loaded: bool,
@@ -285,6 +380,7 @@ impl BuildTab {
             open: None,
             field: Rect::ZERO,
             meta: None,
+            stats: MetaView::new(),
             loadouts: Vec::new(),
             loaded: false,
             name: String::new(),
@@ -328,6 +424,32 @@ impl BuildTab {
         }
     }
 
+    /// Consulta de estatísticas que a janela precisa disparar, se houver.
+    ///
+    /// A aba não fala com a rede nem lê o cache: ela só registra o que falta, e
+    /// quem resolve é a janela, que tem o `Shared` para o worker responder.
+    pub fn take_meta_request(&mut self) -> Option<(Faction, u8)> {
+        self.stats.pending.take()
+    }
+
+    /// Resposta de uma consulta. Resposta de outra combinação é descartada — o
+    /// usuário pode ter trocado de facção enquanto a rede respondia.
+    pub fn set_meta(&mut self, result: MetaResult, data: &GameData) {
+        if result.key != self.stats.key() {
+            return;
+        }
+        self.stats.state = match result.stats {
+            Some(stats) => match (data::equipment(), data::stats_map()) {
+                (Some(equipment), Some(map)) => {
+                    MetaState::Ready(Box::new(builds::meta_lists(&stats, data, equipment, map)))
+                }
+                // Sem os JSONs de apoio não há como resolver slug nenhum.
+                _ => MetaState::Failed,
+            },
+            None => MetaState::Failed,
+        };
+    }
+
     /// Tecla recebida pela janela. Só o Esc interessa, e só com a lista aberta.
     pub fn on_key(&mut self, vk: u16) -> Option<Action> {
         if vk == crate::keys::VK_ESCAPE && self.open.is_some() {
@@ -365,8 +487,14 @@ impl BuildTab {
 
         match self.sub {
             SubTab::Meta => {
-                let height = meta_height();
-                self.meta_card(ui, Rect::new(view.x, y, width, height), ctx);
+                // Primeira visita (ou combinação recém-escolhida): a consulta é
+                // registrada aqui e disparada pela janela logo depois.
+                if matches!(self.stats.state, MetaState::Idle) {
+                    self.stats.state = MetaState::Loading;
+                    self.stats.pending = Some((self.stats.faction, self.stats.difficulty));
+                }
+                let height = self.meta_height();
+                self.meta_card(ui, measure, Rect::new(view.x, y, width, height), ctx);
                 y += height + SECTION_GAP;
             }
             SubTab::Random => {
@@ -476,10 +604,10 @@ impl BuildTab {
         }
     }
 
-    /// Sub-aba Meta: a tela chega na Fase 8; por ora, o aviso de indisponível.
-    fn meta_card(&self, ui: &mut Ui, rect: Rect, ctx: &Ctx) {
+    /// Sub-aba Meta: facção × dificuldade e as listas do helldive.live.
+    fn meta_card(&self, ui: &mut Ui, measure: &mut dyn Measure, rect: Rect, ctx: &Ctx) {
         let tr = ctx.tr();
-        let content = widgets::card(
+        let mut content = widgets::card(
             ui,
             rect,
             Some(CardHeader {
@@ -487,12 +615,190 @@ impl BuildTab {
                 accent: theme::RED,
             }),
         );
+
+        let row = content.cut_top(META_FACTION_HEIGHT);
+        let cells = columns(row, Faction::ALL.len(), META_CHOICE_GAP);
+        for ((index, faction), cell) in Faction::ALL.into_iter().enumerate().zip(cells) {
+            widgets::choice_button(
+                ui,
+                faction_id(index),
+                cell,
+                tr.build.faction(faction),
+                self.stats.faction == faction,
+            );
+        }
+        content.skip_top(META_CHOICE_GAP);
+
+        let row = content.cut_top(META_DIFFICULTY_HEIGHT);
+        let cells = columns(row, DIFFICULTIES.len(), META_CHOICE_GAP);
+        for ((index, difficulty), cell) in DIFFICULTIES.into_iter().enumerate().zip(cells) {
+            let label = match difficulty {
+                0 => tr.build.meta_difficulty_all.to_string(),
+                level => format!("D{level}"),
+            };
+            difficulty_button(
+                ui,
+                difficulty_id(index),
+                cell,
+                &label,
+                self.stats.difficulty == difficulty,
+            );
+        }
+        content.skip_top(META_BLOCK_GAP);
+
+        match self.stats.lists() {
+            Some(lists) => self.meta_body(ui, measure, content, lists, ctx),
+            None => {
+                let (message, color) = match self.stats.state {
+                    MetaState::Loading | MetaState::Idle => {
+                        // O pulso do legado: o aviso respira enquanto a consulta
+                        // não volta, e o timer morre junto com ele.
+                        let pulse = 0.45 + 0.55 * ui.pulse(META_PULSE_MS);
+                        (tr.build.meta_loading, theme::CYAN.alpha(0.7 * pulse))
+                    }
+                    _ => (tr.build.meta_error, theme::RED.alpha(0.8)),
+                };
+                ui.text(
+                    content.with_h(META_STATUS_HEIGHT),
+                    message.to_uppercase(),
+                    label_style().align(Align::Center).middle(),
+                    color,
+                );
+            }
+        }
+    }
+
+    /// Botão de gerar, as duas colunas de listas e o crédito ao site.
+    fn meta_body(
+        &self,
+        ui: &mut Ui,
+        measure: &mut dyn Measure,
+        rect: Rect,
+        lists: &MetaLists,
+        ctx: &Ctx,
+    ) {
+        let tr = ctx.tr();
+        let mut content = rect;
+        widgets::button(
+            ui,
+            meta_generate_id(),
+            content.cut_top(META_GENERATE_HEIGHT),
+            &format!("\u{1F3C6} {}", tr.build.meta_generate),
+            ButtonVariant::Secondary,
+            theme::YELLOW,
+        );
+        content.skip_top(META_BLOCK_GAP);
+
+        let area = content.cut_top(meta_columns_height(lists));
+        let pair = columns(area, 2, META_COLUMN_GAP);
+        self.meta_stratagems(ui, measure, pair[0], lists, ctx);
+        self.meta_gear(ui, measure, pair[1], lists, ctx);
+
+        content.skip_top(META_BLOCK_GAP);
         ui.text(
-            content,
-            tr.build.meta_error.to_uppercase(),
-            label_style().align(Align::Center).middle(),
+            content.cut_top(LABEL_HEIGHT),
+            format!(
+                "{} · {} {}",
+                tr.build.meta_credit,
+                grouped(lists.games, ctx.settings.language),
+                tr.build.meta_games
+            )
+            .to_uppercase(),
+            TextStyle::new(8.0, Weight::Black)
+                .tracking(font::TRACKING_WIDE)
+                .align(Align::Center),
             theme::TEXT_DIM,
         );
+    }
+
+    /// Coluna da esquerda: os estratagemas mais usados, com a barra proporcional
+    /// ao primeiro colocado.
+    fn meta_stratagems(
+        &self,
+        ui: &mut Ui,
+        measure: &mut dyn Measure,
+        rect: Rect,
+        lists: &MetaLists,
+        ctx: &Ctx,
+    ) {
+        let mut cursor = rect;
+        ui.text(
+            cursor.cut_top(LABEL_HEIGHT),
+            ctx.tr().build.meta_top_strats.to_uppercase(),
+            label_style(),
+            theme::TEXT_DIM,
+        );
+        cursor.skip_top(LABEL_GAP);
+
+        let best = lists
+            .stratagems
+            .first()
+            .map(|pick| pick.stat.loadouts_percentage)
+            .unwrap_or_default();
+        for (index, pick) in lists
+            .stratagems
+            .iter()
+            .take(builds::META_TOP_STRATS)
+            .enumerate()
+        {
+            let row = meta_row(&mut cursor, index);
+            let Some(strat) = ctx.data.by_id(pick.item) else {
+                continue;
+            };
+            meta_stratagem_row(ui, measure, row, strat, pick.stat, best, ctx);
+        }
+    }
+
+    /// Coluna da direita: armas por categoria e as passivas mais usadas.
+    fn meta_gear(
+        &self,
+        ui: &mut Ui,
+        measure: &mut dyn Measure,
+        rect: Rect,
+        lists: &MetaLists,
+        ctx: &Ctx,
+    ) {
+        let tr = ctx.tr();
+        let equipment = data::equipment();
+        let mut cursor = rect;
+
+        for slot in [EquipSlot::Primary, EquipSlot::Secondary, EquipSlot::Grenade] {
+            meta_section_label(ui, &mut cursor, tr.build.equip_label(slot));
+            for (index, pick) in lists
+                .weapons(slot)
+                .iter()
+                .take(builds::META_TOP_WEAPONS)
+                .enumerate()
+            {
+                let row = meta_row(&mut cursor, index);
+                let item = equipment.and_then(|equipment| equipment.find(slot, &pick.item));
+                let Some(item) = item else {
+                    continue;
+                };
+                meta_item_row(
+                    ui,
+                    measure,
+                    row,
+                    item.nome(),
+                    raster_icon(item.imagem()).as_deref(),
+                    pick.stat,
+                );
+            }
+            cursor.skip_top(META_BLOCK_GAP);
+        }
+
+        meta_section_label(ui, &mut cursor, tr.build.meta_top_passives);
+        for (index, pick) in lists
+            .passives
+            .iter()
+            .take(builds::META_TOP_PASSIVES)
+            .enumerate()
+        {
+            let row = meta_row(&mut cursor, index);
+            // O ícone da passiva vem em SVG, que o decodificador não lê: a linha
+            // mostra só o nome, como no legado.
+            meta_item_row(ui, measure, row, &pick.item, None, pick.stat);
+        }
     }
 
     /// Sub-aba Aleatória: o botão de sortear e a explicação.
@@ -1252,6 +1558,28 @@ impl BuildTab {
             self.generate(ctx);
             return Some(Action::Redraw);
         }
+        if clicked == meta_generate_id() {
+            self.generate_meta(ctx);
+            return Some(Action::Redraw);
+        }
+        for (index, faction) in Faction::ALL.into_iter().enumerate() {
+            if clicked == faction_id(index) {
+                if self.stats.faction != faction {
+                    self.stats.faction = faction;
+                    self.stats.reset();
+                }
+                return Some(Action::Redraw);
+            }
+        }
+        for (index, difficulty) in DIFFICULTIES.into_iter().enumerate() {
+            if clicked == difficulty_id(index) {
+                if self.stats.difficulty != difficulty {
+                    self.stats.difficulty = difficulty;
+                    self.stats.reset();
+                }
+                return Some(Action::Redraw);
+            }
+        }
         if clicked == apply_id() {
             let build = self.build.as_ref()?;
             let slots = crate::loadouts::sanitize(&build.stratagems, ctx.data);
@@ -1386,6 +1714,30 @@ impl BuildTab {
         ));
     }
 
+    /// Sorteia uma build a partir das estatísticas em tela.
+    fn generate_meta(&mut self, ctx: &Ctx) {
+        let Some(lists) = self.stats.lists() else {
+            return;
+        };
+        let Some(equipment) = data::equipment() else {
+            log::warn!("equipment.json indisponível: nada a sortear");
+            return;
+        };
+        let kinds = self
+            .meta
+            .get_or_insert_with(|| StratMeta::build(ctx.data, equipment));
+        self.build = Some(builds::generate_meta(
+            self.build.as_ref(),
+            &self.locks,
+            Rules::from_settings(ctx.settings),
+            lists,
+            ctx.data,
+            equipment,
+            kinds,
+            &mut rand::rng(),
+        ));
+    }
+
     /// Clique na grade personalizada. O slot em edição avança mesmo quando a
     /// regra recusa — é o que a v1 fazia, com o avanço fora do `setState`.
     fn assign(&mut self, strat: &Stratagem, ctx: &Ctx) -> Option<Action> {
@@ -1510,6 +1862,224 @@ fn tag_color(tag: &str) -> Color {
     }
 }
 
+/// Botão de dificuldade: o escolhido acende em ciano, e não em amarelo — é o que
+/// separa a linha da dificuldade da linha da facção na v1.
+fn difficulty_button(ui: &mut Ui, id: Id, rect: Rect, label: &str, selected: bool) {
+    let hover = ui.fade(id, ui.is_hot(id), HOVER_MS);
+    let style = TextStyle::new(font::SIZE_TINY, Weight::Black)
+        .tracking(font::TRACKING_LABEL)
+        .align(Align::Center)
+        .middle();
+
+    if selected {
+        ui.fill(rect, theme::RADIUS_BUTTON, theme::CYAN.alpha(0.2));
+        ui.stroke(rect, theme::RADIUS_BUTTON, 2.0, theme::CYAN.alpha(0.6));
+        ui.text(rect, label.to_uppercase(), style, theme::CYAN);
+    } else {
+        ui.fill(rect, theme::RADIUS_BUTTON, theme::SURFACE);
+        ui.stroke(
+            rect,
+            theme::RADIUS_BUTTON,
+            2.0,
+            theme::BORDER.mix(theme::CYAN.alpha(0.4), hover),
+        );
+        ui.text(
+            rect,
+            label.to_uppercase(),
+            style,
+            theme::TEXT_DIM.mix(theme::TEXT, hover),
+        );
+    }
+    ui.hit(id, rect);
+}
+
+/// Recorta a próxima linha de uma lista, com o respiro entre linhas — e sem
+/// sobra depois da última, que é o que as alturas calculadas assumem.
+fn meta_row(cursor: &mut Rect, index: usize) -> Rect {
+    if index > 0 {
+        cursor.skip_top(META_ROW_GAP);
+    }
+    cursor.cut_top(META_ROW_HEIGHT)
+}
+
+/// Título de uma seção da coluna da direita, já avançando o cursor.
+fn meta_section_label(ui: &mut Ui, cursor: &mut Rect, label: &str) {
+    ui.text(
+        cursor.cut_top(LABEL_HEIGHT),
+        label.to_uppercase(),
+        label_style(),
+        theme::TEXT_DIM,
+    );
+    cursor.skip_top(LABEL_GAP);
+}
+
+/// Linha do top de estratagemas: ícone, nome, "NOVO", variação, barra e o
+/// percentual (~678–691).
+fn meta_stratagem_row(
+    ui: &mut Ui,
+    measure: &mut dyn Measure,
+    rect: Rect,
+    strat: &Stratagem,
+    stat: ItemStat,
+    best: f64,
+    ctx: &Ctx,
+) {
+    let mut row = rect;
+    let icon = row.cut_left(META_ICON).middle_row(META_ICON);
+    row.cut_left(META_CELL_GAP);
+    ui.image_styled(
+        icon,
+        format!("icons/{}", strat.imagem),
+        ImageStyle::FILL.contain(),
+    );
+
+    // As colunas de número são fixas; o nome fica com o que sobrar.
+    let percent = row.cut_right(META_PERCENT_WIDTH);
+    row.cut_right(META_CELL_GAP);
+    let bar = row.cut_right(META_BAR_WIDTH).middle_row(META_BAR_HEIGHT);
+    row.cut_right(META_CELL_GAP);
+    let change = row.cut_right(META_CHANGE_WIDTH);
+    row.cut_right(META_CELL_GAP);
+    let badge = stat.is_new().then(|| {
+        let badge = row.cut_right(META_NEW_WIDTH).middle_row(14.0);
+        row.cut_right(META_CELL_GAP);
+        badge
+    });
+
+    meta_name(ui, measure, row, &strat.nome);
+
+    if let Some(badge) = badge {
+        ui.fill(badge, 3.0, theme::YELLOW);
+        ui.text(
+            badge,
+            ctx.tr().build.meta_new,
+            TextStyle::new(7.0, Weight::Black)
+                .align(Align::Center)
+                .middle(),
+            theme::TEXT_ON_ACCENT,
+        );
+    }
+
+    let delta = stat.change();
+    let (arrow, color) = match delta {
+        delta if delta > 0.0 => ("\u{25B2}", theme::GREEN),
+        delta if delta < 0.0 => ("\u{25BC}", theme::RED),
+        _ => ("", theme::TEXT_DIM),
+    };
+    ui.text(
+        change,
+        format!("{arrow}{:.1}", delta.abs()),
+        TextStyle::new(8.0, Weight::Black)
+            .align(Align::End)
+            .middle(),
+        color,
+    );
+
+    // Barra proporcional ao primeiro colocado, e não a 100%.
+    ui.fill(bar, META_BAR_HEIGHT / 2.0, theme::BORDER);
+    let share = match best > 0.0 {
+        true => (stat.loadouts_percentage / best).clamp(0.0, 1.0) as f32,
+        false => 0.0,
+    };
+    if share > 0.0 {
+        ui.fill(
+            bar.with_w(bar.w * share),
+            META_BAR_HEIGHT / 2.0,
+            theme::CYAN,
+        );
+    }
+    meta_percent(ui, percent, stat);
+}
+
+/// Linha de arma ou passiva: ícone (quando existe), nome e percentual.
+fn meta_item_row(
+    ui: &mut Ui,
+    measure: &mut dyn Measure,
+    rect: Rect,
+    name: &str,
+    image: Option<&str>,
+    stat: ItemStat,
+) {
+    let mut row = rect;
+    let icon = row.cut_left(META_ICON).middle_row(META_ICON);
+    row.cut_left(META_CELL_GAP);
+    if let Some(path) = image {
+        ui.image_styled(icon, format!("icons/{path}"), ImageStyle::FILL.contain());
+    }
+
+    let percent = row.cut_right(META_PERCENT_WIDTH);
+    row.cut_right(META_CELL_GAP);
+    meta_name(ui, measure, row, name);
+    meta_percent(ui, percent, stat);
+}
+
+fn meta_name(ui: &mut Ui, measure: &mut dyn Measure, rect: Rect, name: &str) {
+    let style = TextStyle::new(font::SIZE_TINY, Weight::Black).middle();
+    ui.text(
+        rect,
+        ellipsize(measure, &name.to_uppercase(), style, rect.w),
+        style,
+        theme::TEXT,
+    );
+}
+
+fn meta_percent(ui: &mut Ui, rect: Rect, stat: ItemStat) {
+    ui.text(
+        rect,
+        format!("{:.1}%", stat.loadouts_percentage),
+        TextStyle::new(font::SIZE_TINY, Weight::Black)
+            .align(Align::End)
+            .middle(),
+        theme::CYAN,
+    );
+}
+
+/// Corta o texto até caber, terminando em reticências (o `truncate` do legado).
+/// Sem isso um nome comprido invadiria as colunas de número da linha.
+fn ellipsize(measure: &mut dyn Measure, text: &str, style: TextStyle, width: f32) -> String {
+    let full = measure.text_size(text, style, f32::INFINITY).0;
+    if full <= width || width <= 0.0 {
+        return text.to_string();
+    }
+
+    let chars: Vec<char> = text.chars().collect();
+    // Primeiro palpite pela proporção: quase sempre acerta de primeira, e o
+    // laço só desce um caractere ou outro.
+    let mut keep = ((chars.len() as f32 * width / full) as usize).min(chars.len());
+    while keep > 0 {
+        let candidate: String = chars[..keep]
+            .iter()
+            .collect::<String>()
+            .trim_end()
+            .chars()
+            .chain(std::iter::once('\u{2026}'))
+            .collect();
+        if measure.text_size(&candidate, style, f32::INFINITY).0 <= width {
+            return candidate;
+        }
+        keep -= 1;
+    }
+    "\u{2026}".to_string()
+}
+
+/// Milhar como o `toLocaleString()` do idioma: ponto em português, vírgula em
+/// inglês.
+fn grouped(value: u64, language: Language) -> String {
+    let separator = match language {
+        Language::Pt => '.',
+        Language::En => ',',
+    };
+    let digits = value.to_string();
+    let mut out = String::with_capacity(digits.len() + digits.len() / 3);
+    for (index, digit) in digits.chars().enumerate() {
+        if index > 0 && (digits.len() - index) % 3 == 0 {
+            out.push(separator);
+        }
+        out.push(digit);
+    }
+    out
+}
+
 fn sub_tab(ui: &mut Ui, id: Id, rect: Rect, label: &str, selected: bool) {
     let hover = ui.fade(id, ui.is_hot(id), HOVER_MS);
     let style = TextStyle::new(font::SIZE_LABEL, Weight::Black)
@@ -1545,8 +2115,48 @@ fn options_height() -> f32 {
     widgets::card_chrome(false) + TOGGLE_HEIGHT * 3.0 + TOGGLE_GAP * 2.0
 }
 
-fn meta_height() -> f32 {
-    widgets::card_chrome(true) + 48.0
+fn meta_rows_height(count: usize) -> f32 {
+    match count {
+        0 => 0.0,
+        count => count as f32 * META_ROW_HEIGHT + (count - 1) as f32 * META_ROW_GAP,
+    }
+}
+
+/// Título mais as linhas de uma seção da coluna da direita.
+fn meta_section_height(count: usize) -> f32 {
+    LABEL_HEIGHT + LABEL_GAP + meta_rows_height(count)
+}
+
+/// As duas colunas acompanham a mais alta, como o grid do legado.
+fn meta_columns_height(lists: &MetaLists) -> f32 {
+    let left = meta_section_height(lists.stratagems.len().min(builds::META_TOP_STRATS));
+    let weapons: f32 = [EquipSlot::Primary, EquipSlot::Secondary, EquipSlot::Grenade]
+        .into_iter()
+        .map(|slot| {
+            meta_section_height(lists.weapons(slot).len().min(builds::META_TOP_WEAPONS))
+                + META_BLOCK_GAP
+        })
+        .sum();
+    let passives = meta_section_height(lists.passives.len().min(builds::META_TOP_PASSIVES));
+    left.max(weapons + passives)
+}
+
+impl BuildTab {
+    fn meta_height(&self) -> f32 {
+        let choices =
+            META_FACTION_HEIGHT + META_CHOICE_GAP + META_DIFFICULTY_HEIGHT + META_BLOCK_GAP;
+        let body = match self.stats.lists() {
+            Some(lists) => {
+                META_GENERATE_HEIGHT
+                    + META_BLOCK_GAP
+                    + meta_columns_height(lists)
+                    + META_BLOCK_GAP
+                    + LABEL_HEIGHT
+            }
+            None => META_STATUS_HEIGHT,
+        };
+        widgets::card_chrome(true) + choices + body
+    }
 }
 
 fn random_height(measure: &mut dyn Measure, width: f32, ctx: &Ctx) -> f32 {
@@ -1693,6 +2303,215 @@ mod tests {
         assert!(ui.frame().has_hit(search_id()));
         // As opções de sorteio somem na montagem à mão.
         assert!(!ui.frame().has_hit(option_id(0)));
+    }
+
+    // --- Sub-aba Meta ---
+
+    /// Resposta plausível: slugs reais do `statsMap.json`, em ordem estável.
+    fn meta_stats_response() -> crate::meta_stats::Stats {
+        use crate::meta_stats::{Section, Stats, Total};
+
+        let map = data::stats_map().expect("statsMap.json do repositório");
+        fn sorted(keys: Vec<&String>) -> Vec<&String> {
+            let mut keys = keys;
+            keys.sort();
+            keys
+        }
+        let section = |slugs: Vec<&String>, games: u64| Section {
+            items: slugs
+                .iter()
+                .enumerate()
+                .map(|(rank, slug)| {
+                    (
+                        (*slug).clone(),
+                        crate::meta_stats::ItemStat {
+                            loadouts_percentage: 40.0 - rank as f64,
+                            change: Some(if rank % 2 == 0 { 3.1 } else { -2.4 }),
+                            is_new: Some(rank == 0),
+                        },
+                    )
+                })
+                .collect(),
+            total: Total { games },
+        };
+
+        Stats {
+            strategem: section(
+                sorted(map.strategem.keys().collect())
+                    .into_iter()
+                    .take(12)
+                    .collect(),
+                4_009,
+            ),
+            weapons: section(sorted(map.weapons.keys().collect()), 0),
+            armor: section(
+                sorted(map.armor.keys().collect())
+                    .into_iter()
+                    .take(6)
+                    .collect(),
+                0,
+            ),
+        }
+    }
+
+    fn answer(tab: &mut BuildTab, data: &GameData, ok: bool) {
+        let key = tab.stats.key();
+        let stats = ok.then(|| std::sync::Arc::new(meta_stats_response()));
+        tab.set_meta(MetaResult { key, stats }, data);
+    }
+
+    #[test]
+    fn the_meta_tab_asks_for_the_stats_and_then_shows_them() {
+        let data = data();
+        let settings = Settings::default();
+        let mut tab = BuildTab::new();
+        let mut ui = Ui::new();
+
+        // A tela abre na Meta: a primeira construção registra a consulta e
+        // mostra o aviso de carregando.
+        build(&mut tab, &mut ui, &ctx(&data, &settings));
+        assert_eq!(
+            tab.take_meta_request(),
+            Some((Faction::Terminid, DIFFICULTIES[0]))
+        );
+        let loading = i18n::tr(settings.language)
+            .build
+            .meta_loading
+            .to_uppercase();
+        assert!(texts(&ui).contains(&loading));
+        assert!(!ui.frame().has_hit(meta_generate_id()));
+        // E só pede uma vez enquanto a consulta não volta.
+        build(&mut tab, &mut ui, &ctx(&data, &settings));
+        assert_eq!(tab.take_meta_request(), None);
+
+        answer(&mut tab, &data, true);
+        build(&mut tab, &mut ui, &ctx(&data, &settings));
+
+        assert!(ui.frame().has_hit(meta_generate_id()));
+        let texts = texts(&ui);
+        assert!(!texts.contains(&loading));
+        // Percentuais, o crédito com o total de partidas e a etiqueta de novo.
+        assert!(texts.iter().any(|text| text == "40.0%"));
+        assert!(texts
+            .iter()
+            .any(|text| text.contains("4.009") && text.contains("HELLDIVE.LIVE")));
+        assert!(texts.iter().any(|text| text == "NOVO"));
+        assert!(texts.iter().any(|text| text.starts_with('\u{25B2}')));
+        assert!(texts.iter().any(|text| text.starts_with('\u{25BC}')));
+    }
+
+    #[test]
+    fn changing_faction_or_difficulty_asks_again_and_ignores_the_old_answer() {
+        let data = data();
+        let settings = Settings::default();
+        let mut tab = BuildTab::new();
+        let mut ui = Ui::new();
+        build(&mut tab, &mut ui, &ctx(&data, &settings));
+        tab.take_meta_request();
+
+        tab.on_click(faction_id(1), &ctx(&data, &settings));
+        build(&mut tab, &mut ui, &ctx(&data, &settings));
+        assert_eq!(
+            tab.take_meta_request(),
+            Some((Faction::Automaton, DIFFICULTIES[0]))
+        );
+
+        // Resposta da facção anterior chega atrasada e é descartada.
+        tab.set_meta(
+            MetaResult {
+                key: meta_stats::cache_key(Faction::Terminid, 0),
+                stats: Some(std::sync::Arc::new(meta_stats_response())),
+            },
+            &data,
+        );
+        assert!(tab.stats.lists().is_none());
+
+        // Clicar na facção que já está escolhida não refaz a consulta.
+        answer(&mut tab, &data, true);
+        tab.on_click(faction_id(1), &ctx(&data, &settings));
+        build(&mut tab, &mut ui, &ctx(&data, &settings));
+        assert_eq!(tab.take_meta_request(), None);
+
+        tab.on_click(difficulty_id(3), &ctx(&data, &settings));
+        build(&mut tab, &mut ui, &ctx(&data, &settings));
+        assert_eq!(
+            tab.take_meta_request(),
+            Some((Faction::Automaton, DIFFICULTIES[3]))
+        );
+    }
+
+    #[test]
+    fn a_failed_query_shows_the_warning_instead_of_the_lists() {
+        let data = data();
+        let settings = Settings::default();
+        let mut tab = BuildTab::new();
+        let mut ui = Ui::new();
+
+        build(&mut tab, &mut ui, &ctx(&data, &settings));
+        tab.take_meta_request();
+        answer(&mut tab, &data, false);
+        build(&mut tab, &mut ui, &ctx(&data, &settings));
+
+        let error = i18n::tr(settings.language).build.meta_error.to_uppercase();
+        assert!(texts(&ui).contains(&error));
+        assert!(!ui.frame().has_hit(meta_generate_id()));
+        // E o botão, se clicado assim mesmo, não sorteia nada.
+        tab.on_click(meta_generate_id(), &ctx(&data, &settings));
+        assert!(tab.build.is_none());
+    }
+
+    #[test]
+    fn the_meta_button_rolls_a_build_out_of_the_listed_stratagems() {
+        let data = data();
+        let settings = Settings::default();
+        let mut tab = BuildTab::new();
+        let mut ui = Ui::new();
+
+        build(&mut tab, &mut ui, &ctx(&data, &settings));
+        tab.take_meta_request();
+        answer(&mut tab, &data, true);
+
+        tab.on_click(meta_generate_id(), &ctx(&data, &settings));
+        let rolled = tab.build.clone().expect("build meta");
+        assert!(rolled.stratagems.iter().all(Option::is_some));
+
+        let top: Vec<u32> = tab
+            .stats
+            .lists()
+            .unwrap()
+            .stratagems
+            .iter()
+            .take(builds::META_TOP_STRATS)
+            .map(|pick| pick.item)
+            .collect();
+        for id in rolled.stratagems.iter().flatten() {
+            assert!(top.contains(id), "{id} está fora do top exibido");
+        }
+
+        // A build sorteada aparece na tela como qualquer outra.
+        build(&mut tab, &mut ui, &ctx(&data, &settings));
+        assert!(ui.frame().has_hit(strat_lock_id(0)));
+    }
+
+    #[test]
+    fn long_names_are_cut_to_fit_the_row() {
+        let style = TextStyle::new(font::SIZE_TINY, Weight::Black);
+        let name = "ORBITAL PRECISION STRIKE";
+        let full = Fixed.text_size(name, style, f32::INFINITY).0;
+
+        assert_eq!(ellipsize(&mut Fixed, name, style, full), name);
+        let cut = ellipsize(&mut Fixed, name, style, full / 2.0);
+        assert!(cut.ends_with('\u{2026}') && cut.len() < name.len());
+        assert!(Fixed.text_size(&cut, style, f32::INFINITY).0 <= full / 2.0);
+    }
+
+    #[test]
+    fn the_match_count_is_grouped_like_the_locale() {
+        assert_eq!(grouped(4_009, Language::Pt), "4.009");
+        assert_eq!(grouped(4_009, Language::En), "4,009");
+        assert_eq!(grouped(1_234_567, Language::Pt), "1.234.567");
+        assert_eq!(grouped(0, Language::Pt), "0");
+        assert_eq!(grouped(999, Language::En), "999");
     }
 
     #[test]
