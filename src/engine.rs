@@ -168,7 +168,8 @@ pub fn jittered_ms(base_ms: u32, floor_ms: u32, offset_ms: f64) -> f64 {
 /// settings no meio de uma sequência.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Sequence {
-    pub codex: Vec<Dir>,
+    /// Vem pronto do hook, compartilhado com a tabela de bindings.
+    pub codex: Arc<[Dir]>,
     pub modifier: Scan,
     pub use_arrows: bool,
     pub speed: Speed,
@@ -262,7 +263,7 @@ pub fn run_sequence<S: InputSink>(
     hooks.started();
     held.wait(Phase::Lead, profile.lead, MIN_WAIT_MS, jitter);
 
-    for dir in &sequence.codex {
+    for dir in sequence.codex.iter() {
         // Perdeu o foco no meio: para agora; o guard solta modificador e direção.
         if hooks.aborted() {
             return Outcome::Aborted;
@@ -589,7 +590,7 @@ mod tests {
 
     fn sequence(codex: &[Dir], speed: Speed, use_arrows: bool) -> Sequence {
         Sequence {
-            codex: codex.to_vec(),
+            codex: codex.into(),
             modifier: CTRL,
             use_arrows,
             speed,
@@ -804,7 +805,7 @@ mod tests {
 
     fn run_cmd(slot: usize) -> EngineCmd {
         EngineCmd::Run {
-            codex: vec![Dir::Up, Dir::Down],
+            codex: [Dir::Up, Dir::Down].into(),
             modifier: CTRL,
             use_arrows: false,
             speed: Speed::Turbo,

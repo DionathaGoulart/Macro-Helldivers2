@@ -48,7 +48,10 @@ pub enum UpdateStatus {
 #[derive(Debug, Clone, PartialEq)]
 pub enum EngineCmd {
     Run {
-        codex: Vec<Dir>,
+        /// Compartilhado, não copiado: quem monta o comando é o callback do hook
+        /// de teclado, que roda sob o prazo do SO e não pode alocar. Clonar o
+        /// `Arc` é um incremento atômico.
+        codex: Arc<[Dir]>,
         /// Scancode do modificador, já resolvido: o hook não pode pagar lookup.
         modifier: Scan,
         use_arrows: bool,
@@ -233,7 +236,7 @@ mod tests {
     fn commands_reach_their_receiver() {
         let (shared, rx) = shared();
         let cmd = EngineCmd::Run {
-            codex: vec![Dir::Up, Dir::Down],
+            codex: [Dir::Up, Dir::Down].into(),
             modifier: keys::modifier_scan("LeftControl"),
             use_arrows: false,
             speed: Speed::Turbo,
@@ -264,7 +267,7 @@ mod tests {
         let (shared, rx) = shared();
         drop(rx);
         shared.send_engine(EngineCmd::Run {
-            codex: vec![Dir::Left],
+            codex: [Dir::Left].into(),
             modifier: keys::modifier_scan("LeftAlt"),
             use_arrows: true,
             speed: Speed::Normal,

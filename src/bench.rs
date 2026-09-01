@@ -236,7 +236,7 @@ mod tests {
         run_sequence(
             &mut trace,
             &Sequence {
-                codex: vec![Dir::Up],
+                codex: [Dir::Up].into(),
                 modifier: crate::keys::modifier_scan("LeftControl"),
                 use_arrows: false,
                 speed: Speed::Turbo,

@@ -114,7 +114,7 @@ fn main() -> ExitCode {
     }
 
     let sequence = Sequence {
-        codex: CODEX.to_vec(),
+        codex: CODEX.into(),
         modifier: keys::modifier_scan("LeftControl"),
         use_arrows: args.use_arrows,
         speed: args.speed,

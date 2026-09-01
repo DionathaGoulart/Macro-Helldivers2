@@ -135,7 +135,7 @@ fn main() -> ExitCode {
     }
 
     let sequence = Sequence {
-        codex: args.codex.clone(),
+        codex: args.codex.as_slice().into(),
         modifier: keys::modifier_scan("LeftControl"),
         use_arrows: args.use_arrows,
         speed: args.speed,
