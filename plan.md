@@ -640,36 +640,111 @@ Eagle Rearm: UP UP LEFT UP RIGHT
 
 **Objetivo:** fechar a v2.0.0: paridade validada, métricas medidas, legado removido, docs.
 
+**Estado (2026-09-01):** a parte que roda no host de desenvolvimento está feita e
+commitada — auditoria estática, correções, limpeza, docs e bump. Gates verdes: `fmt`,
+`clippy --target x86_64-pc-windows-msvc -D warnings`, `check` msvc, `cargo test`
+(266 passando, 2 ignorados por dependerem de rede).
+
+**Falta a passada em Windows**, que é o que fecha a fase: nenhum item do checklist
+foi confirmado com o jogo aberto, e nenhuma métrica foi medida. As anotações
+`(teste: …)` abaixo dizem qual teste automatizado sustenta a lógica do item — elas
+não substituem a validação in-game, servem para saber o que já está coberto e onde
+olhar primeiro se algo falhar na VM.
+
 **Tarefas:**
 
 1. **Checklist de paridade** (validar no Windows com o jogo; marcar aqui):
    - [ ] 4 slots com atalhos configuráveis; captura com Esc; recording desliga hook
+     (teste: `ui::settings_tab::clicking_a_shortcut_starts_listening_and_a_key_binds_it`,
+     `escape_cancels_and_pure_modifiers_are_ignored`, `hooks::nothing_is_swallowed_while_disarmed`)
    - [ ] 3 apoios fixos com atalhos próprios
+     (teste: `hooks::support_shortcuts_carry_the_fixed_codexes`, `data::support_codexes_match_the_game`)
    - [ ] Perfis normal/fast/turbo; WASD↔Setas; modificador Ctrl/Alt/=/−
+     (teste: `engine::speed_profiles_match_the_reference_table`, `engine::arrow_mode_sends_the_extended_scancodes`,
+     `keys::modifier_scancodes_match_the_reference_table`)
    - [ ] Macro dispara com QUALQUER modificador seguro (correr+F1 funciona)
+     (teste: `hooks::a_bound_key_becomes_a_ready_engine_command` — o `decide` só olha a vk,
+     nunca o estado dos modificadores)
    - [ ] Macro só com jogo/app/overlay focado; feedback disparo/bloqueio
+     (teste: `focus::titles_are_classified_like_the_v1_rules`, `focus::only_foreign_windows_disarm_the_macros`,
+     `engine::shortcuts_that_arrived_during_a_run_are_dropped_with_feedback`)
    - [ ] Aborto ao perder foco solta todas as teclas
+     (teste: `engine::losing_focus_stops_the_sequence_and_releases_every_key`,
+     `engine::a_key_held_when_the_sequence_dies_is_released_in_reverse_order`)
    - [ ] Overlay: Ctrl+H, hidden/minimal/panel, click-through, sem roubo de foco, HUD persistente, aviso fullscreen, × fecha
+     (teste: `overlay::the_hotkey_walks_the_three_states_like_the_v1`, `overlay::hidden_collapses_both_windows_into_the_corner`,
+     `overlay::strip::the_strip_never_answers_the_mouse`, `game_config::exclusive_fullscreen_is_the_only_mode_that_warns`;
+     **roubo de foco e click-through só se provam in-game**)
    - [ ] Painel enxuto: atribuir slots + aplicar builds salvas por mouse
+     (teste: `overlay::panel::clicking_a_stratagem_assigns_it_to_the_active_slot`,
+     `overlay::panel::a_saved_build_only_moves_the_macro_slots`, `overlay::panel::there_is_no_text_field_in_the_panel`)
    - [ ] Aba Macros: categorias/cores, busca sem acento, exclusividade, avanço de slot
+     (teste: `ui::macro_tab::sections_follow_the_categories_in_the_legacy_order`,
+     `the_search_ignores_case_and_accents_and_drops_empty_sections`,
+     `a_stratagem_equipped_elsewhere_or_in_conflict_is_refused`, `clicking_a_stratagem_fills_the_active_slot_and_moves_on`)
    - [ ] Builds Meta: facção×dificuldade, cache 6h, tops com Δ/NOVO, geração ponderada
+     (teste: `meta_stats::the_url_carries_every_parameter_the_api_expects`, `meta_stats::an_entry_expires_after_six_hours`,
+     `builds::a_weighted_pick_follows_the_pick_rate`, `builds::a_meta_build_only_takes_stratagems_from_the_top`)
    - [ ] Builds Aleatória: sets, balanceado, máx 1 sentinela, locks
+     (teste: `builds::set_matching_pairs_the_helmet_and_the_cape_with_the_armor`,
+     `a_balanced_build_always_carries_a_support_weapon_and_a_backpack`, `the_sentry_cap_holds`, `locked_items_survive_the_next_roll`)
    - [ ] Builds Personalizada: slots, grade+busca, equipamento, importar, limpar
+     (teste: `builds::the_custom_grid_equips_removes_and_refuses_duplicates`, `the_custom_grid_respects_exclusive_tags`,
+     `the_custom_list_is_ordered_by_category_and_filtered_by_the_search`)
    - [ ] Salvas: salvar/sobrescrever/aplicar/excluir/destaque
+     (teste: `builds::saving_names_overwrites_by_name_and_ignores_an_empty_build`,
+     `builds::applying_a_saved_build_fills_the_slots_and_the_screen`, `loadouts::saved_builds_round_trip_through_disk`)
    - [ ] Backup: export/import compatível com arquivo da v1
+     (teste: `loadouts::a_real_v1_backup_is_read_whole` contra `tests/fixtures/backup-v1.json`,
+     `an_exported_backup_reads_back_identical`, `a_file_from_another_app_is_refused`)
    - [ ] Tray: minimizar/fechar esconde; Sair encerra; single instance
+     (**sem cobertura automatizada — win32 puro, só validável na VM**)
    - [ ] Updater: check adiado com jogo focado; download manual; instalar
+     (teste: `focus::losing_focus_hides_the_overlay_and_releases_the_deferred_update_check`,
+     `focus::an_already_checked_updater_never_asks_again`, `updater::only_a_higher_version_counts_as_an_update`;
+     **o ciclo download→instalar precisa de um release de teste real**)
    - [ ] i18n pt/en completo; bounds da janela persistem; DPI 100/125/150%
-2. **Benchmarks** (tabela no CHANGELOG):
+     (teste: `i18n::both_languages_resolve`, `i18n::no_string_is_empty`, `ui::window::bounds_*`,
+     `overlay::the_monitor_origin_and_the_dpi_scale_are_respected`)
+2. **Benchmarks** (tabela no CHANGELOG): **nenhum medido.** A tabela publicada no
+   CHANGELOG traz as metas e o comando que verifica cada uma; a coluna de medição é
+   preenchida depois da passada em Windows.
    - RAM (private bytes): idle < 20MB; overlay ativo < 22MB
    - CPU idle com jogo focado: ~0%
    - Boot até janela útil: < 300ms
    - `timing_bench`: p99 < 1ms; `soak` in-game: 1.000 turbo @60fps e @30fps → 0 falhas
    - PresentMon: frametime HD2 com HUD persistente on/off → delta < 0,2ms médio
    - Instalador < 5MB
-3. **Limpeza**: `git rm -r legacy/`; ajustar `.gitignore`.
-4. **Docs**: `README.md` reescrito (stack win32/Rust, features, dev com cargo-xwin, pipeline de dados, seção overlay/fullscreen mantida, mudanças deliberadas documentadas); `CHANGELOG.md` entrada `2.0.0` (reescrita, remoções deliberadas com justificativa, métricas antes/depois); `Cargo.toml` → `2.0.0`.
-5. Tag e release: **aguardar comando do usuário** (não taguear sem pedir).
+3. ~~**Limpeza**: `git rm -r legacy/`; ajustar `.gitignore`.~~ **Feito.** A v1 segue
+   acessível pela tag `v1.0.0`; o `.gitignore` perdeu as regras de saída do Vite e do
+   electron-builder.
+4. ~~**Docs**~~ **Feito.** README reescrito e CHANGELOG com a entrada `2.0.0`
+   (reescrita, remoções deliberadas com justificativa, migração da v1 por backup,
+   tabela de metas); `Cargo.toml` em `2.0.0`.
+5. Tag e release: **aguardar comando do usuário** (não taguear sem pedir). **Pendente**
+   — e só faz sentido depois do checklist e dos benchmarks.
+
+**Bugs achados na auditoria estática (corrigidos):**
+
+1. **Console preto junto da janela.** O alvo MSVC linka no subsistema console por
+   padrão e nada no crate pedia outro; o exe instalado abria um `cmd` a cada
+   execução. `windows_subsystem` agora vale só em release (debug mantém o console em
+   que o `RUST_LOG` escreve). Como isso também tira o stderr, uma falha de boot
+   (instalação sem `assets/`) passou a aparecer numa caixa de diálogo em vez de matar
+   o processo sem janela e sem explicação.
+2. **`optimize-images` reescrevendo o arquivo errado.** A lista de arquivos com
+   caminhos de imagem ainda citava `legacy/src/shared/constants.js`, que era onde os
+   três apoios fixos guardavam os ícones na v1. Eles moram em `src/data.rs` desde a
+   Fase 1, então uma nova conversão PNG→WebP deixaria os três apontando para arquivos
+   deletados.
+
+**Ressalvas conhecidas:**
+
+- `cargo clippy` **sem** `--target` no host de dev acusa 4 warnings de dead-code em
+  `hooks.rs` (`KeySet` e `Runtime::swallowed` só existem no Windows). Não afeta a CI:
+  o gate documentado é sempre com `--target x86_64-pc-windows-msvc`.
+- O link do perfil release não foi exercido no host (sem `cargo-xwin` instalado). É o
+  step "Release build" do `ci.yml`, no `windows-latest`, que cobre.
 
 **Commits:**
 1. `fix: ...` (um por bug achado no QA, mensagem própria)
