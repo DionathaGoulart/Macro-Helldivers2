@@ -62,6 +62,16 @@ fn boot() -> Result<()> {
     let (shared, receivers) = Shared::new(settings, slots);
     let settings = shared.settings_snapshot();
 
+    // Em release `panic = "abort"` mata o processo sem rodar o Drop do guard do
+    // engine; o hook roda antes do abort e é a última chance de soltar as
+    // teclas que uma sequência esteja segurando dentro do jogo.
+    let panic_shared = Arc::clone(&shared);
+    let default_hook = std::panic::take_hook();
+    std::panic::set_hook(Box::new(move |info| {
+        engine::emergency_release(&panic_shared);
+        default_hook(info);
+    }));
+
     // O motor fica bloqueado no canal até um atalho chegar. Ele segura uma
     // referência ao `Shared`, e com ela o próprio remetente, então nunca se
     // desliga sozinho: a thread morre junto com o processo, como as demais.

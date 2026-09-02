@@ -67,8 +67,9 @@ opt-level = 3
 lto = "thin"
 codegen-units = 1
 strip = true
-# Só em release: os guards RAII do engine dependem de unwind para soltar as teclas
-# em caso de panic, e os testes de lógica precisam de unwind para rodar.
+# Só em release (os testes de lógica precisam de unwind para rodar). Com abort
+# os guards RAII do engine não rodam em panic; quem solta as teclas nesse caso é
+# o panic hook instalado no boot (`engine::emergency_release`).
 panic = "abort"
 
 [build-dependencies]

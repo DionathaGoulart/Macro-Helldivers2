@@ -280,6 +280,26 @@ pub fn run_sequence<S: InputSink>(
     Outcome::Completed
 }
 
+/// Solta todas as teclas que uma sequência pode estar segurando agora.
+///
+/// É a rede de segurança do panic hook: em release o perfil usa `panic =
+/// "abort"`, que mata o processo sem rodar o `Drop` do guard — e um panic em
+/// qualquer thread no meio de uma sequência deixaria o modificador logicamente
+/// preso no sistema até o usuário apertar a tecla física, no meio da partida.
+/// Key-up de tecla que não está pressionada é inofensivo, então soltamos o
+/// conjunto inteiro em vez de rastrear o que está de fato seguro.
+pub fn emergency_release(shared: &Shared) {
+    if !shared.macro_running.load(Ordering::Acquire) {
+        return;
+    }
+    for scan in keys::WASD.iter().chain(keys::ARROWS.iter()) {
+        send_scan(*scan, true);
+    }
+    for name in keys::MODIFIER_KEYS {
+        send_scan(keys::modifier_scan(name), true);
+    }
+}
+
 /// Sobe a thread do engine. Ela vive enquanto o canal existir.
 pub fn spawn(shared: Arc<Shared>, rx: Receiver<EngineCmd>) -> std::io::Result<JoinHandle<()>> {
     std::thread::Builder::new()
