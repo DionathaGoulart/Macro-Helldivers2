@@ -193,32 +193,42 @@ impl Shared {
         self.recording.store(recording, Ordering::Relaxed);
     }
 
+    // Os locks guardam dado puro: se uma thread entrou em panic com o lock em
+    // mãos, a cópia anterior continua válida — matar em cascata a thread do
+    // overlay ou o callback do hook por envenenamento seria o pior desfecho.
+
     /// Cópia dos settings. Leitores de longa duração devem travar direto.
     pub fn settings_snapshot(&self) -> Settings {
-        self.settings.read().expect("settings envenenado").clone()
+        self.settings
+            .read()
+            .unwrap_or_else(|err| err.into_inner())
+            .clone()
     }
 
     pub fn set_settings(&self, settings: Settings) {
-        *self.settings.write().expect("settings envenenado") = settings;
+        *self.settings.write().unwrap_or_else(|err| err.into_inner()) = settings;
     }
 
     pub fn slots(&self) -> Slots {
-        *self.slots.read().expect("slots envenenado")
+        *self.slots.read().unwrap_or_else(|err| err.into_inner())
     }
 
     pub fn set_slots(&self, slots: Slots) {
-        *self.slots.write().expect("slots envenenado") = slots;
+        *self.slots.write().unwrap_or_else(|err| err.into_inner()) = slots;
     }
 
     pub fn overlay_state(&self) -> OverlayState {
-        *self.overlay_state.read().expect("overlay_state envenenado")
+        *self
+            .overlay_state
+            .read()
+            .unwrap_or_else(|err| err.into_inner())
     }
 
     pub fn set_overlay_state(&self, state: OverlayState) {
         *self
             .overlay_state
             .write()
-            .expect("overlay_state envenenado") = state;
+            .unwrap_or_else(|err| err.into_inner()) = state;
     }
 
     // Canal fechado significa que a thread destino já morreu (encerramento do
