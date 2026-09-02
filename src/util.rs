@@ -72,22 +72,63 @@ pub fn asset_path(rel: &str) -> PathBuf {
 /// Grava criando o diretório se preciso, via arquivo temporário + rename, para
 /// que uma queda no meio da escrita nunca deixe um JSON truncado no lugar do bom.
 pub fn write_atomic(path: &Path, bytes: &[u8]) -> Result<()> {
+    use std::io::Write;
+    use std::sync::atomic::{AtomicU64, Ordering};
+
     let parent = path
         .parent()
         .with_context(|| format!("caminho sem diretório pai: {}", path.display()))?;
     fs::create_dir_all(parent)
         .with_context(|| format!("não foi possível criar {}", parent.display()))?;
 
+    // Nome único por escrita: o mesmo arquivo é salvo por mais de uma thread
+    // (janela, overlay, workers de cache), e um `.tmp` de nome fixo deixaria
+    // uma escrita truncar o temporário da outra entre o write e o rename.
+    static COUNTER: AtomicU64 = AtomicU64::new(0);
     let mut tmp_name = path
         .file_name()
         .with_context(|| format!("caminho sem nome de arquivo: {}", path.display()))?
         .to_os_string();
-    tmp_name.push(".tmp");
+    tmp_name.push(format!(
+        ".{}-{}.tmp",
+        std::process::id(),
+        COUNTER.fetch_add(1, Ordering::Relaxed)
+    ));
     let tmp = parent.join(tmp_name);
 
-    fs::write(&tmp, bytes).with_context(|| format!("falha ao escrever {}", tmp.display()))?;
-    fs::rename(&tmp, path).with_context(|| format!("falha ao publicar {}", path.display()))?;
-    Ok(())
+    let publish = (|| -> Result<()> {
+        let mut file =
+            fs::File::create(&tmp).with_context(|| format!("falha ao criar {}", tmp.display()))?;
+        file.write_all(bytes)
+            .with_context(|| format!("falha ao escrever {}", tmp.display()))?;
+        // fsync antes do rename: o NTFS pode registrar o rename antes de os
+        // dados do temporário baterem no disco, e uma queda de energia
+        // publicaria um JSON vazio no lugar do bom.
+        file.sync_all()
+            .with_context(|| format!("falha ao sincronizar {}", tmp.display()))?;
+        drop(file);
+        fs::rename(&tmp, path).with_context(|| format!("falha ao publicar {}", path.display()))
+    })();
+    if publish.is_err() {
+        let _ = fs::remove_file(&tmp);
+    }
+    publish
+}
+
+/// Afasta um arquivo de configuração ilegível para `<nome>.bad`.
+///
+/// O chamador vai seguir com dados padrão, e o próximo save sobrescreveria o
+/// original — que pode estar intacto (leitura que falhou por bloqueio
+/// transitório de antivírus/backup) ou ser recuperável à mão. Afastado, ele
+/// sobrevive à sessão.
+pub fn quarantine(path: &Path) {
+    let mut bad = path.as_os_str().to_os_string();
+    bad.push(".bad");
+    let bad = PathBuf::from(bad);
+    match fs::rename(path, &bad) {
+        Ok(()) => log::warn!("{} preservado como {}", path.display(), bad.display()),
+        Err(err) => log::warn!("não foi possível afastar {}: {err}", path.display()),
+    }
 }
 
 /// Instante atual em ISO-8601 UTC com milissegundos.
@@ -499,7 +540,35 @@ mod tests {
         assert_eq!(fs::read_to_string(&path).unwrap(), "{\"a\":2}");
 
         // O temporário não fica para trás.
-        assert!(!path.with_file_name("settings.json.tmp").exists());
+        let leftovers: Vec<_> = fs::read_dir(path.parent().unwrap())
+            .unwrap()
+            .filter_map(|entry| entry.ok())
+            .filter(|entry| {
+                entry
+                    .path()
+                    .extension()
+                    .is_some_and(|extension| extension == "tmp")
+            })
+            .collect();
+        assert!(leftovers.is_empty(), "{leftovers:?}");
+        let _ = fs::remove_dir_all(path.parent().unwrap());
+    }
+
+    #[test]
+    fn quarantine_moves_the_bad_file_aside() {
+        let path = temp_path("loadouts.json");
+        fs::create_dir_all(path.parent().unwrap()).unwrap();
+        fs::write(&path, b"nao-e-json").unwrap();
+
+        quarantine(&path);
+
+        assert!(!path.exists(), "o original sai do caminho do próximo save");
+        let bad = PathBuf::from({
+            let mut name = path.as_os_str().to_os_string();
+            name.push(".bad");
+            name
+        });
+        assert_eq!(fs::read(&bad).unwrap(), b"nao-e-json");
         let _ = fs::remove_dir_all(path.parent().unwrap());
     }
 

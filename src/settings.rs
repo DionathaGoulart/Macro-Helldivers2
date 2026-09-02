@@ -155,7 +155,12 @@ impl Settings {
         if path.exists() {
             match Settings::load_from(&path) {
                 Ok(settings) => return settings,
-                Err(err) => log::warn!("settings.json ilegível ({err:#}); usando padrões"),
+                Err(err) => {
+                    log::warn!("settings.json ilegível ({err:#}); usando padrões");
+                    // Afastado, o arquivo não é sobrescrito pelo próximo save
+                    // de settings e continua recuperável à mão.
+                    util::quarantine(&path);
+                }
             }
         }
 

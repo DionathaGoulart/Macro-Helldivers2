@@ -36,6 +36,9 @@ pub fn load_slots(data: &GameData) -> Slots {
         Ok(slots) => slots,
         Err(err) => {
             log::warn!("slots.json ilegível ({err:#}); começando com os slots vazios");
+            // Afastado, o arquivo não é sobrescrito pelo próximo save de slots
+            // e continua recuperável à mão.
+            util::quarantine(&path);
             Slots::default()
         }
     }
@@ -111,6 +114,10 @@ pub fn load_loadouts() -> Vec<Loadout> {
         Ok(loadouts) => loadouts,
         Err(err) => {
             log::warn!("loadouts.json ilegível ({err:#}); começando sem builds salvas");
+            // Sem afastar o arquivo, o primeiro "salvar build" da sessão
+            // publicaria a lista vazia por cima de todas as builds do usuário —
+            // que podem estar intactas (leitura bloqueada por antivírus).
+            util::quarantine(&path);
             Vec::new()
         }
     }
