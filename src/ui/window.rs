@@ -444,6 +444,9 @@ mod platform {
         anim_timer: bool,
         /// Andamento do ciclo de atualização, mostrado no rodapé.
         update: UpdateStatus,
+        /// O usuário clicou "Depois" no modal: o instalador continua pronto e o
+        /// botão do rodapé continua instalando, só o modal não volta.
+        update_deferred: bool,
         /// `None` quando o ícone não pôde ser criado — e aí fechar a janela
         /// encerra o app, porque não haveria como trazê-la de volta.
         tray: Option<Tray>,
@@ -489,6 +492,7 @@ mod platform {
                 tracking_mouse: false,
                 anim_timer: false,
                 update: UpdateStatus::Idle,
+                update_deferred: false,
                 tray: Tray::new(hwnd, WM_APP_TRAY, focus::APP_WINDOW_TITLE),
                 quitting: false,
             };
@@ -531,7 +535,12 @@ mod platform {
                         changed = true;
                     }
                     UiEvent::UpdateStatus(status) => {
-                        changed |= self.update != status;
+                        if self.update != status {
+                            // Estado novo reabre o ciclo: um "Depois" antigo
+                            // não esconde o modal de um download futuro.
+                            self.update_deferred = false;
+                            changed = true;
+                        }
                         self.update = status;
                     }
                     // O estado do overlay é dele; o andamento de uma sequência
@@ -736,18 +745,21 @@ mod platform {
                 match &self.update {
                     UpdateStatus::Available { .. } => updater::download(&self.shared),
                     UpdateStatus::Ready { .. } => self.install_update(),
-                    // O botão só existe nesses dois estados; um clique que
-                    // chegue aqui é de um quadro que já mudou.
+                    // Um erro transitório de rede não pode matar o updater até
+                    // o próximo boot: o clique tenta de novo.
+                    UpdateStatus::Error { .. } => updater::check(&self.shared),
+                    // O botão só existe nesses estados; um clique que chegue
+                    // aqui é de um quadro que já mudou.
                     _ => {}
                 }
                 self.rebuild();
                 return true;
             }
             if clicked == modal::secondary_id() {
-                // "Depois": o modal sai e o rodapé volta ao texto de repouso,
-                // como na v1. O instalador continua no disco para o próximo
-                // check encontrar.
-                self.update = UpdateStatus::Idle;
+                // "Depois": só o modal sai. O instalador continua baixado e o
+                // botão "Instalar agora" fica no rodapé — voltar ao texto de
+                // repouso deixaria o arquivo inalcançável até o próximo boot.
+                self.update_deferred = true;
                 self.rebuild();
                 return true;
             }
@@ -1261,10 +1273,13 @@ mod platform {
             self.footer(footer);
 
             // Por último, sobre tudo: enquanto o modal está aberto, o véu é
-            // quem responde a qualquer clique fora do cartão.
+            // quem responde a qualquer clique fora do cartão. Depois do
+            // "Depois" ele não volta — o botão do rodapé assume.
             if let UpdateStatus::Ready { version } = self.update.clone() {
-                let area = Rect::new(0.0, 0.0, self.size.0, self.size.1);
-                self.update_modal(area, &version);
+                if !self.update_deferred {
+                    let area = Rect::new(0.0, 0.0, self.size.0, self.size.1);
+                    self.update_modal(area, &version);
+                }
             }
             self.ui.end();
         }
@@ -1378,6 +1393,23 @@ mod platform {
                     tr.settings.update_download,
                     ButtonVariant::Secondary,
                     theme::YELLOW,
+                );
+                row.cut_right(FOOTER_GAP);
+            }
+
+            // Erro (rede fora, GitHub indisponível): sem o botão o updater
+            // ficaria morto até o próximo boot.
+            if let UpdateStatus::Error { .. } = self.update {
+                let rect = row
+                    .cut_right(self.button_width(tr.settings.update_retry))
+                    .middle_row(FOOTER_BUTTON_H);
+                widgets::button(
+                    &mut self.ui,
+                    update_action_id(),
+                    rect,
+                    tr.settings.update_retry,
+                    ButtonVariant::Secondary,
+                    theme::RED,
                 );
                 row.cut_right(FOOTER_GAP);
             }
