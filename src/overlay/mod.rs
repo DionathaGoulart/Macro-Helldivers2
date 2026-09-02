@@ -193,12 +193,17 @@ mod platform {
         let Some(current) = worker.take() else {
             return;
         };
-        // SAFETY: id de uma thread viva, cuja fila de mensagens já existe (ela é
-        // criada antes de a thread anunciar o id).
-        if let Err(err) =
-            unsafe { PostThreadMessageW(current.thread_id, WM_QUIT, WPARAM(0), LPARAM(0)) }
-        {
-            log::warn!("overlay não recebeu o pedido de encerramento: {err}");
+        // Thread que já morreu sozinha não recebe WM_QUIT: o id dela pode ter
+        // sido reciclado pelo sistema, e um post às cegas cairia na fila de
+        // outra thread qualquer e mataria o loop errado.
+        if !current.handle.is_finished() {
+            // SAFETY: id de uma thread viva, cuja fila de mensagens já existe
+            // (ela é criada antes de a thread anunciar o id).
+            if let Err(err) =
+                unsafe { PostThreadMessageW(current.thread_id, WM_QUIT, WPARAM(0), LPARAM(0)) }
+            {
+                log::warn!("overlay não recebeu o pedido de encerramento: {err}");
+            }
         }
         if current.handle.join().is_err() {
             log::error!("a thread do overlay terminou em panic");
@@ -250,8 +255,6 @@ mod platform {
         unsafe {
             let _ = PeekMessageW(&mut msg, None, WM_USER, WM_USER, PM_NOREMOVE);
         }
-        // SAFETY: leitura do id da própria thread.
-        let _ = ready.send(unsafe { GetCurrentThreadId() });
 
         if let Err(err) = register_class() {
             log::error!("classe do overlay não registrou: {err}");
@@ -264,6 +267,13 @@ mod platform {
                 return;
             }
         };
+
+        // O id só é anunciado com o boot inteiro de pé: um worker que falhou
+        // aqui nunca vira `Worker` — o `start` enxerga o canal fechado e
+        // devolve `None`, em vez de guardar um id de thread morta que o
+        // `set_enabled(false)` mandaria um WM_QUIT às cegas.
+        // SAFETY: leitura do id da própria thread.
+        let _ = ready.send(unsafe { GetCurrentThreadId() });
         pump(&mut app);
     }
 
@@ -647,6 +657,16 @@ mod platform {
                     }
                 }
             }
+            // Sobrou trabalho depois do teto: em vez de girar, devolve o
+            // controle à fila e agenda outra passada — sem isto o resto
+            // esperaria a próxima mensagem qualquer.
+            if EVENTS.with(|events| !events.borrow().is_empty()) {
+                // SAFETY: post assíncrono para a janela do strip, viva
+                // enquanto o `App` vive.
+                unsafe {
+                    let _ = PostMessageW(Some(self.strip.hwnd), WM_NULL, WPARAM(0), LPARAM(0));
+                }
+            }
         }
 
         fn drain_commands(&mut self) {
@@ -915,8 +935,12 @@ mod platform {
         fn drop(&mut self) {
             self.shared.overlay_hwnd.store(0, Ordering::Relaxed);
             // As janelas somem com o `Drop` de cada `Window`; o estado volta
-            // para "escondido" porque é o que vale sem overlay na tela.
+            // para "escondido" porque é o que vale sem overlay na tela. A
+            // janela principal é avisada: sem o evento, o indicador dela
+            // ficaria mostrando um overlay que já morreu.
             self.shared.set_overlay_state(OverlayState::Hidden);
+            self.shared
+                .send_ui(UiEvent::OverlayState(OverlayState::Hidden));
         }
     }
 
@@ -984,6 +1008,12 @@ mod platform {
                 }
                 WM_DISPLAYCHANGE | WM_DPICHANGED => {
                     push(Event::Display);
+                    // Estas duas chegam por `SendMessage`, despachadas por
+                    // dentro do `GetMessageW` sem fazê-lo retornar: sem um post
+                    // o evento empilhado esperaria a próxima mensagem qualquer
+                    // (o Reassert de 5s — ou nada, com o jogo fora de foco).
+                    // SAFETY: post assíncrono para a própria janela.
+                    let _ = PostMessageW(Some(hwnd), WM_NULL, WPARAM(0), LPARAM(0));
                     LRESULT(0)
                 }
                 // A composição é toda do `UpdateLayeredWindow`; deixar o Windows
