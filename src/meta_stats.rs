@@ -8,8 +8,8 @@
 //! renderer guardava no `localStorage` (`BuildTab.jsx` ~285–311). Aqui o cache é
 //! um arquivo em `config_dir` (R9), o que também o faz sobreviver ao boot.
 
-use std::collections::HashMap;
-use std::sync::Arc;
+use std::collections::{HashMap, HashSet};
+use std::sync::{Arc, LazyLock, Mutex};
 use std::time::Duration;
 
 use anyhow::{Context, Result};
@@ -140,11 +140,19 @@ pub fn request(shared: &Arc<Shared>, faction: Faction, difficulty: u8) -> Option
         return Some(Arc::new(stats));
     }
 
+    // Trocar de facção e voltar no meio de uma consulta não pode duplicar o
+    // worker: seriam três chamadas de rede repetidas e dois `store` correndo no
+    // mesmo arquivo. Quem chegou primeiro responde pelos dois.
+    if !lock(&IN_FLIGHT).insert(key.clone()) {
+        return None;
+    }
+
     let worker = Arc::clone(shared);
     let requested = key.clone();
     let spawned = std::thread::Builder::new()
         .name("meta".to_string())
         .spawn(move || {
+            let guard = InFlightGuard(requested.clone());
             let stats = match fetch(faction, difficulty) {
                 Ok(stats) => {
                     store(&requested, &stats);
@@ -155,6 +163,9 @@ pub fn request(shared: &Arc<Shared>, faction: Faction, difficulty: u8) -> Option
                     None
                 }
             };
+            // A marca sai antes do aviso: um pedido feito depois de a resposta
+            // chegar precisa poder consultar de novo, não ser engolido.
+            drop(guard);
             worker.send_ui(UiEvent::MetaStats(MetaResult {
                 key: requested,
                 stats,
@@ -165,9 +176,27 @@ pub fn request(shared: &Arc<Shared>, faction: Faction, difficulty: u8) -> Option
         // Sem worker não há quem responda, e a tela ficaria carregando para
         // sempre: o aviso de erro sai daqui mesmo.
         log::warn!("worker de estatísticas não subiu: {err}");
+        lock(&IN_FLIGHT).remove(&key);
         shared.send_ui(UiEvent::MetaStats(MetaResult { key, stats: None }));
     }
     None
+}
+
+/// Combinações com worker em voo.
+static IN_FLIGHT: LazyLock<Mutex<HashSet<String>>> = LazyLock::new(|| Mutex::new(HashSet::new()));
+
+/// Trava que sobrevive a um worker em panic: o dado é substituível.
+fn lock<T>(mutex: &Mutex<T>) -> std::sync::MutexGuard<'_, T> {
+    mutex.lock().unwrap_or_else(|err| err.into_inner())
+}
+
+/// Tira a combinação da lista de voo aconteça o que acontecer com o worker.
+struct InFlightGuard(String);
+
+impl Drop for InFlightGuard {
+    fn drop(&mut self) {
+        lock(&IN_FLIGHT).remove(&self.0);
+    }
 }
 
 /// Consulta os três endpoints em sequência. Qualquer um deles falhando derruba a
@@ -243,6 +272,11 @@ fn read_cache() -> Cache {
 
 /// Guarda a consulta, preservando as outras combinações já em cache.
 fn store(key: &str, stats: &Stats) {
+    // Ler-modificar-gravar precisa ser um passo só: dois workers intercalados
+    // fariam o segundo publicar o arquivo sem a entrada do primeiro.
+    static STORE: Mutex<()> = Mutex::new(());
+    let _lock = lock(&STORE);
+
     let mut cache = read_cache();
     // Entradas vencidas de combinações que ninguém abre há dias só engordariam
     // o arquivo, que é lido inteiro a cada consulta.
