@@ -905,16 +905,20 @@ impl Ui {
             }
             Input::Up { x, y } => {
                 self.mouse = Some((x, y));
-                self.hot = self.frame.hit_at(x, y);
+                let hot = self.frame.hit_at(x, y);
+                let hot_changed = hot != self.hot;
+                self.hot = hot;
                 // Clique só conta quando soltou em cima de quem foi pressionado
                 // — arrastar para fora cancela, como em qualquer botão nativo.
-                let clicked = match self.pressed.take() {
+                let pressed = self.pressed.take();
+                let clicked = match pressed {
                     Some(pressed) if Some(pressed) == self.hot => Some(pressed),
-                    Some(_) => None,
-                    None => None,
+                    _ => None,
                 };
                 Response {
-                    redraw: true,
+                    // Soltar em área morta sem nada pressionado não muda pixel
+                    // nenhum; repintar seria um quadro inteiro à toa.
+                    redraw: pressed.is_some() || hot_changed,
                     clicked,
                 }
             }

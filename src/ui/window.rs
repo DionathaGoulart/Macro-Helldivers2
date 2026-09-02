@@ -617,7 +617,16 @@ mod platform {
         }
 
         fn sync_anim_timer(&mut self) {
-            let wanted = self.ui.animating();
+            // `WM_TIMER` dispara mesmo com a janela escondida ou minimizada, e
+            // cada tique refaz o quadro inteiro. Um modal pulsando com o app na
+            // bandeja viraria um rebuild completo a cada 16ms, por horas, no
+            // meio do jogo — invisível para todo mundo. Escondida, a animação
+            // congela; o `WM_SHOWWINDOW`/`WM_SIZE` da volta refaz o quadro e
+            // rearma o timer.
+            // SAFETY: leituras de estado da própria janela.
+            let visible =
+                unsafe { IsWindowVisible(self.hwnd).as_bool() && !IsIconic(self.hwnd).as_bool() };
+            let wanted = self.ui.animating() && visible;
             if wanted == self.anim_timer {
                 return;
             }
