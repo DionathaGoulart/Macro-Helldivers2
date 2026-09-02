@@ -147,6 +147,8 @@ mod platform {
     const WM_APP_TRAY: u32 = 0x8000 + 4;
     /// Pedido de encerramento adiado (ver [`App::install_update`]).
     const WM_APP_QUIT: u32 = 0x8000 + 5;
+    /// Chamada nativa de `EDIT` adiada (ver [`App::defer_edit_op`]).
+    const WM_APP_EDIT: u32 = 0x8000 + 6;
 
     /// Id de controle do primeiro `EDIT` filho; os seguintes vêm em sequência.
     const FIRST_EDIT_CTRL: usize = 1000;
@@ -383,6 +385,28 @@ mod platform {
         id: Id,
         hwnd: HWND,
         visible: bool,
+        /// Última posição aplicada: `SetWindowPos` repetido a cada rebuild
+        /// custaria mensagens cruzadas por quadro de animação.
+        rect: RECT,
+        /// Última fonte aplicada: `WM_SETFONT` com redraw repinta o filho
+        /// nativo mesmo quando a fonte não mudou.
+        font: HFONT,
+    }
+
+    /// Chamada nativa sobre um `EDIT`, adiada por mensagem.
+    ///
+    /// `SetWindowTextW` e `SetFocus` notificam de volta (`EN_CHANGE`,
+    /// `EN_SETFOCUS`, `EN_KILLFOCUS`) por `SendMessage` **síncrono**: chamá-las
+    /// com um `&mut App` vivo reentra no `WndProc` e cria um segundo `&mut App`
+    /// — o mesmo UB que o backup e o menu da bandeja já evitam adiando.
+    #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+    enum EditOp {
+        /// Esvazia o texto do filho nativo.
+        Clear(Id),
+        /// Entrega o teclado ao filho nativo.
+        Focus(Id),
+        /// Devolve o teclado à janela principal.
+        FocusMain,
     }
 
     /// Estado da janela. Vive num `Box` apontado pelo `GWLP_USERDATA`.
@@ -404,6 +428,8 @@ mod platform {
         settings_tab: SettingsTab,
         /// Diálogo de backup pedido e ainda não aberto (ver [`App::request_backup`]).
         pending_backup: Option<BackupRequest>,
+        /// Chamadas de `EDIT` agendadas e ainda não executadas.
+        pending_edit_ops: Vec<EditOp>,
         edits: Vec<EditChild>,
         edit_font: HFONT,
         /// Fonte da escala anterior, viva até os filhos trocarem para a nova.
@@ -448,6 +474,7 @@ mod platform {
                 build_tab: BuildTab::new(),
                 settings_tab: SettingsTab::new(),
                 pending_backup: None,
+                pending_edit_ops: Vec::new(),
                 edits: Vec::new(),
                 edit_font: create_edit_font(dpi),
                 retired_font: None,
@@ -863,11 +890,9 @@ mod platform {
             self.shared.set_recording(capturing);
             if capturing {
                 // O `EDIT` da busca pode estar com o teclado; sem trazer o foco
-                // de volta, a tecla capturada nunca chegaria ao `WndProc`.
-                // SAFETY: janela viva, na própria thread dela.
-                unsafe {
-                    let _ = SetFocus(Some(self.hwnd));
-                }
+                // de volta, a tecla capturada nunca chegaria ao `WndProc`. A
+                // chamada é adiada porque o `EN_KILLFOCUS` dela reentra aqui.
+                self.defer_edit_op(EditOp::FocusMain);
             }
         }
 
@@ -898,28 +923,27 @@ mod platform {
         fn focus_edit(&mut self, id: Id) {
             self.focused_edit = Some(id);
             self.rebuild();
-            if let Some(child) = self.edits.iter().find(|edit| edit.id == id) {
-                // SAFETY: filho vivo, criado por `sync_edits` na reconstrução.
-                unsafe {
-                    let _ = SetFocus(Some(child.hwnd));
-                }
-            }
+            self.defer_edit_op(EditOp::Focus(id));
         }
 
-        /// Esvazia um campo de busca: o filho nativo e o estado da aba.
-        ///
-        /// Os dois lados são acertados de propósito — o `EN_CHANGE` de uma
-        /// escrita programática não é garantido, e quando ele vem a aba já está
-        /// com o mesmo texto e ignora o aviso.
+        /// Esvazia um campo de busca: o estado da aba agora, o filho nativo na
+        /// mensagem adiada. Quando o `EN_CHANGE` da escrita chega, a aba já
+        /// está com o mesmo texto vazio e o aviso não muda nada.
         fn clear_edit(&mut self, id: Id) {
-            if let Some(child) = self.edits.iter().find(|edit| edit.id == id) {
-                // SAFETY: filho vivo; a string vive durante a chamada.
-                unsafe {
-                    let _ = SetWindowTextW(child.hwnd, w!(""));
-                }
-            }
+            self.defer_edit_op(EditOp::Clear(id));
             self.set_edit_text(id, String::new());
             self.rebuild();
+        }
+
+        /// Agenda uma chamada nativa de `EDIT` para rodar sem `&mut App` vivo
+        /// (ver [`EditOp`]); quem executa é o `WM_APP_EDIT`.
+        fn defer_edit_op(&mut self, op: EditOp) {
+            self.pending_edit_ops.push(op);
+            // SAFETY: `PostMessageW` é assíncrono; a mensagem cai na fila desta
+            // própria janela.
+            unsafe {
+                let _ = PostMessageW(Some(self.hwnd), WM_APP_EDIT, WPARAM(0), LPARAM(0));
+            }
         }
 
         /// Entrega o texto novo à aba dona do campo.
@@ -964,28 +988,39 @@ mod platform {
                     }
                 };
                 let child = &mut self.edits[index];
+                // Só o que mudou: durante uma animação isto roda a cada quadro,
+                // e mensagem repetida para o filho nativo é repintura à toa.
                 // SAFETY: filho vivo; posição em pixels de cliente.
                 unsafe {
-                    let _ = SetWindowPos(
-                        child.hwnd,
-                        None,
-                        rect.left,
-                        rect.top,
-                        rect.right - rect.left,
-                        rect.bottom - rect.top,
-                        SWP_NOZORDER | SWP_NOACTIVATE,
-                    );
-                    let _ = ShowWindow(child.hwnd, SW_SHOW);
-                    SendMessageW(
-                        child.hwnd,
-                        WM_SETFONT,
-                        Some(WPARAM(self.edit_font.0 as usize)),
-                        Some(LPARAM(1)),
-                    );
+                    if child.rect != rect {
+                        let _ = SetWindowPos(
+                            child.hwnd,
+                            None,
+                            rect.left,
+                            rect.top,
+                            rect.right - rect.left,
+                            rect.bottom - rect.top,
+                            SWP_NOZORDER | SWP_NOACTIVATE,
+                        );
+                        child.rect = rect;
+                    }
+                    if !child.visible {
+                        let _ = ShowWindow(child.hwnd, SW_SHOW);
+                    }
+                    if child.font != self.edit_font {
+                        SendMessageW(
+                            child.hwnd,
+                            WM_SETFONT,
+                            Some(WPARAM(self.edit_font.0 as usize)),
+                            Some(LPARAM(1)),
+                        );
+                        child.font = self.edit_font;
+                    }
                 }
                 child.visible = true;
             }
 
+            let mut hidden_had_focus = false;
             for child in &mut self.edits {
                 if hosts.iter().any(|host| host.id == child.id) {
                     continue;
@@ -996,7 +1031,15 @@ mod platform {
                         let _ = ShowWindow(child.hwnd, SW_HIDE);
                     }
                     child.visible = false;
+                    hidden_had_focus |= self.focused_edit == Some(child.id);
                 }
+            }
+            if hidden_had_focus {
+                // Esconder não move o teclado: sem isto o `EDIT` invisível
+                // continuaria comendo as teclas (a busca "fantasma" mudaria e o
+                // Esc nunca chegaria à janela). O `EN_KILLFOCUS` da chamada
+                // adiada é quem limpa o `focused_edit`.
+                self.defer_edit_op(EditOp::FocusMain);
             }
 
             if let Some(retired) = self.retired_font.take() {
@@ -1031,6 +1074,8 @@ mod platform {
                     id,
                     hwnd,
                     visible: false,
+                    rect: RECT::default(),
+                    font: HFONT::default(),
                 }),
                 Err(err) => {
                     log::warn!("campo de texto não pôde ser criado: {err}");
@@ -1530,6 +1575,55 @@ mod platform {
         }
     }
 
+    /// Executa as chamadas nativas de `EDIT` agendadas, **sem** empréstimo do
+    /// `App` vivo: o `EN_*` que elas provocam chega por `SendMessage` síncrono
+    /// e reentra no `WndProc`.
+    fn run_pending_edit_ops(hwnd: HWND) {
+        enum Native {
+            SetText(HWND),
+            Focus(HWND),
+        }
+
+        // SAFETY: empréstimo curto — tira os pedidos e resolve os alvos; solto
+        // antes das chamadas que reentram.
+        let actions: Vec<Native> = {
+            let Some(app) = (unsafe { app_mut(hwnd) }) else {
+                return;
+            };
+            let ops = std::mem::take(&mut app.pending_edit_ops);
+            ops.into_iter()
+                .filter_map(|op| {
+                    let child = |id| {
+                        app.edits
+                            .iter()
+                            .find(|edit| edit.id == id)
+                            .map(|edit| edit.hwnd)
+                    };
+                    match op {
+                        EditOp::Clear(id) => child(id).map(Native::SetText),
+                        EditOp::Focus(id) => child(id).map(Native::Focus),
+                        EditOp::FocusMain => Some(Native::Focus(hwnd)),
+                    }
+                })
+                .collect()
+        };
+
+        for action in actions {
+            // SAFETY: janelas vivas (os filhos morrem com a janela pai), e
+            // nenhuma referência ao `App` está viva quando o `EN_*` reentra.
+            unsafe {
+                match action {
+                    Native::SetText(child) => {
+                        let _ = SetWindowTextW(child, w!(""));
+                    }
+                    Native::Focus(target) => {
+                        let _ = SetFocus(Some(target));
+                    }
+                }
+            }
+        }
+    }
+
     /// Abre o diálogo pedido **sem** nenhum empréstimo do `App` vivo: o loop de
     /// mensagens do próprio diálogo reentra no `WndProc`, e dois `&mut App` ao
     /// mesmo tempo seriam UB.
@@ -1806,16 +1900,29 @@ mod platform {
                         match notification {
                             EN_CHANGE => app.on_edit_changed(control),
                             EN_SETFOCUS => {
-                                app.focused_edit = app
+                                let focused = app
                                     .edits
                                     .iter()
                                     .find(|edit| edit.hwnd == control)
                                     .map(|edit| edit.id);
-                                app.rebuild();
+                                if app.focused_edit != focused {
+                                    app.focused_edit = focused;
+                                    app.rebuild();
+                                }
                             }
                             EN_KILLFOCUS => {
-                                app.focused_edit = None;
-                                app.rebuild();
+                                // Só o dono atual do foco limpa o estado: numa
+                                // troca de campo o `EN_SETFOCUS` do novo pode
+                                // já ter passado por aqui.
+                                let leaving = app
+                                    .edits
+                                    .iter()
+                                    .find(|edit| edit.hwnd == control)
+                                    .map(|edit| edit.id);
+                                if leaving.is_some() && app.focused_edit == leaving {
+                                    app.focused_edit = None;
+                                    app.rebuild();
+                                }
                             }
                             _ => {}
                         }
@@ -1858,6 +1965,20 @@ mod platform {
                 WM_APP_BACKUP => {
                     run_pending_backup(hwnd);
                     LRESULT(0)
+                }
+                WM_APP_EDIT => {
+                    run_pending_edit_ops(hwnd);
+                    LRESULT(0)
+                }
+                WM_SHOWWINDOW => {
+                    // A volta da bandeja: as animações congeladas terminam e o
+                    // timer é rearmado (ver `sync_anim_timer`).
+                    if wparam.0 != 0 {
+                        if let Some(app) = app_mut(hwnd) {
+                            app.rebuild();
+                        }
+                    }
+                    DefWindowProcW(hwnd, message, wparam, lparam)
                 }
                 // Sem `NIM_SETVERSION`, o evento de mouse do ícone vem na parte
                 // baixa do `lParam` — o formato clássico da bandeja.
