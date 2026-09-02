@@ -507,11 +507,28 @@ pub fn fatal_dialog(message: &str) {
     eprintln!("erro: {message}");
 }
 
-/// Liga o logger. Sem console em release, então isto serve principalmente para
-/// rodar o app a partir de um terminal com `RUST_LOG=debug` durante o diagnóstico.
+/// Liga o logger. Em debug ele escreve no console (é por onde `RUST_LOG=debug
+/// cargo run` mostra os logs); em release, que não tem console, os avisos vão
+/// para `app.log` na pasta de configuração — sem ele, toda falha pós-boot
+/// (updater, tray, overlay) morreria sem deixar rastro.
 pub fn init_logging() {
     let filter = std::env::var("RUST_LOG").unwrap_or_else(|_| "info".to_string());
-    let _ = env_logger::Builder::new().parse_filters(&filter).try_init();
+    let mut builder = env_logger::Builder::new();
+    builder.parse_filters(&filter);
+    if !cfg!(debug_assertions) {
+        if let Some(file) = session_log_file() {
+            builder.target(env_logger::Target::Pipe(Box::new(file)));
+        }
+    }
+    let _ = builder.try_init();
+}
+
+/// Arquivo de log da sessão, truncado a cada boot: é diagnóstico da execução
+/// atual, não histórico. `None` (segue para o stderr, que em release é mudo)
+/// quando a pasta de configuração não é gravável.
+fn session_log_file() -> Option<fs::File> {
+    fs::create_dir_all(config_dir()).ok()?;
+    fs::File::create(config_path("app.log")).ok()
 }
 
 #[cfg(test)]
