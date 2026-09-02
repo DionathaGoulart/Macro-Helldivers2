@@ -432,10 +432,20 @@ impl Drop for LayeredSurface {
     }
 }
 
+/// Teto do cache de gradientes. As paradas são constantes do tema na prática,
+/// então o mapa fica pequeno; o teto só impede que uma cor animada num
+/// gradiente vire acúmulo de COM pela sessão inteira.
+const LINEAR_BRUSH_MAX: usize = 64;
+
 /// Pincéis do render target. São recursos de dispositivo: morrem com ele.
+///
+/// O sólido é um único pincel mutado com `SetColor` a cada uso — o padrão que a
+/// documentação do Direct2D recomenda. Um mapa por cor aqui seria um vazamento:
+/// flashes e fades produzem uma cor nova (bits de f32 únicos) a cada tick de
+/// 16ms, e cada uma viraria um objeto COM vivo até o fim da sessão.
 #[derive(Default)]
 struct BrushCache {
-    solid: HashMap<u128, ID2D1SolidColorBrush>,
+    solid: Option<ID2D1SolidColorBrush>,
     linear: HashMap<(u128, u128), ID2D1LinearGradientBrush>,
 }
 
@@ -446,14 +456,15 @@ impl BrushCache {
     }
 
     fn solid(&mut self, target: &ID2D1RenderTarget, color: Color) -> Option<ID2D1SolidColorBrush> {
-        let key = BrushCache::key(color);
-        if let Some(brush) = self.solid.get(&key) {
+        if let Some(brush) = &self.solid {
+            // SAFETY: pincel vivo, do mesmo target; a cor vive durante a chamada.
+            unsafe { brush.SetColor(&color_f(color)) };
             return Some(brush.clone());
         }
         // SAFETY: a cor vive durante a chamada.
         let brush = unsafe { target.CreateSolidColorBrush(&color_f(color), None) };
         match brush {
-            Ok(brush) => Some(self.solid.entry(key).or_insert(brush).clone()),
+            Ok(brush) => Some(self.solid.insert(brush).clone()),
             Err(err) => {
                 log::warn!("CreateSolidColorBrush falhou: {err}");
                 None
@@ -470,6 +481,9 @@ impl BrushCache {
         let key = (BrushCache::key(from), BrushCache::key(to));
         if let Some(brush) = self.linear.get(&key) {
             return Some(brush.clone());
+        }
+        if self.linear.len() >= LINEAR_BRUSH_MAX {
+            self.linear.clear();
         }
         let stops = [
             D2D1_GRADIENT_STOP {
@@ -510,7 +524,7 @@ impl BrushCache {
     }
 
     fn clear(&mut self) {
-        self.solid.clear();
+        self.solid = None;
         self.linear.clear();
     }
 }
