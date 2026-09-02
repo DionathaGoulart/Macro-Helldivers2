@@ -476,7 +476,12 @@ mod platform {
                 },
             };
             surface.resize(width, height);
-            surface.draw(text, ui.frame());
+            // Falhou, o target foi recriado por dentro: a segunda tentativa já
+            // desenha no novo. Se nem ela sai, o DIB está com o frame anterior
+            // (ou lixo) e apresentar congelaria o overlay em conteúdo velho.
+            if !surface.draw(text, ui.frame()) && !surface.draw(text, ui.frame()) {
+                return;
+            }
 
             let size = SIZE {
                 cx: width,

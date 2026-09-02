@@ -249,6 +249,7 @@ pub struct LayeredSurface {
     previous: HGDIOBJ,
     width: i32,
     height: i32,
+    dpi: u32,
     brushes: BrushCache,
     images: BitmapCache,
 }
@@ -267,6 +268,7 @@ impl LayeredSurface {
             previous: HGDIOBJ::default(),
             width: 0,
             height: 0,
+            dpi,
             brushes: BrushCache::default(),
             images: BitmapCache::default(),
         };
@@ -322,6 +324,7 @@ impl LayeredSurface {
     /// Novo DPI do monitor. O desenho continua em DIP: quem multiplica é o
     /// render target, então só ele precisa saber da troca.
     pub fn set_dpi(&mut self, dpi: u32) {
+        self.dpi = dpi;
         let target: &ID2D1RenderTarget = &self.target;
         // SAFETY: target vivo; `SetDpi` não falha.
         unsafe { target.SetDpi(dpi as f32, dpi as f32) };
@@ -337,9 +340,12 @@ impl LayeredSurface {
 
     /// Desenha a lista no DIB. O fundo entra transparente: quem compõe é o
     /// `UpdateLayeredWindow`, com o jogo atrás.
-    pub fn draw(&mut self, text: &mut Text, frame: &Frame) {
+    ///
+    /// Devolve `false` quando o frame não saiu inteiro — o chamador não deve
+    /// apresentar o DIB, que ficou com o conteúdo do frame anterior (ou lixo).
+    pub fn draw(&mut self, text: &mut Text, frame: &Frame) -> bool {
         if self.dc.is_invalid() {
-            return;
+            return false;
         }
         let bind = RECT {
             left: 0,
@@ -350,7 +356,7 @@ impl LayeredSurface {
         // SAFETY: DC e retângulo vivos; o target passa a apontar para o DIB.
         if let Err(err) = unsafe { self.target.BindDC(self.dc, &bind) } {
             log::warn!("BindDC falhou: {err}");
-            return;
+            return false;
         }
 
         let render: &ID2D1RenderTarget = &self.target;
@@ -369,9 +375,33 @@ impl LayeredSurface {
         }
         // SAFETY: fecha o par.
         if let Err(err) = unsafe { render.EndDraw(None, None) } {
-            log::warn!("EndDraw da superfície layered falhou: {err}");
+            // Um `ID2D1DCRenderTarget` não se recupera sozinho de perda de
+            // dispositivo (TDR, troca de driver): o erro é permanente até o
+            // target ser recriado. Sem isto o overlay congelaria no último
+            // frame pelo resto da sessão.
+            if err.code() == D2DERR_RECREATE_TARGET {
+                log::info!("dispositivo Direct2D perdido; recriando o target do overlay");
+                self.recreate_target();
+            } else {
+                log::warn!("EndDraw da superfície layered falhou: {err}");
+            }
             self.brushes.clear();
             self.images.clear();
+            return false;
+        }
+        true
+    }
+
+    /// Troca o render target por um novo. Os recursos de dispositivo (pincéis,
+    /// bitmaps) pertencem ao antigo e devem ser limpos por quem chama.
+    fn recreate_target(&mut self) {
+        let properties = target_properties(self.dpi, false);
+        // SAFETY: propriedades vivem durante a chamada.
+        match factory().and_then(|factory| unsafe { factory.CreateDCRenderTarget(&properties) }) {
+            Ok(target) => self.target = target,
+            // Sem target novo o overlay segue mudo; o próximo `draw` falha no
+            // `EndDraw` e tenta de novo.
+            Err(err) => log::warn!("recriação do target do overlay falhou: {err}"),
         }
     }
 
