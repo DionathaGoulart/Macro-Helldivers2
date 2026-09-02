@@ -67,6 +67,49 @@ a sair numa versão 1.x.
 - **Aviso de erro no boot**: se a instalação estiver sem a pasta `assets/`, o app
   explica em uma caixa de diálogo em vez de morrer em silêncio.
 
+### Corrigido
+
+Achados da auditoria de código completa (pré-release, sobre a própria 2.0.0):
+
+- **Panic nunca mais deixa tecla presa no jogo**: um panic hook solta modificador e
+  direções antes de o processo abortar — o `panic = "abort"` do release pulava os
+  guards RAII.
+- **Overlay se recupera de perda de dispositivo da GPU** (reset/atualização de
+  driver): o render target do `LayeredSurface` é recriado e o frame é redesenhado,
+  em vez de congelar no último quadro pelo resto da sessão.
+- **Vazamento de brushes do Direct2D**: cores animadas (flash/fade) criavam um brush
+  COM novo por tick, guardado para sempre. Agora é um brush único com `SetColor`.
+- **Reentrância nos campos de busca**: `SetWindowTextW`/`SetFocus` notificam de volta
+  de forma síncrona e reentravam no `WndProc` com o estado emprestado; as chamadas
+  agora são adiadas por mensagem, como o backup já fazia.
+- **Timer de animação não roda mais com a janela invisível**: minimizada ou na
+  bandeja, o app não reconstruía mais o quadro inteiro a cada 16ms por causa de um
+  modal pulsando.
+- **Updater verifica o SHA-256 do instalador** contra o `.sha256` publicado no
+  release — e de novo na hora de executar, porque o exe espera em `%TEMP%` e roda
+  elevado. Download ganhou prazo total (stall não trava mais o updater pela sessão),
+  botão de "Tentar de novo" no erro, e o "Depois" do modal mantém o "Instalar agora"
+  no rodapé.
+- **Arquivo de configuração ilegível é preservado como `.bad`** em vez de ser
+  sobrescrito pelo próximo save (um bloqueio transitório de antivírus podia apagar
+  todas as builds salvas). `write_atomic` ganhou fsync (queda de energia não publica
+  mais JSON vazio) e nome de temporário único (threads não trucam mais o tmp uma da
+  outra).
+- **Ícone da bandeja renasce quando o Explorer reinicia** (`TaskbarCreated`); antes a
+  janela escondida ficava irrecuperável.
+- **EDIT oculto não retém mais o teclado** depois de trocar de aba (a busca
+  "fantasma" comia as teclas e o Esc).
+- **Mudança de resolução/DPI com o jogo aberto reposiciona o overlay na hora** — o
+  evento chegava mas só era processado no wake seguinte (até 5s).
+- **Consultas de estatísticas não duplicam mais workers** ao alternar facção, e o
+  cache não perde entradas em escrita concorrente.
+- **Builds**: nome em branco não sobrescreve mais uma build existente ("Build 2"
+  colidia após excluir a 1); o chip de build ativa acende também para builds antigas
+  que precisaram de saneamento; passivas do top meta são validadas contra o
+  equipamento atual.
+- **Logs em release** vão para `app.log` na pasta de configuração — sem console, as
+  falhas pós-boot morriam sem rastro.
+
 ### Removido
 
 Decisões da reescrita, não regressões:
