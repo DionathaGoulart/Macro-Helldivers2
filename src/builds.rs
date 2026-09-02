@@ -400,8 +400,13 @@ pub fn meta_lists(
         .items
         .iter()
         .filter_map(|(key, stat)| {
+            let name = map.armor.get(key)?;
+            // Validada como as outras listas: um `statsMap.json` desatualizado
+            // (passiva renomeada) produziria um top sem armadura possível, e a
+            // regra de armadura meta falharia em silêncio na geração.
+            equipment.passive(name)?;
             Some(Pick {
-                item: map.armor.get(key)?.clone(),
+                item: name.clone(),
                 stat: *stat,
             })
         })
@@ -635,6 +640,10 @@ pub fn custom_disabled(build: &Build, slot: usize, strat: &Stratagem, data: &Gam
 /// regra recusa a jogada — o slot em edição avança de qualquer jeito, como na
 /// v1, onde o avanço acontecia fora do `setState`.
 pub fn custom_assign(build: &mut Build, slot: usize, strat: &Stratagem, data: &GameData) -> bool {
+    // Recusa como os demais caminhos de erro, em vez de estourar no índice.
+    if slot >= build.stratagems.len() {
+        return false;
+    }
     if build.stratagems.get(slot) == Some(&Some(strat.id)) {
         build.stratagems[slot] = None;
         return true;
@@ -678,9 +687,19 @@ pub fn custom_list(data: &GameData, search: &str) -> Vec<u32> {
 
 // --- Builds salvas ---
 
-/// Nome sugerido quando o campo fica em branco (`Build {n}` da v1).
-pub fn default_name(count: usize) -> String {
-    format!("Build {}", count + 1)
+/// Nome sugerido quando o campo fica em branco: o primeiro `Build {n}` livre.
+///
+/// A v1 usava `Build {contagem+1}`, que depois de uma exclusão podia colidir
+/// com uma build existente — e a colisão a sobrescreveria em silêncio.
+pub fn default_name(loadouts: &[Loadout]) -> String {
+    (1..)
+        .map(|n| format!("Build {n}"))
+        .find(|name| {
+            !loadouts
+                .iter()
+                .any(|loadout| loadout.name.eq_ignore_ascii_case(name))
+        })
+        .expect("sempre há um número livre")
 }
 
 /// Salva a build exibida. Um nome já usado (sem diferenciar maiúsculas)
@@ -690,7 +709,7 @@ pub fn save(loadouts: &mut Vec<Loadout>, name: &str, build: &Build) -> bool {
         return false;
     }
     let name = match name.trim() {
-        "" => default_name(loadouts.len()),
+        "" => default_name(loadouts),
         typed => typed.to_string(),
     };
     let slot_ids = build.stratagems.to_vec();
@@ -772,10 +791,14 @@ pub fn apply(
 }
 
 /// Índice da build salva que bate com os slots atuais — o chip em destaque.
-pub fn active_loadout(loadouts: &[Loadout], slots: Slots) -> Option<usize> {
+///
+/// A comparação usa a lista saneada, que é o que `apply` põe nos slots: sem
+/// isso, uma build com id morto, lista curta (v1) ou conflito herdado nunca
+/// acenderia — justamente logo depois de ser aplicada.
+pub fn active_loadout(loadouts: &[Loadout], slots: Slots, data: &GameData) -> Option<usize> {
     loadouts
         .iter()
-        .position(|loadout| loadout.slot_ids.as_slice() == slots.as_slice())
+        .position(|loadout| crate::loadouts::sanitize(&loadout.slot_ids, data) == slots)
 }
 
 #[cfg(test)]
@@ -1587,8 +1610,51 @@ mod tests {
             other
         });
 
-        assert_eq!(active_loadout(&loadouts, build.stratagems), Some(0));
-        assert_eq!(active_loadout(&loadouts, Slots::default()), None);
-        assert_eq!(active_loadout(&[], build.stratagems), None);
+        assert_eq!(active_loadout(&loadouts, build.stratagems, &data), Some(0));
+        assert_eq!(active_loadout(&loadouts, Slots::default(), &data), None);
+        assert_eq!(active_loadout(&[], build.stratagems, &data), None);
+    }
+
+    #[test]
+    fn a_loadout_that_needed_sanitizing_still_lights_up_after_apply() {
+        let data = data();
+        // Build salva com um id que sumiu do jogo: `apply` o descarta, e o chip
+        // precisa comparar contra a mesma lista saneada.
+        let loadout = Loadout {
+            id: "1".into(),
+            name: "Velha".into(),
+            slot_ids: vec![Some(data.all()[0].id), Some(9_999), None, None],
+            equip: None,
+        };
+        let applied = apply(&loadout, None, &data, None);
+        assert_eq!(
+            active_loadout(std::slice::from_ref(&loadout), applied.slots, &data),
+            Some(0)
+        );
+    }
+
+    #[test]
+    fn a_blank_name_never_overwrites_a_surviving_build() {
+        let data = data();
+        let build = saved_build(&data);
+        let mut loadouts = Vec::new();
+        save(&mut loadouts, "Build 1", &build);
+        save(&mut loadouts, "Build 2", &build);
+        // "Build 1" foi excluída; o próximo nome em branco era "Build 2" na v1
+        // — e sobrescreveria a sobrevivente.
+        loadouts.remove(0);
+
+        assert_eq!(default_name(&loadouts), "Build 1");
+        save(&mut loadouts, "", &build);
+        assert_eq!(loadouts.len(), 2, "a build nova não engole a existente");
+    }
+
+    #[test]
+    fn assigning_to_an_out_of_range_slot_is_refused_not_a_panic() {
+        let data = data();
+        let mut build = Build::default();
+        let strat = &data.all()[0];
+        assert!(!custom_assign(&mut build, 4, strat, &data));
+        assert_eq!(build.stratagems, Slots::default());
     }
 }

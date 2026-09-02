@@ -216,7 +216,7 @@ impl Panel {
             self.loadouts.iter().map(|loadout| loadout.name.as_str()),
             area.w,
         );
-        let active = builds::active_loadout(&self.loadouts, ctx.slots);
+        let active = builds::active_loadout(&self.loadouts, ctx.slots, ctx.data);
         // O rodapé tem altura fixa: o que não couber fica de fora (a lista longa
         // continua inteira na janela principal, que rola).
         ui.push_clip(area);

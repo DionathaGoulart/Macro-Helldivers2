@@ -1259,7 +1259,7 @@ impl BuildTab {
                 theme::TEXT_DIM,
             );
         } else {
-            let active = builds::active_loadout(&self.loadouts, ctx.slots);
+            let active = builds::active_loadout(&self.loadouts, ctx.slots, ctx.data);
             for chip in &layout.chips {
                 widgets::loadout_chip(
                     ui,
@@ -2716,7 +2716,10 @@ mod tests {
         // A build aplicada também volta para a tela.
         assert_eq!(tab.build.as_ref().unwrap().stratagems, expected);
         // E o chip da build que bate com os slots é o destacado.
-        assert_eq!(builds::active_loadout(tab.loadouts(), expected), Some(1));
+        assert_eq!(
+            builds::active_loadout(tab.loadouts(), expected, &data),
+            Some(1)
+        );
     }
 
     #[test]
