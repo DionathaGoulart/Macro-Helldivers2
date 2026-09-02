@@ -33,8 +33,10 @@ jobs:
       - name: Check
         run: cargo check --all-targets --target x86_64-pc-windows-msvc
 
+      # Com `--target` o grafo de dependências é um só: sem ele o cargo
+      # compilava tudo de novo em `target/debug` só para os testes.
       - name: Test
-        run: cargo test
+        run: cargo test --target x86_64-pc-windows-msvc
 
       # O `check` acima nunca chega no linker, e é lá que aparecem os erros que
       # só o perfil de release tem (LTO, `panic = "abort"`, recursos do

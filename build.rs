@@ -52,9 +52,13 @@ fn main() {
     resources.set_icon(ICON);
     resources.set_manifest(MANIFEST);
     if let Err(err) = resources.compile() {
-        // Falta o compilador de recursos (`rc.exe` no Windows, `llvm-rc` no
-        // resto). O `cargo check` de desenvolvimento no macOS cai aqui, e o que
-        // se perde é só o ícone e o manifesto do exe.
+        // Na CI isto é fatal: um exe publicado sem o manifesto perde a elevação
+        // — e o `SendInput` no jogo elevado simplesmente para de funcionar, em
+        // silêncio. No desenvolvimento fora do Windows (sem `rc.exe`/`llvm-rc`)
+        // o build segue: o que se perde é só o ícone e o manifesto do exe local.
+        if std::env::var_os("CI").is_some() {
+            panic!("ícone e manifesto não embutidos: {err}");
+        }
         println!("cargo:warning=ícone e manifesto não embutidos: {err}");
     }
 }

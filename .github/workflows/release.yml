@@ -58,6 +58,10 @@ jobs:
             ConvertFrom-Json |
             ForEach-Object { $_.packages[0].version }
 
+      # Uma tag em cima de um commit sem CI verde não pode virar release.
+      - name: Test
+        run: cargo test --target x86_64-pc-windows-msvc
+
       - name: Build
         run: cargo build --release --target x86_64-pc-windows-msvc
 
