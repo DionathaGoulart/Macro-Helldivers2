@@ -43,6 +43,12 @@ const USER_AGENT: &str = concat!("macro-helldivers2/", env!("CARGO_PKG_VERSION")
 /// O check é um JSON pequeno: prazo curto, como o da consulta de estatísticas.
 const CHECK_TIMEOUT: Duration = Duration::from_secs(10);
 
+/// Prazo total do download do instalador. Generoso para conexão lenta, mas
+/// finito: o `timeout_recv_response` do agent cobre só os headers, e um stall
+/// silencioso do CDN no meio do corpo deixaria o worker preso — e o updater
+/// travado em "Baixando…" — até o fim da sessão.
+const DOWNLOAD_TIMEOUT: Duration = Duration::from_secs(15 * 60);
+
 /// Pedaço lido por vez do instalador.
 const CHUNK_BYTES: usize = 64 * 1024;
 
@@ -87,6 +93,14 @@ impl Release {
             .iter()
             .find(|asset| has_exe_extension(&asset.name) && !asset.browser_download_url.is_empty())
     }
+
+    /// O asset `.sha256` publicado para um arquivo deste release, se existir.
+    pub fn checksum_asset(&self, name: &str) -> Option<&Asset> {
+        let wanted = format!("{name}.sha256");
+        self.assets
+            .iter()
+            .find(|asset| asset.name == wanted && !asset.browser_download_url.is_empty())
+    }
 }
 
 /// Endereço do release mais recente.
@@ -127,12 +141,21 @@ fn has_exe_extension(name: &str) -> bool {
         .is_some_and(|ext| ext.eq_ignore_ascii_case("exe"))
 }
 
+/// Instalador baixado e conferido, esperando o "Reiniciar Agora".
+#[derive(Debug, Clone)]
+struct Installer {
+    path: PathBuf,
+    /// SHA-256 do arquivo no fim do download. É contra ele que o `install`
+    /// re-confere o disco antes de executar.
+    sha256: String,
+}
+
 /// Estado do ciclo de atualização, compartilhado entre a janela e os workers.
 struct State {
     /// Release do último check com novidade — é dele que sai o download.
     latest: Mutex<Option<Release>>,
     /// Instalador já no disco, esperando o "Reiniciar Agora".
-    installer: Mutex<Option<PathBuf>>,
+    installer: Mutex<Option<Installer>>,
     /// Já houve um check automático nesta sessão.
     auto_checked: AtomicBool,
     /// Um worker de rede por vez: dois downloads simultâneos escreveriam no
@@ -224,9 +247,9 @@ pub fn download(shared: &Arc<Shared>) {
             shared.send_ui(UiEvent::UpdateStatus(UpdateStatus::Downloading { percent }));
         };
         let status = match download_installer(&release, progress) {
-            Ok(path) => {
-                log::info!("instalador baixado em {}", path.display());
-                *lock(&STATE.installer) = Some(path);
+            Ok(installer) => {
+                log::info!("instalador baixado em {}", installer.path.display());
+                *lock(&STATE.installer) = Some(installer);
                 UpdateStatus::Ready {
                     version: display_version(&release.tag_name),
                 }
@@ -249,12 +272,20 @@ pub fn download(shared: &Arc<Shared>) {
 /// `requireAdministrator`), o processo filho herda a elevação e o UAC não
 /// aparece de novo.
 pub fn install() -> Result<()> {
-    let path = lock(&STATE.installer)
+    let installer = lock(&STATE.installer)
         .clone()
         .context("nenhum instalador baixado")?;
-    std::process::Command::new(&path)
+    // O exe esperou em %TEMP% — gravável por qualquer processo do usuário —
+    // entre o download e este clique. Re-conferir o hash aqui fecha a janela de
+    // troca antes de executá-lo com o token elevado herdado do app.
+    let actual = file_sha256(&installer.path)?;
+    if actual != installer.sha256 {
+        *lock(&STATE.installer) = None;
+        anyhow::bail!("o instalador em disco não é o que foi baixado; baixe a atualização de novo");
+    }
+    std::process::Command::new(&installer.path)
         .spawn()
-        .with_context(|| format!("não foi possível executar {}", path.display()))?;
+        .with_context(|| format!("não foi possível executar {}", installer.path.display()))?;
     Ok(())
 }
 
@@ -306,12 +337,12 @@ pub fn fetch_latest() -> Result<Release> {
     Ok(release)
 }
 
-/// Baixa o instalador para a pasta temporária, avisando o progresso.
-fn download_installer(release: &Release, mut progress: impl FnMut(f32)) -> Result<PathBuf> {
+/// Baixa o instalador para a pasta temporária, confere o checksum publicado e
+/// avisa o progresso.
+fn download_installer(release: &Release, mut progress: impl FnMut(f32)) -> Result<Installer> {
     let asset = release.installer().context("release sem instalador .exe")?;
 
-    // Sem prazo global: o tamanho do arquivo é que manda no tempo.
-    let mut response = util::http_agent(None)
+    let mut response = util::http_agent(Some(DOWNLOAD_TIMEOUT))
         .get(&asset.browser_download_url)
         .header("User-Agent", USER_AGENT)
         .call()
@@ -348,11 +379,77 @@ fn download_installer(release: &Release, mut progress: impl FnMut(f32)) -> Resul
         }
     }
     file.flush().context("falha ao fechar o instalador")?;
+    drop(file);
 
     if written == 0 {
         anyhow::bail!("o download veio vazio");
     }
-    Ok(path)
+    // O ureq acusa truncamento com Content-Length e em chunked; a comparação
+    // cobre o caso restante (resposta fechada pela conexão) de graça.
+    if total > 0 && written != total {
+        let _ = std::fs::remove_file(&path);
+        anyhow::bail!("download incompleto ({written} de {total} bytes)");
+    }
+
+    let actual = file_sha256(&path)?;
+    match fetch_expected_sha256(release, &asset.name) {
+        // Um instalador que não bate com o checksum publicado nunca fica no
+        // disco: pode ser corrupção, pode ser coisa pior.
+        Ok(Some(expected)) if expected != actual => {
+            let _ = std::fs::remove_file(&path);
+            anyhow::bail!("o instalador baixado não confere com o checksum do release");
+        }
+        Ok(Some(_)) => log::info!("checksum do instalador confere com o release"),
+        // Release antigo, sem `.sha256`: segue valendo o hash local, que ao
+        // menos garante que o arquivo executado é o que acabou de ser baixado.
+        Ok(None) => log::warn!("release sem asset .sha256; seguindo só com o hash local"),
+        Err(err) => {
+            let _ = std::fs::remove_file(&path);
+            return Err(err.context("não foi possível obter o checksum do release"));
+        }
+    }
+
+    Ok(Installer {
+        path,
+        sha256: actual,
+    })
+}
+
+/// Busca e interpreta o `.sha256` publicado para o instalador, se o release
+/// tiver um.
+fn fetch_expected_sha256(release: &Release, installer_name: &str) -> Result<Option<String>> {
+    let Some(asset) = release.checksum_asset(installer_name) else {
+        return Ok(None);
+    };
+    let text = util::http_agent(Some(CHECK_TIMEOUT))
+        .get(&asset.browser_download_url)
+        .header("User-Agent", USER_AGENT)
+        .call()
+        .with_context(|| format!("GET {}", asset.browser_download_url))?
+        .body_mut()
+        .read_to_string()
+        .context("checksum ilegível")?;
+    let hash = parse_sha256(&text).context("checksum publicado em formato inesperado")?;
+    Ok(Some(hash))
+}
+
+/// Primeiro token de um arquivo no formato do `sha256sum`: o hash em hex.
+pub fn parse_sha256(text: &str) -> Option<String> {
+    let token = text.split_whitespace().next()?;
+    (token.len() == 64 && token.bytes().all(|byte| byte.is_ascii_hexdigit()))
+        .then(|| token.to_ascii_lowercase())
+}
+
+/// SHA-256 de um arquivo, em hex minúsculo.
+fn file_sha256(path: &Path) -> Result<String> {
+    use sha2::{Digest, Sha256};
+
+    let mut file = std::fs::File::open(path)
+        .with_context(|| format!("não foi possível abrir {}", path.display()))?;
+    let mut hasher = Sha256::new();
+    std::io::copy(&mut file, &mut hasher)
+        .with_context(|| format!("falha ao ler {}", path.display()))?;
+    Ok(format!("{:x}", hasher.finalize()))
 }
 
 fn content_length(response: &ureq::http::Response<ureq::Body>) -> Option<u64> {
@@ -423,6 +520,11 @@ mod tests {
                 "name": "Macro-Helldivers-2-Setup-2.1.0.exe",
                 "browser_download_url": "https://github.com/x/releases/download/v2.1.0/Setup.exe",
                 "size": 4194304
+            },
+            {
+                "name": "Macro-Helldivers-2-Setup-2.1.0.exe.sha256",
+                "browser_download_url": "https://github.com/x/releases/download/v2.1.0/Setup.exe.sha256",
+                "size": 105
             }
         ]
     }"#;
@@ -537,6 +639,42 @@ mod tests {
                 "{hostile}"
             );
         }
+    }
+
+    #[test]
+    fn the_checksum_asset_is_found_by_the_installer_name() {
+        let release = release();
+        let installer = release.installer().unwrap();
+        let checksum = release.checksum_asset(&installer.name).expect(".sha256");
+        assert_eq!(checksum.name, "Macro-Helldivers-2-Setup-2.1.0.exe.sha256");
+        // E um nome sem checksum publicado responde nada.
+        assert!(release.checksum_asset("latest.yml").is_none());
+    }
+
+    #[test]
+    fn the_published_checksum_line_parses_to_the_hash() {
+        let hash = "ab".repeat(32);
+        let line = format!("{hash}  Macro-Setup-2.1.0.exe\n");
+        assert_eq!(parse_sha256(&line), Some(hash.clone()));
+        // Hex maiúsculo normaliza para minúsculo, que é como comparamos.
+        assert_eq!(parse_sha256(&"AB".repeat(32)), Some(hash));
+        assert!(parse_sha256("").is_none());
+        assert!(parse_sha256("curto  arquivo.exe").is_none());
+        assert!(parse_sha256(&"zz".repeat(32)).is_none());
+    }
+
+    #[test]
+    fn a_files_sha256_matches_the_reference_vector() {
+        let dir = std::env::temp_dir().join(format!("mh2-sha-{}", std::process::id()));
+        std::fs::create_dir_all(&dir).unwrap();
+        let path = dir.join("abc.bin");
+        std::fs::write(&path, b"abc").unwrap();
+        // Vetor conhecido do SHA-256 para "abc".
+        assert_eq!(
+            file_sha256(&path).unwrap(),
+            "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad"
+        );
+        let _ = std::fs::remove_dir_all(&dir);
     }
 
     #[test]
