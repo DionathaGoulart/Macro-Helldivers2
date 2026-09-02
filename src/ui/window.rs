@@ -1793,11 +1793,21 @@ mod platform {
                     let boot = Box::from_raw(create.lpCreateParams as *mut Boot);
                     match App::new(hwnd, *boot) {
                         Ok(app) => {
+                            // Registrado já aqui, e não só quando o
+                            // `CreateWindowExW` retorna: um evento mandado
+                            // durante a criação (o foco inicial, por exemplo)
+                            // acorda a janela em vez de esperar o próximo.
+                            app.shared
+                                .main_hwnd
+                                .store(hwnd.0 as isize, std::sync::atomic::Ordering::Relaxed);
                             SetWindowLongPtrW(
                                 hwnd,
                                 GWLP_USERDATA,
                                 Box::into_raw(Box::new(app)) as isize,
                             );
+                            // Drena o que já estava no canal antes de a janela
+                            // existir.
+                            let _ = PostMessageW(Some(hwnd), WM_APP_UI_EVENT, WPARAM(0), LPARAM(0));
                         }
                         Err(err) => {
                             log::error!("janela principal não pôde iniciar: {err:#}");
@@ -2080,9 +2090,28 @@ mod platform {
                     }
                     DefWindowProcW(hwnd, message, wparam, lparam)
                 }
-                _ => DefWindowProcW(hwnd, message, wparam, lparam),
+                _ => {
+                    // O Explorer reiniciou (crash ou restart): o ícone da
+                    // bandeja morreu com ele, e sem recriá-lo uma janela
+                    // escondida ficaria irrecuperável — o `WM_CLOSE` continua
+                    // escondendo enquanto `tray.is_some()`.
+                    if message == taskbar_created_message() && message != 0 {
+                        if let Some(app) = app_mut(hwnd) {
+                            app.tray = Tray::new(hwnd, WM_APP_TRAY, focus::APP_WINDOW_TITLE);
+                        }
+                        return LRESULT(0);
+                    }
+                    DefWindowProcW(hwnd, message, wparam, lparam)
+                }
             }
         }
+    }
+
+    /// Mensagem que o shell difunde quando a barra de tarefas (re)nasce.
+    fn taskbar_created_message() -> u32 {
+        static MESSAGE: std::sync::OnceLock<u32> = std::sync::OnceLock::new();
+        // SAFETY: string estática; o registro devolve o mesmo id para todos.
+        *MESSAGE.get_or_init(|| unsafe { RegisterWindowMessageW(w!("TaskbarCreated")) })
     }
 
     fn schedule_bounds_save(hwnd: HWND) {
