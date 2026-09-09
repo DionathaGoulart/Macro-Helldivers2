@@ -1,15 +1,22 @@
 // Sincroniza assets/data/stratagems.json e os ícones de assets/icons/stratagems/
 // com a wiki (helldivers.wiki.gg) via API Cargo.
-// Uso: npm run sync-stratagems   (Node 18+ e ImageMagick `magick` no PATH)
+// Uso: npm run sync-stratagems   (Node 18+; `npm install` na pasta scripts/)
 //
 // Os ícones da wiki são SVG; o app usa WebP com nomes de arquivo estáveis porque
-// loadouts salvos no localStorage guardam o objeto inteiro (imagem inclusa).
-// Rasterizar mantendo o nome evita quebrar saves antigos.
+// builds salvas guardam ids, mas o nome do arquivo é o que o JSON aponta.
+// Rasterizar mantendo o nome evita reescrever a lista inteira a cada sync.
+//
+// A rasterização é feita por resvg, não por ImageMagick. O renderer SVG interno
+// do ImageMagick (o que roda quando ele é compilado sem o delegate do librsvg)
+// descarta elementos com `transform="rotate(a x y) scale(...)"`, e é justamente
+// assim que a wiki posiciona a carga das Eagles: a Strafing Run saía sem as
+// rajadas e a Napalm Airstrike sem as bombas, só com a silhueta da aeronave.
 
 import fs from 'node:fs'
 import path from 'node:path'
-import { execFileSync } from 'node:child_process'
 import { fileURLToPath } from 'node:url'
+import sharp from 'sharp'
+import { Resvg } from '@resvg/resvg-js'
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const API = 'https://helldivers.wiki.gg/api.php'
@@ -79,7 +86,6 @@ async function fetchSvg(wikiFile) {
 
 async function downloadIcon(wikiFile, destName) {
   const destAbs = path.join(ICON_DIR, destName)
-  const tmp = path.join(ICON_DIR, `.tmp-${process.pid}.svg`)
   // Só a variante "Background" traz o fundo escuro e a moldura da cor da permissão —
   // sem ela o ícone sai com fundo branco e destoa da grade. A Cargo às vezes aponta
   // pro arquivo sem fundo (ex.: o genérico de arma de apoio), daí a tentativa dupla.
@@ -100,17 +106,18 @@ async function downloadIcon(wikiFile, destName) {
         continue
       }
       if (r.erro) throw new Error(r.erro)
-      const buf = r.buf
-      fs.writeFileSync(tmp, buf)
-      // -density alto antes do resize: o rasterizador honra o viewBox e a borda sai nítida.
-      // -depth 8 e -strip evitam PNG de 16 bits com metadados (5x maior, sem ganho visual).
-      execFileSync('magick', ['-background', 'none', '-density', '600', tmp,
-        '-resize', `${ICON_SIZE}x${ICON_SIZE}`, '-depth', '8', '-strip',
-        '-define', 'webp:lossless=true', destAbs])
-      fs.unlinkSync(tmp)
+      // resvg rasteriza a partir do viewBox na largura final, então a borda sai
+      // nítida sem o passo de -density alto + resize que o ImageMagick exigia.
+      // WebP lossless: são formas chapadas, e com perda a borda ganha franja.
+      const png = new Resvg(r.buf.toString('utf8'), {
+        fitTo: { mode: 'width', value: ICON_SIZE },
+      }).render().asPng()
+      await sharp(png)
+        .resize(ICON_SIZE, ICON_SIZE, { fit: 'fill' })
+        .webp({ lossless: true })
+        .toFile(destAbs)
       return true
     } catch (e) {
-      if (fs.existsSync(tmp)) fs.unlinkSync(tmp)
       if (attempt === backoffs.length) {
         console.warn(`  ⚠ ícone falhou: ${wikiFile} (${e.message})`)
         return false
@@ -122,12 +129,6 @@ async function downloadIcon(wikiFile, destName) {
 }
 
 async function main() {
-  try {
-    execFileSync('magick', ['-version'], { stdio: 'ignore' })
-  } catch {
-    console.error('✖ ImageMagick não encontrado. Instale com `brew install imagemagick` (macOS) ou https://imagemagick.org/script/download.php')
-    process.exit(1)
-  }
   fs.mkdirSync(ICON_DIR, { recursive: true })
 
   console.log('Coletando estratagemas da wiki (Cargo API)...')

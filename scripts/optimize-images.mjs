@@ -4,15 +4,16 @@
 // com as MESMAS dimensões (o app nunca reescala essas imagens pra cima). Isso é
 // instalador menor, menos I/O de disco e menos memória de imagem decodificada.
 //
-// Requer `cwebp` (libwebp) no PATH:
-//   Windows: winget install Google.LibWebP     macOS: brew install webp
+// A conversão é feita por sharp (libwebp embutida), sem binário externo: antes
+// isto exigia `cwebp` no PATH e `magick`/`sips` só para o tray.png, e cada um
+// que faltasse abortava ou degradava a etapa em silêncio.
 //
 // Uso: npm run optimize-images [-- --dry]
 
-import { execFileSync } from 'node:child_process'
 import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
+import sharp from 'sharp'
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const ICONS = path.join(ROOT, 'assets/icons')
@@ -33,15 +34,6 @@ const REFERENCE_FILES = [
   'src/data.rs'
 ]
 
-function ensureTool(name, args) {
-  try {
-    execFileSync(name, args, { stdio: 'ignore' })
-    return true
-  } catch (e) {
-    return false
-  }
-}
-
 function listPngs(dir) {
   const out = []
   for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
@@ -54,13 +46,6 @@ function listPngs(dir) {
 
 function human(bytes) {
   return `${(bytes / 1024 / 1024).toFixed(2)} MB`
-}
-
-if (!ensureTool('cwebp', ['-version'])) {
-  console.error('cwebp não encontrado no PATH. Instale libwebp:')
-  console.error('  Windows: winget install Google.LibWebP')
-  console.error('  macOS:   brew install webp')
-  process.exit(1)
 }
 
 const pngs = listPngs(ICONS)
@@ -80,28 +65,20 @@ for (const png of pngs) {
   before += fs.statSync(png).size
 
   if (!DRY) {
-    execFileSync('cwebp', ['-quiet', '-q', String(QUALITY), png, '-o', webp])
+    await sharp(png).webp({ quality: QUALITY }).toFile(webp)
     fs.rmSync(png)
   }
   if (fs.existsSync(webp)) after += fs.statSync(webp).size
   renames.set(relPng, relWebp)
 }
 
-// Ícone da bandeja em 64px (cwebp não redimensiona PNG→PNG; mantemos PNG via
-// sips/magick quando existir, que é o que o decode → CreateIconIndirect consome)
+// Ícone da bandeja em 64px: continua PNG porque é o que o decode →
+// CreateIconIndirect consome; só o tamanho muda.
 const trayTarget = path.join(ICONS, 'tray.png')
 const iconSource = path.join(ICONS, 'icon.png')
 if (!DRY && fs.existsSync(iconSource) && !fs.existsSync(trayTarget)) {
-  const resizer =
-    ensureTool('magick', ['-version']) ? ['magick', [iconSource, '-resize', '64x64', trayTarget]] :
-    ensureTool('sips', ['--version']) ? ['sips', ['-z', '64', '64', iconSource, '--out', trayTarget]] :
-    null
-  if (resizer) {
-    execFileSync(resizer[0], resizer[1], { stdio: 'ignore' })
-    console.log(`tray.png gerado (${(fs.statSync(trayTarget).size / 1024).toFixed(0)} KB)`)
-  } else {
-    console.warn('Nem magick nem sips disponíveis: tray.png não gerado (o app cai no icon.png)')
-  }
+  await sharp(iconSource).resize(64, 64).png().toFile(trayTarget)
+  console.log(`tray.png gerado (${(fs.statSync(trayTarget).size / 1024).toFixed(0)} KB)`)
 }
 
 // Reescreve as referências

@@ -8,5 +8,9 @@
     "sync-stratagems": "node sync-stratagems.mjs",
     "stats-map": "node build-stats-map.mjs",
     "optimize-images": "node optimize-images.mjs"
+  },
+  "dependencies": {
+    "@resvg/resvg-js": "^2.6.2",
+    "sharp": "^0.34.4"
   }
 }
