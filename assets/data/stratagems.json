@@ -249,6 +249,20 @@
     ]
   },
   {
+    "id": 91,
+    "nome": "Eagle Gas Airstrike",
+    "imagem": "stratagems/Eagle_Gas_Airstrike_Stratagem_Icon.webp",
+    "tag": [
+      "Offensive"
+    ],
+    "codex": [
+      "UP",
+      "RIGHT",
+      "LEFT",
+      "RIGHT"
+    ]
+  },
+  {
     "id": 17,
     "nome": "Eagle Napalm Airstrike",
     "imagem": "stratagems/Eagle_Napalm_Airstrike_Stratagem_Icon.webp",
@@ -440,6 +454,22 @@
       "DOWN",
       "LEFT",
       "UP",
+      "LEFT",
+      "DOWN"
+    ]
+  },
+  {
+    "id": 90,
+    "nome": "40-K Meltagun",
+    "imagem": "stratagems/Meltagun_Stratagem_Icon.webp",
+    "tag": [
+      "Supply"
+    ],
+    "codex": [
+      "DOWN",
+      "LEFT",
+      "UP",
+      "LEFT",
       "LEFT",
       "DOWN"
     ]
@@ -1384,22 +1414,6 @@
     ],
     "codex": [
       "DOWN",
-      "LEFT",
-      "LEFT",
-      "DOWN"
-    ]
-  },
-  {
-    "id": 90,
-    "nome": "40-K Meltagun",
-    "imagem": "stratagems/Support_Weapon_Stratagem_Fallback_Icon.webp",
-    "tag": [
-      "Supply"
-    ],
-    "codex": [
-      "DOWN",
-      "LEFT",
-      "UP",
       "LEFT",
       "LEFT",
       "DOWN"

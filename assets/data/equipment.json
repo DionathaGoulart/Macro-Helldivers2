@@ -2467,6 +2467,12 @@
       "imagem": "equipment/helmet-ie-57-hell-bent.webp"
     },
     {
+      "nome": "IX-Voidwalker",
+      "warbond": "Void Piercer",
+      "id": "helmet-ix-voidwalker",
+      "imagem": "equipment/helmet-ix-voidwalker.webp"
+    },
+    {
       "nome": "KDM-500 Outrider",
       "warbond": "Lightning Intercept",
       "id": "helmet-kdm-500-outrider",
@@ -3889,6 +3895,11 @@
     },
     {
       "nome": "Eagle Cluster Bomb",
+      "type": "Eagle",
+      "backpack": false
+    },
+    {
+      "nome": "Eagle Gas Airstrike",
       "type": "Eagle",
       "backpack": false
     },

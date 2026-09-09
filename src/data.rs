@@ -576,7 +576,7 @@ mod tests {
     #[test]
     fn stratagems_load_with_unique_ids_and_codexes() {
         let data = data();
-        assert_eq!(data.all().len(), 91);
+        assert_eq!(data.all().len(), 92);
         for strat in data.all() {
             assert!(!strat.codex.is_empty(), "{} sem codex", strat.nome);
             assert!(
