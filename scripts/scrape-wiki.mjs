@@ -1,6 +1,10 @@
 // Scraper de equipamentos do Helldivers 2 via API Cargo da wiki (helldivers.wiki.gg).
 // Gera assets/data/equipment.json e baixa as imagens pra assets/icons/equipment/.
-// Uso: npm run scrape   (Node 18+, sem dependências)
+// Uso: npm run scrape [-- --refresh]   (Node 18+, sem dependências)
+//
+// Depois do scrape rode `npm run optimize-images`: os PNG baixados aqui viram
+// WebP e as referências nos JSON são reescritas junto. Sem esse segundo passo o
+// repositório fica com `equipment.json` apontando para `.png` que ninguém commita.
 
 import fs from 'node:fs'
 import path from 'node:path'
@@ -13,6 +17,13 @@ const OUT_JSON = path.join(ROOT, 'assets/data/equipment.json')
 const IMG_DIR = path.join(ROOT, 'assets/icons/equipment')
 
 const sleep = (ms) => new Promise(r => setTimeout(r, ms))
+
+// --refresh rebaixa tudo, inclusive o que já está em disco. O padrão reaproveita
+// PNG já baixado (o mesmo run pode citar a mesma arte duas vezes), mas nunca SVG:
+// esses sobrevivem ao `optimize-images` com o nome final, então o teste de
+// existência os congelava para sempre — foi assim que o ícone da passiva
+// True Grit ficou preso na versão PNG antiga depois que a wiki trocou por SVG.
+const REFRESH = process.argv.includes('--refresh')
 
 // A API devolve strings com entidades HTML ("Liberty&#39;s Herald") — decodifica tudo
 const decodeEntities = (s) => typeof s === 'string'
@@ -182,7 +193,8 @@ async function downloadImage(file, destBase, width = 200) {
   const ext = isSvg ? '.svg' : '.png'
   const dest = `${destBase}${ext}`
   const destAbs = path.join(IMG_DIR, dest)
-  if (fs.existsSync(destAbs) && fs.statSync(destAbs).size > 0) return dest // cache entre execuções
+  const cacheServe = !REFRESH && !isSvg && fs.existsSync(destAbs) && fs.statSync(destAbs).size > 0
+  if (cacheServe) return dest
   const url = `${FILEPATH_URL}${encodeURIComponent(file)}${isSvg ? '' : `?width=${width}`}`
   // A wiki aplica rate-limit agressivo (429): backoff exponencial e paciência
   const backoffs = [2000, 5000, 15000, 30000, 60000]
