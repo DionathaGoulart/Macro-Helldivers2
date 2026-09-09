@@ -159,14 +159,26 @@ por scripts Node. Eles não fazem parte do build do app:
 
 ```bash
 cd scripts
-npm run scrape            # equipment.json + imagens
-npm run sync-stratagems   # stratagems.json + ícones (requer ImageMagick)
+npm install               # sharp + resvg (só aqui; o app não depende de Node)
+
+npm run scrape            # equipment.json + imagens (--refresh ignora o cache)
+npm run optimize-images   # PNG → WebP + reescrita das referências
+npm run sync-stratagems   # stratagems.json + ícones
 npm run stats-map         # statsMap.json (slugs do helldive.live)
-npm run optimize-images   # PNG → WebP + reescrita das referências (requer cwebp)
 ```
+
+> A ordem importa: `scrape` deixa `equipment.json` apontando para os `.png` que
+> acabou de baixar, e é o `optimize-images` que os converte para WebP e reescreve
+> as referências. Rodar um sem o outro deixa o repositório inconsistente.
 
 > Depois de rodar `scrape` ou `sync-stratagems`, rode `stats-map` — ele valida se os
 > nomes ainda casam com os slugs do helldive.live e avisa o que ficou sem par.
+
+Nenhum binário externo é necessário: a rasterização de SVG e a conversão para WebP
+saem do `sharp` e do `resvg`, instalados pelo `npm install`. O ImageMagick foi
+removido do caminho de ícones porque o renderer SVG interno dele descarta elementos
+com `transform="rotate(a x y) scale(...)"` — era o que fazia as Eagles Strafing Run
+e Napalm Airstrike saírem sem a carga.
 
 ---
 

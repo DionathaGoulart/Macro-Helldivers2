@@ -5,6 +5,32 @@ Todas as mudanças relevantes deste projeto são documentadas aqui.
 O formato segue [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/)
 e o versionamento segue [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
+## [Não lançado]
+
+Sincronização com a wiki da comunidade (helldivers.wiki.gg) em 09/09/2026.
+
+### Adicionado
+
+- **Eagle Gas Airstrike** (`UP RIGHT LEFT RIGHT`), o 92º estratagema de loadout.
+- **Capacete IX-Voidwalker**, da campanha Void Piercer.
+
+### Alterado
+
+- **Ordem dos estratagemas igual à do jogo.** A grade do app agora reproduz célula a
+  célula os menus do destroyer: a Eagle Gas Airstrike entra entre a Cluster Bomb e a
+  Napalm Airstrike, e a 40-K Meltagun sai do fim da lista para logo depois da
+  GL-21 Grenade Launcher. Orbitais e defensivos já estavam na ordem certa.
+- **Ícone da 40-K Meltagun**: era o genérico de arma de apoio (o "?"), porque a wiki
+  ainda não tinha arte na época do scrape. Agora usa o ícone próprio.
+- **Ícones da Eagle Strafing Run e da Eagle Napalm Airstrike**: os dois saíam sem a
+  carga (só a silhueta da Eagle) — as rajadas e as bombas incendiárias voltaram.
+- **23 renders de equipamento atualizados** para as versões novas da wiki: armaduras e
+  capacetes A-35 Recon, A-9 Helljumper, CE-64 Grenadier, PH-9 Predator, TG-8
+  Sharpshooter e TG-122 Demo-Trooper; as armas da colaboração 40-K (R/40-K Hot-Shot,
+  P/40-K Bolt Pistol, G/40-K Melta Mine); e as capas Camo Cloak, City Fighter's
+  Resolve, Cloak of Posterity's Gratitude, Dissident's Nightmare, Ingress-81, Mark of
+  the Crimson Fang, Triangulation Veil e Tyrant Hunter.
+
 ## [2.0.0] - 2026-09-01
 
 **Reescrita completa.** O app deixou de ser um Electron com React e virou um binário
