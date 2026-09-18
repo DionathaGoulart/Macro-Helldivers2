@@ -42,7 +42,7 @@ jobs:
       # A versão do crate vira a da tag antes do build: o updater compara
       # `CARGO_PKG_VERSION` com a tag do release, e um exe publicado com a
       # versão de desenvolvimento se acharia mais novo (ou mais velho) que ele
-      # mesmo. O arquivo só muda dentro do runner — nada volta para o repo.
+      # mesmo. O arquivo só muda dentro do runner: nada volta para o repo.
       - name: Sync crate version with the tag
         shell: pwsh
         run: |

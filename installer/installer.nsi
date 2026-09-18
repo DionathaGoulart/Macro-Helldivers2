@@ -1,4 +1,4 @@
-;; Instalador do Macro Helldivers 2 — NSIS/MUI2, por máquina, elevado.
+;; Instalador do Macro Helldivers 2: NSIS/MUI2, por máquina, elevado.
 ;;
 ;; Compilar (na raiz do repositório, no Windows):
 ;;   cargo build --release --target x86_64-pc-windows-msvc
@@ -11,7 +11,7 @@
 ;;   OUTFILE       caminho do instalador gerado
 ;;
 ;; O app procura `assets/` ao lado do executável (`util::assets_dir`), então a
-;; árvore é instalada dentro de `$INSTDIR` — não em `%APPDATA%`, que é só do
+;; árvore é instalada dentro de `$INSTDIR`, não em `%APPDATA%`, que é só do
 ;; usuário e é justamente o que o desinstalador preserva.
 
 Unicode true
@@ -44,7 +44,7 @@ ManifestDPIAware true
 !define EXE_NAME "macro-helldivers2.exe"
 
 ;; Classe da janela principal (`ui::window::CLASS_NAME`). É por ela que o
-;; instalador descobre se o app está aberto — inclusive quando ele está só na
+;; instalador descobre se o app está aberto, inclusive quando ele está só na
 ;; bandeja, porque a janela continua existindo escondida.
 !define MAIN_CLASS "MacroHelldivers2Main"
 
@@ -162,7 +162,7 @@ FunctionEnd
 ;; Procura a v1 (Electron/electron-builder) numa raiz e visão do registro.
 ;;
 ;; A v1 se identificava pelo mesmo DisplayName, mas com uma chave gerada pelo
-;; electron-builder — daí a varredura em vez de um caminho fixo. A nossa própria
+;; electron-builder, daí a varredura em vez de um caminho fixo. A nossa própria
 ;; chave é pulada: sem isso, reinstalar por cima rodaria o nosso desinstalador.
 ;; Uma ocorrência por raiz basta (a v1 se instalava uma vez só) e evita
 ;; enumerar índices que acabaram de ser removidos.
@@ -213,7 +213,7 @@ FunctionEnd
 
 ;; Roda o desinstalador da v1 em silêncio, sem derrubar a instalação se falhar.
 ;;
-;; `_?=` faz o desinstalador rodar no lugar em vez de se copiar para o temp — é
+;; `_?=` faz o desinstalador rodar no lugar em vez de se copiar para o temp. É
 ;; o que permite ao `ExecWait` de fato esperar o fim. O preço é o executável do
 ;; desinstalador ficar para trás, removido logo em seguida.
 ;;
@@ -267,8 +267,8 @@ Section "-Instalar"
   ;; Recria a pasta `assets/` ao lado do exe, menos o que só serve em tempo de
   ;; build: `icon.ico` já está embutido no executável (build.rs) e é daqui que
   ;; este instalador tira o próprio ícone, e `icons/icon.png` é a arte de 1024px
-  ;; de onde saiu o `tray.png`. Juntos são ~800 KB que ninguém lê em execução —
-  ;; se algum código passar a abri-los, tire a exclusão correspondente.
+  ;; de onde saiu o `tray.png`. Juntos são ~800 KB que ninguém lê em execução.
+  ;; Se algum código passar a abri-los, tire a exclusão correspondente.
   File /r /x ".DS_Store" /x "Thumbs.db" /x "icon.ico" /x "icon.png" "${ASSETS_SOURCE}"
   ;; A licença exige que toda cópia a leve junto. Com `.txt` ela abre no
   ;; Bloco de Notas com dois cliques.
