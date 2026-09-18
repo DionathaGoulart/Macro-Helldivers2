@@ -1,13 +1,13 @@
-# Goodbot — Style Guide do painel (skin `retro`, temas `crimson` e `rose`)
+# Goodbot: Style Guide do painel (skin `retro`, temas `crimson` e `rose`)
 
 **Origem:** portado de `GoodChat/.harness/styleguides/retro.md` + os tokens de
 `palettes.css`/`themes.css` daquele projeto. Os hex, a fonte e a identidade dos
 dois temas foram copiados **sem alteração**. O que mudou é só o vocabulário de
 componentes: o GoodChat é um chat (balão, composer, tile de conversa); o Goodbot é
 um painel de administração (tabela, formulário, gráfico, estados de
-loading/erro/vazio). §6 e §8 são a adaptação; §1–§5 são o original.
+loading/erro/vazio). §6 e §8 são a adaptação; §1 a §5 são o original.
 
-**Escopo:** o painel web (`apps/web`) inteiro — login, dashboard, páginas de
+**Escopo:** o painel web (`apps/web`) inteiro: login, dashboard, páginas de
 configuração, gestão de membros/casos, auditoria, modais e toasts. O bot não tem
 UI; embeds do Discord seguem só a §9.
 
@@ -16,7 +16,7 @@ UI; embeds do Discord seguem só a §9.
 ## 0. Regras de uso no painel (leia primeiro)
 
 1. **Um skin, dois temas.** A skin é sempre `retro` (neobrutal). Não existe
-   skin `terminal` no Goodbot — nada de glow, CRT, dashed, prompt de shell.
+   skin `terminal` no Goodbot: nada de glow, CRT, dashed, prompt de shell.
 2. **Tema padrão: `rose` (escuro).** Painel de moderação é usado à noite e por
    longos períodos; `crimson` (claro) é a alternativa. `prefers-color-scheme`
    decide na primeira visita; a escolha manual fica em `localStorage`
@@ -24,9 +24,9 @@ UI; embeds do Discord seguem só a §9.
    script inline no `<head>` **antes** da hidratação (sem flash).
 3. **Alternância:** toggle na topbar (ícone sol/lua, `icon-btn`), atalho
    `Shift+T`. Componente `ThemeToggle` em `apps/web/components/theme-toggle.tsx`;
-   provider `ThemeProvider` só para expor `theme`/`setTheme` — não usar
+   provider `ThemeProvider` só para expor `theme`/`setTheme`; não usar
    `next-themes` (o script inline já resolve e o provider é trivial).
-4. **Onde os tokens vivem:** `apps/web/app/globals.css` — bloco `:root` com
+4. **Onde os tokens vivem:** `apps/web/app/globals.css`, bloco `:root` com
    `--palette-*` (hex, uma vez só), bloco `[data-theme='crimson']` e
    `[data-theme='rose']` mapeando os tokens semânticos (§2.3) e os aliases
    shadcn (§7). **Hex em nenhum outro arquivo.** Componente nunca hardcoda
@@ -60,7 +60,7 @@ A frase que resolve dúvida de implementação: _o retro preenche._ A cor vive n
 de accent) e a borda é uma linha neutra de `base-300`.
 
 **Padrão notável do tema escuro:** a cor da borda (`base-300`) é a cor _clara_
-do texto. Borda forte e visível nos dois temas — nunca cinza sutil.
+do texto. Borda forte e visível nos dois temas, nunca cinza sutil.
 
 ---
 
@@ -79,15 +79,15 @@ Somente as famílias usadas pelos dois temas + status + overlay. Copiadas do
 | `--palette-noir`           | `#121212`          | fundo de página (escuro)                           |
 | `--palette-noir-raised`    | `#1a1a1a`          | superfície elevada (escuro)                        |
 | `--palette-near-black`     | `#0d0d0d`          | texto sobre status suavizado (escuro)              |
-| `--palette-crimson`        | `#dc143c`          | accent — tema claro (só como **fill**)             |
-| `--palette-crimson-deep`   | `#c8102e`          | accent como **texto** — tema claro (§2.4)          |
-| `--palette-rose`           | `#e8729a`          | accent — tema escuro                               |
+| `--palette-crimson`        | `#dc143c`          | accent no tema claro (só como **fill**)            |
+| `--palette-crimson-deep`   | `#c8102e`          | accent como **texto** no tema claro (§2.4)         |
+| `--palette-rose`           | `#e8729a`          | accent no tema escuro                              |
 | `--palette-info`           | `#2563eb`          | status cheio (claro)                               |
 | `--palette-success`        | `#16a34a`          | status cheio (claro)                               |
 | `--palette-warning`        | `#d97706`          | status cheio (claro)                               |
 | `--palette-error`          | `#dc2626`          | status cheio (claro)                               |
-| `--palette-success-deep`   | `#15803d`          | success como **texto** — tema claro (§2.4)         |
-| `--palette-warning-deep`   | `#b45309`          | warning como **texto** — tema claro (§2.4)         |
+| `--palette-success-deep`   | `#15803d`          | success como **texto** no tema claro (§2.4)        |
+| `--palette-warning-deep`   | `#b45309`          | warning como **texto** no tema claro (§2.4)        |
 | `--palette-info-soft`      | `#60a5fa`          | status suavizado (escuro)                          |
 | `--palette-success-soft`   | `#4ade80`          | status suavizado (escuro)                          |
 | `--palette-warning-soft`   | `#fbbf24`          | status suavizado (escuro)                          |
@@ -128,17 +128,17 @@ Geometria igual nos dois: `--radius-*: 0rem`, `--border: 2px`, `--depth: 0`,
 | ------------------------------------------------------------------------------------ | ----------------------------------------------- |
 | Fundo de página                                                                      | `base-100`                                      |
 | Superfície elevada (card, painel, linha de tabela expandida, input, popover, dialog) | `base-200`                                      |
-| Toda moldura                                                                         | `base-300` — a moldura é neutra, nunca accent   |
+| Toda moldura                                                                         | `base-300` (a moldura é neutra, nunca accent)   |
 | Sombra dura                                                                          | `--shadow` (declarado por tema)                 |
 | Ênfase / estado ativo / item de nav selecionado / avatar / badge primário            | `accent` + `accent-content`                     |
 | Status (badge de caso, toast, banner)                                                | `info`/`success`/`warning`/`error` + `-content` |
-| Micro-texto decorativo                                                               | `muted-text` (§2.4) — nunca `opacity`           |
+| Micro-texto decorativo                                                               | `muted-text` (§2.4), nunca `opacity`            |
 
 Semântica de moderação (fixa, os dois temas): ban/softban → `error`,
 kick → `warning`, timeout → `warning`, warn → `info`, unban/unlock →
 `success`, automod → `accent`, nota interna → `neutral`.
 
-### 2.4 Contraste (WCAG AA) — conferido na Etapa 26
+### 2.4 Contraste (WCAG AA): conferido na Etapa 26
 
 Alvo: **4.5:1** para texto e **3:1** para elemento de interface (moldura,
 trilho, ícone que carrega significado). O micro-texto do §3 é 10px: entra na
@@ -157,7 +157,7 @@ existem só para quando a cor é a do glifo:
 
 Regra prática: **`bg-accent` usa `accent`; `text-accent-text` usa o `-text`.**
 O mesmo vale para os quatro status. Moldura (`border-accent`, `border-warning`)
-continua no token base — 3:1 basta.
+continua no token base; 3:1 basta.
 
 Duas correções de `-content` vieram da mesma conferência:
 
@@ -169,7 +169,7 @@ Duas correções de `-content` vieram da mesma conferência:
   âmbar: **3.30:1** e **3.19:1**. Passaram a ink (**5.84:1** e **6.04:1**).
 
 **Apagar é `color`, nunca `opacity`.** `opacity` cria um grupo de composição:
-tudo que está dentro apaga junto e **nenhum filho consegue escapar** — foi
+tudo que está dentro apaga junto e **nenhum filho consegue escapar**. Foi
 assim que o botão da `window-bar` ficou na opacidade de um `:disabled` e que o
 item atual do breadcrumb precisava de um `opacity-100` que não funcionava. O
 apagado do painel é o token `muted-text` (60% do `base-content`: **4.85:1** no
@@ -183,7 +183,7 @@ textura da scanline do §4.4. Em nenhum deles há um controle ativo dentro.
 ## 3. Tipografia
 
 **Uma família para tudo: JetBrains Mono** (`@fontsource/jetbrains-mono`, pesos
-400/500/700/800 + itálicos). `--font-sans` e `--font-mono` apontam para ela —
+400/500/700/800 + itálicos). `--font-sans` e `--font-mono` apontam para ela;
 não existe sans separada.
 
 | Uso                                  | Tratamento                                                                                                                                                                     |
@@ -191,7 +191,7 @@ não existe sans separada.
 | Título de tela (`screen-title`)      | `text-3xl`→`4xl` (login: `5xl`→`6xl`), `font-black`, `uppercase`, **`italic`**, `tracking-tighter`; no login com `underline decoration-accent decoration-4 underline-offset-4` |
 | Kicker (`screen-kicker`)             | `font-mono text-xs font-bold uppercase tracking-widest text-accent`, precedido do `>` literal (`.sigil`)                                                                       |
 | Label de seção (`section-label`)     | igual ao kicker, ou `text-[10px] tracking-[0.2em]` na variante compacta; também com `>`                                                                                        |
-| Cabeçalho de tabela (`th`)           | `text-[10px] font-black uppercase tracking-[0.2em] text-muted-text` — o `th` pode conter o botão de ordenar, então nada de `opacity` |
+| Cabeçalho de tabela (`th`)           | `text-[10px] font-black uppercase tracking-[0.2em] text-muted-text`; o `th` pode conter o botão de ordenar, então nada de `opacity` |
 | Label de formulário                  | `text-xs font-bold uppercase tracking-widest`                                                                                                                                  |
 | Corpo / célula                       | `text-sm`/`text-base`, `leading-relaxed`; números tabulares (`tabular-nums`) em colunas numéricas                                                                              |
 | Valor de stat (`stat-value`)         | `text-3xl`→`4xl font-black tracking-tighter tabular-nums`                                                                                                                      |
@@ -202,7 +202,7 @@ Padrões-chave: **caixa alta em tudo que não é corpo**, `tracking-tighter` nos
 títulos grandes e `tracking-widest`/`[0.2em]` nos micro-labels, itálico como
 recurso de display, `font-black`/`font-bold` dominantes.
 
-> `font-black` é 900 e a face mais pesada carregada é 800 — o browser resolve
+> `font-black` é 900 e a face mais pesada carregada é 800; o browser resolve
 > para 800. Comportamento herdado e **aprovado**; não "corrigir".
 
 ---
@@ -211,49 +211,49 @@ recurso de display, `font-black`/`font-bold` dominantes.
 
 Numerados: o código referencia por número (`styleguide §4.3`).
 
-1. **Sombra dura deslocada** — a assinatura nº 1. `--frame-shadow: 6px 6px 0 0
+1. **Sombra dura deslocada**: a assinatura nº 1. `--frame-shadow: 6px 6px 0 0
 var(--shadow)`, `--frame-shadow-sm: 3px 3px 0 0 var(--shadow)`. Sem blur, sem
    spread. Consumidas por `retro-shadow` / `retro-shadow-sm`.
-2. **Moldura grossa reta** — `--frame-border: 2px`, cor `base-300`, via
+2. **Moldura grossa reta**: `--frame-border: 2px`, cor `base-300`, via
    `retro-border`.
-3. **Zero border-radius** — em tudo, inclusive avatar, ponto de presença,
+3. **Zero border-radius**: em tudo, inclusive avatar, ponto de presença,
    switch, checkbox, badge, toast, tooltip. Exceção deliberada: nenhuma.
-4. **Scanline discreta** — `terminal-scanline`: gradiente repetido de 1px a
+4. **Scanline discreta** (`terminal-scanline`): gradiente repetido de 1px a
    cada 4px, `opacity: 0.3`, `position: fixed`, `pointer-events: none`. É
    textura, não tela.
-5. **Caret piscando** — `terminal-cursor` = `_` com `blink 1s step-end
+5. **Caret piscando**: `terminal-cursor` = `_` com `blink 1s step-end
 infinite`. Usado em "salvando…", "carregando…" e em placeholders vivos, no
    lugar de spinner circular.
-6. **Micro-texto de máquina** — prefixo `>` nos kickers e labels, valores em
+6. **Micro-texto de máquina**: prefixo `>` nos kickers e labels, valores em
    colchetes (`[sem motivo]`, `[bot]`, `[expirado]`), estados em caixa alta.
-7. **WindowDots** — três quadrados-ou-círculos de janela: `bg-accent`,
+7. **WindowDots** são três quadrados-ou-círculos de janela: `bg-accent`,
    `bg-base-300`, `bg-base-300`. **No Goodbot são quadrados** (§4.3 vale
    para tudo; o GoodChat usava círculo por herança e isso não é portado).
-8. **Barra de título de painel** (`window-bar`) — linha inferior de 2px em
+8. **Barra de título de painel** (`window-bar`): linha inferior de 2px em
    `base-300` sobre `base-100`, nome do "arquivo" em micro-texto bold **em
    caixa alta** (`AUTOMOD.CFG`, `CASOS.LOG`, `MEMBROS.DB`) e os WindowDots à
    direita. Todo card de configuração tem uma. O apagado é `.window-bar-title`
    com `muted-text` e vale **só para o nome**: a barra também hospeda botões de
    ação, e `opacity` na barra os apagaria junto (§2.4).
-9. **Levantar no hover** — `hover:-translate-y-1` + sombra `sm`→padrão, e
+9. **Levantar no hover**: `hover:-translate-y-1` + sombra `sm`→padrão, e
    `active:translate-y-0`. `transition-all duration-300`. Só em elementos
    **clicáveis** (tile, botão, linha-link, card-link). Linha de tabela comum
-   não levanta — faz fill (§6.3).
-10. **Seleção temática** — `::selection` em accent/accent-content.
-11. **Botão como CTA grande** — 3.25rem (md: 3.75rem), peso 900, caixa alta
+   não levanta; faz fill (§6.3).
+10. **Seleção temática**: `::selection` em accent/accent-content.
+11. **Botão como CTA grande**: 3.25rem (md: 3.75rem), peso 900, caixa alta
     (§6.1). Em tabelas e barras usa-se o `icon-btn` compacto.
-12. **Foco visível** — `outline: 2px solid var(--color-accent)`,
+12. **Foco visível**: `outline: 2px solid var(--color-accent)`,
     `outline-offset: 2px`, sólido, em **todo** controle. A regra mora fora de
     `@layer` no `globals.css` de propósito: vários componentes shadcn vêm com
     `outline-hidden`, que é utility e venceria uma regra em `@layer base`.
     Dentro de overlay (`command`, `dropdown-menu`, `select`, item de sidebar) o
     offset é negativo, senão o scroll corta o anel.
-13. **`prefers-reduced-motion`** — animações congeladas, scanline escondida.
-14. **Nada clicável parece desligado** — todo controle tem `cursor: pointer`
+13. **`prefers-reduced-motion`**: animações congeladas, scanline escondida.
+14. **Nada clicável parece desligado**: todo controle tem `cursor: pointer`
     (o UA dá `default` a `<button>`), um `:hover` e um `:focus-visible`. As
     regras genéricas ficam no `globals.css` **fora de `@layer`**, pelo mesmo
     motivo do §4.12. E `opacity` decorativa nunca vai no container de um
-    controle — o apagado é `muted-text` (§2.4). Um controle com `opacity`
+    controle; o apagado é `muted-text` (§2.4). Um controle com `opacity`
     menor que a de um controle ativo é, por definição, um `:disabled`.
 
 **Não existem** (não inventar): glow de fósforo, vignette/curvatura de CRT, dot
@@ -263,7 +263,7 @@ shimmer.
 
 ### Motion
 
-- Entrada: `animate-enter` — fade + `translateY(8px)` → 0 em 200ms,
+- Entrada: `animate-enter`, fade + `translateY(8px)` → 0 em 200ms,
   `cubic-bezier(0.33, 1, 0.68, 1)`, **zero overshoot**. Sem spring, sem
   bounce (regra de time).
 - Interação: `hover:-translate-y-1` + crescimento de sombra, `duration-300`;
@@ -298,8 +298,8 @@ página `screen-pad` (1rem, `sm:` 2rem, com `safe-area-inset`); sidebar 16rem
 ## 6. Componentes do painel
 
 Toda classe abaixo é uma **hook class** aplicada pelo componente; o CSS do tema
-faz o resto. Regra de ouro herdada: **nenhum componente ramifica por tema** —
-não existe `if (theme === 'rose')` em React.
+faz o resto. Regra de ouro herdada: **nenhum componente ramifica por tema**.
+Não existe `if (theme === 'rose')` em React.
 
 ### 6.1 Botões
 
@@ -309,14 +309,14 @@ não existe `if (theme === 'rose')` em React.
   900, caixa alta, `letter-spacing: 0.05em`. Uso: submit de formulário,
   ação primária da página, login.
 - **`btn-goodchat-danger`** (novo, painel): igual ao CTA com fill `error` /
-  texto `error-content`. Uso: ban, purge, reset de config — sempre atrás de
+  texto `error-content`. Uso: ban, purge, reset de config, sempre atrás de
   `alert-dialog`.
 - **`icon-btn`** (compacto): `retro-border bg-base-200`, `text-[10px]
 font-black uppercase tracking-widest`, `px-3 py-2`, hover accent + levanta,
   `disabled:opacity-40`. Uso: barra de ações de tabela, topbar, toggles.
 - Estado _loading_: texto vira `SALVANDO_` com `terminal-cursor`; botão
   `disabled`. Nunca spinner.
-- **Todo** controle — inclusive os que não são `btn-*`: `cursor: pointer`,
+- **Todo** controle, inclusive os que não são `btn-*`: `cursor: pointer`,
   `:hover` e `:focus-visible` (§4.12, §4.14). `opacity` só em `:disabled`; um
   botão apagado por decoração é indistinguível de um desligado (§2.4). Vale
   também para a `tag` quando ela é clicável (legenda de gráfico, filtro
@@ -330,14 +330,14 @@ font-black uppercase tracking-widest`, `px-3 py-2`, hover accent + levanta,
 `retro-border bg-base-200 retro-shadow`, barra de título (§4.8) obrigatória em
 cards de configuração e opcional em cards de stat, `panel-body` com `p-4`→`p-6
 gap-4`. shadcn `Card` recebe `panel`; `CardHeader` vira `window-bar`;
-`CardTitle` é micro-texto caixa alta (não título grande — o título grande é o
+`CardTitle` é micro-texto caixa alta (não título grande; o título grande é o
 `screen-title` da página).
 
 ### 6.3 Tabela (`data-table`)
 
 - Wrapper `retro-border bg-base-200 retro-shadow overflow-x-auto`.
 - `thead`: fundo `base-100`, linha inferior `2px base-300`, `th` em micro-texto
-  §3 (apagado por `muted-text`, nunca por `opacity` — a coluna ordenável é um
+  §3 (apagado por `muted-text`, nunca por `opacity`; a coluna ordenável é um
   `<button>` dentro do `th`). Coluna ordenável mostra `▲`/`▼` literal ao lado
   do label e tem `:hover` em `accent-text`.
 - `tbody tr`: linha separada por `1px base-300` com `opacity-30`; hover faz
@@ -420,7 +420,7 @@ base-300` com `opacity-20`, sem dash.
     `info`, `success`, `warning`, `error`. Comparação "atual vs período
     anterior": atual `accent` sólido, anterior `base-content` com
     `opacity-30`.
-  - Linha: `strokeWidth 2`, sem `dot`, `type="linear"` (nunca `monotone` —
+  - Linha: `strokeWidth 2`, sem `dot`, `type="linear"` (nunca `monotone`:
     curva suave contradiz a identidade). Área: fill `accent` `opacity-15`,
     sem gradiente. Barra: fill sólido, `radius 0`, gap 20%.
   - Tooltip: mesma regra de §6.5 (moldura, sombra dura, micro-texto).
@@ -463,7 +463,7 @@ bg-base-100` h-3, fill sólido `accent`, sem radius. Para cotas
   colapsa.
 - **Índice de configuração** (`/config`): um `panel` por família de
   `CONFIG_GROUPS` (`BOT.DIR`, `MODERACAO.DIR`, `COMUNIDADE.DIR`), com um card
-  por tela — nome, `tag` `LIGADO`/`DESLIGADO` do módulo, a descrição de
+  por tela: nome, `tag` `LIGADO`/`DESLIGADO` do módulo, a descrição de
   `CONFIG_PAGES` e o nome de arquivo em micro-texto. Card = `border-2` sobre
   `base-100` com `hover:bg-base-200`; o anel de foco é o global do §6.1.
 - **Busca de tela (`Ctrl+K` / `⌘K`)**: `CommandPalette` na topbar, `command`
@@ -510,7 +510,7 @@ Ordem no `globals.css`: `@import "tailwindcss"` → `:root { --palette-* }` →
 utilities (`retro-border`, `retro-shadow(-sm)`, `terminal-cursor`,
 `terminal-scanline`, `animate-enter`, `btn-goodchat*`, `screen-pad`) → base.
 Regras de tema são **unlayered** de propósito; nunca mirar numa utility que o
-componente combina com variante — mirar na hook class.
+componente combina com variante. Mirar na hook class.
 
 ---
 
@@ -521,7 +521,7 @@ componente combina com variante — mirar na hook class.
   `base-300` `opacity-10`), **sem shimmer**; micro-texto `CARREGANDO_` com
   caret no cabeçalho. Tabela mostra 5 linhas skeleton na altura real.
 - **Loading de ação**: botão em `SALVANDO_` (§6.1); tabela em refetch mantém
-  os dados e marca `aria-busy` no `tbody` — escurecer o corpo apagava junto as
+  os dados e marca `aria-busy` no `tbody`: escurecer o corpo apagava junto as
   linhas clicáveis (§2.4). Onde o refetch precisa aparecer, o caret do §4.5 na
   barra de ferramentas conta a mesma coisa sem desligar controle nenhum.
 - **Vazio**: dentro do `panel`, centralizado, `screen-kicker` `> NADA AQUI`,
@@ -565,7 +565,7 @@ noir/rose; `font-black` sobre face 800; scanline na força base; foco sólido
 
 Decisões novas do Goodbot:
 
-1. **Sem daisyUI** — a stack é shadcn; os nomes daisyUI (`base-100`, `accent`)
+1. **Sem daisyUI**: a stack é shadcn; os nomes daisyUI (`base-100`, `accent`)
    ficam como nomes semânticos internos e são mapeados em §7.
 2. **Só dois temas** (`crimson`, `rose`) e uma skin. As outras oito paletas do
    GoodChat não são portadas; ponto de extensão: adicionar um bloco
@@ -585,15 +585,15 @@ Decisões novas do Goodbot:
 ## 11. Porte nativo (Macro Helldivers 2)
 
 Este repositório não tem painel web: a skin `retro` foi portada para o app nativo
-(Rust + Direct2D). §1–§5 valem sem alteração; o que muda é onde cada coisa mora e
+(Rust + Direct2D). §1 a §5 valem sem alteração; o que muda é onde cada coisa mora e
 algumas adaptações de meio. **Componente novo entra aqui**, como pede o §0.7.
 
 **Onde vive cada camada**
 
 | Guia                                   | Código                                                                 |
 | -------------------------------------- | ---------------------------------------------------------------------- |
-| `--palette-*` (§2.1)                   | `ui/theme.rs`, módulo `raw` — único lugar com hex                      |
-| Tokens por tema (§2.2–§2.4)            | `theme::ROSE` / `theme::CRIMSON`; widget pede `theme::palette()`       |
+| `--palette-*` (§2.1)                   | `ui/theme.rs`, módulo `raw` (único lugar com hex)                      |
+| Tokens por tema (§2.2-§2.4)            | `theme::ROSE` / `theme::CRIMSON`; widget pede `theme::palette()`       |
 | Geometria (§4, §5)                     | `theme::BORDER`, `SHADOW`, `SHADOW_SM`, `LIFT`, `FOCUS_*`              |
 | Motion (§4)                            | `theme::motion` (`HOVER_MS`, `ENTER_MS`, `BLINK_MS`, `ease_out`)       |
 | Tipografia (§3)                        | `theme::font` + `widgets::styles`; faces em `assets/fonts/`            |
@@ -624,7 +624,7 @@ algumas adaptações de meio. **Componente novo entra aqui**, como pede o §0.7.
   inteiro em cima e a legenda (nome + codex) embaixo, separados pela linha de 2px.
   Descansa com sombra `sm` e levanta no hover (§4.9); o do slot em edição inunda a
   legenda de accent; o indisponível é `:disabled` (40%, sem área clicável). O ícone
-  já traz a cor da categoria — o quadrado de categoria fica só na barra da seção.
+  já traz a cor da categoria; o quadrado de categoria fica só na barra da seção.
 - **Slot de macro** (`slot_square`): quadrado com o ícone, a etiqueta do atalho
   colada meio para fora da borda de cima, o slot em edição erguido com a etiqueta em
   accent. Disparo inunda de accent; recusa acende uma moldura de erro em volta.
