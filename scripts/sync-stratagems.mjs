@@ -1,205 +1,214 @@
 // Sincroniza assets/data/stratagems.json e os ícones de assets/icons/stratagems/
-// com a wiki (helldivers.wiki.gg) via API Cargo.
-// Uso: npm run sync-stratagems   (Node 18+; `npm install` na pasta scripts/)
+// com a API de dados (helldivers-api.dionatha.com.br), que é alimentada pela wiki.
+// Uso: npm run sync-stratagems   (Node 18+, sem dependências)
 //
-// Os ícones da wiki são SVG; o app usa WebP com nomes de arquivo estáveis porque
-// builds salvas guardam ids, mas o nome do arquivo é o que o JSON aponta.
-// Rasterizar mantendo o nome evita reescrever a lista inteira a cada sync.
+// A ordem do arquivo é a do jogo e é curada à mão: a wiki não a tem. O script
+// nunca reordena o que já existe. Estratagema novo entra no fim do subgrupo dele
+// (cor → tipo → corpo a corpo / comuns / descartáveis / com mochila), a mesma
+// regra que o app aplica em runtime (`src/data_sync.rs`). Depois é só mover a
+// entrada para a posição exata do jogo.
 //
-// A rasterização é feita por resvg, não por ImageMagick. O renderer SVG interno
-// do ImageMagick (o que roda quando ele é compilado sem o delegate do librsvg)
-// descarta elementos com `transform="rotate(a x y) scale(...)"`, e é justamente
-// assim que a wiki posiciona a carga das Eagles: a Strafing Run saía sem as
-// rajadas e a Napalm Airstrike sem as bombas, só com a silhueta da aeronave.
+// O id de entrada nova sai do slug (`stableId`, igual ao `stable_id` do app). É o
+// número que o app já deu ao estratagema quando o baixou da API antes deste
+// release, então slot e build salvos por usuários continuam apontando para ele.
+// Nunca renumere à mão.
 
 import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
-import sharp from 'sharp'
-import { Resvg } from '@resvg/resvg-js'
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
-const API = 'https://helldivers.wiki.gg/api.php'
-const FILEPATH_URL = 'https://helldivers.wiki.gg/wiki/Special:FilePath/'
+const API = 'https://helldivers-api.dionatha.com.br'
 const OUT_JSON = path.join(ROOT, 'assets/data/stratagems.json')
 const ICON_DIR = path.join(ROOT, 'assets/icons/stratagems')
-const ICON_SIZE = 256
+const HEADERS = { 'User-Agent': 'MacroHelldivers2-sync/2.0' }
 
-// Permits e tipos que o jogador escolhe no loadout. Fora daqui ficam os de missão
-// (Reinforce, Resupply, SEAF Artillery...), que o app já trata como apoio fixo.
-const LOADOUT_PERMITS = ['Offensive', 'Supply', 'Defensive']
-const NON_LOADOUT_TYPES = ['Ship', 'Objective', 'Other']
+// Menos que isto e a API está quebrada: aborta sem escrever. Mesmo valor do app.
+const MIN_LOADOUT = 80
 
-const sleep = (ms) => new Promise(r => setTimeout(r, ms))
+const PERMIT_TAG = { offensive: 'Offensive', supply: 'Supply', defensive: 'Defensive' }
 
-const decodeEntities = (s) => typeof s === 'string'
-  ? s.replace(/&#0?39;|&apos;/g, "'").replace(/&quot;/g, '"').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&')
-  : s
+// Reforço, Ressuprimento e Rearme da Águia — os mesmos de SUPPORT_STRATS em src/data.rs.
+const SUPPORT_CODEX = {
+  Reinforce: ['UP', 'DOWN', 'RIGHT', 'LEFT', 'UP'],
+  Resupply: ['DOWN', 'DOWN', 'UP', 'RIGHT'],
+  'Eagle Rearm': ['UP', 'UP', 'LEFT', 'UP', 'RIGHT'],
+}
+const DIR = { up: 'UP', down: 'DOWN', left: 'LEFT', right: 'RIGHT' }
 
-async function fetchJson(params) {
-  const url = `${API}?${new URLSearchParams({ format: 'json', ...params })}`
-  const res = await fetch(url, { headers: { 'User-Agent': 'MacroHelldivers2-scraper/1.0' } })
+// FNV-1a de 32 bits com o bit alto ligado — tem que dar o mesmo que o
+// `stable_id` de src/data_sync.rs (o teste de lá fixa dois valores).
+function stableId(slug) {
+  let hash = 0x811c9dc5
+  for (const byte of Buffer.from(slug, 'utf8')) {
+    hash ^= byte
+    hash = Math.imul(hash, 0x01000193) >>> 0
+  }
+  return (hash | 0x80000000) >>> 0
+}
+
+const slugHasWord = (item, prefix) => item.id.split('-').some(w => w.startsWith(prefix))
+const hasTrait = (item, name) => (item.traitIds || []).includes(name)
+
+// Espelho do `group_of` do app.
+function groupOf(item) {
+  let family = item.kind
+  if (item.kind === 'support_weapon') {
+    if (hasTrait(item, 'melee')) family = 'melee'
+    else if (hasTrait(item, 'expendable')) family = 'expendable'
+    else if (hasTrait(item, 'backpack')) family = 'backpack_weapon'
+    else family = 'weapon'
+  } else if (item.kind === 'vehicle' && slugHasWord(item, 'exosuit')) {
+    family = 'exosuit'
+  } else if (item.kind === 'emplacement' && slugHasWord(item, 'mine')) {
+    family = 'mines'
+  }
+  return `${PERMIT_TAG[item.permitType]}/${family}`
+}
+
+// Fim da primeira sequência do subgrupo; subgrupo inédito vai pro fim da cor.
+function insertionPoint(groups, list, group, permit) {
+  const start = groups.indexOf(group)
+  if (start >= 0) {
+    let end = start
+    while (end + 1 < groups.length && groups[end + 1] === group) end++
+    return end + 1
+  }
+  for (let i = list.length - 1; i >= 0; i--) if (list[i].tag[0] === permit) return i + 1
+  return list.length
+}
+
+// Só um veículo e só um exo por loadout. Vale para entrada nova; nas antigas a
+// curadoria é manual (a Bastion, por exemplo, não divide slot com os FRV).
+function extraTags(item) {
+  if (item.kind !== 'vehicle') return []
+  return slugHasWord(item, 'exosuit') ? ['Mecha'] : ['Vehicle']
+}
+
+const codexOf = (item) => item.code.map(step => DIR[step])
+
+// O jogo não tem codex repetido nem um que comece com outro (o menor dispararia
+// no meio do maior). A mesma regra trava as trocas de codex no app.
+function codexClashes(list) {
+  const all = [...list.map(s => [s.nome, s.codex]), ...Object.entries(SUPPORT_CODEX)]
+  const clashes = []
+  for (const [a, x] of all) {
+    for (const [b, y] of all) {
+      if (a !== b && x.length <= y.length && x.every((d, i) => y[i] === d)) clashes.push(`${a} / ${b}`)
+    }
+  }
+  return clashes
+}
+
+async function fetchJson(url) {
+  const res = await fetch(url, { headers: HEADERS })
   if (!res.ok) throw new Error(`HTTP ${res.status} em ${url}`)
   return res.json()
 }
 
-async function cargoAll(tables, fields) {
-  const rows = []
-  for (let offset = 0; ; offset += 500) {
-    const json = await fetchJson({ action: 'cargoquery', limit: '500', offset: String(offset), tables, fields })
-    const batch = (json.cargoquery || []).map(r => {
-      const out = {}
-      for (const [k, v] of Object.entries(r.title)) out[k.replace(/ /g, '_')] = decodeEntities(v)
-      return out
-    })
-    rows.push(...batch)
-    if (batch.length < 500) break
-  }
-  return rows
-}
-
-// "<span>[[File:Stratagem Arrow Down.svg|link=]]</span>..." -> ['DOWN', ...]
-const parseCodex = (html) =>
-  [...(html || '').matchAll(/Stratagem Arrow (Up|Down|Left|Right)\.svg/g)].map(m => m[1].toUpperCase())
-
-// Tags extras controlam exclusividade de slot no app (só um veículo / só um mecha por
-// build). Só valem pra entradas novas: nas que já existem a curadoria é manual, porque
-// a wiki não distingue quem divide slot de quem (ex.: a Bastion não conta como veículo).
-function extraTags(row) {
-  if (row.stratagem_type !== 'Vehicle') return []
-  return /exosuit/i.test(row.page) ? ['Mecha'] : ['Vehicle']
-}
-
-// "Autocannon Stratagem Icon Background.svg" -> "Autocannon_Stratagem_Icon.webp"
-const iconFileName = (wikiFile) =>
-  wikiFile.replace(/\.svg$/i, '').replace(/ Background$/, '').replace(/[^A-Za-z0-9._-]/g, '_') + '.webp'
-
-async function fetchSvg(wikiFile) {
-  const res = await fetch(`${FILEPATH_URL}${encodeURIComponent(wikiFile)}`,
-    { headers: { 'User-Agent': 'MacroHelldivers2-scraper/1.0' } })
-  if (res.status === 429) return { retryAfter: Number(res.headers.get('retry-after')) * 1000 }
-  if (!res.ok) return { erro: `HTTP ${res.status}` }
-  const buf = Buffer.from(await res.arrayBuffer())
-  if (!buf.slice(0, 512).toString().includes('<svg')) return { erro: 'resposta não é SVG' }
-  return { buf }
-}
-
-async function downloadIcon(wikiFile, destName) {
-  const destAbs = path.join(ICON_DIR, destName)
-  // Só a variante "Background" traz o fundo escuro e a moldura da cor da permissão —
-  // sem ela o ícone sai com fundo branco e destoa da grade. A Cargo às vezes aponta
-  // pro arquivo sem fundo (ex.: o genérico de arma de apoio), daí a tentativa dupla.
-  const candidatos = /Background\.svg$/i.test(wikiFile)
-    ? [wikiFile]
-    : [wikiFile.replace(/\.svg$/i, ' Background.svg'), wikiFile]
-  // A wiki aplica rate-limit agressivo (429): backoff exponencial e paciência
-  const backoffs = [2000, 5000, 15000, 30000, 60000]
-  for (let attempt = 0; attempt <= backoffs.length; attempt++) {
-    try {
-      let r
-      for (const candidato of candidatos) {
-        r = await fetchSvg(candidato)
-        if (r.buf || r.retryAfter) break
-      }
-      if (r.retryAfter !== undefined) {
-        await sleep(r.retryAfter || backoffs[Math.min(attempt, backoffs.length - 1)])
-        continue
-      }
-      if (r.erro) throw new Error(r.erro)
-      // resvg rasteriza a partir do viewBox na largura final, então a borda sai
-      // nítida sem o passo de -density alto + resize que o ImageMagick exigia.
-      // WebP lossless: são formas chapadas, e com perda a borda ganha franja.
-      const png = new Resvg(r.buf.toString('utf8'), {
-        fitTo: { mode: 'width', value: ICON_SIZE },
-      }).render().asPng()
-      await sharp(png)
-        .resize(ICON_SIZE, ICON_SIZE, { fit: 'fill' })
-        .webp({ lossless: true })
-        .toFile(destAbs)
-      return true
-    } catch (e) {
-      if (attempt === backoffs.length) {
-        console.warn(`  ⚠ ícone falhou: ${wikiFile} (${e.message})`)
-        return false
-      }
-      await sleep(backoffs[attempt])
-    }
-  }
-  return false
+async function downloadIcon(item, destAbs) {
+  const url = `${API}${item.image.url}`
+  const res = await fetch(url, { headers: HEADERS })
+  if (!res.ok) throw new Error(`HTTP ${res.status} em ${url}`)
+  fs.writeFileSync(destAbs, Buffer.from(await res.arrayBuffer()))
 }
 
 async function main() {
-  fs.mkdirSync(ICON_DIR, { recursive: true })
+  console.log('Lendo estratagemas da API...')
+  const { meta, data } = await fetchJson(`${API}/v1/stratagems.json`)
+  const api = data.filter(s =>
+    s.availability === 'loadout' && PERMIT_TAG[s.permitType] && s.code?.length && s.code.every(d => DIR[d]))
 
-  console.log('Coletando estratagemas da wiki (Cargo API)...')
-  const rows = await cargoAll('Stratagems', '_pageName=page,title,image,permit_type,stratagem_type,stratagem_code')
-
-  // Uma página pode render várias linhas na Cargo; fica a que tem permit preenchido.
-  // "Offense" é typo de uma entrada na wiki — normaliza pra não virar categoria fantasma.
-  const byPage = new Map()
-  for (const row of rows) {
-    if (!row.page || !row.image) continue
-    const permit = row.permit_type === 'Offense' ? 'Offensive' : row.permit_type
-    const prev = byPage.get(row.page)
-    if (!prev || (!prev.permit_type && permit)) byPage.set(row.page, { ...row, permit_type: permit })
+  if (api.length < MIN_LOADOUT) {
+    console.error(`✖ Só ${api.length} estratagemas de loadout — a API mudou de formato? Abortando sem escrever.`)
+    process.exit(1)
   }
+  console.log(`  dados de ${meta?.dataVersion ?? '?'}`)
 
-  const wiki = [...byPage.values()].filter(r =>
-    LOADOUT_PERMITS.includes(r.permit_type) && !NON_LOADOUT_TYPES.includes(r.stratagem_type))
-
-  if (wiki.length < 80) {
-    console.error(`✖ Só ${wiki.length} estratagemas de loadout — a wiki mudou de formato? Abortando sem escrever.`)
+  const current = JSON.parse(fs.readFileSync(OUT_JSON, 'utf8'))
+  const semSlug = current.filter(s => !s.slug)
+  if (semSlug.length) {
+    console.error(`✖ Entradas sem slug: ${semSlug.map(s => s.nome).join(', ')}. Preencha antes de sincronizar.`)
     process.exit(1)
   }
 
-  const current = JSON.parse(fs.readFileSync(OUT_JSON, 'utf8'))
-  // O codex é único por estratagema e não muda em rename — casa melhor que o nome
-  const byCodex = new Map(current.map(s => [s.codex.join(','), s]))
-  let nextId = Math.max(...current.map(s => s.id)) + 1
+  const bySlug = new Map(api.map(s => [s.id, s]))
+  const result = []
+  const groups = []
+  const codexMudou = []
+  const nomeDiferente = []
+  const sumiram = []
 
+  // O que já existe: ordem, nome, tags e ícone curados ficam; o codex segue a API.
+  for (const strat of current) {
+    const item = bySlug.get(strat.slug)
+    if (!item) {
+      sumiram.push(strat.nome)
+      result.push(strat)
+      groups.push(null)
+      continue
+    }
+    const codex = codexOf(item)
+    if (codex.join(',') !== strat.codex.join(',')) {
+      codexMudou.push(`${strat.nome}: ${strat.codex.join(' ')} -> ${codex.join(' ')}`)
+    }
+    if (item.name !== strat.nome) nomeDiferente.push(`${strat.nome} (API: ${item.name})`)
+    result.push({ ...strat, codex })
+    groups.push(groupOf(item))
+  }
+
+  const known = new Set(current.map(s => s.slug))
+  const ids = new Set(current.map(s => s.id))
   const novos = []
-  const renomeados = []
-  const result = wiki.map(row => {
-    const codex = parseCodex(row.stratagem_code)
-    const prev = byCodex.get(codex.join(','))
-    if (prev) {
-      // Nome canônico da wiki é o título da página; o app já usa esse formato
-      if (prev.nome !== row.page) renomeados.push(`${prev.nome} -> ${row.page}`)
-      // Permit vem da wiki; as tags de exclusividade seguem a curadoria já existente
-      return { ...prev, nome: row.page, tag: [row.permit_type, ...prev.tag.slice(1)] }
+  for (const item of api) {
+    if (known.has(item.id)) continue
+    const id = stableId(item.id)
+    if (ids.has(id)) {
+      console.error(`✖ Id ${id} de ${item.id} já está em uso. Abortando sem escrever.`)
+      process.exit(1)
     }
-    novos.push(`${row.page} (${codex.join(' ')})`)
-    return {
-      id: nextId++,
-      nome: row.page,
-      imagem: `stratagems/${iconFileName(row.image)}`,
-      tag: [row.permit_type, ...extraTags(row)],
-      codex,
-    }
-  })
+    ids.add(id)
+    const permit = PERMIT_TAG[item.permitType]
+    const group = groupOf(item)
+    const at = insertionPoint(groups, result, group, permit)
+    result.splice(at, 0, {
+      id,
+      slug: item.id,
+      nome: item.name,
+      imagem: `stratagems/${item.id}.webp`,
+      tag: [permit, ...extraTags(item)],
+      codex: codexOf(item),
+    })
+    groups.splice(at, 0, group)
+    novos.push(item)
+  }
 
-  // Mantém a ordem atual (curada) e joga os novos no fim
-  const ordem = new Map(current.map((s, i) => [s.id, i]))
-  result.sort((a, b) => (ordem.get(a.id) ?? Infinity) - (ordem.get(b.id) ?? Infinity) || a.id - b.id)
+  const clashes = codexClashes(result)
+  if (clashes.length) {
+    console.error(`✖ Codex em conflito (dado errado na API?): ${clashes.join(', ')}. Abortando sem escrever.`)
+    process.exit(1)
+  }
 
   console.log(`Estratagemas: ${current.length} -> ${result.length}`)
-  if (novos.length) console.log('  Novos:', novos.join(', '))
-  if (renomeados.length) console.log('  Renomeados:', renomeados.join(', '))
+  if (codexMudou.length) console.log('  ⚠ Codex mudou (confira no jogo):\n    ' + codexMudou.join('\n    '))
+  if (sumiram.length) console.log('  ⚠ Fora da API (mantidos):', sumiram.join(', '))
+  if (nomeDiferente.length) console.log('  Nome diferente na API (mantido o daqui):', nomeDiferente.join(', '))
 
-  console.log('Baixando ícones (SVG da wiki -> WebP)...')
-  const fileByPage = new Map(wiki.map(r => [r.page, r.image]))
-  let falhas = 0
-  for (let i = 0; i < result.length; i++) {
-    const strat = result[i]
-    const wikiFile = fileByPage.get(strat.nome)
-    if (wikiFile && !await downloadIcon(wikiFile, path.basename(strat.imagem))) falhas++
-    await sleep(250)
-    process.stdout.write(`\r  ${i + 1}/${result.length} ícones`)
+  if (novos.length) {
+    console.log('Baixando ícones dos novos...')
+    fs.mkdirSync(ICON_DIR, { recursive: true })
+    for (const item of novos) {
+      await downloadIcon(item, path.join(ICON_DIR, `${item.id}.webp`))
+    }
+    console.log('  Novos (entraram no fim do subgrupo — mova para a posição do jogo):')
+    for (const item of novos) {
+      const at = result.findIndex(s => s.slug === item.id)
+      console.log(`    #${at} ${item.name} (depois de ${result[at - 1]?.nome ?? 'nada'})`)
+    }
   }
-  process.stdout.write('\n')
 
   fs.writeFileSync(OUT_JSON, JSON.stringify(result, null, 2) + '\n', 'utf8')
-  console.log(`✔ ${OUT_JSON} escrito. Ícones que falharam: ${falhas}`)
+  console.log(`✔ ${OUT_JSON} escrito.`)
 }
 
 main().catch(e => { console.error('✖ Falha no sync:', e); process.exit(1) })
