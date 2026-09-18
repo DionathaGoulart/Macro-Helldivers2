@@ -1,4 +1,4 @@
-# 🛡️ Macro Helldivers 2 — v2.0.0
+# 🛡️ Macro Helldivers 2 v2.0.0
 
 Ferramenta de macros para os Estratagemas do Helldivers 2. A v2 é uma reescrita
 completa: **binário nativo em Rust sobre Win32 puro**, sem Electron, sem Chromium,
@@ -12,17 +12,17 @@ O que mudou em cada versão está no [CHANGELOG](CHANGELOG.md).
 
 ## 🚀 Funcionalidades
 
-- **4 slots de macro** com atalho configurável (F1–F12, numpad, setas, letras…),
+- **4 slots de macro** com atalho configurável (F1 a F12, numpad, setas, letras…),
   em três perfis de velocidade (Padrão, Rápida e Turbo).
 - **Estratagemas de apoio fixos**: Reforço, Ressuprimento e Rearmar Eagle em
   atalhos próprios, fora dos 4 slots.
 - **Timing à prova de frame**: as teclas são enviadas por scancode via `SendInput`,
-  com intervalos humanizados e um piso de tempo de tecla — o jogo lê o teclado uma
+  com intervalos humanizados e um piso de tempo de tecla. O jogo lê o teclado uma
   vez por quadro, e uma tecla mais curta que isso simplesmente não existe pra ele.
 - **Dispara enquanto você corre**: qualquer modificador seguro pode estar
   pressionado; correr e chamar um estratagema funciona.
-- **Só com o jogo em foco**: a detecção é por evento do sistema, não por polling —
-  alt-tab desarma os atalhos na hora e uma sequência em andamento é abortada,
+- **Só com o jogo em foco**: a detecção é por evento do sistema, não por polling.
+  Alt-tab desarma os atalhos na hora e uma sequência em andamento é abortada,
   soltando todas as teclas.
 - **Overlay in-game** (`Ctrl + H`): janela transparente que nunca rouba o foco,
   com strip de slots opcional sempre visível e um painel para atribuir
@@ -35,7 +35,7 @@ O que mudou em cada versão está no [CHANGELOG](CHANGELOG.md).
 - **Arsenal completo** offline: 92 estratagemas, armas, armaduras, capacetes, capas,
   boosters, passivas e warbonds, com ícones locais.
 - **Busca sem acento** na grade de estratagemas, na mesma ordem dos menus do jogo.
-- **Backup** de builds, slots e configurações em JSON — o mesmo formato da v1.
+- **Backup** de builds, slots e configurações em JSON, no mesmo formato da v1.
 - **Bandeja do sistema**: minimizar ou fechar recolhe o app e os macros seguem ativos.
 - **Idiomas**: português e inglês.
 - **Tema escuro e claro**, que segue o Windows até você escolher.
@@ -75,8 +75,8 @@ O que mudou em cada versão está no [CHANGELOG](CHANGELOG.md).
 
 O auto-update da v1 não enxerga a v2 (o formato do instalador mudou), então baixe o
 instalador novo pela aba Releases. Ele desinstala a v1 antes de instalar, e suas
-**configurações são migradas automaticamente** (atalhos, tecla do menu, modo setas, velocidade, idioma,
-overlay e HUD). **Slots e builds salvas não migram sozinhos** — eles viviam no
+**configurações são migradas automaticamente** (atalhos, tecla do menu, modo setas,
+velocidade, idioma, overlay e HUD). **Slots e builds salvas não migram sozinhos**: eles viviam no
 armazenamento interno do Chromium, que não existe mais. O caminho:
 
 1. Na v1, aba **Configurações → Backup → Exportar**.
@@ -84,14 +84,14 @@ armazenamento interno do Chromium, que não existe mais. O caminho:
 
 ## 🔄 Mudanças deliberadas em relação à v1
 
-Não são regressões — são decisões da reescrita:
+Não são regressões, são decisões da reescrita:
 
 - **"Modificador de sprint" removido.** O hook de teclado da v2 dispara com qualquer
   modificador pressionado, então a opção não tinha mais o que resolver.
 - **Animação de abertura removida.** O app abre direto na interface; boot instantâneo
   vale mais que a intro.
 - **Painel do overlay enxuto**: só atribuição de slots e aplicação de builds salvas.
-  Configurações e criação de builds ficam na janela principal — que é onde o teclado
+  Configurações e criação de builds ficam na janela principal, que é onde o teclado
   chega de verdade.
 
 ---
@@ -99,14 +99,14 @@ Não são regressões — são decisões da reescrita:
 ## 🖥️ Overlay In-Game
 
 O overlay (atalho **Ctrl+H**) é uma janela transparente que **nunca rouba o foco do
-jogo** — ele aparece por cima sem minimizar o Helldivers 2. Toda a interação nele é
+jogo**: ele aparece por cima sem minimizar o Helldivers 2. Toda a interação nele é
 feita com o mouse.
 
 - **Obrigatório**: use o jogo em **"Tela Cheia sem Borda"** (borderless). No modo
   "Tela Cheia", o Helldivers 2 **se auto-minimiza sempre que qualquer janela desenha
-  por cima dele** (comportamento do DXGI fullscreen do jogo, verificado por teste —
+  por cima dele** (comportamento do DXGI fullscreen do jogo, verificado por teste:
   acontece até com janelas nativas do Windows, sem roubo de foco algum). A solução
-  usada pelo Discord envolve injeção no processo do jogo — inviável aqui pelo risco
+  usada pelo Discord envolve injeção no processo do jogo, inviável aqui pelo risco
   com o anticheat GameGuard. O app lê a configuração do jogo, detecta o modo "Tela
   Cheia" e exibe o aviso.
 - **Limitação**: o overlay não recebe teclado por design (é o que garante que ele não
@@ -119,7 +119,7 @@ feita com o mouse.
 Na aba **Builds → Personalizada** você monta o loadout na mão, sem depender de sorteio:
 
 1. Clique no slot (1 a 4) que quer preencher.
-2. Clique no estratagema na grade para equipar — clicar de novo no mesmo remove. A
+2. Clique no estratagema na grade para equipar; clicar de novo no mesmo remove. A
    busca filtra por nome, sem acento.
 3. Opcionalmente escolha primária, secundária, granada, armadura, capacete, capa e
    booster nas listas.
@@ -155,11 +155,11 @@ O overlay troca junto, e a escolha vai no backup.
 
 O app consulta os Releases do GitHub e avisa quando há versão nova.
 
-1. A checagem **nunca acontece com o jogo em foco** — ela fica adiada até você sair
+1. A checagem **nunca acontece com o jogo em foco**: ela fica adiada até você sair
    da partida.
 2. O download só começa quando você clica em **Baixar**.
 3. Antes de instalar, o app confere o **SHA-256** do instalador contra o `.sha256`
-   publicado no release — e confere de novo na hora de executar. Arquivo que não
+   publicado no release, e confere de novo na hora de executar. Arquivo que não
    bate não é executado.
 4. Com o instalador pronto, o app pergunta se quer reiniciar para instalar agora ou
    deixar para depois (o **Instalar agora** continua no rodapé).
@@ -175,11 +175,11 @@ e **aparece a partir da próxima vez que você abrir o app**.
   as sentinelas junto das sentinelas…), perto de onde o jogo o mostra. A posição
   exata chega na próxima versão do app.
 - Se um patch trocar a **sequência** de um estratagema, o app passa a digitar a nova
-  — sem esperar versão nova. Ordem e nomes continuam os do instalador.
+  sem esperar versão nova. Ordem e nomes continuam os do instalador.
 - Tudo o que vem da API é validado antes de virar atalho. Uma sequência que repita a
   de outro estratagema, ou que comece com a de outro, é recusada (o jogo não tem
   nenhuma assim), e se a API trocar mais de 5 sequências de uma vez nenhuma troca
-  vale — isso é dado quebrado, não patch. Sem internet, ou com a API fora do ar, o
+  vale: isso é dado quebrado, não patch. Sem internet, ou com a API fora do ar, o
   app segue com os dados do instalador.
 - O modo **Meta** da aba Builds acompanha o patch mais novo do helldive.live e
   reconhece os estratagemas novos assim que o site os registrar.
@@ -201,7 +201,7 @@ Tudo fica em `%APPDATA%\Macro Helldivers 2`, que o desinstalador preserva:
 | `app.log` | log da sessão atual, recriado a cada abertura |
 
 Se um desses arquivos estiver ilegível, o app o renomeia para `<nome>.bad` e segue
-com os padrões — o original não é sobrescrito. Ao relatar um problema, anexe o
+com os padrões; o original não é sobrescrito. Ao relatar um problema, anexe o
 `app.log`.
 
 ---
@@ -209,7 +209,7 @@ com os padrões — o original não é sobrescrito. Ao relatar um problema, anex
 ## 🛠️ Desenvolvimento e Compilação
 
 O app **só roda no Windows**. Em macOS/Linux dá para compilar, checar e rodar os
-testes dos módulos de lógica — todo código de janela, hook e input vive atrás de
+testes dos módulos de lógica: todo código de janela, hook e input vive atrás de
 `#[cfg(windows)]`. Detalhes em [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ```bash
@@ -230,8 +230,8 @@ cargo test
 ```
 
 Duas bancadas medem o motor de macro no Windows: `cargo run --release --bin
-timing_bench` (desvio do relógio, com um editor de texto em foco — ela digita de
-verdade) e `cargo run --release --bin soak -- -n 1000 --speed turbo` (mil chamadas
+timing_bench` (desvio do relógio, com um editor de texto em foco, porque ela digita
+de verdade) e `cargo run --release --bin soak -- -n 1000 --speed turbo` (mil chamadas
 dentro do jogo; o protocolo está no topo de `src/bin/soak.rs`).
 
 O instalador é gerado pela CI a cada tag `vX.Y.Z` (NSIS, em `installer/installer.nsi`),
@@ -241,7 +241,7 @@ junto com o `.sha256`; as notas do release saem da seção da versão no
 ### Pipeline de dados (dev-only)
 
 `assets/data/*.json` e `assets/icons/**` são gerados a partir da wiki da comunidade
-por scripts Node — os estratagemas via [API de dados](https://helldivers-api.dionatha.com.br),
+por scripts Node; os estratagemas vêm da [API de dados](https://helldivers-api.dionatha.com.br),
 que já entrega a wiki em JSON. Eles não fazem parte do build do app:
 
 ```bash
@@ -254,7 +254,7 @@ npm run sync-stratagems   # stratagems.json + ícones (API de dados)
 npm run stats-map         # statsMap.json (slugs do helldive.live)
 ```
 
-> A ordem de `stratagems.json` é a do jogo, curada à mão — a wiki não a tem. O
+> A ordem de `stratagems.json` é a do jogo, curada à mão (a wiki não a tem). O
 > `sync-stratagems` nunca reordena o que existe: estratagema novo entra no fim do
 > subgrupo dele (a mesma regra que o app usa em runtime) e o script diz onde ficou,
 > para você mover a entrada para a posição exata.
@@ -263,7 +263,7 @@ npm run stats-map         # statsMap.json (slugs do helldive.live)
 > acabou de baixar, e é o `optimize-images` que os converte para WebP e reescreve
 > as referências. Rodar um sem o outro deixa o repositório inconsistente.
 
-> Depois de rodar `scrape` ou `sync-stratagems`, rode `stats-map` — ele valida se os
+> Depois de rodar `scrape` ou `sync-stratagems`, rode `stats-map`: ele valida se os
 > nomes ainda casam com os slugs do helldive.live e avisa o que ficou sem par. Ao
 > rodar, atualize o `PATCH_ID` dele e o de `src/meta_stats.rs` para o patch mais novo
 > do site (a lista fica no JavaScript do helldive.live). O app descobre sozinho os
@@ -282,11 +282,16 @@ pelo `npm install`, e os ícones de estratagema já chegam em WebP da API de dad
 │   ├── engine.rs      # motor de macro: thread própria, SendInput por scancode
 │   ├── hooks.rs       # WH_KEYBOARD_LL + SetWinEventHook (atalhos e foco)
 │   ├── focus.rs       # regras de foco do jogo (lógica pura)
+│   ├── game_config.rs # modo de vídeo do jogo (aviso de "Tela Cheia")
+│   ├── keys.rs        # nomes de tecla e virtual-keys dos atalhos
 │   ├── tray.rs        # ícone e menu da bandeja
+│   ├── data.rs        # estratagemas e arsenal embarcados
 │   ├── builds.rs      # geração de builds (lógica pura, testada no host)
+│   ├── loadouts.rs    # slots, builds salvas e backup JSON
 │   ├── meta_stats.rs  # cliente do helldive.live com cache em disco
 │   ├── data_sync.rs   # estratagemas novos da API de dados, sem release
 │   ├── settings.rs    # preferências, migração da v1, gravação atômica
+│   ├── i18n.rs        # textos da interface em português e inglês
 │   ├── updater.rs     # GitHub Releases + verificação SHA-256
 │   ├── gfx/           # Direct2D, DirectWrite e decode de imagem
 │   ├── ui/            # janela principal: toolkit de widgets, tema e abas
@@ -308,7 +313,7 @@ pelo `npm install`, e os ícones de estratagema já chegam em WebP da API de dad
 
 - ✅ usar, estudar e modificar o app para uso próprio;
 - ✅ publicar o app, original ou modificado, sem fins comerciais, e mostrá-lo em
-  vídeos, lives e posts (inclusive em canais monetizados) — sempre com o crédito
+  vídeos, lives e posts (inclusive em canais monetizados), sempre com o crédito
   **"Macro Helldivers 2, criado por DionathaGoulart"** e o link deste repositório;
 - ❌ vender, cobrar pelo acesso, incluir em produto ou serviço comercial, remover os
   créditos ou redistribuir sob outra licença.
