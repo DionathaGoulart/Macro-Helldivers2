@@ -5,7 +5,25 @@ Todas as mudanças relevantes deste projeto são documentadas aqui.
 O formato segue [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/)
 e o versionamento segue [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
-## [Não lançado]
+## [2.0.0] - 2026-09-19
+
+**Reescrita completa.** O app deixou de ser um Electron com React e virou um binário
+nativo em **Rust sobre Win32 puro**: um processo, janela e overlay desenhados em
+Direct2D, entrada por `SendInput` com scancode, atalhos por `WH_KEYBOARD_LL` e foco
+por `SetWinEventHook`. Não há Chromium, Node, nut.js nem processo separado de
+renderer. Toda a funcionalidade da v1 foi portada; as exceções estão em
+**Removido**, e são deliberadas.
+
+A versão traz também uma **interface nova** (visual neobrutal, com tema escuro e
+claro) e a sincronização com a wiki da comunidade (helldivers.wiki.gg) até
+09/09/2026, incluindo a warbond **Castellan's Creed** (Helldivers 2 × Warhammer
+40.000, 12/08/2026) e a campanha **Void Piercer**, que nunca chegaram a sair numa
+versão 1.x. Daqui em diante, estratagema novo e sequência trocada num patch chegam
+sem precisar de versão nova do app.
+
+> **Vindo da v1?** Baixe o instalador manualmente: o auto-update da v1 não instala a
+> v2. As configurações migram sozinhas; slots e builds salvas vêm pelo backup JSON
+> (veja **Migração da v1**, abaixo).
 
 ### Adicionado
 
@@ -20,50 +38,12 @@ e o versionamento segue [Semantic Versioning](https://semver.org/lang/pt-BR/).
   app adota o codex novo de um estratagema que já existe. Uma sequência que repita a
   de outro estratagema ou comece com a de outro é recusada, e mais de 5 trocas de uma
   vez são tratadas como dado quebrado (nenhuma vale).
-- **Modo Meta no patch mais novo.** O app descobre sozinho o patch atual do
-  helldive.live — antes ficava preso no do release — e casa os slugs de estratagema
-  que o `statsMap.json` embarcado não conhece, só quando o par é inequívoco.
-
-### Corrigido
-
-- Modo Meta mostrava os números trocados entre as emplacements: a Grenadier
-  Battlement aparecia com os da AT Emplacement, a HMG Emplacement com os da
-  Grenadier, e a AT Emplacement sumia. O FRV original (`frv`) estava ligado ao Supply
-  FRV em vez do Gunner FRV. O `statsMap.json` foi regenerado com o patch 13, que traz
-  também Meltagun, Supply FRV, Bolt Pistol, Hot-Shot, Melta Mine e True Grit.
-
-### Alterado
-
-- `npm run sync-stratagems` lê a API de dados em vez de raspar a wiki, casa as
-  entradas pelo `slug` e põe estratagema novo no fim do subgrupo, com `id` derivado do
-  slug — o mesmo que o app dá em runtime. `stratagems.json` ganhou o campo `slug`.
-- O `@resvg/resvg-js` saiu do pipeline: os ícones de estratagema já chegam em WebP.
-- `npm run stats-map` junta os slugs dos dois patches mais novos, para não perder o
-  par de um item que ninguém usou no último.
-
-## [2.0.0] - 2026-09-19
-
-**Reescrita completa.** O app deixou de ser um Electron com React e virou um binário
-nativo em **Rust sobre Win32 puro**: um processo, janela e overlay desenhados em
-Direct2D, entrada por `SendInput` com scancode, atalhos por `WH_KEYBOARD_LL` e foco
-por `SetWinEventHook`. Não há Chromium, Node, nut.js nem processo separado de
-renderer. Toda a funcionalidade da v1 foi portada — as exceções estão em
-**Removido**, e são deliberadas.
-
-A versão traz também uma **interface nova** (visual neobrutal, com tema escuro e
-claro) e a sincronização com a wiki da comunidade (helldivers.wiki.gg) até
-09/09/2026 — incluindo a warbond **Castellan's Creed** (Helldivers 2 × Warhammer
-40.000, 12/08/2026) e a campanha **Void Piercer**, que nunca chegaram a sair numa
-versão 1.x.
-
-> **Vindo da v1?** Baixe o instalador manualmente — o auto-update da v1 não instala a
-> v2. As configurações migram sozinhas; slots e builds salvas vêm pelo backup JSON
-> (veja **Migração da v1**, abaixo).
-
-### Adicionado
-
+- **Modo Meta sempre no patch mais novo.** O app descobre sozinho o patch atual do
+  helldive.live, em vez de ficar preso no patch do release, e casa os slugs de
+  estratagema que o `statsMap.json` embarcado não conhece, só quando o par é
+  inequívoco.
 - **Dois temas**: `rose` (escuro, o padrão) e `crimson` (claro). O app segue o modo
-  claro/escuro do Windows até a primeira escolha manual — pelo toggle da topbar, por
+  claro/escuro do Windows até a primeira escolha manual: pelo toggle da topbar, por
   `Shift+T` ou pelo painel **Tema** em Configurações, que também volta a seguir o
   sistema. A escolha vai no `settings.json` (e no backup) como `theme`; o overlay
   troca junto.
@@ -84,7 +64,7 @@ versão 1.x.
 - **Licença de uso pessoal** (`LICENSE`, instalada junto como `LICENSE.txt`): uso
   pessoal e não comercial; publicar o app, original ou modificado, ou mostrá-lo em
   vídeos e posts exige crédito ao autor. Até aqui o repositório não tinha arquivo de
-  licença — só o `Cargo.toml` declarava MIT.
+  licença; só o `Cargo.toml` declarava MIT.
 
 ### Alterado
 
@@ -100,7 +80,7 @@ versão 1.x.
   substituiu o timer que lia o título da janela ativa em intervalo fixo. Alt-tab
   desarma os atalhos na hora e aborta a sequência em andamento.
 - **Perfis de velocidade rotulados pelo FPS que garantem** (`Padrão · 30 fps`,
-  `Rápida · 60 fps`, `Turbo · 60+ fps`) — veja a correção em **Corrigido**.
+  `Rápida · 60 fps`, `Turbo · 60+ fps`). Veja a correção em **Corrigido**.
 
 #### Interface e overlay
 
@@ -115,7 +95,7 @@ versão 1.x.
 - **"Mostrar animações no Windows" desligado** congela os fades e o caret e esconde
   a textura de scanline.
 - **Interface sem loop de render**: a janela e o overlay só repintam em mudança de
-  estado — clique, evento recebido ou animação em curso. Parado, o app não desenha;
+  estado (clique, evento recebido ou animação em curso). Parado, o app não desenha;
   minimizado ou na bandeja, nem as animações rodam.
 - **Overlay dimensionado por estado**: a janela transparente continua sempre viva
   (escondê-la roubaria o foco do jogo), mas mede 1×1 quando não há nada a mostrar,
@@ -160,7 +140,7 @@ versão 1.x.
   mantém o "Instalar agora" no rodapé.
 - **Configurações gravadas de forma atômica**, com fsync: queda de energia no meio do
   save não deixa um JSON vazio. Um arquivo ilegível é preservado como `.bad` em vez de
-  ser sobrescrito pelo próximo save — assim um bloqueio momentâneo de antivírus não
+  ser sobrescrito pelo próximo save, e assim um bloqueio momentâneo de antivírus não
   custa as builds salvas.
 
 ### Removido
@@ -169,17 +149,17 @@ Decisões da reescrita, não regressões:
 
 - **Opção "modificador de sprint"** (adicionada na 1.0.0). O hook de teclado de baixo
   nível dispara com qualquer modificador pressionado, então correr e chamar um
-  estratagema já funciona sem configurar nada — a opção não tinha mais o que resolver.
+  estratagema já funciona sem configurar nada. A opção não tinha mais o que resolver.
 - **Animação de abertura** (intro CRT de 4,5 s). O app abre direto na interface.
 - **Configurações e criação de builds dentro do overlay.** O painel ficou com o que
   se faz de mouse no meio da partida: atribuir slots e aplicar builds salvas. O resto
-  vive na janela principal, que é onde o teclado chega — o overlay não recebe teclado
-  por design, e era o que garantia que ele nunca roubasse o foco do jogo.
+  vive na janela principal, que é onde o teclado chega: o overlay não recebe teclado
+  por design, e é isso que garante que ele nunca roube o foco do jogo.
 
 ### Corrigido
 
 - **Perfis de velocidade que perdiam input.** O jogo lê o teclado uma vez por quadro
-  (16,7 ms a 60 fps), e os perfis Rápida e Turbo seguravam a tecla por 15 ms e 10 ms —
+  (16,7 ms a 60 fps), e os perfis Rápida e Turbo seguravam a tecla por 15 ms e 10 ms;
   o jitter de ±5 ms chegava a derrubar o Turbo para 5 ms. Uma tecla que sobe e desce
   entre dois quadros não existe pro jogo, e o estratagema falhava de forma
   intermitente. Agora cada perfil tem um piso de tempo de tecla medido em quadros, e
@@ -191,6 +171,11 @@ Decisões da reescrita, não regressões:
 - **Mapeamento de estatísticas quebrado pelos renames**: os slugs `guard_rover`,
   `guard_arc`, `guard_hot`, `guard_breath` e `backpack_ballistic` deixaram de casar
   com os nomes novos e sumiam do modo Meta. Corrigidos na tabela de apelidos.
+- **Números trocados entre as emplacements no modo Meta**: a Grenadier Battlement
+  aparecia com os da AT Emplacement, a HMG Emplacement com os da Grenadier, e a AT
+  Emplacement sumia. O FRV original (`frv`) estava ligado ao Supply FRV em vez do
+  Gunner FRV. O `statsMap.json` foi regenerado com o patch 13, que traz também
+  Meltagun, Supply FRV, Bolt Pistol, Hot-Shot, Melta Mine e True Grit.
 - **Builds salvas**: nome em branco não sobrescreve mais uma build existente ("Build 2"
   colidia depois de excluir a 1); o chip de build ativa acende também para builds
   antigas que precisaram de saneamento; passivas do top meta são validadas contra o
@@ -210,7 +195,7 @@ concorrente); e um console preto aberto junto com o exe de release.
 ### Segurança
 
 - **O updater verifica o SHA-256 do instalador** contra o `.sha256` publicado no
-  release — e de novo na hora de executar, porque o exe espera em `%TEMP%` (gravável
+  release, e de novo na hora de executar, porque o exe espera em `%TEMP%` (gravável
   por qualquer processo do usuário) e roda com o token elevado do app.
 
 ### Migração da v1
@@ -223,7 +208,7 @@ concorrente); e um console preto aberto junto com o exe de release.
 - **Configurações são migradas** na primeira execução: atalhos dos slots e dos apoios,
   tecla do menu de estratagemas, modo setas, velocidade, idioma, overlay e HUD
   persistente. A opção de modificador de sprint é descartada.
-- **Slots e builds salvas não migram sozinhos** — viviam no armazenamento interno do
+- **Slots e builds salvas não migram sozinhos**: viviam no armazenamento interno do
   Chromium, que não existe mais. O caminho é exportar o backup JSON na v1
   (**Configurações → Backup → Exportar**) e importá-lo na v2; o formato do arquivo é
   o mesmo.
@@ -258,12 +243,16 @@ Nada aqui muda o app instalado:
 - **Bancadas** `timing_bench` (desvio do relógio do motor) e `soak` (1.000 execuções
   in-game).
 - **Pipeline de dados** em `scripts/` (Node, fora do app):
-  - `npm run sync-stratagems` sincroniza `stratagems.json` e os ícones com a wiki,
-    casando por código de entrada (imune a rename) e preservando os IDs.
-  - `sharp` e `resvg` substituíram o ImageMagick e o `cwebp`: nenhum binário externo
-    é necessário. O renderer SVG do ImageMagick descartava elementos com
-    `transform="rotate(a x y) scale(...)"`, o que tirava a carga dos ícones da Eagle
-    Strafing Run e da Eagle Napalm Airstrike.
+  - `npm run sync-stratagems` lê a [API de dados](https://helldivers-api.dionatha.com.br),
+    que já entrega a wiki em JSON com os ícones em WebP, em vez de raspar a wiki.
+    Casa as entradas pelo `slug` (campo novo em `stratagems.json`), nunca reordena o
+    que existe e põe estratagema novo no fim do subgrupo, com `id` derivado do slug:
+    o mesmo que o app dá em runtime. Aborta sem escrever se algum codex repetir ou
+    começar com outro.
+  - `sharp` substituiu o ImageMagick e o `cwebp`: nenhum binário externo é
+    necessário.
+  - `npm run stats-map` junta os slugs dos dois patches mais novos do helldive.live,
+    para não perder o par de um item que ninguém usou no último.
   - O cache de download nunca serve SVG velho, e o `optimize-images` reescreve os
     ícones dos apoios fixos em `src/data.rs`.
 - **App Electron removido** depois da validação de paridade. A v1 continua acessível
@@ -271,7 +260,7 @@ Nada aqui muda o app instalado:
 
 ## [1.0.0] - 2026-08-08 (pré-release)
 
-Primeira versão 1.x — e a última sobre Electron.
+Primeira versão 1.x, e a última sobre Electron.
 
 ### Adicionado
 
@@ -285,7 +274,7 @@ Primeira versão 1.x — e a última sobre Electron.
     com sorteio ponderado pelo top exibido.
   - **Aleatória**: sorteio completo com regras de sets de armadura, loadout balanceado
     (1 arma de apoio + 1 mochila) e máximo de 1 torreta.
-  - **Personalizada**: montagem manual do loadout — escolha do slot, grade de
+  - **Personalizada**: montagem manual do loadout: escolha do slot, grade de
     estratagemas com busca, equipamento opcional e importação dos slots atuais do macro.
 - **Builds salvas**: nomeie qualquer build e aplique nos slots de macro com um clique,
   inclusive pelo overlay.
