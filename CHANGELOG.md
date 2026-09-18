@@ -5,6 +5,42 @@ Todas as mudanças relevantes deste projeto são documentadas aqui.
 O formato segue [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/)
 e o versionamento segue [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
+## [Não lançado]
+
+### Adicionado
+
+- **Estratagemas novos sem atualizar o app.** Junto com a checagem de atualização
+  (nunca com o jogo em foco), o app consulta a
+  [API de dados](https://helldivers-api.dionatha.com.br) e baixa o estratagema que
+  saiu depois da versão instalada, com o ícone. Ele aparece na próxima abertura do
+  app, no fim do grupo dele (descartável com descartáveis, sentinela com
+  sentinelas…); a posição exata vem no release seguinte. Tudo o que chega da API é
+  validado antes de virar atalho.
+- **Sequência trocada num patch chega sem atualizar o app.** Pela mesma consulta, o
+  app adota o codex novo de um estratagema que já existe. Uma sequência que repita a
+  de outro estratagema ou comece com a de outro é recusada, e mais de 5 trocas de uma
+  vez são tratadas como dado quebrado (nenhuma vale).
+- **Modo Meta no patch mais novo.** O app descobre sozinho o patch atual do
+  helldive.live — antes ficava preso no do release — e casa os slugs de estratagema
+  que o `statsMap.json` embarcado não conhece, só quando o par é inequívoco.
+
+### Corrigido
+
+- Modo Meta mostrava os números trocados entre as emplacements: a Grenadier
+  Battlement aparecia com os da AT Emplacement, a HMG Emplacement com os da
+  Grenadier, e a AT Emplacement sumia. O FRV original (`frv`) estava ligado ao Supply
+  FRV em vez do Gunner FRV. O `statsMap.json` foi regenerado com o patch 13, que traz
+  também Meltagun, Supply FRV, Bolt Pistol, Hot-Shot, Melta Mine e True Grit.
+
+### Alterado
+
+- `npm run sync-stratagems` lê a API de dados em vez de raspar a wiki, casa as
+  entradas pelo `slug` e põe estratagema novo no fim do subgrupo, com `id` derivado do
+  slug — o mesmo que o app dá em runtime. `stratagems.json` ganhou o campo `slug`.
+- O `@resvg/resvg-js` saiu do pipeline: os ícones de estratagema já chegam em WebP.
+- `npm run stats-map` junta os slugs dos dois patches mais novos, para não perder o
+  par de um item que ninguém usou no último.
+
 ## [2.0.0] - 2026-09-19
 
 **Reescrita completa.** O app deixou de ser um Electron com React e virou um binário

@@ -75,19 +75,28 @@ em `scripts/`. Não fazem parte do binário e não rodam em build normal:
 
 ```bash
 cd scripts
-npm install               # sharp + resvg; nenhum binário externo é necessário
+npm install               # sharp; nenhum binário externo é necessário
 
 npm run scrape            # equipment.json + imagens (--refresh ignora o cache)
 npm run optimize-images   # PNG → WebP + reescrita das referências
-npm run sync-stratagems   # stratagems.json + ícones
+npm run sync-stratagems   # stratagems.json + ícones (API de dados)
 npm run stats-map         # statsMap.json (slugs do helldive.live)
 ```
 
 A ordem importa: `optimize-images` converte os `.png` que o `scrape` acabou de baixar
 e reescreve as referências, e `stats-map` valida se os nomes novos ainda casam com os
-slugs do helldive.live. O `sync-stratagems` casa por código de entrada e preserva os
-IDs — nunca renumere estratagemas à mão, ou slots e builds salvas dos usuários passam
-a apontar para outro item.
+slugs do helldive.live. O `stats-map` junta os slugs dos dois patches mais novos
+(`PATCH_ID` e o anterior) e casa por pedaços do nome; quando o casamento erra, o
+conserto é uma entrada na tabela `ALIAS`, nunca editar o `statsMap.json` à mão.
+
+O `sync-stratagems` casa pelo `slug` (o id da API) e nunca reordena o que existe: a
+ordem de `stratagems.json` é a do jogo, curada à mão. Estratagema novo entra no fim
+do subgrupo dele — a mesma regra do `src/data_sync.rs`, que faz isso em runtime para
+quem ainda não atualizou o app — e o script diz onde ficou; mova a entrada para a
+posição exata do jogo. Ele aborta se algum codex repetir outro ou começar com outro
+— o jogo não tem nenhum assim, então é dado errado da API. O `id` de entrada nova sai do slug (`stableId`), e é o mesmo
+número que o app já deu ao estratagema ao baixá-lo da API: nunca renumere à mão, ou
+slots e builds salvas dos usuários passam a apontar para outro item.
 
 ## Licença
 

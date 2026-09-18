@@ -164,6 +164,26 @@ O app consulta os Releases do GitHub e avisa quando há versão nova.
 4. Com o instalador pronto, o app pergunta se quer reiniciar para instalar agora ou
    deixar para depois (o **Instalar agora** continua no rodapé).
 
+### Estratagemas novos sem atualizar o app
+
+Na mesma hora da checagem (e com a mesma regra: nunca com o jogo em foco), o app
+consulta a [API de dados](https://helldivers-api.dionatha.com.br), alimentada pela
+wiki. Estratagema que saiu no jogo depois da sua versão do app é baixado com o ícone
+e **aparece a partir da próxima vez que você abrir o app**.
+
+- Ele entra no **fim do grupo dele** (as armas descartáveis junto das descartáveis,
+  as sentinelas junto das sentinelas…), perto de onde o jogo o mostra. A posição
+  exata chega na próxima versão do app.
+- Se um patch trocar a **sequência** de um estratagema, o app passa a digitar a nova
+  — sem esperar versão nova. Ordem e nomes continuam os do instalador.
+- Tudo o que vem da API é validado antes de virar atalho. Uma sequência que repita a
+  de outro estratagema, ou que comece com a de outro, é recusada (o jogo não tem
+  nenhuma assim), e se a API trocar mais de 5 sequências de uma vez nenhuma troca
+  vale — isso é dado quebrado, não patch. Sem internet, ou com a API fora do ar, o
+  app segue com os dados do instalador.
+- O modo **Meta** da aba Builds acompanha o patch mais novo do helldive.live e
+  reconhece os estratagemas novos assim que o site os registrar.
+
 ---
 
 ## 📂 Seus Dados
@@ -177,6 +197,7 @@ Tudo fica em `%APPDATA%\Macro Helldivers 2`, que o desinstalador preserva:
 | `loadouts.json` | builds salvas |
 | `window-bounds.json` | posição e tamanho da janela |
 | `meta-cache.json` | estatísticas do helldive.live (valem 6 h) |
+| `stratagems-remote.json` e `remote-icons\` | estratagemas e ícones baixados da API de dados |
 | `app.log` | log da sessão atual, recriado a cada abertura |
 
 Se um desses arquivos estiver ilegível, o app o renomeia para `<nome>.bad` e segue
@@ -220,30 +241,36 @@ junto com o `.sha256`; as notas do release saem da seção da versão no
 ### Pipeline de dados (dev-only)
 
 `assets/data/*.json` e `assets/icons/**` são gerados a partir da wiki da comunidade
-por scripts Node. Eles não fazem parte do build do app:
+por scripts Node — os estratagemas via [API de dados](https://helldivers-api.dionatha.com.br),
+que já entrega a wiki em JSON. Eles não fazem parte do build do app:
 
 ```bash
 cd scripts
-npm install               # sharp + resvg (só aqui; o app não depende de Node)
+npm install               # sharp (só aqui; o app não depende de Node)
 
 npm run scrape            # equipment.json + imagens (--refresh ignora o cache)
 npm run optimize-images   # PNG → WebP + reescrita das referências
-npm run sync-stratagems   # stratagems.json + ícones
+npm run sync-stratagems   # stratagems.json + ícones (API de dados)
 npm run stats-map         # statsMap.json (slugs do helldive.live)
 ```
+
+> A ordem de `stratagems.json` é a do jogo, curada à mão — a wiki não a tem. O
+> `sync-stratagems` nunca reordena o que existe: estratagema novo entra no fim do
+> subgrupo dele (a mesma regra que o app usa em runtime) e o script diz onde ficou,
+> para você mover a entrada para a posição exata.
 
 > A ordem importa: `scrape` deixa `equipment.json` apontando para os `.png` que
 > acabou de baixar, e é o `optimize-images` que os converte para WebP e reescreve
 > as referências. Rodar um sem o outro deixa o repositório inconsistente.
 
 > Depois de rodar `scrape` ou `sync-stratagems`, rode `stats-map` — ele valida se os
-> nomes ainda casam com os slugs do helldive.live e avisa o que ficou sem par.
+> nomes ainda casam com os slugs do helldive.live e avisa o que ficou sem par. Ao
+> rodar, atualize o `PATCH_ID` dele e o de `src/meta_stats.rs` para o patch mais novo
+> do site (a lista fica no JavaScript do helldive.live). O app descobre sozinho os
+> patches seguintes; o número só evita sondagem extra.
 
-Nenhum binário externo é necessário: a rasterização de SVG e a conversão para WebP
-saem do `sharp` e do `resvg`, instalados pelo `npm install`. O ImageMagick foi
-removido do caminho de ícones porque o renderer SVG interno dele descarta elementos
-com `transform="rotate(a x y) scale(...)"` — era o que fazia as Eagles Strafing Run
-e Napalm Airstrike saírem sem a carga.
+Nenhum binário externo é necessário: a conversão para WebP sai do `sharp`, instalado
+pelo `npm install`, e os ícones de estratagema já chegam em WebP da API de dados.
 
 ---
 
@@ -258,6 +285,7 @@ e Napalm Airstrike saírem sem a carga.
 │   ├── tray.rs        # ícone e menu da bandeja
 │   ├── builds.rs      # geração de builds (lógica pura, testada no host)
 │   ├── meta_stats.rs  # cliente do helldive.live com cache em disco
+│   ├── data_sync.rs   # estratagemas novos da API de dados, sem release
 │   ├── settings.rs    # preferências, migração da v1, gravação atômica
 │   ├── updater.rs     # GitHub Releases + verificação SHA-256
 │   ├── gfx/           # Direct2D, DirectWrite e decode de imagem
@@ -267,7 +295,7 @@ e Napalm Airstrike saírem sem a carga.
 ├── assets/            # dados, ícones, fontes (JetBrains Mono) e o .ico do exe
 ├── installer/         # script NSIS
 ├── scripts/           # pipeline de dados da wiki (Node, dev-only)
-├── tests/fixtures/    # backup real da v1 e configs do jogo usados nos testes
+├── tests/fixtures/    # backup da v1, configs do jogo e resposta da API usados nos testes
 └── styleguide.md      # fonte de verdade do visual (tokens, componentes, temas)
 ```
 
@@ -292,7 +320,8 @@ conteúdo do jogo, listados abaixo.
 
 ## 🙏 Créditos
 
-- Dados e ícones do jogo: [Helldivers 2 Wiki](https://helldivers.wiki.gg) da comunidade.
+- Dados e ícones do jogo: [Helldivers 2 Wiki](https://helldivers.wiki.gg) da comunidade,
+  servidos em JSON pela [API de dados](https://helldivers-api.dionatha.com.br).
 - Estatísticas de uso do modo Meta: [helldive.live](https://helldive.live).
 - Fonte [JetBrains Mono](https://github.com/JetBrains/JetBrainsMono), sob a SIL Open
   Font License ([`assets/fonts/OFL.txt`](assets/fonts/OFL.txt)).
