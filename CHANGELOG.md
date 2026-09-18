@@ -5,33 +5,7 @@ Todas as mudanças relevantes deste projeto são documentadas aqui.
 O formato segue [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/)
 e o versionamento segue [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
-## [Não lançado]
-
-Sincronização com a wiki da comunidade (helldivers.wiki.gg) em 09/09/2026.
-
-### Adicionado
-
-- **Eagle Gas Airstrike** (`UP RIGHT LEFT RIGHT`), o 92º estratagema de loadout.
-- **Capacete IX-Voidwalker**, da campanha Void Piercer.
-
-### Alterado
-
-- **Ordem dos estratagemas igual à do jogo.** A grade do app agora reproduz célula a
-  célula os menus do destroyer: a Eagle Gas Airstrike entra entre a Cluster Bomb e a
-  Napalm Airstrike, e a 40-K Meltagun sai do fim da lista para logo depois da
-  GL-21 Grenade Launcher. Orbitais e defensivos já estavam na ordem certa.
-- **Ícone da 40-K Meltagun**: era o genérico de arma de apoio (o "?"), porque a wiki
-  ainda não tinha arte na época do scrape. Agora usa o ícone próprio.
-- **Ícones da Eagle Strafing Run e da Eagle Napalm Airstrike**: os dois saíam sem a
-  carga (só a silhueta da Eagle) — as rajadas e as bombas incendiárias voltaram.
-- **23 renders de equipamento atualizados** para as versões novas da wiki: armaduras e
-  capacetes A-35 Recon, A-9 Helljumper, CE-64 Grenadier, PH-9 Predator, TG-8
-  Sharpshooter e TG-122 Demo-Trooper; as armas da colaboração 40-K (R/40-K Hot-Shot,
-  P/40-K Bolt Pistol, G/40-K Melta Mine); e as capas Camo Cloak, City Fighter's
-  Resolve, Cloak of Posterity's Gratitude, Dissident's Nightmare, Ingress-81, Mark of
-  the Crimson Fang, Triangulation Veil e Tyrant Hunter.
-
-## [2.0.0] - 2026-09-01
+## [2.0.0] - 2026-09-19
 
 **Reescrita completa.** O app deixou de ser um Electron com React e virou um binário
 nativo em **Rust sobre Win32 puro**: um processo, janela e overlay desenhados em
@@ -40,109 +14,122 @@ por `SetWinEventHook`. Não há Chromium, Node, nut.js nem processo separado de
 renderer. Toda a funcionalidade da v1 foi portada — as exceções estão em
 **Removido**, e são deliberadas.
 
-A entrega inclui também a sincronização com a wiki da comunidade posterior à warbond
-**Castellan's Creed** (Helldivers 2 × Warhammer 40.000, 12/08/2026), que nunca chegou
-a sair numa versão 1.x.
+A versão traz também uma **interface nova** (visual neobrutal, com tema escuro e
+claro) e a sincronização com a wiki da comunidade (helldivers.wiki.gg) até
+09/09/2026 — incluindo a warbond **Castellan's Creed** (Helldivers 2 × Warhammer
+40.000, 12/08/2026) e a campanha **Void Piercer**, que nunca chegaram a sair numa
+versão 1.x.
+
+> **Vindo da v1?** Baixe o instalador manualmente — o auto-update da v1 não instala a
+> v2. As configurações migram sozinhas; slots e builds salvas vêm pelo backup JSON
+> (veja **Migração da v1**, abaixo).
+
+### Adicionado
+
+- **Dois temas**: `rose` (escuro, o padrão) e `crimson` (claro). O app segue o modo
+  claro/escuro do Windows até a primeira escolha manual — pelo toggle da topbar, por
+  `Shift+T` ou pelo painel **Tema** em Configurações, que também volta a seguir o
+  sistema. A escolha vai no `settings.json` (e no backup) como `theme`; o overlay
+  troca junto.
+- **Barra de título no tema** (Windows 11): cor da página, moldura e cantos retos.
+- **Estratagema Eagle Gas Airstrike** (`⬆️➡️⬅️➡️`), o 92º de loadout.
+- **Estratagema 40-K Meltagun** (`⬇️⬅️⬆️⬅️⬅️⬇️`), da Castellan's Creed, com ícone
+  próprio.
+- **Armadura KDM-500 Outrider** e a passiva **Kinetic Displacement Mitigation**.
+- **Capacete IX-Voidwalker**, da campanha Void Piercer.
+- **Warbonds no arsenal**: `equipment.json` traz as 24 warbonds com capa, tipo
+  (Padrão / Premium / Lendária), data de lançamento e preço.
+- **Tentar de novo** no erro das estatísticas da sub-aba Meta e no erro do updater.
+- **Log de diagnóstico** em `app.log`, na pasta de configuração
+  (`%APPDATA%\Macro Helldivers 2`). Sem console, é onde ficam as falhas que
+  acontecem depois do boot.
+- **Aviso de erro no boot**: se a instalação estiver sem a pasta `assets/`, o app
+  explica em uma caixa de diálogo em vez de morrer em silêncio.
 
 ### Alterado
+
+#### Macro e atalhos
 
 - **Motor de macro em thread própria** com prioridade elevada, `timeBeginPeriod(1)` e
   espera híbrida (`spin_sleep`): a sequência não depende mais do event loop do Node.
   As teclas saem por **scancode** em vez de virtual-key, que é o que o jogo lê.
-- **Guards de liberação de tecla**: modificador e direção são soltos por RAII, então
-  perder o foco no meio de uma sequência (ou qualquer erro) nunca deixa uma tecla
-  presa no jogo.
+- **Nenhuma tecla fica presa no jogo**: modificador e direções são soltos por RAII,
+  então perder o foco no meio de uma sequência (ou qualquer erro) solta tudo. Um
+  panic hook faz o mesmo antes de o processo abortar.
 - **Foco por evento, não por polling**: `SetWinEventHook(EVENT_SYSTEM_FOREGROUND)`
   substituiu o timer que lia o título da janela ativa em intervalo fixo. Alt-tab
   desarma os atalhos na hora e aborta a sequência em andamento.
+- **Perfis de velocidade rotulados pelo FPS que garantem** (`Padrão · 30 fps`,
+  `Rápida · 60 fps`, `Turbo · 60+ fps`) — veja a correção em **Corrigido**.
+
+#### Interface e overlay
+
+- **Visual novo em todas as telas e no overlay**, seguindo o `styleguide.md` (skin
+  `retro`, neobrutal): cantos retos, moldura de 2px, sombra dura deslocada, painéis
+  com barra de título (`ATALHOS_DE_COMBATE.CFG`) e os quadrados de janela, clicáveis
+  que sobem no hover, caret piscando (`ESCUTANDO_`, `VERIFICANDO_`) no lugar de
+  pulsos, estados vazios (`> NADA AQUI`), aviso de tela cheia como banner e o
+  resultado do backup como toast. Os tiles da grade mostram o ícone inteiro, com
+  nome e codex numa legenda embaixo.
+- **Fonte JetBrains Mono** (400, 700, 800 e 800 itálico), embutida no app.
+- **"Mostrar animações no Windows" desligado** congela os fades e o caret e esconde
+  a textura de scanline.
 - **Interface sem loop de render**: a janela e o overlay só repintam em mudança de
-  estado — clique, evento recebido ou animação em curso. Parado, o app não desenha.
+  estado — clique, evento recebido ou animação em curso. Parado, o app não desenha;
+  minimizado ou na bandeja, nem as animações rodam.
 - **Overlay dimensionado por estado**: a janela transparente continua sempre viva
   (escondê-la roubaria o foco do jogo), mas mede 1×1 quando não há nada a mostrar,
   o retângulo do strip no modo minimal e 840×660 no painel. Antes o compositor
   empilhava uma camada do tamanho do monitor sobre o jogo em todo frame.
-- **Atualização não baixa mais sozinha durante a partida**: a checagem fica adiada
-  enquanto o jogo está em foco e o download exige confirmação.
-- **Dados de equipamento carregados sob demanda**: `equipment.json` e `statsMap.json`
-  só são lidos na primeira visita à aba Builds.
-- **Ícones em WebP**: 429 PNG convertidos com as mesmas dimensões, 17,7 MB → 3,0 MB.
-  O ícone da bandeja é um `tray.png` de 64 px em vez do `icon.png` de 1024 px.
-- **Instalador NSIS per-machine** no lugar do electron-builder, com desinstalação
-  automática da v1 antes de instalar e preservação de `%APPDATA%\Macro Helldivers 2`.
+
+#### Estratagemas, arsenal e ícones
+
+- **Ordem dos estratagemas igual à do jogo.** A grade reproduz célula a célula os
+  menus do destroyer: a Eagle Gas Airstrike entra entre a Cluster Bomb e a Napalm
+  Airstrike, e a 40-K Meltagun fica logo depois da GL-21 Grenade Launcher.
 - **Ícones dos estratagemas redesenhados**: a wiki migrou para SVG com paleta nova e
   moldura colorida por tipo de permissão (vermelho / ciano / verde), que agora bate
-  com as cores das categorias na interface. Todos os 91 foram regerados.
+  com as cores das categorias na interface. Todos os 92 foram regerados.
+- **23 renders de equipamento atualizados** para as versões novas da wiki: armaduras e
+  capacetes A-35 Recon, A-9 Helljumper, CE-64 Grenadier, PH-9 Predator, TG-8
+  Sharpshooter e TG-122 Demo-Trooper; as armas da colaboração 40-K (R/40-K Hot-Shot,
+  P/40-K Bolt Pistol, G/40-K Melta Mine); e as capas Camo Cloak, City Fighter's
+  Resolve, Cloak of Posterity's Gratitude, Dissident's Nightmare, Ingress-81, Mark of
+  the Crimson Fang, Triangulation Veil e Tyrant Hunter.
 - **Estratagemas renomeados** conforme o jogo: os drones perderam a alcunha "Guard Dog"
   (`AX/LAS-5 Rover`, `AX/ARC-3 K-9`, `AX/FLAM-75 Hot Dog`, `AX/TX-13 Dog Breath`,
   `AX/AR-23 Guard Dog`), `M-102 Fast Recon Vehicle` virou `M-102 Gunner FRV` e
-  `SH-20 Ballistic Shield Supply` virou `SH-20 Ballistic Shield Backpack`.
+  `SH-20 Ballistic Shield Supply` virou `SH-20 Ballistic Shield Backpack`. Os IDs não
+  mudaram: slots e builds salvas continuam válidos.
 - **Nomes das armas 40-K corrigidos** (`R/40-K Hot-Shot Marksman Rifle`,
   `P/40-K Bolt Pistol`, `G/40-K Melta Mine`) e a capa `United in Equality` perdeu o
   sufixo `(Cape)`.
+- **Ícones em WebP**: a biblioteca inteira saiu de PNG para WebP com as mesmas
+  dimensões (a conversão levou 429 imagens de 17,7 MB para 3,0 MB). O ícone da
+  bandeja é um `tray.png` de 64 px em vez do `icon.png` de 1024 px.
+- **Dados de equipamento carregados sob demanda**: `equipment.json` e `statsMap.json`
+  só são lidos na primeira visita à aba Builds.
 
-### Adicionado
+#### Instalação, atualização e arquivos
 
-- **Estratagema 40-K Meltagun** (`⬇️⬅️⬆️⬅️⬅️⬇️`), da Castellan's Creed. A wiki ainda não
-  publicou o ícone próprio, então ele usa o genérico de arma de apoio por enquanto.
-- **Warbonds no arsenal**: `equipment.json` traz as 24 warbonds com capa, tipo
-  (Padrão / Premium / Lendária), data de lançamento e preço.
-- **Armadura KDM-500 Outrider** e a passiva **Kinetic Displacement Mitigation**.
-- **`npm run sync-stratagems`**: sincroniza `stratagems.json` e os ícones com a wiki,
-  casando por código de entrada (imune a rename) e preservando os IDs — builds e
-  slots salvos continuam válidos.
-- **Aviso de erro no boot**: se a instalação estiver sem a pasta `assets/`, o app
-  explica em uma caixa de diálogo em vez de morrer em silêncio.
-
-### Corrigido
-
-Achados da auditoria de código completa (pré-release, sobre a própria 2.0.0):
-
-- **Panic nunca mais deixa tecla presa no jogo**: um panic hook solta modificador e
-  direções antes de o processo abortar — o `panic = "abort"` do release pulava os
-  guards RAII.
-- **Overlay se recupera de perda de dispositivo da GPU** (reset/atualização de
-  driver): o render target do `LayeredSurface` é recriado e o frame é redesenhado,
-  em vez de congelar no último quadro pelo resto da sessão.
-- **Vazamento de brushes do Direct2D**: cores animadas (flash/fade) criavam um brush
-  COM novo por tick, guardado para sempre. Agora é um brush único com `SetColor`.
-- **Reentrância nos campos de busca**: `SetWindowTextW`/`SetFocus` notificam de volta
-  de forma síncrona e reentravam no `WndProc` com o estado emprestado; as chamadas
-  agora são adiadas por mensagem, como o backup já fazia.
-- **Timer de animação não roda mais com a janela invisível**: minimizada ou na
-  bandeja, o app não reconstruía mais o quadro inteiro a cada 16ms por causa de um
-  modal pulsando.
-- **Updater verifica o SHA-256 do instalador** contra o `.sha256` publicado no
-  release — e de novo na hora de executar, porque o exe espera em `%TEMP%` e roda
-  elevado. Download ganhou prazo total (stall não trava mais o updater pela sessão),
-  botão de "Tentar de novo" no erro, e o "Depois" do modal mantém o "Instalar agora"
-  no rodapé.
-- **Arquivo de configuração ilegível é preservado como `.bad`** em vez de ser
-  sobrescrito pelo próximo save (um bloqueio transitório de antivírus podia apagar
-  todas as builds salvas). `write_atomic` ganhou fsync (queda de energia não publica
-  mais JSON vazio) e nome de temporário único (threads não trucam mais o tmp uma da
-  outra).
-- **Ícone da bandeja renasce quando o Explorer reinicia** (`TaskbarCreated`); antes a
-  janela escondida ficava irrecuperável.
-- **EDIT oculto não retém mais o teclado** depois de trocar de aba (a busca
-  "fantasma" comia as teclas e o Esc).
-- **Mudança de resolução/DPI com o jogo aberto reposiciona o overlay na hora** — o
-  evento chegava mas só era processado no wake seguinte (até 5s).
-- **Consultas de estatísticas não duplicam mais workers** ao alternar facção, e o
-  cache não perde entradas em escrita concorrente.
-- **Builds**: nome em branco não sobrescreve mais uma build existente ("Build 2"
-  colidia após excluir a 1); o chip de build ativa acende também para builds antigas
-  que precisaram de saneamento; passivas do top meta são validadas contra o
-  equipamento atual.
-- **Logs em release** vão para `app.log` na pasta de configuração — sem console, as
-  falhas pós-boot morriam sem rastro.
+- **Instalador NSIS per-machine** no lugar do electron-builder, com desinstalação
+  automática da v1 antes de instalar e preservação de `%APPDATA%\Macro Helldivers 2`.
+- **Atualização não baixa mais sozinha durante a partida**: a checagem fica adiada
+  enquanto o jogo está em foco e o download exige confirmação. O download tem prazo
+  total (uma conexão travada não prende o updater pela sessão), e o "Depois" do modal
+  mantém o "Instalar agora" no rodapé.
+- **Configurações gravadas de forma atômica**, com fsync: queda de energia no meio do
+  save não deixa um JSON vazio. Um arquivo ilegível é preservado como `.bad` em vez de
+  ser sobrescrito pelo próximo save — assim um bloqueio momentâneo de antivírus não
+  custa as builds salvas.
 
 ### Removido
 
 Decisões da reescrita, não regressões:
 
-- **Opção "modificador de sprint"**. O hook de teclado de baixo nível dispara com
-  qualquer modificador pressionado, então correr e chamar um estratagema já funciona
-  sem configurar nada — a opção não tinha mais o que resolver.
+- **Opção "modificador de sprint"** (adicionada na 1.0.0). O hook de teclado de baixo
+  nível dispara com qualquer modificador pressionado, então correr e chamar um
+  estratagema já funciona sem configurar nada — a opção não tinha mais o que resolver.
 - **Animação de abertura** (intro CRT de 4,5 s). O app abre direto na interface.
 - **Configurações e criação de builds dentro do overlay.** O painel ficou com o que
   se faz de mouse no meio da partida: atribuir slots e aplicar builds salvas. O resto
@@ -155,8 +142,8 @@ Decisões da reescrita, não regressões:
   (16,7 ms a 60 fps), e os perfis Rápida e Turbo seguravam a tecla por 15 ms e 10 ms —
   o jitter de ±5 ms chegava a derrubar o Turbo para 5 ms. Uma tecla que sobe e desce
   entre dois quadros não existe pro jogo, e o estratagema falhava de forma
-  intermitente. Agora cada perfil tem um piso de tempo de tecla medido em quadros
-  (e é rotulado pelo FPS que garante), e a velocidade vem do intervalo entre teclas.
+  intermitente. Agora cada perfil tem um piso de tempo de tecla medido em quadros, e
+  a velocidade vem do intervalo entre teclas.
 - **Latência do disparo**: a sequência de teclas começa antes dos avisos para a
   interface, não depois.
 - **Casamento de metadados da wiki**: nomes curtos podiam casar com o estratagema
@@ -164,16 +151,42 @@ Decisões da reescrita, não regressões:
 - **Mapeamento de estatísticas quebrado pelos renames**: os slugs `guard_rover`,
   `guard_arc`, `guard_hot`, `guard_breath` e `backpack_ballistic` deixaram de casar
   com os nomes novos e sumiam do modo Meta. Corrigidos na tabela de apelidos.
+- **Builds salvas**: nome em branco não sobrescreve mais uma build existente ("Build 2"
+  colidia depois de excluir a 1); o chip de build ativa acende também para builds
+  antigas que precisaram de saneamento; passivas do top meta são validadas contra o
+  equipamento atual.
 - **Imagens órfãs no arsenal**: oito arquivos com `39` no nome (resíduo de `&#39;` mal
   decodificado em uma extração antiga) foram removidos.
-- **Console preto ao abrir o app**: o executável de release passou a ser linkado no
-  subsistema `windows`.
+
+Também foram corrigidos, antes do lançamento, bugs da própria reescrita que nunca
+saíram numa versão: vazamento de brushes do Direct2D em cores animadas; overlay
+congelado depois de uma perda de dispositivo da GPU; reentrância no `WndProc` a partir
+dos campos de busca; um `EDIT` oculto que retinha o teclado depois de trocar de aba;
+overlay que só se reposicionava segundos depois de uma mudança de resolução ou DPI;
+ícone da bandeja que não voltava depois de o Explorer reiniciar; consultas de
+estatísticas duplicadas ao alternar facção (e o cache perdendo entradas em escrita
+concorrente); e um console preto aberto junto com o exe de release.
+
+### Segurança
+
+- **O updater verifica o SHA-256 do instalador** contra o `.sha256` publicado no
+  release — e de novo na hora de executar, porque o exe espera em `%TEMP%` (gravável
+  por qualquer processo do usuário) e roda com o token elevado do app.
 
 ### Migração da v1
 
-Configurações são migradas na primeira execução. **Slots e builds salvas não** —
-viviam no armazenamento interno do Chromium, que não existe mais. O caminho é
-exportar o backup JSON na v1 e importá-lo na v2; o formato do arquivo é o mesmo.
+- **O auto-update da v1 não chega na v2**: o electron-updater procura um
+  `latest.yml` que o release novo não publica. A atualização é pelo instalador
+  baixado da página de releases.
+- O instalador da v2 **desinstala a v1** antes de instalar e preserva a pasta
+  `%APPDATA%\Macro Helldivers 2`.
+- **Configurações são migradas** na primeira execução: atalhos dos slots e dos apoios,
+  tecla do menu de estratagemas, modo setas, velocidade, idioma, overlay e HUD
+  persistente. A opção de modificador de sprint é descartada.
+- **Slots e builds salvas não migram sozinhos** — viviam no armazenamento interno do
+  Chromium, que não existe mais. O caminho é exportar o backup JSON na v1
+  (**Configurações → Backup → Exportar**) e importá-lo na v2; o formato do arquivo é
+  o mesmo.
 
 ### Desempenho
 
@@ -190,22 +203,43 @@ Metas de projeto da reescrita, e como cada uma é verificada:
 | Impacto no frametime do jogo (HUD ligado) | < 0,2 ms médio | PresentMon, com e sem overlay |
 | Tamanho do instalador | < 5 MB | artefato do release |
 
+### Desenvolvimento
+
+Nada aqui muda o app instalado:
+
+- **Crate Rust** com `rust-toolchain.toml` pinando canal, componentes e o alvo
+  `x86_64-pc-windows-msvc`. Todo código win32 fica atrás de `#[cfg(windows)]`, com
+  stubs que deixam `cargo check` e `cargo test` rodarem no macOS e no Linux.
+- **CI** (`ci.yml`) em `windows-latest`: `fmt`, `clippy -D warnings`, `check`, testes
+  no alvo MSVC e build de release a cada push e PR.
+- **Release por tag** (`release.yml`): uma tag `vX.Y.Z` roda os testes, compila,
+  gera o instalador NSIS e o `.sha256` e publica o release, com as notas tiradas
+  desta seção do changelog.
+- **Bancadas** `timing_bench` (desvio do relógio do motor) e `soak` (1.000 execuções
+  in-game).
+- **Pipeline de dados** em `scripts/` (Node, fora do app):
+  - `npm run sync-stratagems` sincroniza `stratagems.json` e os ícones com a wiki,
+    casando por código de entrada (imune a rename) e preservando os IDs.
+  - `sharp` e `resvg` substituíram o ImageMagick e o `cwebp`: nenhum binário externo
+    é necessário. O renderer SVG do ImageMagick descartava elementos com
+    `transform="rotate(a x y) scale(...)"`, o que tirava a carga dos ícones da Eagle
+    Strafing Run e da Eagle Napalm Airstrike.
+  - O cache de download nunca serve SVG velho, e o `optimize-images` reescreve os
+    ícones dos apoios fixos em `src/data.rs`.
+- **App Electron removido** depois da validação de paridade. A v1 continua acessível
+  pela tag [`v1.0.0`](https://github.com/DionathaGoulart/Macro-Helldivers2/releases/tag/v1.0.0).
+
 ## [1.0.0] - 2026-08-08 (pré-release)
 
-Primeira versão pública do **Macro Helldivers 2**.
+Primeira versão 1.x — e a última sobre Electron.
 
 ### Adicionado
 
-- **Macros de estratagema**: 4 slots com atalho configurável, executados por emulação
-  de hardware (`nut.js`) com intervalos humanizados e três perfis de velocidade
-  (Padrão, Rápida e Turbo).
-- **Estratagemas de apoio fixos**: Reforço, Ressuprimento e Rearmar Eagle em atalhos
-  próprios, independentes dos 4 slots.
-- **Detecção de janela**: os macros só disparam com o Helldivers 2 (ou o próprio app)
-  em foco.
-- **Overlay in-game** (`Ctrl + H`): janela transparente que nunca rouba o foco do jogo,
-  com strip de slots opcional sempre visível e aviso quando o jogo está em "Tela Cheia"
-  (modo incompatível com overlay de janela).
+- **Perfis de velocidade** (Padrão, Rápida e Turbo) com intervalos humanizados: um
+  jitter aleatório de ±5 ms em cada espera.
+- **Overlay in-game não-ativável** (`Ctrl + H`): a janela transparente nunca rouba o
+  foco do jogo, com strip de slots opcional sempre visível e aviso quando o jogo está
+  em "Tela Cheia" (modo incompatível com overlay de janela).
 - **Central de Builds** com três modos:
   - **Meta**: pick rates reais da comunidade (helldive.live) por facção e dificuldade,
     com sorteio ponderado pelo top exibido.
@@ -219,17 +253,17 @@ Primeira versão pública do **Macro Helldivers 2**.
   passivas extraída da wiki da comunidade, com ícones offline.
 - **Busca de estratagemas** sem acento e sem diferenciar maiúsculas.
 - **Backup**: exportação e importação de builds, slots e configurações em JSON.
-- **Bandeja do sistema**: minimizar ou fechar recolhe o app, que segue rodando os macros.
-- **Auto-update** via GitHub Releases.
-- **Idiomas**: português e inglês.
-
-### Corrigido
-
-- **Ícone da bandeja ausente no app instalado**: o `extraResources` copiava o ícone para
-  `resources/public/icon.png` enquanto o processo principal procurava em
-  `resources/icon.png`. Sem ícone, a criação do `Tray` falhava e a janela escondida ao
-  fechar ficava inalcançável. O ícone agora é copiado para o caminho esperado, com
-  fallbacks na resolução, e fechar só esconde a janela quando existe bandeja.
+- **Liberar um slot**: botão de remover no hover, e clicar no estratagema que já está
+  no slot ativo o desequipa.
+- **Feedback de execução**: cards de apoio e slots acendem quando o macro dispara e
+  ficam vermelhos quando o disparo é recusado por outro macro em andamento; o rodapé
+  mostra se o jogo está sendo detectado.
+- **Modificador de sprint configurável**: quem corre com Alt ou Ctrl escolhe a tecla
+  (antes era sempre Shift).
+- **Posição e tamanho da janela lembrados** entre sessões, descartando posições fora
+  de qualquer monitor conectado.
+- **Estratagemas M-103 Supply FRV e M-104 Incinerator FRV**, com a tag de
+  exclusividade `Vehicle`: só um veículo por loadout, como já valia para exotrajes.
 
 ### Alterado
 
@@ -237,6 +271,73 @@ Primeira versão pública do **Macro Helldivers 2**.
   bloqueia o processo principal por cerca de 1s) e a criação da janela de overlay agora
   acontecem depois da primeira pintura da janela principal, eliminando o travamento na
   abertura do app.
+- **Veículos reordenados** na categoria de suprimento (TD-220, M-104, M-103, M-102,
+  depois os exotrajes) e **códigos dos exotrajes** EXO-55 Breakthrough e EXO-51
+  Lumberer atualizados.
+- **Um macro por vez**: disparos simultâneos são recusados com aviso, em vez de
+  descartados em silêncio.
 
-[2.0.0]: https://github.com/DionathaGoulart/Macro-Helldivers2/releases/tag/v2.0.0
-[1.0.0]: https://github.com/DionathaGoulart/Macro-Helldivers2/releases/tag/v1.0.0
+### Corrigido
+
+- **Estratagemas falhando no meio da sequência** em máquinas mais lentas: o atraso
+  automático do `nut.js` subiu de 1 ms para 10 ms.
+- **Ícone da bandeja ausente no app instalado**: o `extraResources` copiava o ícone para
+  `resources/public/icon.png` enquanto o processo principal procurava em
+  `resources/icon.png`. Sem ícone, a criação do `Tray` falhava e a janela escondida ao
+  fechar ficava inalcançável. O ícone agora é copiado para o caminho esperado, com
+  fallbacks na resolução, e fechar só esconde a janela quando existe bandeja.
+
+## [0.3.0] - 2026-04-28 (instável)
+
+### Adicionado
+
+- **Overlay in-game** (`Ctrl + H`), com modo minimalista para ver e configurar os
+  macros por cima do jogo.
+- **Exotrajes EXO-55 Breakthrough e EXO-51 Lumberer**, com ícones.
+- **Instância única**: abrir o app de novo traz a janela existente para a frente.
+- **Animação de abertura**, com as frases traduzidas.
+- **Versão do app** exibida no rodapé.
+
+### Alterado
+
+- **IDs dos estratagemas reindexados** em ordem crescente; os exotrajes ocupam os IDs
+  66 a 69.
+- **Atalhos registrados só com o jogo em foco**, e detecção da janela do jogo mais
+  robusta a variações do título.
+- **Electron atualizado**, fechando vulnerabilidades conhecidas das dependências.
+
+### Corrigido
+
+- Ícones dos estratagemas de apoio que não carregavam no app instalado.
+- Ponte do auto-update entre o processo principal e a interface.
+
+## [0.2.0] - 2026-04-25
+
+### Adicionado
+
+- **Idiomas**: português e inglês.
+- **HUD tático**: visual novo com cores por categoria (vermelho ofensivo, verde
+  defensivo) para reconhecer os estratagemas de relance.
+
+### Alterado
+
+- **Ícones em WebP**, redimensionados para 256 px.
+- Transições e animações com aceleração por GPU.
+
+## [0.1.0] - 2026-04-25
+
+Primeira versão funcional.
+
+### Adicionado
+
+- **4 slots de macro** configuráveis, executados por emulação de teclado (`nut.js`)
+  com o app elevado.
+- **Tecla do menu de estratagemas** à escolha: Ctrl, Alt, `=` ou `-`.
+- **Controle de foco**: os macros só disparam com a janela do jogo ativa.
+- **Instalador NSIS** para Windows.
+
+[2.0.0]: https://github.com/DionathaGoulart/Macro-Helldivers2/compare/v1.0.0...v2.0.0
+[1.0.0]: https://github.com/DionathaGoulart/Macro-Helldivers2/compare/v0.3.0-(unstable)...v1.0.0
+[0.3.0]: https://github.com/DionathaGoulart/Macro-Helldivers2/compare/v0.2.0...v0.3.0-(unstable)
+[0.2.0]: https://github.com/DionathaGoulart/Macro-Helldivers2/compare/v0.1.0...v0.2.0
+[0.1.0]: https://github.com/DionathaGoulart/Macro-Helldivers2/releases/tag/v0.1.0

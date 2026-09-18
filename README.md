@@ -8,6 +8,8 @@ sistema, não por polling.
 
 ![Ícone de Ataque Orbital de Precisão](assets/icons/stratagems/Orbital_Precision_Strike_Stratagem_Icon.webp)
 
+O que mudou em cada versão está no [CHANGELOG](CHANGELOG.md).
+
 ## 🚀 Funcionalidades
 
 - **4 slots de macro** com atalho configurável (F1–F12, numpad, setas, letras…),
@@ -30,18 +32,28 @@ sistema, não por polling.
   armadura, loadout balanceado, máximo de 1 torreta) e cadeados por item; e
   **Personalizada**, montada na mão.
 - **Builds salvas**: nomeie e aplique nos slots com um clique, inclusive pelo overlay.
-- **Arsenal completo** offline: armas, armaduras, capacetes, capas, boosters e
-  passivas, com ícones locais.
-- **Busca sem acento** na grade de estratagemas.
+- **Arsenal completo** offline: 92 estratagemas, armas, armaduras, capacetes, capas,
+  boosters, passivas e warbonds, com ícones locais.
+- **Busca sem acento** na grade de estratagemas, na mesma ordem dos menus do jogo.
 - **Backup** de builds, slots e configurações em JSON — o mesmo formato da v1.
 - **Bandeja do sistema**: minimizar ou fechar recolhe o app e os macros seguem ativos.
 - **Idiomas**: português e inglês.
+- **Tema escuro e claro**, que segue o Windows até você escolher.
+
+## 💻 Requisitos
+
+- **Windows 10 ou 11, 64 bits.** A barra de título pintada nas cores do tema é
+  recurso do Windows 11.
+- **Permissão de administrador**: o app pede elevação ao abrir, porque o `SendInput`
+  precisa do mesmo nível de integridade da janela que recebe as teclas.
+- Helldivers 2 em **"Tela Cheia sem Borda"** para usar o overlay (detalhes em
+  **Overlay In-Game**, abaixo). Os macros funcionam em qualquer modo de vídeo.
 
 ## 📥 Como Instalar e Usar
 
-1. Baixe o instalador `.exe` na aba **[Releases](https://github.com/DionathaGoulart/Macro-Helldivers2/releases)**.
-2. Execute o instalador e abra o app (ele pede elevação: o `SendInput` precisa do
-   mesmo nível de integridade da janela que recebe as teclas).
+1. Baixe o instalador `Macro-Helldivers-2-Setup-2.0.0.exe` na aba
+   **[Releases](https://github.com/DionathaGoulart/Macro-Helldivers2/releases)**.
+2. Execute o instalador e abra o app.
 3. Configure seus 4 slots de estratagemas favoritos.
 4. No jogo, confira se a tecla que abre o menu de estratagemas é a mesma
    selecionada no app (Ctrl, Alt, `=` ou `-`).
@@ -51,11 +63,21 @@ sistema, não por polling.
 > O app fica na bandeja do sistema: minimizar ou fechar a janela **não encerra** os
 > macros. Para sair de vez, use **Sair** no menu do ícone na bandeja.
 
+> O instalador não tem assinatura digital, então o Windows SmartScreen pode avisar
+> na primeira execução (**Mais informações → Executar assim mesmo**). Para conferir
+> que o arquivo é o publicado, compare o hash com o `.sha256` do mesmo release:
+>
+> ```powershell
+> Get-FileHash .\Macro-Helldivers-2-Setup-2.0.0.exe -Algorithm SHA256
+> ```
+
 ### Vindo da v1
 
-O instalador da v2 desinstala a v1 antes de instalar, e suas **configurações são
-migradas automaticamente**. **Slots e builds salvas não migram sozinhos** — eles
-viviam no armazenamento interno do Chromium, que não existe mais. O caminho:
+O auto-update da v1 não enxerga a v2 (o formato do instalador mudou), então baixe o
+instalador novo pela aba Releases. Ele desinstala a v1 antes de instalar, e suas
+**configurações são migradas automaticamente** (atalhos, tecla do menu, modo setas, velocidade, idioma,
+overlay e HUD). **Slots e builds salvas não migram sozinhos** — eles viviam no
+armazenamento interno do Chromium, que não existe mais. O caminho:
 
 1. Na v1, aba **Configurações → Backup → Exportar**.
 2. Instale a v2 e importe o mesmo arquivo em **Configurações → Backup → Importar**.
@@ -115,6 +137,20 @@ repetido nem dois exoesqueletos/veículos na mesma build.
 
 ---
 
+## 🎨 Temas
+
+Dois temas no mesmo visual neobrutal: **escuro** (`rose`, o padrão) e **claro**
+(`crimson`). Até você escolher, o app segue o modo claro/escuro do Windows. Para
+trocar:
+
+- o toggle na barra do topo, ou **`Shift+T`** com a janela do app em foco;
+- **Configurações → Tema**, que também tem a opção **Sistema** para voltar a seguir
+  o Windows.
+
+O overlay troca junto, e a escolha vai no backup.
+
+---
+
 ## 🔄 Atualizações
 
 O app consulta os Releases do GitHub e avisa quando há versão nova.
@@ -122,8 +158,30 @@ O app consulta os Releases do GitHub e avisa quando há versão nova.
 1. A checagem **nunca acontece com o jogo em foco** — ela fica adiada até você sair
    da partida.
 2. O download só começa quando você clica em **Baixar**.
-3. Com o instalador pronto, o app pergunta se quer reiniciar para instalar agora ou
-   deixar para depois.
+3. Antes de instalar, o app confere o **SHA-256** do instalador contra o `.sha256`
+   publicado no release — e confere de novo na hora de executar. Arquivo que não
+   bate não é executado.
+4. Com o instalador pronto, o app pergunta se quer reiniciar para instalar agora ou
+   deixar para depois (o **Instalar agora** continua no rodapé).
+
+---
+
+## 📂 Seus Dados
+
+Tudo fica em `%APPDATA%\Macro Helldivers 2`, que o desinstalador preserva:
+
+| Arquivo | Conteúdo |
+|---|---|
+| `settings.json` | atalhos, velocidade, idioma, tema e demais opções |
+| `slots.json` | os 4 estratagemas dos slots de macro |
+| `loadouts.json` | builds salvas |
+| `window-bounds.json` | posição e tamanho da janela |
+| `meta-cache.json` | estatísticas do helldive.live (valem 6 h) |
+| `app.log` | log da sessão atual, recriado a cada abertura |
+
+Se um desses arquivos estiver ilegível, o app o renomeia para `<nome>.bad` e segue
+com os padrões — o original não é sobrescrito. Ao relatar um problema, anexe o
+`app.log`.
 
 ---
 
@@ -150,7 +208,14 @@ cargo clippy --all-targets --target x86_64-pc-windows-msvc -- -D warnings
 cargo test
 ```
 
-O instalador é gerado pela CI a cada tag `vX.Y.Z` (NSIS, em `installer/installer.nsi`).
+Duas bancadas medem o motor de macro no Windows: `cargo run --release --bin
+timing_bench` (desvio do relógio, com um editor de texto em foco — ela digita de
+verdade) e `cargo run --release --bin soak -- -n 1000 --speed turbo` (mil chamadas
+dentro do jogo; o protocolo está no topo de `src/bin/soak.rs`).
+
+O instalador é gerado pela CI a cada tag `vX.Y.Z` (NSIS, em `installer/installer.nsi`),
+junto com o `.sha256`; as notas do release saem da seção da versão no
+[CHANGELOG](CHANGELOG.md).
 
 ### Pipeline de dados (dev-only)
 
@@ -186,16 +251,37 @@ e Napalm Airstrike saírem sem a carga.
 
 ```text
 ├── src/
+│   ├── main.rs        # boot: instância única, threads, message loop
 │   ├── engine.rs      # motor de macro: thread própria, SendInput por scancode
 │   ├── hooks.rs       # WH_KEYBOARD_LL + SetWinEventHook (atalhos e foco)
+│   ├── focus.rs       # regras de foco do jogo (lógica pura)
+│   ├── tray.rs        # ícone e menu da bandeja
 │   ├── builds.rs      # geração de builds (lógica pura, testada no host)
+│   ├── meta_stats.rs  # cliente do helldive.live com cache em disco
+│   ├── settings.rs    # preferências, migração da v1, gravação atômica
+│   ├── updater.rs     # GitHub Releases + verificação SHA-256
 │   ├── gfx/           # Direct2D, DirectWrite e decode de imagem
-│   ├── ui/            # janela principal: toolkit de widgets e abas
-│   └── overlay/       # strip e painel em janelas layered
-├── assets/            # dados, ícones, fontes e o .ico do executável
+│   ├── ui/            # janela principal: toolkit de widgets, tema e abas
+│   ├── overlay/       # strip e painel em janelas layered
+│   └── bin/           # bancadas timing_bench e soak
+├── assets/            # dados, ícones, fontes (JetBrains Mono) e o .ico do exe
 ├── installer/         # script NSIS
-└── scripts/           # pipeline de dados da wiki (Node, dev-only)
+├── scripts/           # pipeline de dados da wiki (Node, dev-only)
+├── tests/fixtures/    # backup real da v1 e configs do jogo usados nos testes
+└── styleguide.md      # fonte de verdade do visual (tokens, componentes, temas)
 ```
+
+---
+
+## 🙏 Créditos
+
+- Dados e ícones do jogo: [Helldivers 2 Wiki](https://helldivers.wiki.gg) da comunidade.
+- Estatísticas de uso do modo Meta: [helldive.live](https://helldive.live).
+- Fonte [JetBrains Mono](https://github.com/JetBrains/JetBrainsMono), sob a SIL Open
+  Font License ([`assets/fonts/OFL.txt`](assets/fonts/OFL.txt)).
+
+Projeto de fã, sem vínculo com a Arrowhead Game Studios ou a Sony Interactive
+Entertainment. Helldivers é marca de seus respectivos donos.
 
 ---
 

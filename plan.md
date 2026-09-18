@@ -2,6 +2,11 @@
 
 **Branch:** `rewrite/rust-native` (baseada em `development`)
 
+> **Documento histórico.** O plano foi executado até a Fase 12; o que falta para o
+> release está no estado da Fase 12, abaixo. Depois dele a interface foi refeita sobre
+> o [`styleguide.md`](styleguide.md) (skin `retro`, temas `rose` e `crimson`, fonte
+> JetBrains Mono), que substitui a §R5 como referência de visual.
+
 **Stack decidida (final):**
 
 | # | Parte | Escolha |
@@ -175,6 +180,8 @@ pub enum OverlayCmd { SetState(OverlayState), Toggle, Slots([Option<u32>;4]), Lo
 Caminho quente (hotkey→tecla) NÃO passa pela UI: hooks → `engine_tx` → SendInput. UI é notificada depois.
 
 ### R5. Tema (tokens exatos do legado — `ui/theme.rs`)
+
+> Substituída pelo `styleguide.md`. A tabela abaixo é o tema da v1, portado na Fase 4.
 
 | Token | Valor | Uso |
 |---|---|---|
@@ -645,15 +652,16 @@ commitada — auditoria estática, correções, limpeza, docs e bump. Gates verd
 `clippy --target x86_64-pc-windows-msvc -D warnings`, `check` msvc, `cargo test`
 (266 passando, 2 ignorados por dependerem de rede).
 
-**Falta a passada em Windows**, que é o que fecha a fase: nenhum item do checklist
-foi confirmado com o jogo aberto, e nenhuma métrica foi medida. As anotações
-`(teste: …)` abaixo dizem qual teste automatizado sustenta a lógica do item — elas
-não substituem a validação in-game, servem para saber o que já está coberto e onde
-olhar primeiro se algo falhar na VM.
+**Passada em Windows fora do checklist de release** (decisão do dono do projeto,
+2026-09-18): o checklist de paridade e os benchmarks deixaram de bloquear a tag. Os
+itens ficam abaixo como roteiro de QA manual — as anotações `(teste: …)` dizem qual
+teste automatizado sustenta a lógica de cada um e onde olhar primeiro se algo falhar
+no Windows. A tabela do CHANGELOG publica só as metas, não medições.
 
 **Tarefas:**
 
-1. **Checklist de paridade** (validar no Windows com o jogo; marcar aqui):
+1. **Checklist de paridade** — *fora do checklist de release; roteiro de QA manual*
+   (validar no Windows com o jogo; marcar aqui):
    - [ ] 4 slots com atalhos configuráveis; captura com Esc; recording desliga hook
      (teste: `ui::settings_tab::clicking_a_shortcut_starts_listening_and_a_key_binds_it`,
      `escape_cancels_and_pure_modifiers_are_ignored`, `hooks::nothing_is_swallowed_while_disarmed`)
@@ -706,9 +714,8 @@ olhar primeiro se algo falhar na VM.
    - [ ] i18n pt/en completo; bounds da janela persistem; DPI 100/125/150%
      (teste: `i18n::both_languages_resolve`, `i18n::no_string_is_empty`, `ui::window::bounds_*`,
      `overlay::the_monitor_origin_and_the_dpi_scale_are_respected`)
-2. **Benchmarks** (tabela no CHANGELOG): **nenhum medido.** A tabela publicada no
-   CHANGELOG traz as metas e o comando que verifica cada uma; a coluna de medição é
-   preenchida depois da passada em Windows.
+2. **Benchmarks** — *fora do checklist de release.* **Nenhum medido.** A tabela
+   publicada no CHANGELOG traz as metas e o comando que verifica cada uma.
    - RAM (private bytes): idle < 20MB; overlay ativo < 22MB
    - CPU idle com jogo focado: ~0%
    - Boot até janela útil: < 300ms
@@ -720,9 +727,13 @@ olhar primeiro se algo falhar na VM.
    electron-builder.
 4. ~~**Docs**~~ **Feito.** README reescrito e CHANGELOG com a entrada `2.0.0`
    (reescrita, remoções deliberadas com justificativa, migração da v1 por backup,
-   tabela de metas); `Cargo.toml` em `2.0.0`.
+   tabela de metas); `Cargo.toml` em `2.0.0`. Revisados em 2026-09-18 para o release:
+   a seção "Não lançado" (sync da wiki + interface nova) entrou na `2.0.0`, o
+   changelog ganhou as entradas históricas 0.1.0–0.3.0, o README ganhou requisitos,
+   temas e dados do usuário, e o `release.yml` passou a publicar a seção da versão
+   do CHANGELOG como notas do release.
 5. Tag e release: **aguardar comando do usuário** (não taguear sem pedir). **Pendente**
-   — e só faz sentido depois do checklist e dos benchmarks.
+   — data prevista no CHANGELOG: 2026-09-19.
 
 **Bugs achados na auditoria estática (corrigidos):**
 
