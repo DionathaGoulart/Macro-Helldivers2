@@ -8,7 +8,9 @@ import { fileURLToPath } from 'node:url'
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const API = 'https://utm7j5pjvi.us-east-1.awsapprunner.com'
-const PATCH_ID = 12
+// Patch mais novo do helldive.live (a lista fica no JS do site). O app descobre os
+// seguintes sozinho; manter aqui o mais recente só evita sondagem extra.
+const PATCH_ID = 13
 const OUT = path.join(ROOT, 'assets/data/statsMap.json')
 
 const stratagems = JSON.parse(fs.readFileSync(path.join(ROOT, 'assets/data/stratagems.json'), 'utf8'))
@@ -46,6 +48,14 @@ const ALIAS = {
     guard_arc: 'AX/ARC-3 K-9',
     guard_hot: 'AX/FLAM-75 Hot Dog',
     guard_breath: 'AX/TX-13 Dog Breath',
+    // Os sinônimos curtos ('g' de grenade, 'at' dentro de "battlement") faziam o
+    // casamento guloso trocar as três emplacements entre si.
+    grenade_encampment: 'E/GL-21 Grenadier Battlement',
+    encampment_at: 'E/AT-12 Anti-Tank Emplacement',
+    encampment_hmg: 'E/MG-101 HMG Emplacement',
+    // "frv" é o FRV original (M-102); os outros vieram depois com sufixo.
+    frv: 'M-102 Gunner FRV',
+    frv_supply: 'M-103 Supply FRV',
   },
   weapons: {
     grenade_termite: 'G-123 Thermite',
@@ -59,11 +69,13 @@ const ALIAS = {
     sabre: 'CQC-2 Saber',
     axe: 'CQC-5 Combat Hatchet',
     spray_n_pray: 'SG-225SP Breaker Spray&Pray',
+    // "hot" também está dentro de "shotgun", e o desempate por nome curto pegava a M90A
+    hot_shot: 'R/40-K Hot-Shot Marksman Rifle',
   },
 }
 
-async function fetchStats(faction, type) {
-  const url = `${API}/items_stats?faction=${faction}&patch_id=${PATCH_ID}&difficulty=0&mission=All&modifier=ALL&type=${type}`
+async function fetchStats(faction, type, patch) {
+  const url = `${API}/items_stats?faction=${faction}&patch_id=${patch}&difficulty=0&mission=All&modifier=ALL&type=${type}`
   const res = await fetch(url, { headers: { 'User-Agent': 'MacroHelldivers2/1.0 (mapeamento)' } })
   if (!res.ok) throw new Error(`HTTP ${res.status} em ${url}`)
   return res.json()
@@ -108,12 +120,16 @@ async function main() {
   const factions = ['terminid', 'automaton', 'illuminate']
   const slugSets = { strategem: new Set(), weapons: new Set(), armor: new Set() }
 
+  // Dois patches: item que ninguém usou no mais novo (passiva fora de moda, por
+  // exemplo) some da resposta dele, e o mapa perderia o par à toa.
   console.log('Coletando slugs da API do helldive.live...')
-  for (const f of factions) {
-    for (const t of Object.keys(slugSets)) {
-      const data = await fetchStats(f, t)
-      Object.keys(data.items || {}).forEach(k => slugSets[t].add(k))
-      await new Promise(r => setTimeout(r, 300))
+  for (const patch of [PATCH_ID - 1, PATCH_ID]) {
+    for (const f of factions) {
+      for (const t of Object.keys(slugSets)) {
+        const data = await fetchStats(f, t, patch)
+        Object.keys(data.items || {}).forEach(k => slugSets[t].add(k))
+        await new Promise(r => setTimeout(r, 300))
+      }
     }
   }
   console.log('Slugs únicos:', Object.fromEntries(Object.entries(slugSets).map(([k, v]) => [k, v.size])))

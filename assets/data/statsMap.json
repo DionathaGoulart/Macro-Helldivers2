@@ -16,7 +16,7 @@
     "sup_c4_pack": 50,
     "orbital_railcannon": 7,
     "backpack_ballistic": 58,
-    "grenade_encampment": 82,
+    "grenade_encampment": 80,
     "sentry_autocannon": 75,
     "backpack_hellbomb": 52,
     "orbital_precision": 0,
@@ -43,7 +43,7 @@
     "backpack_warp": 53,
     "eagle_cluster": 16,
     "sentry_mortar": 78,
-    "encampment_at": 80,
+    "encampment_at": 81,
     "orbital_smoke": 11,
     "exo_lumberer": 69,
     "eagle_napalm": 17,
@@ -72,6 +72,7 @@
     "sentry_gas": 77,
     "hover_pack": 54,
     "sentry_ems": 76,
+    "frv_supply": 88,
     "sentry_mg": 71,
     "mines_gas": 85,
     "guard_dog": 61,
@@ -79,6 +80,7 @@
     "sup_spear": 44,
     "guard_arc": 59,
     "sup_epoch": 28,
+    "sup_melta": 90,
     "sup_wasp": 46,
     "mines_at": 84,
     "sup_eat": 41,
@@ -87,7 +89,7 @@
     "sup_mg": 22,
     "bastion": 64,
     "flag": 21,
-    "frv": 88
+    "frv": 65
   },
   "weapons": {
     "grenade_inc_impact": {
@@ -214,9 +216,17 @@
       "cat": "secondary",
       "id": "secondary-cqc-19-stun-lance"
     },
+    "bolt_pistol": {
+      "cat": "secondary",
+      "id": "secondary-p-40-k-bolt-pistol"
+    },
     "grenade_he": {
       "cat": "grenade",
       "id": "grenade-g-12-high-explosive"
+    },
+    "melta_mine": {
+      "cat": "grenade",
+      "id": "grenade-g-40-k-melta-mine"
     },
     "lure_mine": {
       "cat": "grenade",
@@ -225,6 +235,10 @@
     "sickle_d": {
       "cat": "primary",
       "id": "primary-las-17-double-edge-sickle"
+    },
+    "hot_shot": {
+      "cat": "primary",
+      "id": "primary-r-40-k-hot-shot-marksman-rifle"
     },
     "one_two": {
       "cat": "primary",
@@ -491,6 +505,7 @@
     "GUNSLINGER": "Gunslinger",
     "ELECTRICAL CONDUIT": "Electrical Conduit",
     "CONCUSSIVE PADDING, HAZMAT": "Concussive Padding, Hazmat",
-    "ADRENO-DEFIBRILLATOR": "Adreno-Defibrillator"
+    "ADRENO-DEFIBRILLATOR": "Adreno-Defibrillator",
+    "TRUE GRIT": "True Grit"
   }
 }
