@@ -103,7 +103,7 @@ pub fn file_name(title: &str, ext: &str) -> String {
     format!("{}.{}", name.trim_end_matches('_'), ext.to_uppercase())
 }
 
-/// Texto com o caret `_` piscando no fim (§4.5) — o "carregando" do guia, no
+/// Texto com o caret `_` piscando no fim (§4.5): o "carregando" do guia, no
 /// lugar de spinner. Reticências do texto original saem: o caret já diz que
 /// algo está em curso.
 ///
@@ -182,7 +182,7 @@ fn touch(ui: &mut Ui, id: Id) -> Touch {
 
 /// Levantar no hover (§4.9): o clicável sobe 4 DIP e a sombra cresce de `sm`
 /// para a padrão; pressionado, ele volta ao lugar. Desenha a sombra e devolve
-/// onde a face vai. A área clicável continua no retângulo original — é ela
+/// onde a face vai. A área clicável continua no retângulo original: é ela
 /// que decide o hover, e ela não pode fugir do mouse.
 fn raised(ui: &mut Ui, rect: Rect, touch: Touch, rest: f32) -> Rect {
     if touch.pressed {
@@ -204,7 +204,7 @@ fn focus_ring(ui: &mut Ui, rect: Rect) {
 }
 
 /// Quadrado de status (presença, categoria): fill da cor com a moldura em
-/// volta — a moldura carrega o contraste, a cor carrega o significado.
+/// volta. A moldura carrega o contraste, a cor carrega o significado.
 pub fn status_square(ui: &mut Ui, rect: Rect, color: Color) {
     framed(ui, rect, color);
 }
@@ -248,7 +248,7 @@ const NAV_GAP: f32 = 6.0;
 /// O `icon-btn` do toggle de tema.
 const TOGGLE_SIZE: f32 = 32.0;
 
-/// Id da aba `index` — o que a tela compara com o clique.
+/// Id da aba `index`: o que a tela compara com o clique.
 pub fn tab_id(index: usize) -> Id {
     id_at("ui.tab", index)
 }
@@ -352,7 +352,7 @@ pub struct CardHeader<'a> {
     pub title: &'a str,
     /// Extensão do "arquivo": `CFG`, `DB`, `LOG`…
     pub ext: &'a str,
-    /// Quadrado de cor antes do nome — a categoria da seção.
+    /// Quadrado de cor antes do nome: a categoria da seção.
     pub marker: Option<Color>,
 }
 
@@ -373,7 +373,7 @@ impl<'a> CardHeader<'a> {
     }
 }
 
-/// Altura que o painel consome fora do conteúdo — o que uma tela precisa somar
+/// Altura que o painel consome fora do conteúdo: o que uma tela precisa somar
 /// para saber de quanto painel ela precisa. A sombra fica de fora: ela sai do
 /// retângulo, e quem empilha painéis deixa o espaço dela no vão.
 pub fn card_chrome(header: bool) -> f32 {
@@ -396,7 +396,7 @@ pub fn card(ui: &mut Ui, rect: Rect, header: Option<CardHeader<'_>>) -> Rect {
 }
 
 /// A barra: fundo de página, linha inferior de 2px, o nome em micro-texto
-/// apagado (só o nome — a barra também hospeda botões) e os quadrados de
+/// apagado (só o nome; a barra também hospeda botões) e os quadrados de
 /// janela à direita.
 fn window_bar(ui: &mut Ui, bar: Rect, header: CardHeader<'_>) {
     let palette = theme::palette();
@@ -625,7 +625,7 @@ fn lock_icon(ui: &mut Ui, rect: Rect, locked: bool, ink: Color, fill: Color) {
 /// levantam no hover.
 ///
 /// Um rótulo `NOME · DETALHE` ("Padrão · 30 fps") vira duas linhas: o nome em
-/// cima e o detalhe em micro-texto embaixo — numa linha só, três escolhas
+/// cima e o detalhe em micro-texto embaixo. Numa linha só, três escolhas
 /// lado a lado não cabem na coluna.
 pub fn choice_button(ui: &mut Ui, id: Id, rect: Rect, label: &str, selected: bool) {
     let palette = theme::palette();
@@ -838,8 +838,8 @@ pub const TOAST_WIDTH: f32 = 280.0;
 pub const TOAST_HEIGHT: f32 = 74.0;
 const TOAST_BAR: f32 = 26.0;
 
-/// Toast (§6.8): painel com a barra de título — o primeiro quadrado de janela
-/// na cor do status —, o título em micro-texto e o corpo. `visible` vai de 1 a
+/// Toast (§6.8): painel com a barra de título (o primeiro quadrado de janela
+/// na cor do status), o título em micro-texto e o corpo. `visible` vai de 1 a
 /// 0 na saída, e o bloco inteiro apaga junto.
 pub fn toast(ui: &mut Ui, rect: Rect, status: Status, title: &str, message: &str, visible: f32) {
     let palette = theme::palette();
@@ -993,7 +993,7 @@ pub fn tile_height(width: f32) -> f32 {
 pub struct CardState {
     /// Equipado noutro slot ou em conflito de exclusividade: não responde.
     pub disabled: bool,
-    /// É o estratagema do slot em edição — clicar de novo o remove.
+    /// É o estratagema do slot em edição: clicar de novo o remove.
     pub in_active_slot: bool,
 }
 
@@ -1008,7 +1008,7 @@ struct TileLook {
 
 /// Tile da grade: o ícone do jogo, que já é um quadro, em cima; nome e codex
 /// na legenda embaixo. Clicável, ele descansa com a sombra `sm` e levanta no
-/// hover. Desabilitado, apaga a 40% e não registra área clicável — sem clique,
+/// hover. Desabilitado, apaga a 40% e não registra área clicável: sem clique,
 /// sem hover e sem cursor de mão.
 pub fn stratagem_card(ui: &mut Ui, id: Id, rect: Rect, strat: &Stratagem, state: CardState) {
     let look = TileLook {
@@ -1084,7 +1084,7 @@ fn tile_body(ui: &mut Ui, rect: Rect, image: &str, name: &str, codex: &[Dir], lo
 // --- Card de apoio fixo ---
 
 /// Card de um apoio fixo (Reforço, Ressuprimento, Rearme da Águia). Não é
-/// clicável — quem responde é o botão de atalho embaixo dele —, mas recebe as
+/// clicável (quem responde é o botão de atalho embaixo dele), mas recebe as
 /// mesmas piscadas de disparo e bloqueio dos slots de macro.
 pub fn support_card(ui: &mut Ui, index: usize, rect: Rect, support: &SupportStrat) {
     let triggered = ui.anim(
@@ -1155,8 +1155,8 @@ pub fn flash_id(index: usize, support: bool, kind: FlashKind) -> Id {
 
 /// Quadrado de um slot de macro: o ícone equipado (ou `[VAZIO]`), o atalho
 /// como etiqueta colada na borda de cima, o slot em edição erguido com a
-/// etiqueta em accent e as duas piscadas — o disparo inunda de accent, o
-/// bloqueio acende uma moldura de erro em volta.
+/// etiqueta em accent e as duas piscadas (o disparo inunda de accent, o
+/// bloqueio acende uma moldura de erro em volta).
 #[allow(clippy::too_many_arguments)]
 pub fn slot_square(
     ui: &mut Ui,
@@ -1264,7 +1264,7 @@ pub const DROPDOWN_ROW: f32 = 28.0;
 pub const DROPDOWN_MAX_HEIGHT: f32 = 240.0;
 
 /// Campo fechado do dropdown: o valor atual e o `▼` literal. É o `<select>`,
-/// que aqui não pode ser um controle nativo — a lista precisa do mesmo tema.
+/// que aqui não pode ser um controle nativo: a lista precisa do mesmo tema.
 pub fn dropdown_field(ui: &mut Ui, id: Id, rect: Rect, value: &str, open: bool) {
     let palette = theme::palette();
     let hover = ui.fade(id, ui.is_hot(id), motion::HOVER_MS);
@@ -1293,7 +1293,7 @@ pub fn dropdown_field(ui: &mut Ui, id: Id, rect: Rect, value: &str, open: bool) 
 }
 
 /// Fundo da lista aberta: popover com moldura e sombra `sm`. As linhas e a
-/// rolagem ficam com quem chama — só ela sabe quantos itens a categoria tem.
+/// rolagem ficam com quem chama: só ela sabe quantos itens a categoria tem.
 pub fn dropdown_panel(ui: &mut Ui, rect: Rect) {
     shadow(ui, rect, theme::SHADOW_SM);
     framed(ui, rect, theme::palette().base_200);
@@ -1398,9 +1398,9 @@ pub fn chip_layout<'a>(
     }
 }
 
-/// Chip de uma build salva — a `tag` clicável: levanta e inunda de accent no
+/// Chip de uma build salva, a `tag` clicável: levanta e inunda de accent no
 /// hover, e fica em accent quando é a build aplicada. Com `delete`, ganha o ×
-/// que aparece sob o mouse. O overlay usa a mesma peça sem o × — lá a build é
+/// que aparece sob o mouse. O overlay usa a mesma peça sem o ×: lá a build é
 /// só aplicada (a gestão fica na janela principal).
 pub fn loadout_chip(ui: &mut Ui, id: Id, delete: Option<Id>, rect: Rect, name: &str, active: bool) {
     let palette = theme::palette();
@@ -1455,7 +1455,7 @@ const LOCK_SIZE: f32 = 22.0;
 /// Respiro em volta da imagem.
 const ITEM_IMAGE_PADDING: f32 = 12.0;
 
-/// Um item da build exibida — estratagema ou equipamento.
+/// Um item da build exibida: estratagema ou equipamento.
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct ItemCard<'a> {
     /// Categoria ("ESTRATAGEMA 1", "ARMADURA").
@@ -1855,7 +1855,7 @@ mod tests {
         );
         assert_eq!(file_name("Builds Salvas", "db"), "BUILDS_SALVAS.DB");
         assert_eq!(
-            file_name("  Meta — por Facção ", "log"),
+            file_name("  Meta: por Facção ", "log"),
             "META_POR_FACÇÃO.LOG"
         );
     }
@@ -1932,7 +1932,7 @@ mod tests {
         assert_eq!(face(&ui), rect.translate(0.0, -theme::LIFT), "levantou");
         assert_eq!(ui.frame().hit_at(10.0, rect.bottom() - 1.0), Some(id("go")));
 
-        // Pressionado, volta ao lugar — e o clique conta.
+        // Pressionado, volta ao lugar, e o clique conta.
         ui.input(Input::Down { x: 10.0, y: 30.0 });
         draw(&mut ui, 1_000);
         assert_eq!(face(&ui), rect);
@@ -2372,7 +2372,7 @@ mod tests {
     fn an_item_card_without_an_image_draws_the_empty_marker() {
         let card = ItemCard {
             label: "Booster",
-            name: "—",
+            name: "-",
             image: None,
             subtitle: None,
             description: None,

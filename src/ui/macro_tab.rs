@@ -1,12 +1,12 @@
 //! Aba de macros: a grade de estratagemas por categoria, a busca e a barra dos
 //! quatro slots.
 //!
-//! A tela é uma função do estado — settings, slots e o texto da busca entram,
+//! A tela é uma função do estado: settings, slots e o texto da busca entram,
 //! nós e áreas clicáveis saem. Quem clica devolve uma [`Action`] para a janela
 //! executar (gravar, refazer a tabela de atalhos, avisar o overlay); assim as
 //! regras de equipar, que são o coração da aba, ficam testáveis no host.
 //!
-//! Comportamento portado de `legacy/src/renderer/App.jsx` (~460–535 e ~900–935).
+//! Comportamento portado de `legacy/src/renderer/App.jsx` (~460-535 e ~900-935).
 
 use crate::data::{self, GameData, Stratagem};
 use crate::i18n::{self, Tr};
@@ -24,7 +24,7 @@ const SEARCH_MIN_WIDTH: f32 = 240.0;
 const HEADER_GAP: f32 = 24.0;
 /// Espaço entre o cabeçalho e a grade, e entre a grade e a barra de slots.
 const BLOCK_GAP: f32 = 16.0;
-/// Espaço entre seções — cabe a sombra dura da de cima.
+/// Espaço entre seções: cabe a sombra dura da de cima.
 const SECTION_GAP: f32 = 24.0;
 const GRID_COLS: usize = 4;
 const GRID_GAP: f32 = 12.0;
@@ -117,7 +117,7 @@ pub struct MacroTab {
     /// construção, e não a cada quadro.
     dirty: bool,
     /// Campo de busca na tela. O painel do overlay não o tem: a janela é
-    /// `WS_EX_NOACTIVATE` — ela recebe o mouse mas nunca o teclado —, e a v1
+    /// `WS_EX_NOACTIVATE` (ela recebe o mouse mas nunca o teclado), e a v1
     /// escondia o campo lá pelo mesmo motivo (`{!isOverlay && ...}`).
     searchable: bool,
 }
@@ -232,7 +232,7 @@ impl MacroTab {
     /// `> SELECIONAR ESTRATAGEMAS PARA O SLOT` sobre `SLOT 1 · F1`: o slot que
     /// os cliques da grade equipam.
     fn header(&self, ui: &mut Ui, rect: Rect, ctx: &Ctx) {
-        let shortcut = ctx.settings.shortcut(self.active_slot).unwrap_or("—");
+        let shortcut = ctx.settings.shortcut(self.active_slot).unwrap_or("-");
         let title = format!("Slot {} \u{00B7} {}", self.active_slot + 1, shortcut);
         widgets::page_header(ui, rect, ctx.tr().macros.select_title, &title);
     }
@@ -300,7 +300,7 @@ impl MacroTab {
         for section in &self.sections {
             let height = section_height(section.ids.len(), cell);
             let rect = Rect::new(view.x, y, width, height);
-            // Fora da janela visível não há o que desenhar — é o que segura o
+            // Fora da janela visível não há o que desenhar: é o que segura o
             // custo de uma grade de 91 ícones.
             if rect.bottom() + theme::SHADOW >= view.y && rect.y <= view.bottom() {
                 self.section(ui, rect, section, cell, view, &equipped, ctx);
@@ -399,7 +399,7 @@ impl MacroTab {
 
     // --- Cliques ---
 
-    /// Trata um clique da aba. `None` quando o id não é daqui — ou quando a
+    /// Trata um clique da aba. `None` quando o id não é daqui, ou quando a
     /// regra de equipar recusou a jogada, que na v1 também não fazia nada.
     pub fn on_click(&mut self, clicked: Id, ctx: &Ctx) -> Option<Action> {
         if clicked == search_id() {
@@ -464,8 +464,8 @@ fn tag_rank(tag: &str) -> usize {
 }
 
 /// Cor da categoria, vinda dos status do tema: ofensivo é erro, defensivo é
-/// sucesso e o resto (suprimento) é info. Aparece como quadrado de cor — no
-/// canto do tile e na barra da seção —, nunca como moldura.
+/// sucesso e o resto (suprimento) é info. Aparece como quadrado de cor (no
+/// canto do tile e na barra da seção), nunca como moldura.
 fn tag_color(tag: &str) -> Color {
     let palette = theme::palette();
     match tag {

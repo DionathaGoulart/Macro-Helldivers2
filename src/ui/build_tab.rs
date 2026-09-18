@@ -36,7 +36,7 @@ const PAGE_PADDING: f32 = 24.0;
 const PAGE_TOP: f32 = 20.0;
 /// Espaço reservado à direita para a barra de rolagem da página.
 const SCROLL_GUTTER: f32 = 14.0;
-/// Espaço entre os blocos — cabe a sombra dura do de cima.
+/// Espaço entre os blocos: cabe a sombra dura do de cima.
 const SECTION_GAP: f32 = 24.0;
 
 /// Grupo das sub-abas.
@@ -95,7 +95,7 @@ const META_CHANGE_WIDTH: f32 = 40.0;
 const META_PERCENT_WIDTH: f32 = 46.0;
 
 /// Largura do campo de nome da build e do botão de salvar. Os chips em si vêm
-/// de `widgets` — o painel do overlay mostra a mesma fileira.
+/// de `widgets`: o painel do overlay mostra a mesma fileira.
 const NAME_WIDTH: f32 = 200.0;
 const SAVE_WIDTH: f32 = 120.0;
 /// `maxLength={24}` do campo de nome da v1.
@@ -238,7 +238,7 @@ fn dropdown_id(slot: EquipSlot) -> Id {
 }
 
 /// Linha `index` da lista de `slot`. As categorias ficam em faixas separadas do
-/// contador — nenhuma delas chega perto de mil itens.
+/// contador: nenhuma delas chega perto de mil itens.
 fn dropdown_row_id(slot: EquipSlot, index: usize) -> Id {
     id_at("build.dropdown.row", slot.index() * 1_000 + index)
 }
@@ -283,7 +283,7 @@ fn hint_style() -> TextStyle {
 
 /// Em que pé está a consulta da sub-aba Meta.
 enum MetaState {
-    /// Combinação ainda não pedida — a próxima construção registra o pedido.
+    /// Combinação ainda não pedida; a próxima construção registra o pedido.
     Idle,
     Loading,
     Ready(Box<MetaLists>),
@@ -333,7 +333,7 @@ impl MetaView {
 /// Estado da aba entre passagens de construção.
 pub struct BuildTab {
     sub: SubTab,
-    /// A build exibida — sorteada, montada à mão ou vinda de uma build salva.
+    /// A build exibida: sorteada, montada à mão ou vinda de uma build salva.
     build: Option<Build>,
     locks: Locks,
     /// Slot da build personalizada que os cliques na grade equipam.
@@ -406,7 +406,7 @@ impl BuildTab {
         &self.loadouts
     }
 
-    /// Relê o `loadouts.json` — a importação de backup o reescreve por fora.
+    /// Relê o `loadouts.json`: a importação de backup o reescreve por fora.
     pub fn reload_loadouts(&mut self) {
         self.loadouts = loadouts::load_loadouts();
         self.loaded = true;
@@ -427,7 +427,7 @@ impl BuildTab {
         self.stats.pending.take()
     }
 
-    /// Resposta de uma consulta. Resposta de outra combinação é descartada — o
+    /// Resposta de uma consulta. Resposta de outra combinação é descartada: o
     /// usuário pode ter trocado de facção enquanto a rede respondia.
     pub fn set_meta(&mut self, result: MetaResult, data: &GameData) {
         if result.key != self.stats.key() {
@@ -1038,7 +1038,7 @@ impl BuildTab {
             content,
             strat
                 .map(|strat| strat.nome.to_uppercase())
-                .unwrap_or_else(|| "\u{2014}".into()),
+                .unwrap_or_else(|| "-".into()),
             TextStyle::new(font::SIZE_MICRO, Weight::Black)
                 .align(Align::Center)
                 .wrap(),
@@ -1084,7 +1084,7 @@ impl BuildTab {
     }
 
     /// Grade de 5 colunas, rolável, com as mesmas regras de clique da aba de
-    /// macros — só que mexendo na build, e não nos slots.
+    /// macros, só que mexendo na build, e não nos slots.
     fn custom_grid(&self, ui: &mut Ui, view: Rect, ctx: &Ctx) {
         let cell = custom_cell(view.w);
         let content = grid_height(
@@ -1173,7 +1173,7 @@ impl BuildTab {
         let count = equipment.count(slot) + 1;
         let content = widgets::DROPDOWN_ROW * count as f32 + 8.0;
         let height = content.min(widgets::DROPDOWN_MAX_HEIGHT);
-        // Abaixo do campo, a não ser que não caiba — aí sobe. E, se nem assim
+        // Abaixo do campo, a não ser que não caiba; aí sobe. E, se nem assim
         // couber (campo perto da borda, ou rolado para fora), ela é presa dentro
         // da aba: fora dela a lista seria inalcançável.
         let below = self.field.bottom() + 4.0;
@@ -1204,7 +1204,7 @@ impl BuildTab {
             if row.bottom() < view.y || row.y > view.bottom() {
                 continue;
             }
-            // A primeira linha é o "— Nenhum —" da v1; as demais seguem a ordem
+            // A primeira linha é a opção "Nenhum" da v1; as demais seguem a ordem
             // do `equipment.json`.
             let (label, is_selected) = match index.checked_sub(1) {
                 None => (ctx.tr().build.equip_none, selected.is_empty()),
@@ -1308,7 +1308,7 @@ impl BuildTab {
             let label = format!("{} {}", tr.build.stratagem, index + 1);
             let card = ItemCard {
                 label: &label,
-                name: strat.map(|strat| strat.nome.as_str()).unwrap_or("\u{2014}"),
+                name: strat.map(|strat| strat.nome.as_str()).unwrap_or("-"),
                 image: strat.map(|strat| strat.imagem.as_str()),
                 subtitle: None,
                 description: None,
@@ -1422,7 +1422,7 @@ impl BuildTab {
 
     // --- Cliques ---
 
-    /// Trata um clique da aba. `None` quando o id não é daqui — ou quando a
+    /// Trata um clique da aba. `None` quando o id não é daqui, ou quando a
     /// regra de equipar recusou a jogada, que na v1 também não fazia nada.
     pub fn on_click(&mut self, clicked: Id, ctx: &Ctx) -> Option<Action> {
         // Com a lista aberta ela tem prioridade: o resto da tela está atrás dela.
@@ -1502,7 +1502,7 @@ impl BuildTab {
             return Some(Action::FocusEdit(name_id()));
         }
         if clicked == save_id() {
-            // Sem estratagema nenhum não há build para salvar — o botão fica
+            // Sem estratagema nenhum não há build para salvar: o botão fica
             // apagado, e o clique não faz nada (a v1 o desabilitava).
             let build = self.build.clone()?;
             if !builds::save(&mut self.loadouts, &self.name, &build) {
@@ -1633,7 +1633,7 @@ impl BuildTab {
     }
 
     /// Clique na grade personalizada. O slot em edição avança mesmo quando a
-    /// regra recusa — é o que a v1 fazia, com o avanço fora do `setState`.
+    /// regra recusa. É o que a v1 fazia, com o avanço fora do `setState`.
     fn assign(&mut self, strat: &Stratagem, ctx: &Ctx) -> Option<Action> {
         let mut build = self.build.clone().unwrap_or_default();
         builds::custom_assign(&mut build, self.custom_slot, strat, ctx.data);
@@ -1692,7 +1692,7 @@ fn options<'a>(ctx: &Ctx<'a>) -> [Option_<'static>; 3] {
     ]
 }
 
-/// Card de equipamento já com os textos prontos — os `&str` do widget precisam
+/// Card de equipamento já com os textos prontos: os `&str` do widget precisam
 /// de alguém que os mantenha vivos durante a construção.
 struct EquipCard {
     slot: EquipSlot,
@@ -1745,7 +1745,7 @@ fn empty_state(ui: &mut Ui, rect: Rect, kicker: &str, message: &str) {
     );
 }
 
-/// Recorta a próxima linha de uma lista, com o respiro entre linhas — e sem
+/// Recorta a próxima linha de uma lista, com o respiro entre linhas, e sem
 /// sobra depois da última, que é o que as alturas calculadas assumem.
 fn meta_row(cursor: &mut Rect, index: usize) -> Rect {
     if index > 0 {
@@ -1884,7 +1884,7 @@ fn meta_name(ui: &mut Ui, measure: &mut dyn Measure, rect: Rect, name: &str) {
     );
 }
 
-/// Percentual em números tabulares — a fonte já é monoespaçada.
+/// Percentual em números tabulares: a fonte já é monoespaçada.
 fn meta_percent(ui: &mut Ui, rect: Rect, stat: ItemStat) {
     ui.text(
         rect,
@@ -2045,7 +2045,7 @@ fn stratagems_height(measure: &mut dyn Measure, width: f32, build: &Build, ctx: 
             let name = build.stratagems[index]
                 .and_then(|id| ctx.data.by_id(id))
                 .map(|strat| strat.nome.as_str())
-                .unwrap_or("—");
+                .unwrap_or("-");
             let card = ItemCard {
                 label: ctx.tr().build.stratagem,
                 name,

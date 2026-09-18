@@ -1,10 +1,10 @@
 //! Diálogo genérico em D2D (styleguide §6.5): véu sobre a tela inteira e um
-//! `dialog-box` no meio — moldura, sombra dura, barra de título com os
-//! quadrados de janela, título grande, texto e dois botões.
+//! `dialog-box` no meio (moldura, sombra dura, barra de título com os
+//! quadrados de janela, título grande, texto e dois botões).
 //!
 //! Hoje quem o usa é o aviso de atualização pronta. O véu não é só decoração:
 //! ele registra uma área clicável do tamanho da tela, e como é desenhado por
-//! último ele fica por cima de tudo no hit-test — nenhum clique vaza para a
+//! último ele fica por cima de tudo no hit-test; nenhum clique vaza para a
 //! aba de trás enquanto o diálogo está aberto.
 
 use crate::ui::theme::{self, font, motion};
@@ -42,7 +42,7 @@ pub struct Modal<'a> {
     pub secondary: &'a str,
 }
 
-/// Véu de fundo. Clicar nele não faz nada — só impede que o clique chegue na
+/// Véu de fundo. Clicar nele não faz nada, só impede que o clique chegue na
 /// tela de trás.
 pub fn scrim_id() -> Id {
     id("modal.scrim")
@@ -135,7 +135,7 @@ pub fn show(ui: &mut Ui, measure: &mut dyn Measure, area: Rect, modal: &Modal) {
     let mut buttons = content.cut_top(BUTTON_H);
     let secondary = buttons.cut_left(SECONDARY_WIDTH);
     buttons.cut_left(BUTTON_GAP);
-    // Descartar à esquerda, a ação à direita — o rodapé de formulário do guia.
+    // Descartar à esquerda, a ação à direita: o rodapé de formulário do guia.
     widgets::button(
         ui,
         secondary_id(),

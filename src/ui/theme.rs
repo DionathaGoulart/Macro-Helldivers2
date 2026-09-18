@@ -4,17 +4,17 @@
 //! fonte e a geometria vêm de lá sem alteração. Aqui eles viram três camadas,
 //! na mesma ordem do guia:
 //!
-//! 1. [`raw`] — a paleta bruta. **Hex existe só ali**, uma vez (§2.1).
-//! 2. [`Palette`] — os tokens semânticos de cada tema (§2.2–§2.4). Widget
+//! 1. [`raw`]: a paleta bruta. **Hex existe só ali**, uma vez (§2.1).
+//! 2. [`Palette`]: os tokens semânticos de cada tema (§2.2-§2.4). Widget
 //!    nenhum lê a paleta bruta nem pergunta qual é o tema: ele pede
 //!    [`palette()`] e usa o papel (`base_300` é toda moldura, `accent` é todo
 //!    fill de ênfase…). Trocar o tema é trocar a paleta inteira de uma vez.
 //! 3. A geometria (§4, §5): moldura de 2px, sombra dura deslocada, zero raio.
-//!    Não existe constante de raio — o toolkit nem aceita um.
+//!    Não existe constante de raio: o toolkit nem aceita um.
 //!
 //! Tudo é medido em DIP. O render target recebe o DPI do monitor
 //! (`SetDpi`) e faz a multiplicação sozinho, então nenhum widget precisa saber a
-//! escala — ela só aparece onde o Win32 fala em pixel: tamanho de janela, posição
+//! escala. Ela só aparece onde o Win32 fala em pixel: tamanho de janela, posição
 //! do mouse e bounds persistidos.
 
 use std::sync::atomic::{AtomicU8, Ordering};
@@ -51,7 +51,7 @@ impl Color {
         Color { a, ..self }
     }
 
-    /// Multiplica o alfa — é assim que um bloco inteiro apaga junto (estado
+    /// Multiplica o alfa: é assim que um bloco inteiro apaga junto (estado
     /// `:disabled`, saída de um toast) sem virar outra cor.
     pub const fn faded(self, factor: f32) -> Color {
         Color {
@@ -63,7 +63,7 @@ impl Color {
     /// Interpola até `other`. Serve pros fades de hover, que andam por um valor
     /// 0..1 vindo do toolkit.
     pub fn mix(self, other: Color, t: f32) -> Color {
-        // Nas pontas a cor é a do token, bit a bit — sem o resíduo da conta.
+        // Nas pontas a cor é a do token, bit a bit, sem o resíduo da conta.
         if t <= 0.0 {
             return self;
         }
@@ -142,7 +142,7 @@ pub mod raw {
 }
 
 /// Um status (§2.2): a cor de fill, o conteúdo que vai por cima dela e a cor
-/// para quando o status é o próprio glifo (§2.4 — fill não serve de texto).
+/// para quando o status é o próprio glifo (§2.4: fill não serve de texto).
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Status {
     pub fill: Color,
@@ -157,7 +157,7 @@ pub struct Palette {
     pub base_100: Color,
     /// Superfície elevada: painel, campo, dropdown, diálogo.
     pub base_200: Color,
-    /// Toda moldura. Neutra, nunca accent — no escuro é a cor clara do texto.
+    /// Toda moldura. Neutra, nunca accent; no escuro é a cor clara do texto.
     pub base_300: Color,
     /// Texto.
     pub content: Color,
@@ -204,7 +204,7 @@ impl Palette {
 /// Opacidade da scanline sobre a cor base do tema (§4.4).
 const SCANLINE_OPACITY: f32 = 0.3;
 
-/// `crimson` — o claro (`color-scheme: light`).
+/// `crimson`: o claro (`color-scheme: light`).
 pub static CRIMSON: Palette = Palette {
     base_100: raw::CREAM,
     base_200: raw::WHITE,
@@ -238,7 +238,7 @@ pub static CRIMSON: Palette = Palette {
     scanline: raw::SCANLINE_LIGHT.faded(SCANLINE_OPACITY),
 };
 
-/// `rose` — o escuro (`color-scheme: dark`), padrão do app.
+/// `rose`: o escuro (`color-scheme: dark`), padrão do app.
 pub static ROSE: Palette = Palette {
     base_100: raw::NOIR,
     base_200: raw::NOIR_RAISED,
@@ -335,7 +335,7 @@ pub mod motion {
     /// Saída de toast e de overlay (fade de 150ms).
     pub const EXIT_MS: u32 = 150;
 
-    /// `cubic-bezier(0.33, 1, 0.68, 1)` — o ease-out do `animate-enter`, sem
+    /// `cubic-bezier(0.33, 1, 0.68, 1)`: o ease-out do `animate-enter`, sem
     /// overshoot. Resolvido por bisseção em `x`, que é monotônico na curva.
     pub fn ease_out(t: f32) -> f32 {
         let t = t.clamp(0.0, 1.0);
@@ -357,7 +357,7 @@ pub mod motion {
 }
 
 /// Tipografia (§3). Uma família para tudo, carregada de `assets/fonts/` numa
-/// coleção própria do DirectWrite — nada é instalado no sistema.
+/// coleção própria do DirectWrite; nada é instalado no sistema.
 pub mod font {
     pub const FAMILY: &str = "JetBrains Mono";
 
@@ -388,7 +388,7 @@ pub mod font {
     /// Altura de uma linha em EM: ascendente 1020 + descendente 300 sobre
     /// 1000 unidades da JetBrains Mono. É o que o DirectWrite mede.
     pub const LINE: f32 = 1.32;
-    /// Avanço de um caractere em EM — a fonte é monoespaçada.
+    /// Avanço de um caractere em EM: a fonte é monoespaçada.
     pub const ADVANCE: f32 = 0.6;
 }
 
@@ -402,7 +402,7 @@ pub struct Scale {
 }
 
 impl Scale {
-    /// 100% — o que vale no host de desenvolvimento e nos testes.
+    /// 100%: o que vale no host de desenvolvimento e nos testes.
     pub const ONE: Scale = Scale { factor: 1.0 };
 
     pub fn from_dpi(dpi: u32) -> Scale {
@@ -504,7 +504,7 @@ mod tests {
     ///
     /// Texto neutro e accent valem nos dois fundos. Os `-text` de status foram
     /// conferidos pelo guia sobre a superfície elevada (é onde status aparece:
-    /// dentro de painel, toast e banner) — sobre o creme da página o verde e o
+    /// dentro de painel, toast e banner). Sobre o creme da página o verde e o
     /// âmbar escuros ficam em 4.4:1, então a página nunca recebe texto de
     /// status: lá o status vai num quadrado de cor, com o rótulo em `content`.
     #[test]

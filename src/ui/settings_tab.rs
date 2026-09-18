@@ -3,11 +3,11 @@
 //!
 //! Como a aba de macros, a tela é uma função do estado: entram os settings, saem
 //! nós e áreas clicáveis. Um clique (ou uma tecla capturada) devolve uma
-//! [`Action`] para a janela executar — gravar, refazer a tabela de atalhos,
+//! [`Action`] para a janela executar: gravar, refazer a tabela de atalhos,
 //! avisar o overlay, abrir um diálogo de arquivo. A transformação em si mora em
 //! [`Change::apply`], que é lógica pura e roda nos testes do host.
 //!
-//! Comportamento portado de `legacy/src/renderer/App.jsx` (~558–898), menos o
+//! Comportamento portado de `legacy/src/renderer/App.jsx` (~558-898), menos o
 //! "modificador de sprint" (removido: o hook dispara com qualquer modificador
 //! seguro) e a seção do updater, que chega na Fase 10.
 
@@ -24,7 +24,7 @@ const PAGE_PADDING: f32 = 24.0;
 const PAGE_TOP: f32 = 20.0;
 /// Espaço reservado à direita para a barra de rolagem.
 const SCROLL_GUTTER: f32 = 14.0;
-/// Espaço entre as colunas e entre os painéis — cabe a sombra dura.
+/// Espaço entre as colunas e entre os painéis: cabe a sombra dura.
 const CARD_GAP: f32 = 20.0;
 const SECTION_GAP: f32 = 22.0;
 
@@ -231,7 +231,7 @@ impl SettingsTab {
         self.capturing
     }
 
-    /// Desiste da captura em curso — a janela chama ao sair da aba.
+    /// Desiste da captura em curso; a janela chama ao sair da aba.
     pub fn cancel_capture(&mut self) {
         self.capturing = None;
     }
@@ -686,7 +686,7 @@ impl SettingsTab {
     }
 
     /// Tecla recebida pela janela enquanto a aba espera um atalho. `None` quando
-    /// não há captura em curso — aí a tecla segue seu caminho normal.
+    /// não há captura em curso; aí a tecla segue seu caminho normal.
     ///
     /// Modificadores puros e teclas fora da tabela canônica são engolidos sem
     /// ligar nada: a v1 ignorava os primeiros, e uma tecla que `keys.rs` não
@@ -756,7 +756,7 @@ fn backup_height(measure: &mut dyn Measure, width: f32, ctx: &Ctx) -> f32 {
     widgets::card_chrome(true) + desc_h + LABEL_GAP + 4.0 + CHOICE_H
 }
 
-/// Largura de cada tile de apoio: a coluna inteira até um teto — acima dele o
+/// Largura de cada tile de apoio: a coluna inteira até um teto; acima dele o
 /// ícone viraria um pôster e empurraria o resto da aba para baixo.
 fn support_tile(column: f32) -> f32 {
     column.min(SUPPORT_TILE_MAX)

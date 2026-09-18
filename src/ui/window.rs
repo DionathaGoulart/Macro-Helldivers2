@@ -3,7 +3,7 @@
 //!
 //! O modelo de render é o do R14, e a consequência prática está no `WndProc`:
 //! ele não tem loop de quadro. Uma passagem de construção acontece quando algo
-//! muda — mouse, `UiEvent`, redimensionamento, tique de animação — e o
+//! muda (mouse, `UiEvent`, redimensionamento, tique de animação) e o
 //! `WM_PAINT` só executa a lista pronta. Parada, a janela não consome CPU.
 //!
 //! A parte que não depende do Windows (formato e validação dos bounds) fica
@@ -20,7 +20,7 @@ pub const BOUNDS_FILE: &str = "window-bounds.json";
 /// primeira (`util::focus_running_instance`).
 pub const CLASS_NAME: &str = "MacroHelldivers2Main";
 
-/// Tamanho inicial, em DIP — o mesmo da v1.
+/// Tamanho inicial, em DIP: o mesmo da v1.
 pub const DEFAULT_WIDTH: f32 = 820.0;
 pub const DEFAULT_HEIGHT: f32 = 640.0;
 /// Abaixo disto a grade de 4 colunas não fecha.
@@ -39,7 +39,7 @@ pub struct Bounds {
 
 impl Bounds {
     /// A janela cabe inteira em alguma área de trabalho? Monitor desligado ou
-    /// resolução trocada deixaria a janela abrir fora da tela — a v1 descartava
+    /// resolução trocada deixaria a janela abrir fora da tela. A v1 descartava
     /// a posição nesse caso (`legacy/src/main/index.js` ~453-469), e aqui é igual.
     pub fn fits_in(&self, work_areas: &[Bounds]) -> bool {
         self.width > 0
@@ -261,7 +261,7 @@ mod platform {
     /// Sem o recurso (build sem compilador de recursos) a janela fica com o
     /// ícone padrão do sistema, que é o que o Windows já usaria.
     fn app_icon(instance: windows::Win32::Foundation::HINSTANCE) -> HICON {
-        // Um recurso por id viaja no lugar do ponteiro do nome — é o
+        // Um recurso por id viaja no lugar do ponteiro do nome: é o
         // `MAKEINTRESOURCE` do C, e não um endereço que alguém vá desreferenciar.
         let by_id = PCWSTR(std::ptr::without_provenance(ICON_RESOURCE_ID));
         // SAFETY: o módulo é o do próprio processo e o "ponteiro" é um id.
@@ -270,7 +270,7 @@ mod platform {
 
     /// Per-monitor v2 antes de qualquer janela: sem isto o Windows esticaria a
     /// janela em telas com escala, e o texto sairia borrado. O manifesto da
-    /// Fase 10 declara o mesmo — a chamada aqui vale para `cargo run`.
+    /// Fase 10 declara o mesmo; a chamada aqui vale para `cargo run`.
     fn enable_dpi_awareness() {
         // SAFETY: chamada sem ponteiros; falha só quando o manifesto já definiu
         // a consciência de DPI, que é o mesmo resultado.
@@ -394,8 +394,8 @@ mod platform {
     ///
     /// `SetWindowTextW` e `SetFocus` notificam de volta (`EN_CHANGE`,
     /// `EN_SETFOCUS`, `EN_KILLFOCUS`) por `SendMessage` **síncrono**: chamá-las
-    /// com um `&mut App` vivo reentra no `WndProc` e cria um segundo `&mut App`
-    /// — o mesmo UB que o backup e o menu da bandeja já evitam adiando.
+    /// com um `&mut App` vivo reentra no `WndProc` e cria um segundo `&mut App`,
+    /// o mesmo UB que o backup e o menu da bandeja já evitam adiando.
     #[derive(Debug, Clone, Copy, PartialEq, Eq)]
     enum EditOp {
         /// Esvazia o texto do filho nativo.
@@ -446,7 +446,7 @@ mod platform {
         /// O usuário clicou "Depois" no modal: o instalador continua pronto e o
         /// botão do rodapé continua instalando, só o modal não volta.
         update_deferred: bool,
-        /// `None` quando o ícone não pôde ser criado — e aí fechar a janela
+        /// `None` quando o ícone não pôde ser criado, e aí fechar a janela
         /// encerra o app, porque não haveria como trazê-la de volta.
         tray: Option<Tray>,
         /// O usuário pediu "Sair": o próximo `WM_CLOSE` encerra de verdade.
@@ -634,14 +634,14 @@ mod platform {
             // `WM_TIMER` dispara mesmo com a janela escondida ou minimizada, e
             // cada tique refaz o quadro inteiro. Um modal pulsando com o app na
             // bandeja viraria um rebuild completo a cada 16ms, por horas, no
-            // meio do jogo — invisível para todo mundo. Escondida, a animação
+            // meio do jogo, invisível para todo mundo. Escondida, a animação
             // congela; o `WM_SHOWWINDOW`/`WM_SIZE` da volta refaz o quadro e
             // rearma o timer.
             // SAFETY: leituras de estado da própria janela.
             let visible =
                 unsafe { IsWindowVisible(self.hwnd).as_bool() && !IsIconic(self.hwnd).as_bool() };
             // Um fade pede 16ms; o caret piscando pede só a próxima troca de
-            // fase — meio segundo de janela parada entre um quadro e outro.
+            // fase: meio segundo de janela parada entre um quadro e outro.
             let wanted = self.ui.frame_delay().filter(|_| visible);
             match wanted {
                 // Animação contínua já armada: o timer periódico segue.
@@ -650,7 +650,7 @@ mod platform {
                 _ => {}
             }
             // SAFETY: timer da própria janela. `SetTimer` com o mesmo id troca
-            // o intervalo e recomeça a contagem — é o que a espera do caret
+            // o intervalo e recomeça a contagem: é o que a espera do caret
             // precisa a cada passagem.
             unsafe {
                 match wanted {
@@ -781,13 +781,13 @@ mod platform {
             }
             if clicked == modal::secondary_id() {
                 // "Depois": só o modal sai. O instalador continua baixado e o
-                // botão "Instalar agora" fica no rodapé — voltar ao texto de
+                // botão "Instalar agora" fica no rodapé: voltar ao texto de
                 // repouso deixaria o arquivo inalcançável até o próximo boot.
                 self.update_deferred = true;
                 self.rebuild();
                 return true;
             }
-            // O véu come o clique sem fazer nada — é o que impede a tela de
+            // O véu come o clique sem fazer nada: é o que impede a tela de
             // trás de reagir com o modal aberto.
             if clicked == modal::scrim_id() {
                 return true;
@@ -862,7 +862,7 @@ mod platform {
         /// Agenda o diálogo em vez de abri-lo aqui.
         ///
         /// Um diálogo do shell roda o **próprio** loop de mensagens, que reentra
-        /// neste `WndProc` — e neste ponto o empréstimo do `App` está vivo, no
+        /// neste `WndProc`, e neste ponto o empréstimo do `App` está vivo, no
         /// meio do tratamento do clique. O pedido fica guardado e é executado
         /// quando a mensagem chegar, com o empréstimo já solto.
         fn request_backup(&mut self, request: BackupRequest) {
@@ -928,7 +928,7 @@ mod platform {
         }
 
         /// Toggle da topbar e `Shift+T`: o outro tema, gravado como escolha
-        /// manual — a partir daí o app para de seguir o Windows.
+        /// manual. A partir daí o app para de seguir o Windows.
         fn toggle_theme(&mut self) {
             let next = theme::current().toggled();
             self.apply_change(Change::Theme(Some(next)));
@@ -1005,7 +1005,7 @@ mod platform {
         /// Tecla recebida pela janela. `true` quando a aba da frente a consumiu,
         /// e ela não deve seguir para o tratamento padrão.
         fn on_key(&mut self, vk: u16, repeat: bool) -> bool {
-            // `Shift+T` troca o tema — menos durante a captura de um atalho,
+            // `Shift+T` troca o tema, menos durante a captura de um atalho,
             // em que a tecla é do atalho. Segurar a tecla não fica alternando.
             if vk == VK_T && !self.recording && shift_down() {
                 if !repeat {
@@ -1257,8 +1257,8 @@ mod platform {
         settings.theme.unwrap_or_else(system_theme)
     }
 
-    /// Modo de app do Windows (`AppsUseLightTheme`). Sem a chave — Windows
-    /// antigo, política de empresa —, vale o padrão escuro do app.
+    /// Modo de app do Windows (`AppsUseLightTheme`). Sem a chave (Windows
+    /// antigo, política de empresa), vale o padrão escuro do app.
     fn system_theme() -> Theme {
         use windows::Win32::System::Registry::{RegGetValueW, HKEY_CURRENT_USER, RRF_RT_REG_DWORD};
 
@@ -1301,7 +1301,7 @@ mod platform {
     }
 
     /// Barra de título no tema: modo escuro do DWM no `rose`, fundo e texto
-    /// da página, moldura na cor da moldura e cantos retos (§4.3 — nem a
+    /// da página, moldura na cor da moldura e cantos retos (§4.3: nem a
     /// janela escapa). Os atributos de cor e de canto são do Windows 11; no
     /// 10 as chamadas falham em silêncio e fica só o modo escuro.
     fn apply_title_bar(hwnd: HWND) {
@@ -1480,7 +1480,7 @@ mod platform {
     }
 
     /// Escreve o backup no arquivo escolhido. Cancelar não é falha e não vira
-    /// aviso — a v1 separava os dois casos do mesmo jeito.
+    /// aviso: a v1 separava os dois casos do mesmo jeito.
     fn export_backup(shared: &Shared, language: Language) -> BackupOutcome {
         let title = i18n::tr(language).settings.backup_export;
         let write = || -> Result<bool> {
@@ -1512,8 +1512,8 @@ mod platform {
         }
     }
 
-    /// Restaura o que o arquivo trouxer — o que ele não trouxer fica como está
-    /// (porte de `legacy/src/renderer/App.jsx` ~199–241).
+    /// Restaura o que o arquivo trouxer; o que ele não trouxer fica como está
+    /// (porte de `legacy/src/renderer/App.jsx` ~199-241).
     fn import_backup(
         shared: &Shared,
         data: &GameData,
@@ -1560,7 +1560,7 @@ mod platform {
     }
 
     /// O que uma mudança de preferência faz com o overlay (portado de
-    /// `legacy/src/main/index.js` ~737–746).
+    /// `legacy/src/main/index.js` ~737-746).
     ///
     /// Desligar o recurso derruba a thread inteira, com as duas janelas: é o que
     /// zera de verdade o custo do overlay, e não só o que ele desenha.
@@ -1579,7 +1579,7 @@ mod platform {
         // Atalhos e idioma aparecem no strip e no painel.
         shared.send_overlay(OverlayCmd::SettingsChanged);
 
-        // Com o jogo na frente, o HUD persistente aparece e some na hora —
+        // Com o jogo na frente, o HUD persistente aparece e some na hora,
         // menos com o painel aberto, que manda no estado.
         let hud_changed =
             settings.always_show_slots != previous.always_show_slots || !previous.enable_overlay;
@@ -1602,7 +1602,7 @@ mod platform {
             Focus(HWND),
         }
 
-        // SAFETY: empréstimo curto — tira os pedidos e resolve os alvos; solto
+        // SAFETY: empréstimo curto (tira os pedidos e resolve os alvos); solto
         // antes das chamadas que reentram.
         let actions: Vec<Native> = {
             let Some(app) = (unsafe { app_mut(hwnd) }) else {
@@ -1730,7 +1730,7 @@ mod platform {
     /// Encerra o app de verdade: destrói a janela, o que solta o ícone da
     /// bandeja (no `Drop` do `App`) e fecha o loop de mensagens.
     fn quit_app(hwnd: HWND) {
-        // SAFETY: empréstimo curto, solto antes do `DestroyWindow` — que chama
+        // SAFETY: empréstimo curto, solto antes do `DestroyWindow`, que chama
         // `WM_DESTROY` e `WM_NCDESTROY` de dentro dele mesmo.
         unsafe {
             if let Some(app) = app_mut(hwnd) {
@@ -2017,7 +2017,7 @@ mod platform {
                     DefWindowProcW(hwnd, message, wparam, lparam)
                 }
                 // Sem `NIM_SETVERSION`, o evento de mouse do ícone vem na parte
-                // baixa do `lParam` — o formato clássico da bandeja.
+                // baixa do `lParam`, o formato clássico da bandeja.
                 WM_APP_TRAY => {
                     match loword(lparam.0 as u32) as u32 {
                         WM_LBUTTONUP | WM_LBUTTONDBLCLK => restore_window(hwnd),
@@ -2039,7 +2039,7 @@ mod platform {
                     }
                 }
                 WM_CLOSE => {
-                    // Fechar também esconde — menos quando o pedido veio do
+                    // Fechar também esconde, menos quando o pedido veio do
                     // "Sair" do menu, ou quando não há ícone na bandeja: aí a
                     // janela escondida seria irrecuperável.
                     let to_tray =
@@ -2086,7 +2086,7 @@ mod platform {
                 _ => {
                     // O Explorer reiniciou (crash ou restart): o ícone da
                     // bandeja morreu com ele, e sem recriá-lo uma janela
-                    // escondida ficaria irrecuperável — o `WM_CLOSE` continua
+                    // escondida ficaria irrecuperável; o `WM_CLOSE` continua
                     // escondendo enquanto `tray.is_some()`.
                     if message == taskbar_created_message() && message != 0 {
                         if let Some(app) = app_mut(hwnd) {

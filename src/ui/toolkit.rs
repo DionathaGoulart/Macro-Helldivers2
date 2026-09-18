@@ -8,7 +8,7 @@
 //! desenha nada e não acorda a CPU.
 //!
 //! Nada aqui fala Win32: o desenho sai por [`Painter`], implementado sobre
-//! `ID2D1RenderTarget` em `gfx::d2d` — o mesmo trait serve à janela principal
+//! `ID2D1RenderTarget` em `gfx::d2d`; o mesmo trait serve à janela principal
 //! (`ID2D1HwndRenderTarget`) e ao overlay (`ID2D1DCRenderTarget`, Fase 9). Por
 //! isso o módulo inteiro compila e é testado no host.
 
@@ -228,7 +228,7 @@ pub fn grid_height(count: usize, cols: usize, cell_h: f32, gap: f32) -> f32 {
 
 /// Peso da fonte. Só os que o app embute da JetBrains Mono: 400, 700 e 800.
 /// `Black` é o `font-black` do guia, que resolve para a face mais pesada
-/// carregada (800) — comportamento herdado e aprovado (§3).
+/// carregada (800), comportamento herdado e aprovado (§3).
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Weight {
     Regular,
@@ -345,7 +345,7 @@ pub enum Visual {
 pub struct ImageStyle {
     pub opacity: f32,
     /// Cabe inteira no retângulo, preservando a proporção (`object-contain`).
-    /// Sem isso a imagem é esticada até preencher — o que só serve para os
+    /// Sem isso a imagem é esticada até preencher, o que só serve para os
     /// ícones quadrados do jogo.
     pub contain: bool,
 }
@@ -606,7 +606,7 @@ impl Ui {
     /// Acerta o relógio fora de uma passagem de construção.
     ///
     /// A janela parada não constrói nada, então `now_ms` fica no valor da última
-    /// passagem — que pode ser de minutos atrás. Um pulso disparado por um
+    /// passagem, que pode ser de minutos atrás. Um pulso disparado por um
     /// evento nasceria com todo esse tempo já decorrido e morreria antes do
     /// primeiro quadro; acertar o relógio antes é o que o faz aparecer.
     pub fn set_now(&mut self, now_ms: u64) {
@@ -684,7 +684,7 @@ impl Ui {
     }
 
     /// Segmento entre dois pontos. O retângulo do nó é a caixa que o traço
-    /// ocupa — um segmento vertical tem largura zero, e sem a folga da espessura
+    /// ocupa: um segmento vertical tem largura zero, e sem a folga da espessura
     /// ele seria descartado como vazio.
     pub fn line(&mut self, from: (f32, f32), to: (f32, f32), width: f32, color: Color) {
         let half = width / 2.0;
@@ -806,8 +806,8 @@ impl Ui {
     }
 
     /// Caret piscando (§4.5, `blink 1s step-end infinite`): aceso na primeira
-    /// metade do período, apagado na segunda. Sem estado por widget — sai do
-    /// relógio da passagem — e sem quadro de 16ms: a tela só é refeita quando
+    /// metade do período, apagado na segunda. Sem estado por widget (sai do
+    /// relógio da passagem) e sem quadro de 16ms: a tela só é refeita quando
     /// a fase troca. Quem encerra a piscada é a tela deixando de pedi-la.
     pub fn blink(&mut self, period_ms: u32) -> bool {
         if self.reduced_motion {
@@ -860,7 +860,7 @@ impl Ui {
     }
 
     /// Fecha o container: prende o deslocamento ao conteúdo real e desenha a
-    /// barra — polegar reto na cor da moldura, sem trilho.
+    /// barra (polegar reto na cor da moldura, sem trilho).
     pub fn scroll_end(&mut self, id: Id, view: Rect, content_height: f32) {
         self.pop_clip();
 
@@ -922,8 +922,8 @@ impl Ui {
                 let hot = self.frame.hit_at(x, y);
                 let hot_changed = hot != self.hot;
                 self.hot = hot;
-                // Clique só conta quando soltou em cima de quem foi pressionado
-                // — arrastar para fora cancela, como em qualquer botão nativo.
+                // Clique só conta quando soltou em cima de quem foi pressionado:
+                // arrastar para fora cancela, como em qualquer botão nativo.
                 let pressed = self.pressed.take();
                 let clicked = match pressed {
                     Some(pressed) if Some(pressed) == self.hot => Some(pressed),

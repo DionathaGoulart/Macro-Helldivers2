@@ -1,5 +1,5 @@
 //! Moldura da janela principal: topbar, banner de aviso, rodapé, o diálogo de
-//! atualização e a textura de scanline — tudo o que está na tela e não é de
+//! atualização e a textura de scanline, tudo o que está na tela e não é de
 //! nenhuma aba.
 //!
 //! Vive fora de `window.rs` para ser lógica pura: a janela só junta o estado,
@@ -28,7 +28,7 @@ pub struct Chrome<'a> {
     /// Aba da frente.
     pub tab: usize,
     pub game_focused: bool,
-    /// Jogo em "Tela Cheia" exclusiva — só aparece com o jogo em foco.
+    /// Jogo em "Tela Cheia" exclusiva. Só aparece com o jogo em foco.
     pub fullscreen_warning: bool,
     pub update: &'a UpdateStatus,
     /// O usuário clicou "Depois": o diálogo não volta, o rodapé assume.
@@ -82,7 +82,7 @@ pub fn build(
     self::footer(ui, measure, footer, chrome);
 
     // Por último, sobre tudo: enquanto o diálogo está aberto, o véu é quem
-    // responde a qualquer clique fora dele. Depois do "Depois" ele não volta —
+    // responde a qualquer clique fora dele. Depois do "Depois" ele não volta;
     // o botão do rodapé assume.
     if let UpdateStatus::Ready { version } = chrome.update {
         if !chrome.update_deferred {
@@ -139,7 +139,7 @@ fn status_footer(ui: &mut Ui, measure: &mut dyn Measure, row: &mut Rect, chrome:
     row.cut_left(FOOTER_GAP);
 
     // Presença: cheio de sucesso com o jogo na frente, vazio fora dele. O
-    // rótulo fica em conteúdo — a página não recebe texto de status (§2.4).
+    // rótulo fica em conteúdo: a página não recebe texto de status (§2.4).
     let square = row.cut_left(PRESENCE).middle_row(PRESENCE);
     let fill = if chrome.game_focused {
         palette.success.fill

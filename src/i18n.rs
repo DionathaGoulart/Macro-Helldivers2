@@ -156,7 +156,7 @@ pub struct Overlay {
     pub fullscreen_warning: &'static str,
 }
 
-/// Modal de "atualização pronta" — também embutido no JSX da v1.
+/// Modal de "atualização pronta", também embutido no JSX da v1.
 pub struct Update {
     pub title: &'static str,
     pub body: &'static str,
@@ -233,7 +233,7 @@ pub fn tr(language: Language) -> &'static Tr {
     }
 }
 
-/// Nome do idioma na própria língua — não traduzido, como na v1.
+/// Nome do idioma na própria língua, não traduzido, como na v1.
 pub fn language_name(language: Language) -> &'static str {
     match language {
         Language::Pt => "Português",
@@ -318,7 +318,7 @@ pub static PT: Tr = Tr {
         custom_import: "Usar slots atuais",
         custom_clear: "Limpar tudo",
         custom_equipment: "Equipamento (opcional)",
-        equip_none: "— Nenhum —",
+        equip_none: "Nenhum",
     },
     settings: SettingsText {
         keybinding: "Atalhos de Combate",
@@ -376,7 +376,7 @@ pub static PT: Tr = Tr {
     },
     overlay: Overlay {
         warning_title: "Aviso",
-        fullscreen_warning: "O jogo está em \"Tela Cheia\" — nesse modo o Windows minimiza o \
+        fullscreen_warning: "O jogo está em \"Tela Cheia\": nesse modo o Windows minimiza o \
                              jogo quando o overlay aparece. Mude o vídeo do jogo para \"Tela \
                              Cheia sem Borda\" (mesmo visual e desempenho).",
     },
@@ -468,7 +468,7 @@ pub static EN: Tr = Tr {
         custom_import: "Use current slots",
         custom_clear: "Clear all",
         custom_equipment: "Equipment (optional)",
-        equip_none: "— None —",
+        equip_none: "None",
     },
     settings: SettingsText {
         keybinding: "Combat Shortcuts",
@@ -526,7 +526,7 @@ pub static EN: Tr = Tr {
     },
     overlay: Overlay {
         warning_title: "Warning",
-        fullscreen_warning: "The game is in \"Fullscreen\" mode — Windows minimizes it whenever \
+        fullscreen_warning: "The game is in \"Fullscreen\" mode: Windows minimizes it whenever \
                              the overlay appears. Switch the game video mode to \"Borderless \
                              Fullscreen\" (same look and performance).",
     },
@@ -605,7 +605,7 @@ mod tests {
         );
         assert_eq!(
             PT.overlay.fullscreen_warning,
-            "O jogo está em \"Tela Cheia\" — nesse modo o Windows minimiza o jogo quando o overlay aparece. Mude o vídeo do jogo para \"Tela Cheia sem Borda\" (mesmo visual e desempenho)."
+            "O jogo está em \"Tela Cheia\": nesse modo o Windows minimiza o jogo quando o overlay aparece. Mude o vídeo do jogo para \"Tela Cheia sem Borda\" (mesmo visual e desempenho)."
         );
         assert_eq!(
             EN.settings.macro_speed_desc,
@@ -613,7 +613,7 @@ mod tests {
         );
     }
 
-    /// Nenhuma string pode ter ficado vazia no porte — vazio na UI passa batido.
+    /// Nenhuma string pode ter ficado vazia no porte: vazio na UI passa batido.
     #[test]
     fn no_string_is_empty() {
         for language in Language::ALL {
