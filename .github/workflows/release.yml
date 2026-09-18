@@ -99,6 +99,25 @@ jobs:
           "path=$file" >> $env:GITHUB_OUTPUT
           $line
 
+      # O texto do release é a seção `## [X.Y.Z]` do CHANGELOG.md, até a próxima
+      # `## [`. Tag sem seção (um beta, por exemplo) cai nas notas geradas pelo
+      # GitHub em vez de publicar um release vazio.
+      - name: Release notes
+        id: notes
+        shell: bash
+        run: |
+          awk -v head='## [${{ steps.version.outputs.version }}]' '
+            index($0, head) == 1 { on = 1; next }
+            on && /^## \[/ { exit }
+            on { print }
+          ' CHANGELOG.md > release-notes.md
+          if grep -q '[^[:space:]]' release-notes.md; then
+            echo "file=release-notes.md" >> "$GITHUB_OUTPUT"
+            echo "notas: seção ${{ steps.version.outputs.version }} do CHANGELOG.md ($(wc -l < release-notes.md) linhas)"
+          else
+            echo "CHANGELOG.md sem seção ${{ steps.version.outputs.version }}; usando as notas geradas"
+          fi
+
       - name: Publish release
         shell: pwsh
         env:
@@ -108,9 +127,14 @@ jobs:
             'release', 'create', '${{ github.ref_name }}',
             '${{ steps.installer.outputs.path }}',
             '${{ steps.checksum.outputs.path }}',
-            '--title', '${{ steps.version.outputs.version }}',
-            '--generate-notes'
+            '--title', 'Macro Helldivers 2 v${{ steps.version.outputs.version }}'
           )
+          $notes = '${{ steps.notes.outputs.file }}'
+          if ($notes) {
+            $ghArgs += @('--notes-file', $notes)
+          } else {
+            $ghArgs += '--generate-notes'
+          }
           if ('${{ steps.version.outputs.prerelease }}' -eq 'true') {
             $ghArgs += '--prerelease'
           }
