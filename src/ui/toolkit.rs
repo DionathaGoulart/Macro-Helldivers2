@@ -226,10 +226,13 @@ pub fn grid_height(count: usize, cols: usize, cell_h: f32, gap: f32) -> f32 {
     cell_h * rows as f32 + gap * (rows - 1) as f32
 }
 
-/// Peso da fonte. Só os dois que o app embute (Inter Regular e Black).
+/// Peso da fonte. Só os que o app embute da JetBrains Mono: 400, 700 e 800.
+/// `Black` é o `font-black` do guia, que resolve para a face mais pesada
+/// carregada (800) — comportamento herdado e aprovado (§3).
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Weight {
     Regular,
+    Bold,
     Black,
 }
 
@@ -252,6 +255,8 @@ pub struct TextStyle {
     /// Centraliza verticalmente no retângulo.
     pub middle: bool,
     pub wrap: bool,
+    /// Itálico de display (§3): só nos títulos grandes, com `Black`.
+    pub italic: bool,
 }
 
 impl TextStyle {
@@ -263,6 +268,7 @@ impl TextStyle {
             align: Align::Start,
             middle: false,
             wrap: false,
+            italic: false,
         }
     }
 
@@ -284,32 +290,32 @@ impl TextStyle {
     pub const fn wrap(self) -> TextStyle {
         TextStyle { wrap: true, ..self }
     }
+
+    pub const fn italic(self) -> TextStyle {
+        TextStyle {
+            italic: true,
+            ..self
+        }
+    }
 }
 
 /// Um desenho elementar. A lista de nós é o único formato que o painter enxerga.
+///
+/// Não há raio, gradiente nem elipse: cantos 100% retos em tudo, sem exceção
+/// (styleguide §4.3), e cor vive em fill sólido. O que o guia proíbe não tem
+/// como ser pedido.
 #[derive(Debug, Clone, PartialEq)]
 pub enum Visual {
-    /// Retângulo (arredondado quando `radius > 0`).
     Fill {
-        radius: f32,
         color: Color,
     },
-    /// Gradiente vertical, usado nos headers dos cards de estratagema.
-    Gradient {
-        radius: f32,
-        from: Color,
-        to: Color,
-    },
+    /// Moldura por dentro do retângulo, como a `border` do CSS.
     Stroke {
-        radius: f32,
         width: f32,
         color: Color,
     },
-    Ellipse {
-        color: Color,
-    },
-    /// Segmento com pontas arredondadas. É o traço das setas do codex, que os
-    /// ícones do legado desenhavam como linha + chevron.
+    /// Segmento de ponta reta. É o traço das setas do codex e dos ícones
+    /// desenhados.
     Line {
         from: (f32, f32),
         to: (f32, f32),
@@ -326,18 +332,18 @@ pub enum Visual {
         path: PathBuf,
         style: ImageStyle,
     },
+    /// Textura de scanline (§4.4): uma linha de 1 DIP a cada `step`, por cima
+    /// de tudo e sem responder ao mouse.
+    Scanlines {
+        step: f32,
+        color: Color,
+    },
 }
 
 /// Como a imagem ocupa o retângulo do nó.
-///
-/// `radius` recorta num retângulo arredondado (o `overflow-hidden` dos cards) e
-/// `zoom` amplia o conteúdo em torno do centro sem mexer no retângulo — juntos
-/// são o `object-cover` + `group-hover:scale-110` do CSS.
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct ImageStyle {
     pub opacity: f32,
-    pub radius: f32,
-    pub zoom: f32,
     /// Cabe inteira no retângulo, preservando a proporção (`object-contain`).
     /// Sem isso a imagem é esticada até preencher — o que só serve para os
     /// ícones quadrados do jogo.
@@ -345,11 +351,9 @@ pub struct ImageStyle {
 }
 
 impl ImageStyle {
-    /// Imagem opaca esticada no retângulo, sem recorte nem ampliação.
+    /// Imagem opaca esticada no retângulo.
     pub const FILL: ImageStyle = ImageStyle {
         opacity: 1.0,
-        radius: 0.0,
-        zoom: 1.0,
         contain: false,
     };
 
@@ -357,16 +361,8 @@ impl ImageStyle {
         ImageStyle { opacity, ..self }
     }
 
-    pub const fn rounded(self, radius: f32) -> ImageStyle {
-        ImageStyle { radius, ..self }
-    }
-
-    pub const fn zoom(self, zoom: f32) -> ImageStyle {
-        ImageStyle { zoom, ..self }
-    }
-
     /// Proporção preservada: a imagem cabe inteira e sobra espaço nas laterais
-    /// ou no topo, como o `object-contain` do legado.
+    /// ou no topo.
     pub const fn contain(self) -> ImageStyle {
         ImageStyle {
             contain: true,
@@ -440,13 +436,23 @@ pub trait Painter: Measure {
     fn clear(&mut self, color: Color);
     /// Recorte ativo dos próximos desenhos.
     fn set_clip(&mut self, clip: Option<Rect>);
-    fn fill(&mut self, rect: Rect, radius: f32, color: Color);
-    fn gradient(&mut self, rect: Rect, radius: f32, from: Color, to: Color);
-    fn stroke(&mut self, rect: Rect, radius: f32, width: f32, color: Color);
-    fn ellipse(&mut self, rect: Rect, color: Color);
+    fn fill(&mut self, rect: Rect, color: Color);
+    /// Moldura de `width` por dentro de `rect`.
+    fn stroke(&mut self, rect: Rect, width: f32, color: Color);
     fn line(&mut self, from: (f32, f32), to: (f32, f32), width: f32, color: Color);
     fn text(&mut self, rect: Rect, text: &str, style: TextStyle, color: Color);
     fn image(&mut self, rect: Rect, path: &Path, style: ImageStyle);
+
+    /// Linhas horizontais de 1 DIP a cada `step`. O padrão é um laço de
+    /// `fill`; um painter pode trocar por algo mais barato.
+    fn scanlines(&mut self, rect: Rect, step: f32, color: Color) {
+        let step = step.max(1.0);
+        let mut y = rect.y;
+        while y < rect.bottom() {
+            self.fill(Rect::new(rect.x, y, rect.w, 1.0), color);
+            y += step;
+        }
+    }
 }
 
 /// Percorre a lista de desenho. É tudo o que acontece num `WM_PAINT`.
@@ -454,16 +460,8 @@ pub fn paint(frame: &Frame, painter: &mut dyn Painter) {
     for node in &frame.nodes {
         painter.set_clip(node.clip);
         match &node.visual {
-            Visual::Fill { radius, color } => painter.fill(node.rect, *radius, *color),
-            Visual::Gradient { radius, from, to } => {
-                painter.gradient(node.rect, *radius, *from, *to)
-            }
-            Visual::Stroke {
-                radius,
-                width,
-                color,
-            } => painter.stroke(node.rect, *radius, *width, *color),
-            Visual::Ellipse { color } => painter.ellipse(node.rect, *color),
+            Visual::Fill { color } => painter.fill(node.rect, *color),
+            Visual::Stroke { width, color } => painter.stroke(node.rect, *width, *color),
             Visual::Line {
                 from,
                 to,
@@ -472,6 +470,7 @@ pub fn paint(frame: &Frame, painter: &mut dyn Painter) {
             } => painter.line(*from, *to, *width, *color),
             Visual::Text { text, style, color } => painter.text(node.rect, text, *style, *color),
             Visual::Image { path, style } => painter.image(node.rect, path, *style),
+            Visual::Scanlines { step, color } => painter.scanlines(node.rect, *step, *color),
         }
     }
     painter.set_clip(None);
@@ -499,6 +498,9 @@ struct AnimState {
 /// Quanto uma "marcha" da roda rola, em DIP. Equivale às três linhas que o
 /// Windows sugere por padrão.
 const WHEEL_STEP_DIP: f32 = 60.0;
+
+/// Intervalo de um quadro de animação contínua (hover, piscada de slot).
+pub const FRAME_MS: u32 = 16;
 
 /// Evento de mouse já convertido para DIP, em coordenadas de cliente.
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -543,7 +545,11 @@ pub struct Ui {
     anims: Vec<(Id, AnimState)>,
     frame: Frame,
     clips: Vec<Rect>,
-    animating: bool,
+    /// Daqui a quantos ms a tela precisa de outra passagem, se precisar. Um
+    /// fade pede o próximo quadro; o caret só pede a próxima troca de fase.
+    wake_ms: Option<u32>,
+    /// `prefers-reduced-motion` (§4.13): fades instantâneos e caret parado.
+    reduced_motion: bool,
 }
 
 impl Default for Ui {
@@ -563,8 +569,19 @@ impl Ui {
             anims: Vec::new(),
             frame: Frame::default(),
             clips: Vec::new(),
-            animating: false,
+            wake_ms: None,
+            reduced_motion: false,
         }
+    }
+
+    /// Liga o modo de movimento reduzido do sistema: os fades viram corte
+    /// seco e o caret fica aceso, sem timer nenhum.
+    pub fn set_reduced_motion(&mut self, on: bool) {
+        self.reduced_motion = on;
+    }
+
+    pub fn reduced_motion(&self) -> bool {
+        self.reduced_motion
     }
 
     // --- Passagem de construção ---
@@ -577,7 +594,7 @@ impl Ui {
         self.frame.hits.clear();
         self.frame.edits.clear();
         self.clips.clear();
-        self.animating = false;
+        self.wake_ms = None;
         for (_, state) in &mut self.scrolls {
             state.touched = false;
         }
@@ -610,9 +627,20 @@ impl Ui {
         &self.frame
     }
 
-    /// Há animação em curso: a janela mantém o timer de 16ms vivo.
+    /// Há animação em curso: a janela mantém um timer vivo.
     pub fn animating(&self) -> bool {
-        self.animating
+        self.wake_ms.is_some()
+    }
+
+    /// Daqui a quanto tempo a próxima passagem é necessária. `None` = a tela
+    /// está parada e nenhum timer deve existir (R14).
+    pub fn frame_delay(&self) -> Option<u32> {
+        self.wake_ms
+    }
+
+    fn wake_in(&mut self, ms: u32) {
+        let ms = ms.max(1);
+        self.wake_ms = Some(self.wake_ms.map_or(ms, |current| current.min(ms)));
     }
 
     pub fn hot(&self) -> Option<Id> {
@@ -640,38 +668,19 @@ impl Ui {
         self.frame.nodes.push(Node { rect, clip, visual });
     }
 
-    pub fn fill(&mut self, rect: Rect, radius: f32, color: Color) {
-        self.push_node(rect, Visual::Fill { radius, color });
+    pub fn fill(&mut self, rect: Rect, color: Color) {
+        self.push_node(rect, Visual::Fill { color });
     }
 
-    pub fn gradient(&mut self, rect: Rect, radius: f32, from: Color, to: Color) {
-        self.push_node(rect, Visual::Gradient { radius, from, to });
+    /// Moldura de `width` por dentro de `rect`.
+    pub fn stroke(&mut self, rect: Rect, width: f32, color: Color) {
+        self.push_node(rect, Visual::Stroke { width, color });
     }
 
-    pub fn stroke(&mut self, rect: Rect, radius: f32, width: f32, color: Color) {
-        self.push_node(
-            rect,
-            Visual::Stroke {
-                radius,
-                width,
-                color,
-            },
-        );
-    }
-
-    /// Brilho aproximado: traço externo semitransparente na cor do acento, no
-    /// lugar do `box-shadow` com blur do CSS (R5).
-    pub fn glow(&mut self, rect: Rect, radius: f32, color: Color) {
-        self.stroke(
-            rect.inset(-theme::GLOW_WIDTH / 2.0),
-            radius + theme::GLOW_WIDTH / 2.0,
-            theme::GLOW_WIDTH,
-            color.alpha(color.a * theme::GLOW_ALPHA),
-        );
-    }
-
-    pub fn ellipse(&mut self, rect: Rect, color: Color) {
-        self.push_node(rect, Visual::Ellipse { color });
+    /// Textura de scanline sobre `rect` (§4.4). Não registra área clicável:
+    /// é textura, não tela.
+    pub fn scanlines(&mut self, rect: Rect, step: f32, color: Color) {
+        self.push_node(rect, Visual::Scanlines { step, color });
     }
 
     /// Segmento entre dois pontos. O retângulo do nó é a caixa que o traço
@@ -709,7 +718,7 @@ impl Ui {
         self.image_styled(rect, path, ImageStyle::FILL.opacity(opacity));
     }
 
-    /// Imagem com recorte, ampliação ou proporção preservada (ver [`ImageStyle`]).
+    /// Imagem com opacidade ou proporção preservada (ver [`ImageStyle`]).
     pub fn image_styled(&mut self, rect: Rect, path: impl Into<PathBuf>, style: ImageStyle) {
         self.push_node(
             rect,
@@ -773,13 +782,14 @@ impl Ui {
     /// quadro.
     pub fn fade(&mut self, id: Id, on: bool, duration_ms: u32) -> f32 {
         let now = self.now_ms;
+        let duration_ms = if self.reduced_motion { 0 } else { duration_ms };
         let (value, target) = {
             let state = self.anim_mut(id, duration_ms);
             state.target = if on { 1.0 } else { 0.0 };
             (advance(state, now), state.target)
         };
         if value != target {
-            self.animating = true;
+            self.wake_in(FRAME_MS);
         }
         value
     }
@@ -795,19 +805,24 @@ impl Ui {
         state.touched = true;
     }
 
-    /// Oscilação contínua 0→1→0 no período dado, sem estado por widget: sai do
-    /// relógio da passagem. É o `animate-pulse-hd` do legado, usado no botão que
-    /// espera uma tecla. Enquanto for chamada, [`Ui::animating`] fica ligado — o
-    /// pulso não tem fim próprio, quem o encerra é a tela deixando de pedi-lo.
-    pub fn pulse(&mut self, period_ms: u32) -> f32 {
-        self.animating = true;
-        let period = period_ms.max(1) as u64;
-        let phase = (self.now_ms % period) as f32 / period as f32;
-        if phase < 0.5 {
-            phase * 2.0
-        } else {
-            2.0 - phase * 2.0
+    /// Caret piscando (§4.5, `blink 1s step-end infinite`): aceso na primeira
+    /// metade do período, apagado na segunda. Sem estado por widget — sai do
+    /// relógio da passagem — e sem quadro de 16ms: a tela só é refeita quando
+    /// a fase troca. Quem encerra a piscada é a tela deixando de pedi-la.
+    pub fn blink(&mut self, period_ms: u32) -> bool {
+        if self.reduced_motion {
+            return true;
         }
+        let period = period_ms.max(2) as u64;
+        let half = period / 2;
+        let phase = self.now_ms % period;
+        let (on, left) = if phase < half {
+            (true, half - phase)
+        } else {
+            (false, period - phase)
+        };
+        self.wake_in(left as u32);
+        on
     }
 
     /// Valor atual de um pulso, 1 no disparo e 0 quando acaba.
@@ -818,7 +833,7 @@ impl Ui {
             (advance(state, now), state.target)
         };
         if value != target {
-            self.animating = true;
+            self.wake_in(FRAME_MS);
         }
         value
     }
@@ -845,7 +860,7 @@ impl Ui {
     }
 
     /// Fecha o container: prende o deslocamento ao conteúdo real e desenha a
-    /// barra (5px, polegar slate — `scrollbar-hd` do legado).
+    /// barra — polegar reto na cor da moldura, sem trilho.
     pub fn scroll_end(&mut self, id: Id, view: Rect, content_height: f32) {
         self.pop_clip();
 
@@ -863,8 +878,7 @@ impl Ui {
         let thumb_y = view.y + (view.h - thumb_h) * (offset / max);
         self.fill(
             Rect::new(track.x, thumb_y, width, thumb_h),
-            width / 2.0,
-            theme::SCROLL_THUMB,
+            theme::palette().base_300,
         );
     }
 
@@ -998,17 +1012,11 @@ mod tests {
         fn set_clip(&mut self, clip: Option<Rect>) {
             self.clip = clip;
         }
-        fn fill(&mut self, rect: Rect, _radius: f32, _color: Color) {
+        fn fill(&mut self, rect: Rect, _color: Color) {
             self.calls.push(format!("fill {} {}", rect.x, rect.y));
         }
-        fn gradient(&mut self, _rect: Rect, _radius: f32, _from: Color, _to: Color) {
-            self.calls.push("gradient".into());
-        }
-        fn stroke(&mut self, _rect: Rect, _radius: f32, _width: f32, _color: Color) {
+        fn stroke(&mut self, _rect: Rect, _width: f32, _color: Color) {
             self.calls.push("stroke".into());
-        }
-        fn ellipse(&mut self, _rect: Rect, _color: Color) {
-            self.calls.push("ellipse".into());
         }
         fn line(&mut self, from: (f32, f32), to: (f32, f32), _width: f32, _color: Color) {
             self.calls
@@ -1064,7 +1072,7 @@ mod tests {
 
     fn frame_with_two_buttons(ui: &mut Ui) {
         ui.begin(0);
-        ui.fill(Rect::new(0.0, 0.0, 50.0, 20.0), 0.0, theme::CARD_BG);
+        ui.fill(Rect::new(0.0, 0.0, 50.0, 20.0), theme::ROSE.base_200);
         ui.hit(id("a"), Rect::new(0.0, 0.0, 50.0, 20.0));
         ui.hit(id("b"), Rect::new(50.0, 0.0, 50.0, 20.0));
         ui.end();
@@ -1287,26 +1295,58 @@ mod tests {
     }
 
     #[test]
-    fn a_pulse_oscillates_and_keeps_the_timer_alive() {
+    fn the_caret_blinks_and_only_wakes_at_the_phase_change() {
         let mut ui = Ui::new();
 
         ui.begin(0);
-        assert_eq!(ui.pulse(1_000), 0.0);
+        assert!(ui.blink(1_000), "primeira metade: aceso");
         ui.end();
-        assert!(ui.animating(), "o pulso não termina sozinho");
+        assert_eq!(
+            ui.frame_delay(),
+            Some(500),
+            "a tela só volta quando o caret apaga, não a cada 16ms"
+        );
 
-        ui.begin(500);
-        assert_eq!(ui.pulse(1_000), 1.0, "meio período: topo");
+        ui.begin(700);
+        assert!(!ui.blink(1_000), "segunda metade: apagado");
         ui.end();
+        assert_eq!(ui.frame_delay(), Some(300));
 
         ui.begin(1_000);
-        assert_eq!(ui.pulse(1_000), 0.0, "período fechado: voltou ao início");
+        assert!(ui.blink(1_000), "período fechado: aceso de novo");
         ui.end();
 
-        // Sem ninguém pedindo o pulso, o timer pode morrer.
+        // Sem ninguém pedindo a piscada, o timer pode morrer.
         ui.begin(1_200);
         ui.end();
         assert!(!ui.animating());
+        assert_eq!(ui.frame_delay(), None);
+    }
+
+    #[test]
+    fn a_fade_asks_for_a_full_frame_even_next_to_a_caret() {
+        let mut ui = Ui::new();
+        ui.begin(0);
+        ui.blink(1_000);
+        ui.fade(id("btn"), true, 300);
+        ui.end();
+        assert_eq!(ui.frame_delay(), Some(FRAME_MS), "o menor pedido vence");
+    }
+
+    #[test]
+    fn reduced_motion_cuts_fades_and_freezes_the_caret() {
+        let mut ui = Ui::new();
+        ui.set_reduced_motion(true);
+
+        ui.begin(0);
+        assert_eq!(ui.fade(id("btn"), true, 300), 1.0, "corte seco");
+        assert!(ui.blink(1_000));
+        ui.end();
+        assert!(!ui.animating(), "nada se mexe sozinho");
+
+        ui.begin(700);
+        assert!(ui.blink(1_000), "o caret fica aceso");
+        ui.end();
     }
 
     #[test]
@@ -1342,12 +1382,12 @@ mod tests {
     fn painting_walks_the_list_in_order() {
         let mut ui = Ui::new();
         ui.begin(0);
-        ui.fill(Rect::new(1.0, 2.0, 10.0, 10.0), 4.0, theme::CARD_BG);
+        ui.fill(Rect::new(1.0, 2.0, 10.0, 10.0), theme::ROSE.base_200);
         ui.text(
             Rect::new(0.0, 0.0, 50.0, 10.0),
             "MACROS",
             LABEL,
-            theme::TEXT,
+            theme::ROSE.content,
         );
         ui.image(Rect::new(0.0, 0.0, 10.0, 10.0), "icons/tray.png", 1.0);
         ui.end();
@@ -1366,7 +1406,7 @@ mod tests {
         let mut ui = Ui::new();
         ui.begin(0);
         // Vertical: sem a folga da espessura o retângulo sairia vazio.
-        ui.line((10.0, 4.0), (10.0, 20.0), 2.0, theme::CYAN);
+        ui.line((10.0, 4.0), (10.0, 20.0), 2.0, theme::ROSE.accent);
         ui.end();
 
         let node = &ui.frame().nodes[0];
@@ -1378,19 +1418,14 @@ mod tests {
     }
 
     #[test]
-    fn an_image_carries_its_corner_radius_and_zoom() {
+    fn an_image_carries_its_opacity_and_fit() {
         let mut ui = Ui::new();
         ui.begin(0);
         ui.image(Rect::new(0.0, 0.0, 10.0, 10.0), "icons/tray.png", 1.0);
         ui.image_styled(
             Rect::new(0.0, 0.0, 10.0, 10.0),
             "icons/tray.png",
-            ImageStyle::FILL.opacity(0.7).rounded(16.0).zoom(1.1),
-        );
-        ui.image_styled(
-            Rect::new(0.0, 0.0, 10.0, 10.0),
-            "icons/tray.png",
-            ImageStyle::FILL.contain(),
+            ImageStyle::FILL.opacity(0.4).contain(),
         );
         ui.end();
 
@@ -1400,35 +1435,46 @@ mod tests {
                 path: "icons/tray.png".into(),
                 style: ImageStyle::FILL,
             },
-            "o atalho desenha a imagem inteira, sem recorte nem ampliação"
+            "o atalho desenha a imagem inteira, esticada no retângulo"
         );
-        assert!(matches!(
+        assert_eq!(
             ui.frame().nodes[1].visual,
             Visual::Image {
+                path: "icons/tray.png".into(),
                 style: ImageStyle {
-                    opacity: 0.7,
-                    radius: 16.0,
-                    zoom: 1.1,
-                    contain: false,
+                    opacity: 0.4,
+                    contain: true,
                 },
-                ..
             }
-        ));
-        assert!(matches!(
-            ui.frame().nodes[2].visual,
-            Visual::Image {
-                style: ImageStyle { contain: true, .. },
-                ..
-            }
-        ));
+        );
+    }
+
+    #[test]
+    fn scanlines_are_texture_and_never_answer_the_mouse() {
+        let area = Rect::new(0.0, 0.0, 100.0, 10.0);
+        let mut ui = Ui::new();
+        ui.begin(0);
+        ui.scanlines(area, theme::SCANLINE_STEP, theme::ROSE.scanline);
+        ui.end();
+        assert_eq!(ui.frame().hit_at(5.0, 5.0), None);
+
+        let mut painter = Recorder::default();
+        paint(ui.frame(), &mut painter);
+        // Uma linha a cada 4 DIP em 10 DIP de altura: y = 0, 4 e 8.
+        assert_eq!(painter.calls, vec!["fill 0 0", "fill 0 4", "fill 0 8"]);
     }
 
     #[test]
     fn empty_shapes_and_strings_never_reach_the_painter() {
         let mut ui = Ui::new();
         ui.begin(0);
-        ui.fill(Rect::new(0.0, 0.0, 0.0, 10.0), 0.0, theme::CARD_BG);
-        ui.text(Rect::new(0.0, 0.0, 50.0, 10.0), "", LABEL, theme::TEXT);
+        ui.fill(Rect::new(0.0, 0.0, 0.0, 10.0), theme::ROSE.base_200);
+        ui.text(
+            Rect::new(0.0, 0.0, 50.0, 10.0),
+            "",
+            LABEL,
+            theme::ROSE.content,
+        );
         ui.hit(id("nada"), Rect::ZERO);
         ui.end();
 
@@ -1442,7 +1488,7 @@ mod tests {
         ui.begin(0);
         ui.push_clip(Rect::new(0.0, 0.0, 100.0, 100.0));
         ui.push_clip(Rect::new(50.0, 0.0, 100.0, 40.0));
-        ui.fill(Rect::new(0.0, 0.0, 200.0, 200.0), 0.0, theme::CARD_BG);
+        ui.fill(Rect::new(0.0, 0.0, 200.0, 200.0), theme::ROSE.base_200);
         ui.pop_clip();
         ui.pop_clip();
         ui.end();

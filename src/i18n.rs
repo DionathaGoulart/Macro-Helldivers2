@@ -33,6 +33,10 @@ pub struct Macros {
     pub clear_slot: &'static str,
     pub search_placeholder: &'static str,
     pub search_no_results: &'static str,
+    /// Slot sem estratagema, entre colchetes na tela (`[VAZIO]`).
+    pub empty: &'static str,
+    /// Kicker do estado vazio (`> NADA AQUI`).
+    pub nothing_here: &'static str,
 }
 
 pub struct Build {
@@ -138,9 +142,17 @@ pub struct SettingsText {
     pub persistent_hud: &'static str,
     pub persistent_hud_on: &'static str,
     pub persistent_hud_off: &'static str,
+    pub theme: &'static str,
+    pub theme_system: &'static str,
+    pub theme_dark: &'static str,
+    pub theme_light: &'static str,
+    /// Títulos do toast do backup.
+    pub toast_done: &'static str,
+    pub toast_error: &'static str,
 }
 
 pub struct Overlay {
+    pub warning_title: &'static str,
     pub fullscreen_warning: &'static str,
 }
 
@@ -243,6 +255,8 @@ pub static PT: Tr = Tr {
         clear_slot: "Remover do slot",
         search_placeholder: "Buscar estratagema...",
         search_no_results: "Nenhum estratagema encontrado para",
+        empty: "Vazio",
+        nothing_here: "Nada aqui",
     },
     build: Build {
         sub_meta: "Meta",
@@ -353,8 +367,15 @@ pub static PT: Tr = Tr {
         persistent_hud: "HUD Persistente",
         persistent_hud_on: "Slots sempre visíveis no jogo",
         persistent_hud_off: "Esconder slots ao fechar",
+        theme: "Tema",
+        theme_system: "Sistema",
+        theme_dark: "Escuro",
+        theme_light: "Claro",
+        toast_done: "Concluído",
+        toast_error: "Erro",
     },
     overlay: Overlay {
+        warning_title: "Aviso",
         fullscreen_warning: "O jogo está em \"Tela Cheia\" — nesse modo o Windows minimiza o \
                              jogo quando o overlay aparece. Mude o vídeo do jogo para \"Tela \
                              Cheia sem Borda\" (mesmo visual e desempenho).",
@@ -386,6 +407,8 @@ pub static EN: Tr = Tr {
         clear_slot: "Clear slot",
         search_placeholder: "Search stratagem...",
         search_no_results: "No stratagem found for",
+        empty: "Empty",
+        nothing_here: "Nothing here",
     },
     build: Build {
         sub_meta: "Meta",
@@ -494,8 +517,15 @@ pub static EN: Tr = Tr {
         persistent_hud: "Persistent HUD",
         persistent_hud_on: "Slots always visible in-game",
         persistent_hud_off: "Hide slots on close",
+        theme: "Theme",
+        theme_system: "System",
+        theme_dark: "Dark",
+        theme_light: "Light",
+        toast_done: "Done",
+        toast_error: "Error",
     },
     overlay: Overlay {
+        warning_title: "Warning",
         fullscreen_warning: "The game is in \"Fullscreen\" mode — Windows minimizes it whenever \
                              the overlay appears. Switch the game video mode to \"Borderless \
                              Fullscreen\" (same look and performance).",
@@ -608,6 +638,15 @@ mod tests {
                 t.settings.backup_desc,
                 t.settings.overlay_shortcut,
                 t.settings.persistent_hud_off,
+                t.settings.theme,
+                t.settings.theme_system,
+                t.settings.theme_dark,
+                t.settings.theme_light,
+                t.settings.toast_done,
+                t.settings.toast_error,
+                t.macros.empty,
+                t.macros.nothing_here,
+                t.overlay.warning_title,
                 t.overlay.fullscreen_warning,
                 t.update.title,
                 t.update.body,

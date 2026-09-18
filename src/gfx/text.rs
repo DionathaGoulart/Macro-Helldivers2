@@ -1,9 +1,11 @@
-//! DirectWrite: a Inter embutida, formatos cacheados e o desenho de texto.
+//! DirectWrite: a JetBrains Mono embutida, formatos cacheados e o desenho de
+//! texto.
 //!
-//! As duas faces (Regular 400 e Black 900) vêm de `assets/fonts/` para uma
-//! coleção privada do processo — nada é instalado no sistema, e o app não
-//! depende de o usuário ter a fonte. Se a carga falhar, o texto cai na fonte de
-//! interface do Windows em vez de sumir.
+//! Uma família para tudo (styleguide §3). As quatro faces que a interface usa —
+//! Regular 400, Bold 700, ExtraBold 800 e o itálico do 800, que é o dos títulos
+//! de display — vêm de `assets/fonts/` para uma coleção privada do processo:
+//! nada é instalado no sistema, e o app não depende de o usuário ter a fonte.
+//! Se a carga falhar, o texto cai na monoespaçada do Windows em vez de sumir.
 //!
 //! O `tracking` do tema (`letter-spacing` do CSS) só existe em
 //! `IDWriteTextLayout`, então todo texto vira layout — que também é o que mede.
@@ -20,18 +22,24 @@ use windows::Win32::Graphics::Direct2D::{
 use windows::Win32::Graphics::DirectWrite::{
     DWriteCreateFactory, IDWriteFactory5, IDWriteFontCollection1, IDWriteTextFormat,
     IDWriteTextLayout, IDWriteTextLayout1, DWRITE_FACTORY_TYPE_SHARED, DWRITE_FONT_STRETCH_NORMAL,
-    DWRITE_FONT_STYLE_NORMAL, DWRITE_FONT_WEIGHT_BLACK, DWRITE_FONT_WEIGHT_NORMAL,
-    DWRITE_PARAGRAPH_ALIGNMENT_CENTER, DWRITE_PARAGRAPH_ALIGNMENT_NEAR,
-    DWRITE_TEXT_ALIGNMENT_CENTER, DWRITE_TEXT_ALIGNMENT_LEADING, DWRITE_TEXT_ALIGNMENT_TRAILING,
-    DWRITE_TEXT_METRICS, DWRITE_TEXT_RANGE, DWRITE_TRIMMING, DWRITE_TRIMMING_GRANULARITY_CHARACTER,
-    DWRITE_WORD_WRAPPING_NO_WRAP, DWRITE_WORD_WRAPPING_WRAP,
+    DWRITE_FONT_STYLE_ITALIC, DWRITE_FONT_STYLE_NORMAL, DWRITE_FONT_WEIGHT_BOLD,
+    DWRITE_FONT_WEIGHT_EXTRA_BOLD, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_PARAGRAPH_ALIGNMENT_CENTER,
+    DWRITE_PARAGRAPH_ALIGNMENT_NEAR, DWRITE_TEXT_ALIGNMENT_CENTER, DWRITE_TEXT_ALIGNMENT_LEADING,
+    DWRITE_TEXT_ALIGNMENT_TRAILING, DWRITE_TEXT_METRICS, DWRITE_TEXT_RANGE, DWRITE_TRIMMING,
+    DWRITE_TRIMMING_GRANULARITY_CHARACTER, DWRITE_WORD_WRAPPING_NO_WRAP, DWRITE_WORD_WRAPPING_WRAP,
 };
 
+use crate::ui::theme::font;
 use crate::ui::toolkit::{Align, Measure, Rect, TextStyle, Weight};
 use crate::util;
 
 /// Arquivos da família, relativos a `assets/`.
-const FONT_FILES: [&str; 2] = ["fonts/Inter-Regular.ttf", "fonts/Inter-Black.ttf"];
+const FONT_FILES: [&str; 4] = [
+    "fonts/JetBrainsMono-Regular.ttf",
+    "fonts/JetBrainsMono-Bold.ttf",
+    "fonts/JetBrainsMono-ExtraBold.ttf",
+    "fonts/JetBrainsMono-ExtraBoldItalic.ttf",
+];
 
 /// Teto do cache de layouts. Uma tela cheia usa algumas centenas; passando
 /// disso (busca digitada rápido, por exemplo) o cache recomeça do zero.
@@ -57,14 +65,17 @@ impl StyleKey {
             tracking: style.tracking.to_bits(),
             weight: match style.weight {
                 Weight::Regular => 0,
-                Weight::Black => 1,
+                Weight::Bold => 1,
+                Weight::Black => 2,
             },
             align: match style.align {
                 Align::Start => 0,
                 Align::Center => 1,
                 Align::End => 2,
             },
-            flags: u8::from(style.middle) | (u8::from(style.wrap) << 1),
+            flags: u8::from(style.middle)
+                | (u8::from(style.wrap) << 1)
+                | (u8::from(style.italic) << 2),
         }
     }
 }
@@ -94,7 +105,10 @@ impl Text {
         let collection = match load_collection(&factory) {
             Ok(collection) => Some(collection),
             Err(err) => {
-                log::warn!("Inter não carregou ({err}); usando a fonte do sistema");
+                log::warn!(
+                    "{} não carregou ({err}); usando a fonte do sistema",
+                    font::FAMILY
+                );
                 None
             }
         };
@@ -109,9 +123,11 @@ impl Text {
 
     fn family(&self) -> PCWSTR {
         if self.collection.is_some() {
-            w!("Inter")
+            w!("JetBrains Mono")
         } else {
-            w!("Segoe UI")
+            // Monoespaçada do próprio Windows: o layout foi pensado para
+            // avanço fixo, e uma proporcional estouraria as colunas.
+            w!("Consolas")
         }
     }
 
@@ -121,9 +137,17 @@ impl Text {
             return Ok(format.clone());
         }
 
+        // `font-black` (900) resolve para a face mais pesada embutida, a 800 —
+        // comportamento herdado do guia e aprovado (§3).
         let weight = match style.weight {
             Weight::Regular => DWRITE_FONT_WEIGHT_NORMAL,
-            Weight::Black => DWRITE_FONT_WEIGHT_BLACK,
+            Weight::Bold => DWRITE_FONT_WEIGHT_BOLD,
+            Weight::Black => DWRITE_FONT_WEIGHT_EXTRA_BOLD,
+        };
+        let slant = if style.italic {
+            DWRITE_FONT_STYLE_ITALIC
+        } else {
+            DWRITE_FONT_STYLE_NORMAL
         };
         // SAFETY: todos os ponteiros são strings estáticas ou COM válidos.
         let format = unsafe {
@@ -131,7 +155,7 @@ impl Text {
                 self.family(),
                 self.collection.as_deref(),
                 weight,
-                DWRITE_FONT_STYLE_NORMAL,
+                slant,
                 DWRITE_FONT_STRETCH_NORMAL,
                 style.size,
                 w!("en-us"),
@@ -298,7 +322,7 @@ fn load_collection(factory: &IDWriteFactory5) -> Result<IDWriteFontCollection1> 
 }
 
 /// Registra as mesmas fontes no GDI, só para o processo. É o único jeito de o
-/// controle `EDIT` nativo (que não fala DirectWrite) usar a Inter.
+/// controle `EDIT` nativo (que não fala DirectWrite) usar a JetBrains Mono.
 pub fn register_gdi_fonts() {
     use windows::Win32::Graphics::Gdi::{AddFontResourceExW, FR_PRIVATE};
 

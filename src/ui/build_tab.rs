@@ -22,81 +22,77 @@ use crate::meta_stats::{self, Faction, ItemStat, MetaResult, DIFFICULTIES};
 use crate::settings::{Language, Settings, SLOT_COUNT};
 use crate::shared::Slots;
 use crate::ui::settings_tab::Change;
-use crate::ui::theme::{self, font, Color};
+use crate::ui::theme::{self, font, motion};
 use crate::ui::toolkit::{
     columns, grid_cell, grid_height, id, id_at, Align, Id, ImageStyle, Measure, Rect, TextStyle,
     Ui, Weight,
 };
-use crate::ui::widgets::{self, ButtonVariant, CardHeader, CardState, ChipLayout, ItemCard};
+use crate::ui::widgets::{
+    self, styles, ButtonVariant, CardHeader, CardState, ChipLayout, Glyph, ItemCard, Tone,
+};
 
-/// `px-6` da coluna de conteúdo.
+/// `screen-pad` da coluna de conteúdo.
 const PAGE_PADDING: f32 = 24.0;
+const PAGE_TOP: f32 = 20.0;
 /// Espaço reservado à direita para a barra de rolagem da página.
-const SCROLL_GUTTER: f32 = 12.0;
-/// `space-y-6` entre os blocos.
+const SCROLL_GUTTER: f32 = 14.0;
+/// Espaço entre os blocos — cabe a sombra dura do de cima.
 const SECTION_GAP: f32 = 24.0;
 
-/// Grupo das sub-abas (`p-1` em volta de botões `py-2.5`).
+/// Grupo das sub-abas.
 const SUBTAB_HEIGHT: f32 = 44.0;
 const SUBTAB_PADDING: f32 = 4.0;
-const SUBTAB_WIDTH: f32 = 132.0;
+const SUBTAB_WIDTH: f32 = 140.0;
 
-/// `p-4` das linhas de opção.
-const TOGGLE_HEIGHT: f32 = 52.0;
-const TOGGLE_GAP: f32 = 12.0;
+/// Linhas de opção.
+const TOGGLE_HEIGHT: f32 = 58.0;
+const TOGGLE_GAP: f32 = 10.0;
 /// Altura de um rótulo de campo.
-const LABEL_HEIGHT: f32 = 14.0;
+const LABEL_HEIGHT: f32 = 16.0;
 const LABEL_GAP: f32 = 8.0;
-/// `py-4 px-10` do botão de sortear.
+/// Botão de sortear (CTA grande).
 const GENERATE_HEIGHT: f32 = 52.0;
-const GENERATE_WIDTH: f32 = 260.0;
-/// Botões do header do card personalizado (`py-2 px-4`).
-const HEADER_BUTTON_HEIGHT: f32 = 30.0;
-const HEADER_BUTTON_WIDTH: f32 = 132.0;
-/// A faixa do header de um card começa logo depois do padding de cima.
-const CARD_HEADER_HEIGHT: f32 = 30.0;
+const GENERATE_WIDTH: f32 = 280.0;
 
-/// Slot em edição da build personalizada (`p-3`, ícone `w-14 h-14`).
-const CUSTOM_SLOT_HEIGHT: f32 = 116.0;
+/// Slot em edição da build personalizada.
+const CUSTOM_SLOT_HEIGHT: f32 = 124.0;
 const CUSTOM_SLOT_IMAGE: f32 = 56.0;
-/// `grid-cols-5` da grade personalizada.
+const CUSTOM_SLOT_BAR: f32 = 24.0;
+/// Colunas da grade personalizada.
 const CUSTOM_GRID_COLS: usize = 5;
-/// `max-h-[420px]` da grade.
-const CUSTOM_GRID_MAX_HEIGHT: f32 = 420.0;
-/// `gap-3` das grades.
+/// Altura máxima da grade: passando disso ela rola por dentro.
+const CUSTOM_GRID_MAX_HEIGHT: f32 = 440.0;
 const GRID_GAP: f32 = 12.0;
-/// `grid-cols-4` do equipamento.
+/// Colunas do equipamento, e o espaço entre as linhas de campos.
 const EQUIP_COLS: usize = 4;
-/// × que esvazia um slot em edição.
+const EQUIP_ROW_GAP: f32 = 12.0;
+/// Espaço entre os chips das builds salvas e a linha do nome.
+const SAVED_ROW_GAP: f32 = 16.0;
+/// × que esvazia um slot em edição, e o de limpar a busca.
 const CLEAR_SIZE: f32 = 20.0;
-const HOVER_MS: u32 = 180;
+const SEARCH_CLEAR_SIZE: f32 = 22.0;
 
-/// Botões de facção (`py-3`) e de dificuldade (`py-2`) da sub-aba Meta.
+/// Botões de facção e de dificuldade da sub-aba Meta.
 const META_FACTION_HEIGHT: f32 = 38.0;
 const META_DIFFICULTY_HEIGHT: f32 = 32.0;
-/// `gap-2` entre eles e `mb-4` depois das escolhas.
 const META_CHOICE_GAP: f32 = 8.0;
-const META_BLOCK_GAP: f32 = 16.0;
-/// `w-full py-4` do botão de gerar a build meta.
+const META_BLOCK_GAP: f32 = 18.0;
+/// Botão de gerar a build meta.
 const META_GENERATE_HEIGHT: f32 = 48.0;
-/// Altura do aviso de carregando/erro (`py-6`).
-const META_STATUS_HEIGHT: f32 = 48.0;
-/// `gap-6` entre a coluna dos estratagemas e a das armas.
-const META_COLUMN_GAP: f32 = 24.0;
-/// Linha de item das listas e o `space-y-1` entre elas.
-const META_ROW_HEIGHT: f32 = 24.0;
-const META_ROW_GAP: f32 = 4.0;
-/// `gap-2` entre as partes de uma linha.
+/// Altura do aviso de carregando/erro.
+const META_STATUS_HEIGHT: f32 = 56.0;
+const META_COLUMN_GAP: f32 = 28.0;
+/// Linha de item das listas.
+const META_ROW_HEIGHT: f32 = 28.0;
+const META_ROW_GAP: f32 = 0.0;
 const META_CELL_GAP: f32 = 8.0;
-/// Ícone (`w-6 h-6`), barra proporcional (`w-14 h-1.5`) e as colunas de número.
-const META_ICON: f32 = 24.0;
+/// Ícone, trilho de uso e as colunas de número.
+const META_ICON: f32 = 22.0;
 const META_BAR_WIDTH: f32 = 56.0;
-const META_BAR_HEIGHT: f32 = 6.0;
-const META_NEW_WIDTH: f32 = 34.0;
-const META_CHANGE_WIDTH: f32 = 38.0;
-const META_PERCENT_WIDTH: f32 = 44.0;
-/// Período do pulso do aviso de carregando (`animate-pulse`).
-const META_PULSE_MS: u32 = 1_400;
+const META_BAR_HEIGHT: f32 = 10.0;
+const META_NEW_WIDTH: f32 = 38.0;
+const META_CHANGE_WIDTH: f32 = 40.0;
+const META_PERCENT_WIDTH: f32 = 46.0;
 
 /// Largura do campo de nome da build e do botão de salvar. Os chips em si vêm
 /// de `widgets` — o painel do overlay mostra a mesma fileira.
@@ -264,6 +260,11 @@ fn loadout_delete_id(index: usize) -> Id {
     id_at("build.loadout.delete", index)
 }
 
+/// `TENTAR DE NOVO` do banner de erro da sub-aba Meta.
+fn meta_retry_id() -> Id {
+    id("build.meta.retry")
+}
+
 /// Id do campo com o nome da build. A janela precisa dele para reconhecer o
 /// `EDIT` nativo.
 pub fn name_id() -> Id {
@@ -276,12 +277,8 @@ fn save_id() -> Id {
 
 // --- Estilos ---
 
-fn label_style() -> TextStyle {
-    TextStyle::new(font::SIZE_LABEL, Weight::Black).tracking(font::TRACKING_LABEL)
-}
-
 fn hint_style() -> TextStyle {
-    TextStyle::new(font::SIZE_TINY, Weight::Regular).wrap()
+    styles::hint()
 }
 
 /// Em que pé está a consulta da sub-aba Meta.
@@ -468,7 +465,12 @@ impl BuildTab {
         // Primeira visita à aba: é aqui que `equipment.json` sai do disco (R1).
         let equipment = data::equipment();
 
-        let view = area.inset_xy(PAGE_PADDING, 16.0);
+        let view = Rect::new(
+            area.x + PAGE_PADDING,
+            area.y + PAGE_TOP,
+            area.w - PAGE_PADDING * 2.0,
+            area.h - PAGE_TOP,
+        );
         let width = view.w - SCROLL_GUTTER;
         let offset = ui.scroll_begin(scroll_id(), view);
         let mut y = view.y - offset;
@@ -546,7 +548,12 @@ impl BuildTab {
             }
         }
 
-        ui.scroll_end(scroll_id(), view, y - SECTION_GAP - (view.y - offset));
+        // A sombra do último painel e um respiro antes do rodapé.
+        ui.scroll_end(
+            scroll_id(),
+            view,
+            y - SECTION_GAP + theme::SHADOW + PAGE_TOP - (view.y - offset),
+        );
 
         // A lista aberta sai por cima de tudo e fora do recorte da página: ela
         // precisa cobrir o que vem depois do campo que a abriu.
@@ -555,24 +562,25 @@ impl BuildTab {
         }
     }
 
-    /// Grupo das três sub-abas, centralizado.
+    /// Grupo das três sub-abas, centralizado: um controle segmentado com
+    /// moldura e sombra `sm`.
     fn sub_tabs(&self, ui: &mut Ui, rect: Rect, ctx: &Ctx) {
+        let palette = theme::palette();
         let width = SUBTAB_WIDTH * SubTab::ALL.len() as f32 + SUBTAB_PADDING * 2.0;
         let group = rect.centered(width, SUBTAB_HEIGHT);
-        ui.fill(group, theme::RADIUS_CARD, theme::SURFACE);
-        ui.stroke(
-            group,
-            theme::RADIUS_CARD,
-            theme::HAIRLINE_WIDTH,
-            theme::HAIRLINE,
+        ui.fill(
+            group.translate(theme::SHADOW_SM, theme::SHADOW_SM),
+            palette.shadow,
         );
+        ui.fill(group, palette.base_200);
+        ui.stroke(group, theme::BORDER, palette.base_300);
 
-        let inner = group.inset(SUBTAB_PADDING);
+        let inner = group.inset(SUBTAB_PADDING + 1.0);
         for (index, sub) in SubTab::ALL.into_iter().enumerate() {
             let cell = Rect::new(
-                inner.x + SUBTAB_WIDTH * index as f32,
+                inner.x + (inner.w / 3.0) * index as f32,
                 inner.y,
-                SUBTAB_WIDTH,
+                inner.w / 3.0,
                 inner.h,
             );
             sub_tab(
@@ -605,14 +613,8 @@ impl BuildTab {
     /// Sub-aba Meta: facção × dificuldade e as listas do helldive.live.
     fn meta_card(&self, ui: &mut Ui, measure: &mut dyn Measure, rect: Rect, ctx: &Ctx) {
         let tr = ctx.tr();
-        let mut content = widgets::card(
-            ui,
-            rect,
-            Some(CardHeader {
-                title: tr.build.meta,
-                accent: theme::RED,
-            }),
-        );
+        let palette = theme::palette();
+        let mut content = widgets::card(ui, rect, Some(CardHeader::new(tr.build.meta, "log")));
 
         let row = content.cut_top(META_FACTION_HEIGHT);
         let cells = columns(row, Faction::ALL.len(), META_CHOICE_GAP);
@@ -634,7 +636,7 @@ impl BuildTab {
                 0 => tr.build.meta_difficulty_all.to_string(),
                 level => format!("D{level}"),
             };
-            difficulty_button(
+            widgets::choice_button(
                 ui,
                 difficulty_id(index),
                 cell,
@@ -647,21 +649,34 @@ impl BuildTab {
         match self.stats.lists() {
             Some(lists) => self.meta_body(ui, measure, content, lists, ctx),
             None => {
-                let (message, color) = match self.stats.state {
-                    MetaState::Loading | MetaState::Idle => {
-                        // O pulso do legado: o aviso respira enquanto a consulta
-                        // não volta, e o timer morre junto com ele.
-                        let pulse = 0.45 + 0.55 * ui.pulse(META_PULSE_MS);
-                        (tr.build.meta_loading, theme::CYAN.alpha(0.7 * pulse))
+                let status = content.with_h(META_STATUS_HEIGHT);
+                match self.stats.state {
+                    // O "carregando" do guia: caret piscando, sem spinner.
+                    MetaState::Loading | MetaState::Idle => widgets::caret_text(
+                        ui,
+                        measure,
+                        status,
+                        tr.build.meta_loading,
+                        styles::micro().align(Align::Center).middle(),
+                        palette.muted,
+                    ),
+                    // Erro de carregamento (§8): banner no lugar do conteúdo e
+                    // o `TENTAR DE NOVO`.
+                    _ => {
+                        let mut banner = status;
+                        let width = widgets::icon_btn_width(measure, tr.settings.update_retry);
+                        let retry = banner.cut_right(width).middle_row(widgets::ICON_BTN_HEIGHT);
+                        banner.cut_right(12.0);
+                        widgets::alert(ui, banner, palette.error, tr.build.meta_error, "");
+                        widgets::icon_btn(
+                            ui,
+                            meta_retry_id(),
+                            retry,
+                            Glyph::Text(tr.settings.update_retry),
+                            Tone::Plain,
+                        );
                     }
-                    _ => (tr.build.meta_error, theme::RED.alpha(0.8)),
-                };
-                ui.text(
-                    content.with_h(META_STATUS_HEIGHT),
-                    message.to_uppercase(),
-                    label_style().align(Align::Center).middle(),
-                    color,
-                );
+                }
             }
         }
     }
@@ -681,11 +696,10 @@ impl BuildTab {
             ui,
             meta_generate_id(),
             content.cut_top(META_GENERATE_HEIGHT),
-            &format!("\u{1F3C6} {}", tr.build.meta_generate),
-            ButtonVariant::Secondary,
-            theme::YELLOW,
+            tr.build.meta_generate,
+            ButtonVariant::Primary,
         );
-        content.skip_top(META_BLOCK_GAP);
+        content.skip_top(META_BLOCK_GAP + 4.0);
 
         let area = content.cut_top(meta_columns_height(lists));
         let pair = columns(area, 2, META_COLUMN_GAP);
@@ -696,16 +710,14 @@ impl BuildTab {
         ui.text(
             content.cut_top(LABEL_HEIGHT),
             format!(
-                "{} · {} {}",
+                "{} \u{00B7} {} {}",
                 tr.build.meta_credit,
                 grouped(lists.games, ctx.settings.language),
                 tr.build.meta_games
             )
             .to_uppercase(),
-            TextStyle::new(8.0, Weight::Black)
-                .tracking(font::TRACKING_WIDE)
-                .align(Align::Center),
-            theme::TEXT_DIM,
+            styles::micro().align(Align::Center),
+            theme::palette().muted,
         );
     }
 
@@ -720,13 +732,7 @@ impl BuildTab {
         ctx: &Ctx,
     ) {
         let mut cursor = rect;
-        ui.text(
-            cursor.cut_top(LABEL_HEIGHT),
-            ctx.tr().build.meta_top_strats.to_uppercase(),
-            label_style(),
-            theme::TEXT_DIM,
-        );
-        cursor.skip_top(LABEL_GAP);
+        meta_section_label(ui, &mut cursor, ctx.tr().build.meta_top_strats);
 
         let best = lists
             .stratagems
@@ -799,7 +805,7 @@ impl BuildTab {
         }
     }
 
-    /// Sub-aba Aleatória: o botão de sortear e a explicação.
+    /// Sub-aba Aleatória: o CTA de sortear e a explicação.
     fn random_card(&self, ui: &mut Ui, measure: &mut dyn Measure, rect: Rect, ctx: &Ctx) {
         let tr = ctx.tr();
         let mut content = widgets::card(ui, rect, None);
@@ -810,18 +816,17 @@ impl BuildTab {
             ui,
             generate_id(),
             button,
-            &format!("\u{1F3B2} {}", tr.build.generate),
+            tr.build.generate,
             ButtonVariant::Primary,
-            theme::YELLOW,
         );
-        content.skip_top(LABEL_GAP);
+        content.skip_top(LABEL_GAP + 6.0);
 
         let height = measure.text_size(tr.build.hint, hint_style(), content.w).1;
         ui.text(
             content.with_h(height),
             tr.build.hint,
             hint_style().align(Align::Center),
-            theme::TEXT_DIM,
+            theme::palette().muted,
         );
     }
 
@@ -843,7 +848,7 @@ impl BuildTab {
             LABEL_HEIGHT
                 + LABEL_GAP
                 + equip_rows() * (LABEL_HEIGHT + 4.0 + widgets::CONTROL_HEIGHT)
-                + (equip_rows() - 1.0) * TOGGLE_GAP
+                + (equip_rows() - 1.0) * EQUIP_ROW_GAP
                 + SECTION_GAP
         } else {
             0.0
@@ -855,16 +860,24 @@ impl BuildTab {
             + SECTION_GAP
             + widgets::CONTROL_HEIGHT
             + LABEL_GAP
+            + 4.0
             + grid
             + equip
     }
 
     fn custom_grid_height(&self, width: f32) -> f32 {
         if self.list.is_empty() {
-            return 48.0;
+            return 64.0;
         }
         let cell = custom_cell(width);
-        grid_height(self.list.len(), CUSTOM_GRID_COLS, cell, GRID_GAP).min(CUSTOM_GRID_MAX_HEIGHT)
+        // A folga de baixo é a sombra do tile, que também precisa caber.
+        (grid_height(
+            self.list.len(),
+            CUSTOM_GRID_COLS,
+            widgets::tile_height(cell),
+            GRID_GAP,
+        ) + theme::SHADOW)
+            .min(CUSTOM_GRID_MAX_HEIGHT)
     }
 
     fn custom_card(
@@ -876,15 +889,10 @@ impl BuildTab {
         equipment: Option<&Equipment>,
     ) {
         let tr = ctx.tr();
-        let mut content = widgets::card(
-            ui,
-            rect,
-            Some(CardHeader {
-                title: tr.build.custom_title,
-                accent: theme::CYAN,
-            }),
-        );
-        self.custom_header_buttons(ui, rect, ctx);
+        let palette = theme::palette();
+        let mut content =
+            widgets::card(ui, rect, Some(CardHeader::new(tr.build.custom_title, "db")));
+        self.custom_header_buttons(ui, measure, rect, ctx);
 
         let height = measure
             .text_size(tr.build.custom_hint, hint_style(), content.w)
@@ -893,7 +901,7 @@ impl BuildTab {
             content.cut_top(height),
             tr.build.custom_hint,
             hint_style(),
-            theme::TEXT_DIM,
+            palette.muted,
         );
         content.skip_top(LABEL_GAP);
 
@@ -907,19 +915,19 @@ impl BuildTab {
         // Busca e grade.
         let search = content.cut_top(widgets::CONTROL_HEIGHT);
         self.search_field(ui, search, ctx);
-        content.skip_top(LABEL_GAP);
+        content.skip_top(LABEL_GAP + 4.0);
 
         let grid = content.cut_top(self.custom_grid_height(content.w));
         if self.list.is_empty() {
-            ui.text(
+            empty_state(
+                ui,
                 grid,
-                format!(
+                tr.macros.nothing_here,
+                &format!(
                     "{} \u{201c}{}\u{201d}",
                     tr.macros.search_no_results,
                     self.search.trim()
                 ),
-                label_style().align(Align::Center).middle(),
-                theme::TEXT_DIM,
             );
         } else {
             self.custom_grid(ui, grid, ctx);
@@ -930,143 +938,125 @@ impl BuildTab {
             return;
         };
         content.skip_top(SECTION_GAP);
-        ui.text(
-            content.cut_top(LABEL_HEIGHT),
-            tr.build.custom_equipment.to_uppercase(),
-            label_style(),
-            theme::TEXT_DIM,
-        );
+        widgets::section_label(ui, content.cut_top(LABEL_HEIGHT), tr.build.custom_equipment);
         content.skip_top(LABEL_GAP);
         self.equipment_fields(ui, content, ctx, equipment);
     }
 
-    /// "Usar slots atuais" e "Limpar tudo", encostados no header do card.
-    fn custom_header_buttons(&self, ui: &mut Ui, rect: Rect, ctx: &Ctx) {
+    /// "Usar slots atuais" e "Limpar tudo", como `icon-btn` na barra de
+    /// título do painel.
+    fn custom_header_buttons(&self, ui: &mut Ui, measure: &mut dyn Measure, rect: Rect, ctx: &Ctx) {
         let tr = ctx.tr();
-        let row = Rect::new(
-            rect.x + widgets::CARD_PADDING,
-            rect.y + widgets::CARD_PADDING,
-            rect.w - widgets::CARD_PADDING * 2.0,
-            CARD_HEADER_HEIGHT,
-        )
-        .middle_row(HEADER_BUTTON_HEIGHT);
-
-        let mut cursor = row;
-        let reset = cursor.cut_right(HEADER_BUTTON_WIDTH);
-        cursor.cut_right(GRID_GAP);
-        let import = cursor.cut_right(HEADER_BUTTON_WIDTH);
-        widgets::button(
+        let mut cursor = widgets::card_actions(rect);
+        let width = widgets::icon_btn_width(measure, tr.build.custom_clear);
+        let reset = cursor.cut_right(width);
+        cursor.cut_right(8.0);
+        let width = widgets::icon_btn_width(measure, tr.build.custom_import);
+        let import = cursor.cut_right(width);
+        widgets::icon_btn(
             ui,
             import_slots_id(),
             import,
-            tr.build.custom_import,
-            ButtonVariant::Secondary,
-            theme::CYAN,
+            Glyph::Text(tr.build.custom_import),
+            Tone::Plain,
         );
-        widgets::button(
+        widgets::icon_btn(
             ui,
             reset_id(),
             reset,
-            tr.build.custom_clear,
-            ButtonVariant::Secondary,
-            theme::RED,
+            Glyph::Text(tr.build.custom_clear),
+            Tone::Danger,
         );
     }
 
-    /// Um dos quatro slots em edição da build personalizada.
+    /// Um dos quatro slots em edição da build personalizada: caixa aninhada
+    /// com a barra da categoria. O slot em edição fica erguido, com a barra em
+    /// accent; os outros levantam no hover.
     fn custom_slot(&self, ui: &mut Ui, index: usize, rect: Rect, ctx: &Ctx) {
+        let palette = theme::palette();
         let id = custom_slot_id(index);
         let active = self.custom_slot == index;
-        let hover = ui.fade(id, ui.is_hot(id), HOVER_MS);
+        let hover = ui.fade(id, ui.is_hot(id), motion::HOVER_MS);
         let strat = self
             .build
             .as_ref()
             .and_then(|build| build.stratagems[index])
             .and_then(|id| ctx.data.by_id(id));
 
-        ui.fill(
-            rect,
-            theme::RADIUS_CARD,
-            if active {
-                theme::CYAN.alpha(0.05).over(theme::CARD_BG)
-            } else {
-                theme::CARD_BG
-            },
-        );
-        ui.stroke(
-            rect,
-            theme::RADIUS_CARD,
-            2.0,
-            if active {
-                theme::CYAN.alpha(0.6)
-            } else {
-                theme::BORDER.mix(theme::CYAN.alpha(0.3), hover)
-            },
-        );
+        let lift = if active || ui.is_pressed(id) {
+            0.0
+        } else {
+            theme::LIFT * hover
+        };
+        let face = rect.translate(0.0, -lift);
+        let shadow = if active {
+            theme::SHADOW
+        } else {
+            theme::SHADOW_SM + (theme::SHADOW - theme::SHADOW_SM) * hover
+        };
+        ui.fill(face.translate(shadow, shadow), palette.shadow);
+        ui.fill(face, palette.base_100);
+
+        let mut content = face;
+        let bar = content.cut_top(CUSTOM_SLOT_BAR);
         if active {
-            ui.glow(rect, theme::RADIUS_CARD, theme::CYAN);
+            ui.fill(bar, palette.accent);
         }
-
-        let mut content = rect.inset(12.0);
+        ui.fill(
+            Rect::new(bar.x, bar.bottom() - theme::BORDER, bar.w, theme::BORDER),
+            palette.base_300,
+        );
         ui.text(
-            content.cut_top(LABEL_HEIGHT),
+            bar,
             format!("{} {}", ctx.tr().build.stratagem, index + 1).to_uppercase(),
-            TextStyle::new(8.0, Weight::Black)
-                .tracking(font::TRACKING_WIDE)
-                .align(Align::Center),
-            if active { theme::CYAN } else { theme::TEXT_DIM },
+            styles::micro().align(Align::Center).middle(),
+            if active {
+                palette.accent_content
+            } else {
+                palette.muted
+            },
         );
 
+        let mut content = content.inset(8.0);
         let picture = content
             .cut_top(CUSTOM_SLOT_IMAGE)
             .centered(CUSTOM_SLOT_IMAGE, CUSTOM_SLOT_IMAGE);
         match strat {
-            Some(strat) => ui.image_styled(
-                picture,
-                format!("icons/{}", strat.imagem),
-                ImageStyle::FILL.contain(),
-            ),
+            Some(strat) => {
+                ui.image(picture, format!("icons/{}", strat.imagem), 1.0);
+                ui.stroke(picture, theme::BORDER, palette.base_300);
+            }
             None => ui.text(
                 picture,
-                "\u{25A3}",
-                TextStyle::new(20.0, Weight::Regular)
-                    .align(Align::Center)
-                    .middle(),
-                theme::BORDER,
+                widgets::bracketed(ctx.tr().macros.empty),
+                styles::micro().align(Align::Center).middle(),
+                palette.muted,
             ),
         }
+        content.skip_top(6.0);
         ui.text(
             content,
             strat
                 .map(|strat| strat.nome.to_uppercase())
-                .unwrap_or_else(|| "—".into()),
-            TextStyle::new(font::SIZE_TINY, Weight::Black)
+                .unwrap_or_else(|| "\u{2014}".into()),
+            TextStyle::new(font::SIZE_MICRO, Weight::Black)
                 .align(Align::Center)
                 .wrap(),
-            theme::TEXT,
+            palette.content,
         );
+        ui.stroke(face, theme::BORDER, palette.base_300);
         ui.hit(id, rect);
 
         // O × sai por cima e é registrado depois, então ganha a sobreposição.
         if strat.is_some() {
             let clear = custom_clear_id(index);
             let button = Rect::new(
-                rect.right() - CLEAR_SIZE / 2.0,
-                rect.y - CLEAR_SIZE / 2.0,
+                face.right() - CLEAR_SIZE + 4.0,
+                face.y - 6.0,
                 CLEAR_SIZE,
                 CLEAR_SIZE,
             );
-            let strong = ui.is_hot(clear);
-            ui.ellipse(button, theme::RED.alpha(if strong { 1.0 } else { 0.8 }));
-            ui.text(
-                button,
-                "×",
-                TextStyle::new(font::SIZE_BODY, Weight::Black)
-                    .align(Align::Center)
-                    .middle(),
-                theme::TEXT,
-            );
-            ui.hit(clear, button);
+            widgets::icon_btn(ui, clear, button, Glyph::Close, Tone::Danger);
         }
     }
 
@@ -1074,44 +1064,45 @@ impl BuildTab {
         let focused = ctx.focused_edit == Some(search_id());
         let placeholder =
             (self.search.is_empty() && !focused).then_some(ctx.tr().macros.search_placeholder);
-        widgets::edit_host(ui, search_id(), rect, focused, placeholder);
+        let reserve = if self.search.is_empty() {
+            0.0
+        } else {
+            SEARCH_CLEAR_SIZE
+        };
+        widgets::edit_host(ui, search_id(), rect, focused, placeholder, reserve);
 
         if self.search.is_empty() {
             return;
         }
-        let id = clear_search_id();
         let button = Rect::new(
-            rect.right() - CLEAR_SIZE - 14.0,
-            rect.center_y() - CLEAR_SIZE / 2.0,
-            CLEAR_SIZE,
-            CLEAR_SIZE,
+            rect.right() - SEARCH_CLEAR_SIZE - 9.0,
+            rect.center_y() - SEARCH_CLEAR_SIZE / 2.0,
+            SEARCH_CLEAR_SIZE,
+            SEARCH_CLEAR_SIZE,
         );
-        let hover = ui.fade(id, ui.is_hot(id), HOVER_MS);
-        ui.text(
-            button,
-            "×",
-            TextStyle::new(font::SIZE_CARD_HEADER, Weight::Black)
-                .align(Align::Center)
-                .middle(),
-            theme::TEXT_DIM.mix(theme::TEXT, hover),
-        );
-        ui.hit(id, button);
+        widgets::icon_btn(ui, clear_search_id(), button, Glyph::Close, Tone::Plain);
     }
 
     /// Grade de 5 colunas, rolável, com as mesmas regras de clique da aba de
     /// macros — só que mexendo na build, e não nos slots.
     fn custom_grid(&self, ui: &mut Ui, view: Rect, ctx: &Ctx) {
         let cell = custom_cell(view.w);
-        let content = grid_height(self.list.len(), CUSTOM_GRID_COLS, cell, GRID_GAP);
+        let content = grid_height(
+            self.list.len(),
+            CUSTOM_GRID_COLS,
+            widgets::tile_height(cell),
+            GRID_GAP,
+        );
         let empty = Build::default();
         let build = self.build.as_ref().unwrap_or(&empty);
 
+        let content = content + theme::SHADOW;
         let offset = ui.scroll_begin(grid_id(), view);
         for (index, strat_id) in self.list.iter().enumerate() {
             let rect = grid_cell(
                 Rect::new(view.x, view.y - offset, view.w, view.h),
                 CUSTOM_GRID_COLS,
-                cell,
+                widgets::tile_height(cell),
                 GRID_GAP,
                 index,
             );
@@ -1130,7 +1121,6 @@ impl BuildTab {
                 CardState {
                     disabled: builds::custom_disabled(build, self.custom_slot, strat, ctx.data),
                     in_active_slot: build.stratagems[self.custom_slot] == Some(*strat_id),
-                    accent: tag_color(strat.primary_tag().unwrap_or_default()),
                 },
             );
         }
@@ -1142,12 +1132,12 @@ impl BuildTab {
         let tr = ctx.tr();
         let cell_height = LABEL_HEIGHT + 4.0 + widgets::CONTROL_HEIGHT;
         for (index, slot) in EquipSlot::ALL.into_iter().enumerate() {
-            let mut cell = grid_cell(rect, EQUIP_COLS, cell_height, TOGGLE_GAP, index);
+            let mut cell = grid_cell(rect, EQUIP_COLS, cell_height, EQUIP_ROW_GAP, index);
             ui.text(
                 cell.cut_top(LABEL_HEIGHT),
                 tr.build.equip_label(slot).to_uppercase(),
-                TextStyle::new(8.0, Weight::Black).tracking(font::TRACKING_WIDE),
-                theme::TEXT_DIM,
+                styles::micro(),
+                theme::palette().muted,
             );
             cell.skip_top(4.0);
 
@@ -1241,23 +1231,11 @@ impl BuildTab {
 
     fn saved_card(&self, ui: &mut Ui, rect: Rect, layout: &ChipLayout, ctx: &Ctx) {
         let tr = ctx.tr();
-        let mut content = widgets::card(
-            ui,
-            rect,
-            Some(CardHeader {
-                title: tr.build.saved,
-                accent: theme::YELLOW,
-            }),
-        );
+        let mut content = widgets::card(ui, rect, Some(CardHeader::new(tr.build.saved, "db")));
 
         let area = content.cut_top(layout.height);
         if self.loadouts.is_empty() {
-            ui.text(
-                area.with_h(widgets::CHIP_HEIGHT),
-                tr.build.saved_empty.to_uppercase(),
-                label_style().middle(),
-                theme::TEXT_DIM,
-            );
+            empty_state(ui, area, tr.macros.nothing_here, tr.build.saved_empty);
         } else {
             let active = builds::active_loadout(&self.loadouts, ctx.slots, ctx.data);
             for chip in &layout.chips {
@@ -1271,9 +1249,9 @@ impl BuildTab {
                 );
             }
         }
-        content.skip_top(widgets::CHIP_GAP);
+        content.skip_top(SAVED_ROW_GAP);
 
-        // Nome e botão, encostados à direita como o `ml-auto` da v1.
+        // Nome e botão, encostados à direita.
         let mut row = content.cut_top(widgets::CONTROL_HEIGHT);
         let save = row.cut_right(SAVE_WIDTH);
         row.cut_right(widgets::CHIP_GAP);
@@ -1281,10 +1259,9 @@ impl BuildTab {
 
         let focused = ctx.focused_edit == Some(name_id());
         let placeholder = (self.name.is_empty() && !focused).then_some(tr.build.save_placeholder);
-        widgets::edit_host(ui, name_id(), field, focused, placeholder);
+        widgets::edit_host(ui, name_id(), field, focused, placeholder, 0.0);
 
-        // Sem build na tela não há o que salvar: o botão fica só com o texto
-        // apagado, que é como o `disabled:opacity-30` da v1 se lia.
+        // Sem build na tela não há o que salvar: o botão fica `:disabled`.
         let can_save = self.build.as_ref().is_some_and(Build::has_stratagem);
         widgets::button(
             ui,
@@ -1292,11 +1269,10 @@ impl BuildTab {
             save,
             tr.build.save_build,
             if can_save {
-                ButtonVariant::Secondary
+                ButtonVariant::Primary
             } else {
-                ButtonVariant::Ghost
+                ButtonVariant::Disabled
             },
-            theme::YELLOW,
         );
     }
 
@@ -1311,31 +1287,17 @@ impl BuildTab {
         ctx: &Ctx,
     ) {
         let tr = ctx.tr();
-        let content = widgets::card(
-            ui,
-            rect,
-            Some(CardHeader {
-                title: tr.build.stratagems,
-                accent: theme::CYAN,
-            }),
-        );
-        // O botão de aplicar mora no header, como na v1.
-        let header = Rect::new(
-            rect.x + widgets::CARD_PADDING,
-            rect.y + widgets::CARD_PADDING,
-            rect.w - widgets::CARD_PADDING * 2.0,
-            CARD_HEADER_HEIGHT,
-        )
-        .middle_row(HEADER_BUTTON_HEIGHT);
-        let mut cursor = header;
-        let apply = cursor.cut_right(HEADER_BUTTON_WIDTH * 1.6);
-        widgets::button(
+        let content = widgets::card(ui, rect, Some(CardHeader::new(tr.build.stratagems, "sys")));
+        // O botão de aplicar mora na barra do painel.
+        let mut cursor = widgets::card_actions(rect);
+        let width = widgets::icon_btn_width(measure, tr.build.apply_stratagems);
+        let apply = cursor.cut_right(width);
+        widgets::icon_btn(
             ui,
             apply_id(),
             apply,
-            tr.build.apply_stratagems,
-            ButtonVariant::Secondary,
-            theme::CYAN,
+            Glyph::Text(tr.build.apply_stratagems),
+            Tone::Accent,
         );
 
         for (index, cell) in columns(content, SLOT_COUNT, GRID_GAP)
@@ -1346,7 +1308,7 @@ impl BuildTab {
             let label = format!("{} {}", tr.build.stratagem, index + 1);
             let card = ItemCard {
                 label: &label,
-                name: strat.map(|strat| strat.nome.as_str()).unwrap_or("—"),
+                name: strat.map(|strat| strat.nome.as_str()).unwrap_or("\u{2014}"),
                 image: strat.map(|strat| strat.imagem.as_str()),
                 subtitle: None,
                 description: None,
@@ -1432,10 +1394,7 @@ impl BuildTab {
         let content = widgets::card(
             ui,
             rect,
-            Some(CardHeader {
-                title: ctx.tr().build.equipment,
-                accent: theme::YELLOW,
-            }),
+            Some(CardHeader::new(ctx.tr().build.equipment, "sys")),
         );
         let width = cell_width(content.w, EQUIP_COLS);
         let mut y = content.y;
@@ -1490,6 +1449,11 @@ impl BuildTab {
         }
         if clicked == meta_generate_id() {
             self.generate_meta(ctx);
+            return Some(Action::Redraw);
+        }
+        if clicked == meta_retry_id() {
+            // A próxima construção registra a consulta de novo.
+            self.stats.reset();
             return Some(Action::Redraw);
         }
         for (index, faction) in Faction::ALL.into_iter().enumerate() {
@@ -1762,44 +1726,23 @@ fn raster_icon(path: &str) -> Option<String> {
     (lower.ends_with(".webp") || lower.ends_with(".png")).then(|| path.to_string())
 }
 
-/// Cor da categoria, igual à da aba de macros.
-fn tag_color(tag: &str) -> Color {
-    match tag {
-        "Offensive" => theme::RED,
-        "Defensive" => theme::GREEN,
-        _ => theme::CYAN,
-    }
-}
-
-/// Botão de dificuldade: o escolhido acende em ciano, e não em amarelo — é o que
-/// separa a linha da dificuldade da linha da facção na v1.
-fn difficulty_button(ui: &mut Ui, id: Id, rect: Rect, label: &str, selected: bool) {
-    let hover = ui.fade(id, ui.is_hot(id), HOVER_MS);
-    let style = TextStyle::new(font::SIZE_TINY, Weight::Black)
-        .tracking(font::TRACKING_LABEL)
-        .align(Align::Center)
-        .middle();
-
-    if selected {
-        ui.fill(rect, theme::RADIUS_BUTTON, theme::CYAN.alpha(0.2));
-        ui.stroke(rect, theme::RADIUS_BUTTON, 2.0, theme::CYAN.alpha(0.6));
-        ui.text(rect, label.to_uppercase(), style, theme::CYAN);
-    } else {
-        ui.fill(rect, theme::RADIUS_BUTTON, theme::SURFACE);
-        ui.stroke(
-            rect,
-            theme::RADIUS_BUTTON,
-            2.0,
-            theme::BORDER.mix(theme::CYAN.alpha(0.4), hover),
-        );
-        ui.text(
-            rect,
-            label.to_uppercase(),
-            style,
-            theme::TEXT_DIM.mix(theme::TEXT, hover),
-        );
-    }
-    ui.hit(id, rect);
+/// Estado vazio (§8): kicker `> NADA AQUI` e a explicação apagada, sem
+/// ilustração.
+fn empty_state(ui: &mut Ui, rect: Rect, kicker: &str, message: &str) {
+    let palette = theme::palette();
+    let mut rect = rect.middle_row(34.0);
+    ui.text(
+        rect.cut_top(16.0),
+        widgets::sigil(kicker),
+        styles::micro().align(Align::Center).middle(),
+        palette.accent_text,
+    );
+    ui.text(
+        rect,
+        message,
+        styles::hint().align(Align::Center).middle(),
+        palette.muted,
+    );
 }
 
 /// Recorta a próxima linha de uma lista, com o respiro entre linhas — e sem
@@ -1811,19 +1754,21 @@ fn meta_row(cursor: &mut Rect, index: usize) -> Rect {
     cursor.cut_top(META_ROW_HEIGHT)
 }
 
-/// Título de uma seção da coluna da direita, já avançando o cursor.
+/// Cabeçalho de uma lista (`section-label`), com a linha de 2px embaixo como
+/// o `thead` de uma tabela, já avançando o cursor.
 fn meta_section_label(ui: &mut Ui, cursor: &mut Rect, label: &str) {
-    ui.text(
-        cursor.cut_top(LABEL_HEIGHT),
-        label.to_uppercase(),
-        label_style(),
-        theme::TEXT_DIM,
+    let palette = theme::palette();
+    let row = cursor.cut_top(LABEL_HEIGHT);
+    widgets::section_label(ui, row, label);
+    ui.fill(
+        Rect::new(row.x, row.bottom() + 2.0, row.w, theme::BORDER),
+        palette.base_300,
     );
     cursor.skip_top(LABEL_GAP);
 }
 
-/// Linha do top de estratagemas: ícone, nome, "NOVO", variação, barra e o
-/// percentual (~678–691).
+/// Linha do top de estratagemas: ícone, nome, "NOVO", variação, o trilho de
+/// uso e o percentual.
 fn meta_stratagem_row(
     ui: &mut Ui,
     measure: &mut dyn Measure,
@@ -1833,14 +1778,12 @@ fn meta_stratagem_row(
     best: f64,
     ctx: &Ctx,
 ) {
+    let palette = theme::palette();
+    meta_rule(ui, rect);
     let mut row = rect;
     let icon = row.cut_left(META_ICON).middle_row(META_ICON);
     row.cut_left(META_CELL_GAP);
-    ui.image_styled(
-        icon,
-        format!("icons/{}", strat.imagem),
-        ImageStyle::FILL.contain(),
-    );
+    ui.image(icon, format!("icons/{}", strat.imagem), 1.0);
 
     // As colunas de número são fixas; o nome fica com o que sobrar.
     let percent = row.cut_right(META_PERCENT_WIDTH);
@@ -1850,7 +1793,7 @@ fn meta_stratagem_row(
     let change = row.cut_right(META_CHANGE_WIDTH);
     row.cut_right(META_CELL_GAP);
     let badge = stat.is_new().then(|| {
-        let badge = row.cut_right(META_NEW_WIDTH).middle_row(14.0);
+        let badge = row.cut_right(META_NEW_WIDTH).middle_row(16.0);
         row.cut_right(META_CELL_GAP);
         badge
     });
@@ -1858,45 +1801,40 @@ fn meta_stratagem_row(
     meta_name(ui, measure, row, &strat.nome);
 
     if let Some(badge) = badge {
-        ui.fill(badge, 3.0, theme::YELLOW);
+        // `tag-accent`.
+        ui.fill(badge, palette.accent);
+        ui.stroke(badge, theme::BORDER, palette.base_300);
         ui.text(
             badge,
             ctx.tr().build.meta_new,
-            TextStyle::new(7.0, Weight::Black)
+            TextStyle::new(font::SIZE_TINY, Weight::Black)
                 .align(Align::Center)
                 .middle(),
-            theme::TEXT_ON_ACCENT,
+            palette.accent_content,
         );
     }
 
     let delta = stat.change();
     let (arrow, color) = match delta {
-        delta if delta > 0.0 => ("\u{25B2}", theme::GREEN),
-        delta if delta < 0.0 => ("\u{25BC}", theme::RED),
-        _ => ("", theme::TEXT_DIM),
+        delta if delta > 0.0 => ("\u{25B2}", palette.success.text),
+        delta if delta < 0.0 => ("\u{25BC}", palette.error.text),
+        _ => ("", palette.muted),
     };
     ui.text(
         change,
         format!("{arrow}{:.1}", delta.abs()),
-        TextStyle::new(8.0, Weight::Black)
+        TextStyle::new(font::SIZE_MICRO, Weight::Bold)
             .align(Align::End)
             .middle(),
         color,
     );
 
-    // Barra proporcional ao primeiro colocado, e não a 100%.
-    ui.fill(bar, META_BAR_HEIGHT / 2.0, theme::BORDER);
+    // Trilho proporcional ao primeiro colocado, e não a 100%.
     let share = match best > 0.0 {
         true => (stat.loadouts_percentage / best).clamp(0.0, 1.0) as f32,
         false => 0.0,
     };
-    if share > 0.0 {
-        ui.fill(
-            bar.with_w(bar.w * share),
-            META_BAR_HEIGHT / 2.0,
-            theme::CYAN,
-        );
-    }
+    widgets::usage_bar(ui, bar, share);
     meta_percent(ui, percent, stat);
 }
 
@@ -1909,6 +1847,7 @@ fn meta_item_row(
     image: Option<&str>,
     stat: ItemStat,
 ) {
+    meta_rule(ui, rect);
     let mut row = rect;
     let icon = row.cut_left(META_ICON).middle_row(META_ICON);
     row.cut_left(META_CELL_GAP);
@@ -1922,24 +1861,38 @@ fn meta_item_row(
     meta_percent(ui, percent, stat);
 }
 
+/// Divisor de linha de lista: 1 DIP da moldura a 30%, embaixo da linha.
+fn meta_rule(ui: &mut Ui, rect: Rect) {
+    ui.fill(
+        Rect::new(
+            rect.x,
+            rect.bottom() - theme::HAIRLINE,
+            rect.w,
+            theme::HAIRLINE,
+        ),
+        theme::palette().rule(),
+    );
+}
+
 fn meta_name(ui: &mut Ui, measure: &mut dyn Measure, rect: Rect, name: &str) {
-    let style = TextStyle::new(font::SIZE_TINY, Weight::Black).middle();
+    let style = TextStyle::new(font::SIZE_MICRO, Weight::Bold).middle();
     ui.text(
         rect,
         ellipsize(measure, &name.to_uppercase(), style, rect.w),
         style,
-        theme::TEXT,
+        theme::palette().content,
     );
 }
 
+/// Percentual em números tabulares — a fonte já é monoespaçada.
 fn meta_percent(ui: &mut Ui, rect: Rect, stat: ItemStat) {
     ui.text(
         rect,
         format!("{:.1}%", stat.loadouts_percentage),
-        TextStyle::new(font::SIZE_TINY, Weight::Black)
+        TextStyle::new(font::SIZE_LABEL, Weight::Black)
             .align(Align::End)
             .middle(),
-        theme::CYAN,
+        theme::palette().accent_text,
     );
 }
 
@@ -1989,31 +1942,22 @@ fn grouped(value: u64, language: Language) -> String {
     out
 }
 
+/// Segmento do grupo de sub-abas: o escolhido inunda de accent, os outros
+/// ganham o fill de 8% no hover (como os itens de navegação).
 fn sub_tab(ui: &mut Ui, id: Id, rect: Rect, label: &str, selected: bool) {
-    let hover = ui.fade(id, ui.is_hot(id), HOVER_MS);
-    let style = TextStyle::new(font::SIZE_LABEL, Weight::Black)
-        .tracking(font::TRACKING_WIDE)
-        .align(Align::Center)
-        .middle();
+    let palette = theme::palette();
+    let hover = ui.fade(id, ui.is_hot(id), motion::HOVER_MS);
+    let style = styles::label().align(Align::Center).middle();
 
     if selected {
-        ui.fill(rect, theme::RADIUS_BUTTON, theme::YELLOW);
-        ui.glow(rect, theme::RADIUS_BUTTON, theme::YELLOW);
-        ui.text(rect, label.to_uppercase(), style, theme::TEXT_ON_ACCENT);
+        ui.fill(rect, palette.accent);
+        ui.stroke(rect, theme::BORDER, palette.base_300);
+        ui.text(rect, label.to_uppercase(), style, palette.accent_content);
     } else {
         if hover > 0.0 {
-            ui.fill(
-                rect,
-                theme::RADIUS_BUTTON,
-                theme::SURFACE_HOVER.alpha(0.6 * hover),
-            );
+            ui.fill(rect, palette.hover_fill().faded(hover));
         }
-        ui.text(
-            rect,
-            label.to_uppercase(),
-            style,
-            theme::TEXT_DIM.mix(theme::TEXT, hover),
-        );
+        ui.text(rect, label.to_uppercase(), style, palette.content);
     }
     ui.hit(id, rect);
 }
@@ -2031,7 +1975,7 @@ fn meta_rows_height(count: usize) -> f32 {
     }
 }
 
-/// Título mais as linhas de uma seção da coluna da direita.
+/// Cabeçalho mais as linhas de uma lista.
 fn meta_section_height(count: usize) -> f32 {
     LABEL_HEIGHT + LABEL_GAP + meta_rows_height(count)
 }
@@ -2058,6 +2002,7 @@ impl BuildTab {
             Some(lists) => {
                 META_GENERATE_HEIGHT
                     + META_BLOCK_GAP
+                    + 4.0
                     + meta_columns_height(lists)
                     + META_BLOCK_GAP
                     + LABEL_HEIGHT
@@ -2073,11 +2018,11 @@ fn random_height(measure: &mut dyn Measure, width: f32, ctx: &Ctx) -> f32 {
     let hint = measure
         .text_size(ctx.tr().build.hint, hint_style(), inner)
         .1;
-    widgets::card_chrome(false) + GENERATE_HEIGHT + LABEL_GAP + hint
+    widgets::card_chrome(false) + GENERATE_HEIGHT + LABEL_GAP + 6.0 + hint
 }
 
 fn saved_height(layout: &ChipLayout) -> f32 {
-    widgets::card_chrome(true) + layout.height + widgets::CHIP_GAP + widgets::CONTROL_HEIGHT
+    widgets::card_chrome(true) + layout.height + SAVED_ROW_GAP + widgets::CONTROL_HEIGHT
 }
 
 fn equip_rows() -> f32 {
@@ -2283,11 +2228,18 @@ mod tests {
             tab.take_meta_request(),
             Some((Faction::Terminid, DIFFICULTIES[0]))
         );
+        // O "carregando" é o texto com o caret piscando no lugar das
+        // reticências.
         let loading = i18n::tr(settings.language)
             .build
             .meta_loading
+            .trim_end_matches('.')
             .to_uppercase();
         assert!(texts(&ui).contains(&loading));
+        assert!(
+            ui.animating(),
+            "o caret pisca enquanto a consulta não volta"
+        );
         assert!(!ui.frame().has_hit(meta_generate_id()));
         // E só pede uma vez enquanto a consulta não volta.
         build(&mut tab, &mut ui, &ctx(&data, &settings));
@@ -2362,11 +2314,23 @@ mod tests {
         build(&mut tab, &mut ui, &ctx(&data, &settings));
 
         let error = i18n::tr(settings.language).build.meta_error.to_uppercase();
-        assert!(texts(&ui).contains(&error));
+        assert!(texts(&ui).contains(&format!("! {error}")));
         assert!(!ui.frame().has_hit(meta_generate_id()));
         // E o botão, se clicado assim mesmo, não sorteia nada.
         tab.on_click(meta_generate_id(), &ctx(&data, &settings));
         assert!(tab.build.is_none());
+
+        // O banner oferece tentar de novo, e a próxima construção pede outra vez.
+        assert!(ui.frame().has_hit(meta_retry_id()));
+        assert_eq!(
+            tab.on_click(meta_retry_id(), &ctx(&data, &settings)),
+            Some(Action::Redraw)
+        );
+        build(&mut tab, &mut ui, &ctx(&data, &settings));
+        assert_eq!(
+            tab.take_meta_request(),
+            Some((Faction::Terminid, DIFFICULTIES[0]))
+        );
     }
 
     #[test]
@@ -2807,8 +2771,10 @@ mod tests {
         let mut ui = Ui::new();
         build(&mut tab, &mut ui, &ctx(&data, &settings));
 
-        let empty = i18n::tr(settings.language).build.saved_empty.to_uppercase();
-        assert!(texts(&ui).contains(&empty));
+        let tr = i18n::tr(settings.language);
+        let texts = texts(&ui);
+        assert!(texts.contains(&tr.build.saved_empty.to_string()));
+        assert!(texts.contains(&widgets::sigil(tr.macros.nothing_here)));
         assert!(!ui.frame().has_hit(loadout_id(0)));
         // O campo de nome continua lá, com a dica no lugar do filho nativo.
         assert!(ui.frame().has_hit(name_id()));

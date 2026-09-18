@@ -20,25 +20,22 @@ use crate::loadouts::{self, Loadout};
 use crate::settings::Settings;
 use crate::shared::Slots;
 use crate::ui::macro_tab::{self, MacroTab};
-use crate::ui::theme::{self, font, Color};
-use crate::ui::toolkit::{id, id_at, Align, Id, Measure, Rect, TextStyle, Ui, Weight};
-use crate::ui::widgets;
+use crate::ui::theme;
+use crate::ui::toolkit::{id, id_at, Align, Id, Measure, Rect, Ui};
+use crate::ui::widgets::{self, styles, Glyph, Tone};
 
-/// Folga entre a janela (840×660) e o vidro (820×640): é onde a sombra do
-/// legado se espalhava.
+/// Folga entre a janela (840×660) e o painel (820×640): é onde cabe a sombra
+/// dura.
 const MARGIN: f32 = 10.0;
-/// `rounded-3xl` do container.
-const RADIUS: f32 = 24.0;
-/// Faixa do título e do botão de fechar.
-const HEADER_HEIGHT: f32 = 44.0;
+/// Barra de título do painel, com os quadrados de janela e o fechar.
+const HEADER_HEIGHT: f32 = 40.0;
 /// Aviso de tela cheia exclusiva, quando o jogo está nesse modo.
-const WARNING_HEIGHT: f32 = 52.0;
+const WARNING_HEIGHT: f32 = 68.0;
 /// Rodapé com as builds salvas: rótulo + duas fileiras de chips.
-const SAVED_HEIGHT: f32 = 108.0;
-/// `px-6` das faixas fixas.
+const SAVED_HEIGHT: f32 = 112.0;
+/// Padding das faixas fixas.
 const PAGE_PADDING: f32 = 24.0;
-const CLOSE_SIZE: f32 = 28.0;
-const HOVER_MS: u32 = 180;
+const CLOSE_SIZE: f32 = 24.0;
 
 /// Id do × que fecha o painel.
 fn close_id() -> Id {
@@ -124,89 +121,85 @@ impl Panel {
     // --- Construção ---
 
     pub fn build(&mut self, ui: &mut Ui, measure: &mut dyn Measure, area: Rect, ctx: &Ctx) {
-        let glass = area.inset(MARGIN);
-        ui.fill(glass, RADIUS, theme::BG_DEEP.alpha(0.85));
-        ui.stroke(
-            glass,
-            RADIUS,
-            theme::HAIRLINE_WIDTH,
-            Color::rgba(0xFFFFFF, 0.10),
+        let palette = theme::palette();
+        // `dialog-box`: sombra dura, fundo de página e a moldura por cima de
+        // tudo no fim.
+        let window = area.inset(MARGIN);
+        let window = Rect::new(
+            window.x,
+            window.y,
+            window.w - theme::SHADOW / 2.0,
+            window.h - theme::SHADOW / 2.0,
         );
+        ui.fill(
+            window.translate(theme::SHADOW, theme::SHADOW),
+            palette.shadow,
+        );
+        ui.fill(window, palette.base_100);
 
-        let mut body = glass;
+        let mut body = window;
         let header = body.cut_top(HEADER_HEIGHT);
         self.header(ui, header, ctx);
         if self.warning {
             let banner = body.cut_top(WARNING_HEIGHT);
-            warning(ui, banner, ctx.tr().overlay.fullscreen_warning);
+            let tr = ctx.tr();
+            widgets::alert(
+                ui,
+                banner.inset_xy(PAGE_PADDING, 10.0),
+                palette.warning,
+                tr.overlay.warning_title,
+                tr.overlay.fullscreen_warning,
+            );
         }
         let saved = body.cut_bottom(SAVED_HEIGHT);
 
         self.macro_tab.build(ui, measure, body, &ctx.macro_ctx());
         self.saved(ui, measure, saved, ctx);
+        ui.stroke(window, theme::BORDER, palette.base_300);
     }
 
-    /// Título à esquerda e o × à direita, com o filete do header embaixo.
+    /// Barra de título: nome do "programa", os quadrados de janela e o
+    /// `icon-btn` de fechar à direita.
     fn header(&self, ui: &mut Ui, rect: Rect, ctx: &Ctx) {
-        let mut row = rect.inset_xy(PAGE_PADDING, 0.0);
+        let palette = theme::palette();
+        ui.fill(rect, palette.base_200);
         ui.fill(
-            Rect::new(
-                rect.x + RADIUS,
-                rect.bottom() - theme::HAIRLINE_WIDTH,
-                (rect.w - RADIUS * 2.0).max(0.0),
-                theme::HAIRLINE_WIDTH,
-            ),
-            0.0,
-            theme::HAIRLINE,
+            Rect::new(rect.x, rect.bottom() - theme::BORDER, rect.w, theme::BORDER),
+            palette.base_300,
         );
 
+        let mut row = rect.inset_xy(14.0, 0.0);
+        row.h -= theme::BORDER;
         let close = row.cut_right(CLOSE_SIZE).middle_row(CLOSE_SIZE);
+        widgets::icon_btn(ui, close_id(), close, Glyph::Close, Tone::Plain);
+        row.cut_right(14.0);
+        let row = widgets::window_dots(ui, row, palette.accent);
         ui.text(
-            row.middle_row(16.0),
-            ctx.tr().tabs.macro_tab.to_uppercase(),
-            TextStyle::new(font::SIZE_LABEL, Weight::Black).tracking(font::TRACKING_WIDE),
-            theme::CYAN,
+            row,
+            widgets::file_name(ctx.tr().tabs.macro_tab, "exe"),
+            styles::micro().middle(),
+            palette.muted,
         );
-
-        // `text-slate-500 hover:text-red-500` do botão de fechar da v1.
-        let id = close_id();
-        let hover = ui.fade(id, ui.is_hot(id), HOVER_MS);
-        if hover > 0.0 {
-            ui.fill(close, 8.0, theme::SURFACE.alpha(0.6 * hover));
-        }
-        ui.text(
-            close,
-            "×",
-            TextStyle::new(font::SIZE_TITLE, Weight::Black)
-                .align(Align::Center)
-                .middle(),
-            theme::TEXT_DIM.mix(theme::RED, hover),
-        );
-        ui.hit(id, close);
     }
 
     /// Rodapé: os chips das builds salvas, só para aplicar.
     fn saved(&self, ui: &mut Ui, measure: &mut dyn Measure, rect: Rect, ctx: &Ctx) {
+        let palette = theme::palette();
+        ui.fill(rect.with_h(theme::BORDER), palette.base_300);
         let rect = rect.inset_xy(PAGE_PADDING, 0.0);
-        ui.fill(rect.with_h(theme::HAIRLINE_WIDTH), 0.0, theme::HAIRLINE);
 
         let mut area = rect;
-        area.skip_top(12.0);
+        area.skip_top(14.0);
         let label = area.cut_top(14.0);
-        ui.text(
-            label,
-            ctx.tr().build.saved.to_uppercase(),
-            TextStyle::new(font::SIZE_TINY, Weight::Black).tracking(font::TRACKING_LABEL),
-            theme::TEXT_DIM,
-        );
-        area.skip_top(8.0);
+        widgets::section_label(ui, label, ctx.tr().build.saved);
+        area.skip_top(12.0);
 
         if self.loadouts.is_empty() {
             ui.text(
                 area.with_h(widgets::CHIP_HEIGHT),
-                ctx.tr().build.saved_empty.to_uppercase(),
-                widgets::chip_style().align(Align::Start),
-                theme::TEXT_DIM,
+                ctx.tr().build.saved_empty,
+                styles::hint().align(Align::Start).middle(),
+                palette.muted,
             );
             return;
         }
@@ -218,8 +211,14 @@ impl Panel {
         );
         let active = builds::active_loadout(&self.loadouts, ctx.slots, ctx.data);
         // O rodapé tem altura fixa: o que não couber fica de fora (a lista longa
-        // continua inteira na janela principal, que rola).
-        ui.push_clip(area);
+        // continua inteira na janela principal, que rola). O recorte folga
+        // em cima e à direita para o chip erguido e a sombra.
+        ui.push_clip(Rect::new(
+            area.x,
+            area.y - theme::LIFT,
+            area.w + theme::SHADOW,
+            area.h + theme::LIFT,
+        ));
         for chip in &layout.chips {
             let rect = chip.rect(area);
             if rect.bottom() > area.bottom() {
@@ -264,29 +263,10 @@ impl Panel {
     }
 }
 
-/// Faixa amarela avisando que o modo de vídeo do jogo não convive com overlay.
-fn warning(ui: &mut Ui, rect: Rect, message: &str) {
-    let rect = rect.inset_xy(PAGE_PADDING, 4.0);
-    ui.fill(rect, theme::RADIUS_BUTTON, theme::YELLOW.alpha(0.12));
-    ui.stroke(
-        rect,
-        theme::RADIUS_BUTTON,
-        theme::HAIRLINE_WIDTH,
-        theme::YELLOW.alpha(0.5),
-    );
-    ui.text(
-        rect.inset_xy(16.0, 8.0),
-        message,
-        TextStyle::new(font::SIZE_TINY, Weight::Regular)
-            .align(Align::Center)
-            .wrap(),
-        theme::YELLOW,
-    );
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::ui::toolkit::TextStyle;
     use crate::ui::toolkit::Visual;
     use std::collections::HashMap;
 

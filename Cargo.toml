@@ -46,12 +46,16 @@ windows = { version = "0.62.2", features = [
   "Win32_Graphics_Direct2D",
   "Win32_Graphics_Direct2D_Common",
   "Win32_Graphics_DirectWrite",
+  # Barra de título no tema (escura/clara, cor da moldura, cantos retos).
+  "Win32_Graphics_Dwm",
   "Win32_Graphics_Dxgi_Common",
   "Win32_Graphics_Gdi",
   "Win32_Media",
   "Win32_Security",
   "Win32_System_Com",
   "Win32_System_LibraryLoader",
+  # `AppsUseLightTheme`: o tema do Windows decide o do app até o primeiro toggle.
+  "Win32_System_Registry",
   "Win32_System_SystemInformation",
   "Win32_System_Threading",
   "Win32_UI_Controls",

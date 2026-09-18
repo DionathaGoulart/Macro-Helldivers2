@@ -107,17 +107,18 @@ mod platform {
     use crate::gfx::d2d::{window_dpi, WindowTarget};
     use crate::gfx::text::{register_gdi_fonts, Text};
     use crate::meta_stats::{self, MetaResult};
-    use crate::settings::{Language, Settings};
+    use crate::settings::{Language, Settings, Theme};
     use crate::shared::{
         FlashKind, OverlayCmd, OverlayState, Shared, Slots, UiEvent, UpdateStatus, WM_APP_UI_EVENT,
     };
     use crate::ui::build_tab::{self, BuildTab};
+    use crate::ui::chrome::{self, Chrome};
     use crate::ui::macro_tab::{self, Action, MacroTab};
-    use crate::ui::modal::{self, Modal};
+    use crate::ui::modal;
     use crate::ui::settings_tab::{self, BackupStatus, Change, SettingsTab};
     use crate::ui::theme::{self, font, Color, Scale};
-    use crate::ui::toolkit::{id, Id, Input, Measure, Rect, TextStyle, Ui, Weight};
-    use crate::ui::widgets::{self, ButtonVariant, Tab, TAB_BAR_HEIGHT};
+    use crate::ui::toolkit::{Id, Input, Rect, Ui, FRAME_MS};
+    use crate::ui::widgets;
     use crate::{focus, hooks, i18n, loadouts, overlay, tray, updater, util};
 
     use tray::Tray;
@@ -149,6 +150,8 @@ mod platform {
     const WM_APP_QUIT: u32 = 0x8000 + 5;
     /// Chamada nativa de `EDIT` adiada (ver [`App::defer_edit_op`]).
     const WM_APP_EDIT: u32 = 0x8000 + 6;
+    /// Barra de título no tema novo, adiada (ver [`App::apply_theme`]).
+    const WM_APP_TITLE_BAR: u32 = 0x8000 + 7;
 
     /// Id de controle do primeiro `EDIT` filho; os seguintes vêm em sequência.
     const FIRST_EDIT_CTRL: usize = 1000;
@@ -156,14 +159,8 @@ mod platform {
     /// Id do ícone que o `build.rs` embute no executável.
     const ICON_RESOURCE_ID: usize = 1;
 
-    const PAGE_PADDING: f32 = 24.0;
-    const FOOTER_HEIGHT: f32 = 40.0;
-    const WARNING_HEIGHT: f32 = 56.0;
-    /// Botão do updater no rodapé (`px-3 py-1` da v1).
-    const FOOTER_BUTTON_H: f32 = 24.0;
-    const FOOTER_BUTTON_PADDING: f32 = 24.0;
-    /// Espaço entre os pedaços do rodapé.
-    const FOOTER_GAP: f32 = 10.0;
+    /// Tecla do atalho de tema (`Shift+T`, styleguide §0.3).
+    const VK_T: u16 = 0x54;
 
     /// Sobe a janela e roda o message loop até o app encerrar.
     pub fn run(shared: Arc<Shared>, data: Arc<GameData>, ui_rx: Receiver<UiEvent>) -> Result<()> {
@@ -434,6 +431,7 @@ mod platform {
         edit_font: HFONT,
         /// Fonte da escala anterior, viva até os filhos trocarem para a nova.
         retired_font: Option<HFONT>,
+        /// Fundo dos `EDIT` nativos, na superfície do tema em uso.
         edit_brush: HBRUSH,
         focused_edit: Option<Id>,
         game_focused: bool,
@@ -441,7 +439,8 @@ mod platform {
         recording: bool,
         fullscreen_warning: bool,
         tracking_mouse: bool,
-        anim_timer: bool,
+        /// Intervalo do timer de animação armado agora, se houver.
+        anim_timer: Option<u32>,
         /// Andamento do ciclo de atualização, mostrado no rodapé.
         update: UpdateStatus,
         /// O usuário clicou "Depois" no modal: o instalador continua pronto e o
@@ -461,12 +460,19 @@ mod platform {
             let settings = boot.shared.settings_snapshot();
             let game_focused = boot.shared.is_game_focused();
 
+            // O tema entra antes da primeira pintura: escolhido à mão ou o do
+            // Windows. Vale para o processo, e o overlay lê o mesmo.
+            theme::set(resolve_theme(&settings));
+            apply_title_bar(hwnd);
+            let mut ui = Ui::new();
+            ui.set_reduced_motion(reduced_motion());
+
             let app = App {
                 hwnd,
                 shared: boot.shared,
                 data: boot.data,
                 ui_rx: boot.ui_rx,
-                ui: Ui::new(),
+                ui,
                 text,
                 target: WindowTarget::new(hwnd, dpi),
                 scale: Scale::from_dpi(dpi),
@@ -481,16 +487,15 @@ mod platform {
                 edits: Vec::new(),
                 edit_font: create_edit_font(dpi),
                 retired_font: None,
-                // SAFETY: cor sólida; o pincel é destruído no `Drop`.
-                edit_brush: unsafe {
-                    CreateSolidBrush(colorref(theme::SURFACE.over(theme::BG_DEEP)))
-                },
+                // SAFETY: cor sólida; o pincel é destruído no `Drop` (ou na
+                // troca de tema).
+                edit_brush: unsafe { CreateSolidBrush(colorref(theme::palette().base_200)) },
                 focused_edit: None,
                 game_focused,
                 recording: false,
                 fullscreen_warning: false,
                 tracking_mouse: false,
-                anim_timer: false,
+                anim_timer: None,
                 update: UpdateStatus::Idle,
                 update_deferred: false,
                 tray: Tray::new(hwnd, WM_APP_TRAY, focus::APP_WINDOW_TITLE),
@@ -622,7 +627,7 @@ mod platform {
                 self.build();
             }
             self.target
-                .draw(&mut self.text, self.ui.frame(), theme::BG_DEEP);
+                .draw(&mut self.text, self.ui.frame(), theme::palette().base_100);
         }
 
         fn sync_anim_timer(&mut self) {
@@ -635,16 +640,31 @@ mod platform {
             // SAFETY: leituras de estado da própria janela.
             let visible =
                 unsafe { IsWindowVisible(self.hwnd).as_bool() && !IsIconic(self.hwnd).as_bool() };
-            let wanted = self.ui.animating() && visible;
-            if wanted == self.anim_timer {
-                return;
+            // Um fade pede 16ms; o caret piscando pede só a próxima troca de
+            // fase — meio segundo de janela parada entre um quadro e outro.
+            let wanted = self.ui.frame_delay().filter(|_| visible);
+            match wanted {
+                // Animação contínua já armada: o timer periódico segue.
+                Some(FRAME_MS) if self.anim_timer == Some(FRAME_MS) => return,
+                None if self.anim_timer.is_none() => return,
+                _ => {}
             }
-            // SAFETY: timer da própria janela.
+            // SAFETY: timer da própria janela. `SetTimer` com o mesmo id troca
+            // o intervalo e recomeça a contagem — é o que a espera do caret
+            // precisa a cada passagem.
             unsafe {
-                if wanted {
-                    SetTimer(Some(self.hwnd), TIMER_ANIM, ANIM_INTERVAL_MS, None);
-                } else {
-                    let _ = KillTimer(Some(self.hwnd), TIMER_ANIM);
+                match wanted {
+                    Some(delay) => {
+                        SetTimer(
+                            Some(self.hwnd),
+                            TIMER_ANIM,
+                            delay.max(ANIM_INTERVAL_MS),
+                            None,
+                        );
+                    }
+                    None => {
+                        let _ = KillTimer(Some(self.hwnd), TIMER_ANIM);
+                    }
                 }
             }
             self.anim_timer = wanted;
@@ -681,6 +701,10 @@ mod platform {
 
         fn on_click(&mut self, clicked: Id) {
             if self.on_update_click(clicked) {
+                return;
+            }
+            if clicked == widgets::theme_toggle_id() {
+                self.toggle_theme();
                 return;
             }
             if let Some(index) = (0..3).find(|index| widgets::tab_id(*index) == clicked) {
@@ -741,7 +765,7 @@ mod platform {
         /// Cliques do updater: o botão do rodapé e os do modal. `true` quando o
         /// clique era de lá e as abas não devem vê-lo.
         fn on_update_click(&mut self, clicked: Id) -> bool {
-            if clicked == update_action_id() || clicked == modal::primary_id() {
+            if clicked == chrome::update_action_id() || clicked == modal::primary_id() {
                 match &self.update {
                     UpdateStatus::Available { .. } => updater::download(&self.shared),
                     UpdateStatus::Ready { .. } => self.install_update(),
@@ -896,7 +920,68 @@ mod platform {
             }
             hooks::rebuild_bindings();
             self.language = settings.language;
+            if settings.theme != previous.theme {
+                let _ = self.apply_theme(resolve_theme(&settings));
+            }
             overlay_effects(&self.shared, self.game_focused, &previous, &settings);
+            self.rebuild();
+        }
+
+        /// Toggle da topbar e `Shift+T`: o outro tema, gravado como escolha
+        /// manual — a partir daí o app para de seguir o Windows.
+        fn toggle_theme(&mut self) {
+            let next = theme::current().toggled();
+            self.apply_change(Change::Theme(Some(next)));
+        }
+
+        /// Troca o tema do processo e tudo o que não passa pela lista de
+        /// desenho: o pincel dos `EDIT` e a barra de título. `false` quando o
+        /// tema já era esse.
+        fn apply_theme(&mut self, next: Theme) -> bool {
+            if next == theme::current() {
+                return false;
+            }
+            theme::set(next);
+            // SAFETY: pincel nosso; o novo substitui o antigo antes de o velho
+            // morrer, e os `EDIT` o pedem de novo no próximo `WM_CTLCOLOREDIT`.
+            unsafe {
+                let previous = std::mem::replace(
+                    &mut self.edit_brush,
+                    CreateSolidBrush(colorref(theme::palette().base_200)),
+                );
+                let _ = DeleteObject(previous.into());
+                for edit in &self.edits {
+                    let _ = InvalidateRect(Some(edit.hwnd), None, true);
+                }
+            }
+            // Os atributos do DWM repintam a moldura da janela; a chamada vai
+            // por mensagem para nenhuma notificação reentrar no `WndProc` com
+            // este `&mut App` vivo.
+            // SAFETY: `PostMessageW` é assíncrono; a mensagem cai na fila desta
+            // própria janela.
+            unsafe {
+                let _ = PostMessageW(Some(self.hwnd), WM_APP_TITLE_BAR, WPARAM(0), LPARAM(0));
+            }
+            // O overlay não tem canal próprio para o tema: ele refaz tudo no
+            // `SettingsChanged`, que a mudança de preferência já manda.
+            self.rebuild();
+            true
+        }
+
+        /// O Windows mudou o modo claro/escuro ou a preferência de animação.
+        fn on_system_settings(&mut self) {
+            self.ui.set_reduced_motion(reduced_motion());
+            let settings = self.shared.settings_snapshot();
+            // O aviso chega por qualquer mudança do sistema; só o modo de app
+            // interessa, e só quando o tema segue o Windows.
+            if settings.theme.is_none()
+                && self.apply_theme(resolve_theme(&settings))
+                && settings.enable_overlay
+            {
+                // Sem mudança de preferência não sai `SettingsChanged`; o
+                // overlay precisa do aviso para trocar junto.
+                self.shared.send_overlay(OverlayCmd::SettingsChanged);
+            }
             self.rebuild();
         }
 
@@ -919,7 +1004,15 @@ mod platform {
 
         /// Tecla recebida pela janela. `true` quando a aba da frente a consumiu,
         /// e ela não deve seguir para o tratamento padrão.
-        fn on_key(&mut self, vk: u16) -> bool {
+        fn on_key(&mut self, vk: u16, repeat: bool) -> bool {
+            // `Shift+T` troca o tema — menos durante a captura de um atalho,
+            // em que a tecla é do atalho. Segurar a tecla não fica alternando.
+            if vk == VK_T && !self.recording && shift_down() {
+                if !repeat {
+                    self.toggle_theme();
+                }
+                return true;
+            }
             match self.tab {
                 1 => match self.build_tab.on_key(vk) {
                     Some(action) => {
@@ -1158,6 +1251,105 @@ mod platform {
         }
     }
 
+    /// Tema que vale agora: o escolhido à mão ou, sem escolha, o do Windows
+    /// (`prefers-color-scheme` do guia).
+    fn resolve_theme(settings: &Settings) -> Theme {
+        settings.theme.unwrap_or_else(system_theme)
+    }
+
+    /// Modo de app do Windows (`AppsUseLightTheme`). Sem a chave — Windows
+    /// antigo, política de empresa —, vale o padrão escuro do app.
+    fn system_theme() -> Theme {
+        use windows::Win32::System::Registry::{RegGetValueW, HKEY_CURRENT_USER, RRF_RT_REG_DWORD};
+
+        let mut value: u32 = 0;
+        let mut size = size_of::<u32>() as u32;
+        // SAFETY: buffer de um DWORD com o tamanho declarado; os nomes são
+        // literais estáticos.
+        let status = unsafe {
+            RegGetValueW(
+                HKEY_CURRENT_USER,
+                w!("Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize"),
+                w!("AppsUseLightTheme"),
+                RRF_RT_REG_DWORD,
+                None,
+                Some(&mut value as *mut u32 as *mut _),
+                Some(&mut size),
+            )
+        };
+        if status.is_ok() && value == 1 {
+            Theme::Crimson
+        } else {
+            Theme::Rose
+        }
+    }
+
+    /// `prefers-reduced-motion` do Windows: "Mostrar animações no Windows"
+    /// desligado congela os fades, o caret e some com a scanline (§4.13).
+    fn reduced_motion() -> bool {
+        let mut animate = windows::core::BOOL(1);
+        // SAFETY: `pvParam` aponta para um BOOL nosso, como a ação pede.
+        let read = unsafe {
+            SystemParametersInfoW(
+                SPI_GETCLIENTAREAANIMATION,
+                0,
+                Some(&mut animate as *mut _ as *mut _),
+                SYSTEM_PARAMETERS_INFO_UPDATE_FLAGS(0),
+            )
+        };
+        read.is_ok() && !animate.as_bool()
+    }
+
+    /// Barra de título no tema: modo escuro do DWM no `rose`, fundo e texto
+    /// da página, moldura na cor da moldura e cantos retos (§4.3 — nem a
+    /// janela escapa). Os atributos de cor e de canto são do Windows 11; no
+    /// 10 as chamadas falham em silêncio e fica só o modo escuro.
+    fn apply_title_bar(hwnd: HWND) {
+        use windows::Win32::Graphics::Dwm::{
+            DwmSetWindowAttribute, DWMWA_BORDER_COLOR, DWMWA_CAPTION_COLOR, DWMWA_TEXT_COLOR,
+            DWMWA_USE_IMMERSIVE_DARK_MODE, DWMWA_WINDOW_CORNER_PREFERENCE, DWMWCP_DONOTROUND,
+        };
+
+        let palette = theme::palette();
+        let dark = windows::core::BOOL::from(theme::current() == Theme::Rose);
+        let colors = [
+            (DWMWA_CAPTION_COLOR, colorref(palette.base_100)),
+            (DWMWA_TEXT_COLOR, colorref(palette.content)),
+            (DWMWA_BORDER_COLOR, colorref(palette.base_300)),
+        ];
+        // SAFETY: cada valor vive durante a chamada e o tamanho casa com o
+        // tipo que o atributo espera (BOOL, COLORREF e o enum de canto).
+        unsafe {
+            let _ = DwmSetWindowAttribute(
+                hwnd,
+                DWMWA_USE_IMMERSIVE_DARK_MODE,
+                &dark as *const _ as *const _,
+                size_of::<windows::core::BOOL>() as u32,
+            );
+            let corner = DWMWCP_DONOTROUND;
+            let _ = DwmSetWindowAttribute(
+                hwnd,
+                DWMWA_WINDOW_CORNER_PREFERENCE,
+                &corner as *const _ as *const _,
+                size_of_val(&corner) as u32,
+            );
+            for (attribute, color) in colors {
+                let _ = DwmSetWindowAttribute(
+                    hwnd,
+                    attribute,
+                    &color as *const _ as *const _,
+                    size_of::<COLORREF>() as u32,
+                );
+            }
+        }
+    }
+
+    fn shift_down() -> bool {
+        use windows::Win32::UI::Input::KeyboardAndMouse::{GetKeyState, VK_SHIFT};
+        // SAFETY: leitura do estado de teclado da thread.
+        unsafe { GetKeyState(VK_SHIFT.0 as i32) < 0 }
+    }
+
     fn create_edit_font(dpi: u32) -> HFONT {
         let height = -(font::SIZE_BODY * dpi as f32 / theme::BASE_DPI as f32).round() as i32;
         let face = wide(font::FAMILY);
@@ -1214,271 +1406,56 @@ mod platform {
             let now = tick_ms();
             self.ui.begin(now);
             let settings = self.shared.settings_snapshot();
-
-            let mut body = Rect::new(0.0, 0.0, self.size.0, self.size.1);
-            let header = body.cut_top(TAB_BAR_HEIGHT);
-            let footer = body.cut_bottom(FOOTER_HEIGHT);
-
-            let tr = i18n::tr(self.language);
-            let tabs = [
-                Tab {
-                    label: tr.tabs.macro_tab,
-                    accent: theme::CYAN,
+            let chrome = Chrome {
+                tr: i18n::tr(self.language),
+                tab: self.tab,
+                game_focused: self.game_focused,
+                fullscreen_warning: self.fullscreen_warning,
+                update: &self.update,
+                update_deferred: self.update_deferred,
+                scanlines: !self.ui.reduced_motion(),
+            };
+            let slots = self.shared.slots();
+            let focused_edit = self.focused_edit;
+            let data = &self.data;
+            let (macro_tab, build_tab, settings_tab) = (
+                &mut self.macro_tab,
+                &mut self.build_tab,
+                &mut self.settings_tab,
+            );
+            chrome::build(
+                &mut self.ui,
+                &mut self.text,
+                self.size,
+                &chrome,
+                |ui, measure, body| match chrome.tab {
+                    0 => {
+                        let ctx = macro_tab::Ctx {
+                            data,
+                            settings: &settings,
+                            slots,
+                            focused_edit,
+                        };
+                        macro_tab.build(ui, measure, body, &ctx);
+                    }
+                    1 => {
+                        let ctx = build_tab::Ctx {
+                            data,
+                            settings: &settings,
+                            slots,
+                            focused_edit,
+                        };
+                        build_tab.build(ui, measure, body, &ctx);
+                    }
+                    _ => {
+                        let ctx = settings_tab::Ctx {
+                            settings: &settings,
+                        };
+                        settings_tab.build(ui, measure, body, &ctx);
+                    }
                 },
-                Tab {
-                    label: tr.tabs.build,
-                    accent: theme::CYAN,
-                },
-                Tab {
-                    label: tr.tabs.settings,
-                    accent: theme::YELLOW,
-                },
-            ];
-            widgets::tab_bar(&mut self.ui, &mut self.text, header, &tabs, self.tab);
-
-            if self.fullscreen_warning && self.game_focused {
-                let banner = body.cut_top(WARNING_HEIGHT);
-                self.warning(banner, tr.overlay.fullscreen_warning);
-            }
-
-            match self.tab {
-                0 => {
-                    let ctx = macro_tab::Ctx {
-                        data: &self.data,
-                        settings: &settings,
-                        slots: self.shared.slots(),
-                        focused_edit: self.focused_edit,
-                    };
-                    self.macro_tab
-                        .build(&mut self.ui, &mut self.text, body, &ctx);
-                }
-                1 => {
-                    let ctx = build_tab::Ctx {
-                        data: &self.data,
-                        settings: &settings,
-                        slots: self.shared.slots(),
-                        focused_edit: self.focused_edit,
-                    };
-                    self.build_tab
-                        .build(&mut self.ui, &mut self.text, body, &ctx);
-                }
-                _ => {
-                    let ctx = settings_tab::Ctx {
-                        settings: &settings,
-                    };
-                    self.settings_tab
-                        .build(&mut self.ui, &mut self.text, body, &ctx);
-                }
-            }
-            self.footer(footer);
-
-            // Por último, sobre tudo: enquanto o modal está aberto, o véu é
-            // quem responde a qualquer clique fora do cartão. Depois do
-            // "Depois" ele não volta — o botão do rodapé assume.
-            if let UpdateStatus::Ready { version } = self.update.clone() {
-                if !self.update_deferred {
-                    let area = Rect::new(0.0, 0.0, self.size.0, self.size.1);
-                    self.update_modal(area, &version);
-                }
-            }
+            );
             self.ui.end();
-        }
-
-        fn warning(&mut self, rect: Rect, message: &str) {
-            let rect = rect.inset_xy(PAGE_PADDING, 6.0);
-            self.ui
-                .fill(rect, theme::RADIUS_BUTTON, theme::YELLOW.alpha(0.12));
-            self.ui.stroke(
-                rect,
-                theme::RADIUS_BUTTON,
-                theme::HAIRLINE_WIDTH,
-                theme::YELLOW.alpha(0.5),
-            );
-            self.ui.text(
-                rect.inset_xy(16.0, 8.0),
-                message,
-                TextStyle::new(font::SIZE_TINY, Weight::Regular).wrap(),
-                theme::YELLOW,
-            );
-        }
-
-        /// Rodapé: versão e estado do jogo à esquerda, updater à direita — o
-        /// mesmo agrupamento do rodapé da v1.
-        fn footer(&mut self, rect: Rect) {
-            self.ui.fill(rect, 0.0, theme::BG_DEEP);
-            self.ui
-                .fill(rect.with_h(theme::HAIRLINE_WIDTH), 0.0, theme::HAIRLINE);
-
-            let mut row = rect.inset_xy(PAGE_PADDING, 0.0);
-            self.update_footer(&mut row);
-            self.status_footer(&mut row);
-        }
-
-        /// Versão do app e a bolinha de "jogo detectado".
-        fn status_footer(&mut self, row: &mut Rect) {
-            let tr = i18n::tr(self.language);
-            let style =
-                TextStyle::new(font::SIZE_TINY, Weight::Black).tracking(font::TRACKING_LABEL);
-
-            let version = format!(
-                "{} v{}",
-                tr.settings.version.to_uppercase(),
-                env!("CARGO_PKG_VERSION")
-            );
-            let width = self.text.text_size(&version, style, f32::INFINITY).0;
-            let label = row.cut_left(width).middle_row(16.0);
-            self.ui.text(label, version, style, theme::TEXT_DIM);
-            row.cut_left(FOOTER_GAP);
-
-            let divider = row.cut_left(theme::HAIRLINE_WIDTH).middle_row(12.0);
-            self.ui.fill(divider, 0.0, theme::BORDER);
-            row.cut_left(FOOTER_GAP);
-
-            let dot = row.cut_left(8.0).middle_row(8.0);
-            widgets::status_dot(&mut self.ui, dot, self.game_focused);
-            row.cut_left(6.0);
-
-            let status = if self.game_focused {
-                tr.settings.game_active
-            } else {
-                tr.settings.game_inactive
-            }
-            .to_uppercase();
-            let width = self.text.text_size(&status, style, f32::INFINITY).0;
-            let label = row.cut_left(width).middle_row(16.0);
-            self.ui.text(
-                label,
-                status,
-                style,
-                if self.game_focused {
-                    theme::GREEN
-                } else {
-                    theme::TEXT_DIM
-                },
-            );
-        }
-
-        /// Canto direito do rodapé: o andamento do updater e, quando há o que
-        /// fazer, o botão que baixa ou instala. Montado da direita para a
-        /// esquerda, então o botão vem antes do texto.
-        fn update_footer(&mut self, row: &mut Rect) {
-            let tr = i18n::tr(self.language);
-
-            // Pronto para instalar: só o botão, pulsando como na v1.
-            if let UpdateStatus::Ready { .. } = self.update {
-                let rect = row
-                    .cut_right(self.button_width(tr.settings.update_ready))
-                    .middle_row(FOOTER_BUTTON_H);
-                widgets::button(
-                    &mut self.ui,
-                    update_action_id(),
-                    rect,
-                    tr.settings.update_ready,
-                    ButtonVariant::Primary,
-                    theme::YELLOW,
-                );
-                return;
-            }
-
-            // O download deixou de ser automático para não puxar o instalador
-            // no meio de uma partida: quem manda é o botão.
-            if let UpdateStatus::Available { .. } = self.update {
-                let rect = row
-                    .cut_right(self.button_width(tr.settings.update_download))
-                    .middle_row(FOOTER_BUTTON_H);
-                widgets::button(
-                    &mut self.ui,
-                    update_action_id(),
-                    rect,
-                    tr.settings.update_download,
-                    ButtonVariant::Secondary,
-                    theme::YELLOW,
-                );
-                row.cut_right(FOOTER_GAP);
-            }
-
-            // Erro (rede fora, GitHub indisponível): sem o botão o updater
-            // ficaria morto até o próximo boot.
-            if let UpdateStatus::Error { .. } = self.update {
-                let rect = row
-                    .cut_right(self.button_width(tr.settings.update_retry))
-                    .middle_row(FOOTER_BUTTON_H);
-                widgets::button(
-                    &mut self.ui,
-                    update_action_id(),
-                    rect,
-                    tr.settings.update_retry,
-                    ButtonVariant::Secondary,
-                    theme::RED,
-                );
-                row.cut_right(FOOTER_GAP);
-            }
-
-            let style =
-                TextStyle::new(font::SIZE_TINY, Weight::Black).tracking(font::TRACKING_LABEL);
-            let text = update_label(&self.update, tr);
-            let width = self.text.text_size(&text, style, f32::INFINITY).0;
-            let label = row.cut_right(width).middle_row(16.0);
-            self.ui.text(label, text, style, theme::TEXT_DIM);
-            row.cut_right(6.0);
-
-            let color = match self.update {
-                UpdateStatus::Error { .. } => theme::RED,
-                _ => theme::YELLOW,
-            };
-            let dot = row.cut_right(6.0).middle_row(6.0);
-            self.ui.ellipse(dot, color);
-            self.ui.glow(dot, dot.w / 2.0, color);
-        }
-
-        fn button_width(&mut self, label: &str) -> f32 {
-            let style =
-                TextStyle::new(font::SIZE_LABEL, Weight::Black).tracking(font::TRACKING_WIDE);
-            let text = self
-                .text
-                .text_size(&label.to_uppercase(), style, f32::INFINITY)
-                .0;
-            text + FOOTER_BUTTON_PADDING
-        }
-
-        /// Modal de "atualização baixada" (porte do modal da v1).
-        fn update_modal(&mut self, area: Rect, version: &str) {
-            let tr = i18n::tr(self.language);
-            let subtitle = format!("v{version}");
-            let modal = Modal {
-                title: tr.update.title,
-                subtitle: &subtitle,
-                body: tr.update.body,
-                primary: tr.update.restart_now,
-                secondary: tr.update.later,
-                accent: theme::YELLOW,
-            };
-            modal::show(&mut self.ui, &mut self.text, area, &modal);
-        }
-    }
-
-    /// Botão do updater no rodapé: baixa quando há novidade, instala quando o
-    /// arquivo já está no disco.
-    fn update_action_id() -> Id {
-        id("footer.update")
-    }
-
-    /// Texto do andamento, com os mesmos estados da v1.
-    fn update_label(status: &UpdateStatus, tr: &i18n::Tr) -> String {
-        let text = &tr.settings;
-        match status {
-            UpdateStatus::Checking => text.update_checking.to_uppercase(),
-            UpdateStatus::Available { .. } => text.update_available.to_uppercase(),
-            UpdateStatus::Downloading { percent } => format!(
-                "{} {}%",
-                text.update_downloading.to_uppercase(),
-                percent.round()
-            ),
-            UpdateStatus::UpToDate => text.update_up_to_date.to_uppercase(),
-            UpdateStatus::Error { .. } => text.update_error.to_uppercase(),
-            // "Atualizado" é o texto de repouso da v1, e também o que sobra
-            // depois de o usuário adiar a instalação.
-            UpdateStatus::Idle | UpdateStatus::Ready { .. } => text.updated.to_uppercase(),
         }
     }
 
@@ -1871,7 +1848,10 @@ mod platform {
                 WM_KEYDOWN | WM_SYSKEYDOWN => {
                     // Só a captura de atalho consome tecla; o resto segue para
                     // o tratamento padrão da janela.
-                    let captured = app_mut(hwnd).is_some_and(|app| app.on_key(wparam.0 as u16));
+                    // Bit 30 do `lParam`: a tecla já estava baixa (autorrepetição).
+                    let repeat = lparam.0 & (1 << 30) != 0;
+                    let captured =
+                        app_mut(hwnd).is_some_and(|app| app.on_key(wparam.0 as u16, repeat));
                     if captured {
                         LRESULT(0)
                     } else {
@@ -1982,9 +1962,9 @@ mod platform {
                 }
                 WM_CTLCOLOREDIT => {
                     let dc = HDC(wparam.0 as *mut _);
-                    SetTextColor(dc, colorref(theme::TEXT));
-                    let background = theme::SURFACE.over(theme::BG_DEEP);
-                    SetBkColor(dc, colorref(background));
+                    let palette = theme::palette();
+                    SetTextColor(dc, colorref(palette.content));
+                    SetBkColor(dc, colorref(palette.base_200));
                     match app_mut(hwnd) {
                         Some(app) => LRESULT(app.edit_brush.0 as isize),
                         None => DefWindowProcW(hwnd, message, wparam, lparam),
@@ -2019,6 +1999,10 @@ mod platform {
                 }
                 WM_APP_EDIT => {
                     run_pending_edit_ops(hwnd);
+                    LRESULT(0)
+                }
+                WM_APP_TITLE_BAR => {
+                    apply_title_bar(hwnd);
                     LRESULT(0)
                 }
                 WM_SHOWWINDOW => {
@@ -2071,6 +2055,14 @@ mod platform {
                         app.drain_events();
                     }
                     LRESULT(0)
+                }
+                // Modo claro/escuro do Windows (`ImmersiveColorSet`) ou a
+                // preferência de animação mudaram.
+                WM_SETTINGCHANGE | WM_THEMECHANGED => {
+                    if let Some(app) = app_mut(hwnd) {
+                        app.on_system_settings();
+                    }
+                    DefWindowProcW(hwnd, message, wparam, lparam)
                 }
                 WM_APP_QUIT => {
                     quit_app(hwnd);

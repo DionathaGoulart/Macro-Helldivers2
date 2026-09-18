@@ -12,38 +12,31 @@ use crate::data::{self, GameData, Stratagem};
 use crate::i18n::{self, Tr};
 use crate::settings::{Settings, SLOT_COUNT};
 use crate::shared::Slots;
-use crate::ui::theme::{self, font, Color};
-use crate::ui::toolkit::{
-    grid_cell, grid_height, id, id_at, Align, Id, Measure, Rect, TextStyle, Ui, Weight,
-};
-use crate::ui::widgets::{self, CardState};
+use crate::ui::theme::{self, Color};
+use crate::ui::toolkit::{grid_cell, grid_height, id, id_at, Align, Id, Measure, Rect, Ui};
+use crate::ui::widgets::{self, styles, CardHeader, CardState, Glyph, Tone};
 
-/// `px-6` da coluna de conteúdo.
+/// `screen-pad` da coluna de conteúdo.
 const PAGE_PADDING: f32 = 24.0;
-const TITLE_HEIGHT: f32 = 24.0;
-/// Folga dos dois lados do título, entre o texto e os filetes.
-const TITLE_GAP: f32 = 16.0;
-const SEARCH_GAP: f32 = 16.0;
-/// `p-5` das seções.
-const SECTION_PADDING: f32 = 20.0;
-const SECTION_HEADER: f32 = 16.0;
-/// `mb-5` entre o título da seção e a grade.
-const SECTION_HEADER_GAP: f32 = 20.0;
-/// `space-y-6` entre seções.
+const PAGE_TOP: f32 = 16.0;
+/// Largura mínima do campo de busca, ao lado do cabeçalho.
+const SEARCH_MIN_WIDTH: f32 = 240.0;
+const HEADER_GAP: f32 = 24.0;
+/// Espaço entre o cabeçalho e a grade, e entre a grade e a barra de slots.
+const BLOCK_GAP: f32 = 16.0;
+/// Espaço entre seções — cabe a sombra dura da de cima.
 const SECTION_GAP: f32 = 24.0;
 const GRID_COLS: usize = 4;
-/// `gap-3` da grade.
 const GRID_GAP: f32 = 12.0;
 /// Espaço à direita reservado para a barra de rolagem, para ela não cair em
-/// cima dos cards da última coluna.
-const SCROLL_GUTTER: f32 = 12.0;
-/// `p-4` e `gap-4` da barra de slots.
-const SLOT_BAR_PADDING: f32 = 16.0;
+/// cima da sombra dos painéis.
+const SCROLL_GUTTER: f32 = 14.0;
+/// Padding e espaço entre os slots da barra. O de cima cabe a etiqueta de
+/// atalho, que sai meio para fora do slot, e o slot erguido.
+const SLOT_BAR_PADDING: f32 = 18.0;
 const SLOT_BAR_GAP: f32 = 16.0;
-/// `rounded-3xl` da barra.
-const SLOT_BAR_RADIUS: f32 = 24.0;
-const CLEAR_SIZE: f32 = 20.0;
-const HOVER_MS: u32 = 180;
+/// `icon-btn` de limpar a busca, dentro do campo.
+const CLEAR_SIZE: f32 = 22.0;
 
 /// Ordem fixa das categorias; o que não estiver aqui vai depois, em ordem
 /// alfabética (`sortedTags` do legado).
@@ -71,6 +64,11 @@ pub fn card_id(stratagem: u32) -> Id {
 /// Altura da barra de slots, que fica presa no rodapé da aba.
 pub fn slot_bar_height() -> f32 {
     widgets::SLOT_SIZE + SLOT_BAR_PADDING * 2.0
+}
+
+/// Altura total da barra, com a sombra dura embaixo.
+fn slot_bar_block() -> f32 {
+    slot_bar_height() + theme::SHADOW
 }
 
 /// O que a aba precisa saber do resto do app para se desenhar.
@@ -203,20 +201,26 @@ impl MacroTab {
             self.regroup(ctx.data);
         }
 
-        let mut area = area.inset_xy(PAGE_PADDING, 16.0);
-        let bar = area.cut_bottom(slot_bar_height());
-        area.cut_bottom(SEARCH_GAP);
-        let title = area.cut_top(TITLE_HEIGHT);
-        let search = self.searchable.then(|| {
-            area.skip_top(8.0);
-            area.cut_top(widgets::CONTROL_HEIGHT)
-        });
-        area.skip_top(SEARCH_GAP);
+        let mut area = Rect::new(
+            area.x + PAGE_PADDING,
+            area.y + PAGE_TOP,
+            area.w - PAGE_PADDING * 2.0,
+            area.h - PAGE_TOP - 12.0,
+        );
+        let bar = area.cut_bottom(slot_bar_block());
+        area.cut_bottom(BLOCK_GAP);
 
-        self.title(ui, measure, title, ctx);
-        if let Some(search) = search {
+        // Cabeçalho de tela à esquerda e a busca à direita, na mesma faixa.
+        let mut row = area.cut_top(widgets::PAGE_HEADER_HEIGHT);
+        area.skip_top(BLOCK_GAP);
+        if self.searchable {
+            let width = (row.w * 0.42).max(SEARCH_MIN_WIDTH).min(row.w);
+            let search = row.cut_right(width).middle_row(widgets::CONTROL_HEIGHT);
+            row.cut_right(HEADER_GAP);
             self.search_field(ui, search, ctx);
         }
+        self.header(ui, row, ctx);
+
         if self.sections.is_empty() {
             self.no_results(ui, area, ctx);
         } else {
@@ -225,76 +229,57 @@ impl MacroTab {
         self.slot_bar(ui, measure, bar, ctx);
     }
 
-    /// "SELECIONAR ESTRATAGEMAS PARA O SLOT F1", entre dois filetes.
-    fn title(&self, ui: &mut Ui, measure: &mut dyn Measure, rect: Rect, ctx: &Ctx) {
+    /// `> SELECIONAR ESTRATAGEMAS PARA O SLOT` sobre `SLOT 1 · F1`: o slot que
+    /// os cliques da grade equipam.
+    fn header(&self, ui: &mut Ui, rect: Rect, ctx: &Ctx) {
         let shortcut = ctx.settings.shortcut(self.active_slot).unwrap_or("—");
-        let label = format!("{} {}", ctx.tr().macros.select_title, shortcut).to_uppercase();
-        let style = TextStyle::new(font::SIZE_LABEL, Weight::Black)
-            .tracking(font::TRACKING_LABEL)
-            .align(Align::Center)
-            .middle();
-
-        let width = measure.text_size(&label, style, f32::INFINITY).0;
-        ui.text(rect, label, style, theme::TEXT_DIM);
-
-        let line = theme::BORDER.alpha(0.6);
-        let y = rect.center_y();
-        let left = Rect::new(
-            rect.x,
-            y,
-            (rect.w - width) / 2.0 - TITLE_GAP,
-            theme::HAIRLINE_WIDTH,
-        );
-        ui.fill(left, 0.0, line);
-        ui.fill(
-            Rect::new(rect.right() - left.w, y, left.w, theme::HAIRLINE_WIDTH),
-            0.0,
-            line,
-        );
+        let title = format!("Slot {} \u{00B7} {}", self.active_slot + 1, shortcut);
+        widgets::page_header(ui, rect, ctx.tr().macros.select_title, &title);
     }
 
     fn search_field(&self, ui: &mut Ui, rect: Rect, ctx: &Ctx) {
         let focused = ctx.focused_edit == Some(search_id());
         let placeholder =
             (self.search.is_empty() && !focused).then_some(ctx.tr().macros.search_placeholder);
-        widgets::edit_host(ui, search_id(), rect, focused, placeholder);
+        let reserve = if self.search.is_empty() {
+            0.0
+        } else {
+            CLEAR_SIZE
+        };
+        widgets::edit_host(ui, search_id(), rect, focused, placeholder, reserve);
 
         if self.search.is_empty() {
             return;
         }
-        // × dentro do campo, do jeito que a v1 o colocava.
-        let id = clear_search_id();
+        // `icon-btn` de limpar, encostado na borda direita do campo.
         let button = Rect::new(
-            rect.right() - CLEAR_SIZE - 14.0,
+            rect.right() - CLEAR_SIZE - 9.0,
             rect.center_y() - CLEAR_SIZE / 2.0,
             CLEAR_SIZE,
             CLEAR_SIZE,
         );
-        let hover = ui.fade(id, ui.is_hot(id), HOVER_MS);
-        ui.text(
-            button,
-            "×",
-            TextStyle::new(font::SIZE_CARD_HEADER, Weight::Black)
-                .align(Align::Center)
-                .middle(),
-            theme::TEXT_DIM.mix(theme::TEXT, hover),
-        );
-        ui.hit(id, button);
+        widgets::icon_btn(ui, clear_search_id(), button, Glyph::Close, Tone::Plain);
     }
 
+    /// Estado vazio (§8): kicker `> NADA AQUI` e a explicação, sem ilustração.
     fn no_results(&self, ui: &mut Ui, rect: Rect, ctx: &Ctx) {
+        let palette = theme::palette();
+        let mut rect = rect.with_h(64.0);
         ui.text(
-            rect.with_h(48.0),
+            rect.cut_top(20.0),
+            widgets::sigil(ctx.tr().macros.nothing_here),
+            styles::micro().align(Align::Center).middle(),
+            palette.accent_text,
+        );
+        ui.text(
+            rect,
             format!(
                 "{} \u{201c}{}\u{201d}",
                 ctx.tr().macros.search_no_results,
                 self.search.trim()
             ),
-            TextStyle::new(font::SIZE_LABEL, Weight::Black)
-                .tracking(font::TRACKING_LABEL)
-                .align(Align::Center)
-                .middle(),
-            theme::TEXT_DIM,
+            styles::body().align(Align::Center).middle(),
+            palette.muted,
         );
     }
 
@@ -317,12 +302,13 @@ impl MacroTab {
             let rect = Rect::new(view.x, y, width, height);
             // Fora da janela visível não há o que desenhar — é o que segura o
             // custo de uma grade de 91 ícones.
-            if rect.bottom() >= view.y && rect.y <= view.bottom() {
+            if rect.bottom() + theme::SHADOW >= view.y && rect.y <= view.bottom() {
                 self.section(ui, rect, section, cell, view, &equipped, ctx);
             }
             y += height + SECTION_GAP;
         }
-        ui.scroll_end(grid_id(), view, content.max(0.0));
+        // A sombra do último painel também precisa caber na rolagem.
+        ui.scroll_end(grid_id(), view, (content + theme::SHADOW).max(0.0));
     }
 
     #[allow(clippy::too_many_arguments)]
@@ -337,35 +323,17 @@ impl MacroTab {
         ctx: &Ctx,
     ) {
         let accent = tag_color(&section.tag);
-        ui.fill(rect, theme::RADIUS_CARD, theme::CARD_BG);
-        ui.stroke(
-            rect,
-            theme::RADIUS_CARD,
-            theme::HAIRLINE_WIDTH,
-            theme::BORDER,
-        );
-        widgets::card_left_accent(ui, rect, accent.alpha(0.5));
-
-        let mut content = rect.inset(SECTION_PADDING);
-        let mut header = content.cut_top(SECTION_HEADER);
-        let dot = header.cut_left(20.0).middle_row(8.0).with_w(8.0);
-        ui.ellipse(dot, accent);
-        ui.glow(dot, 4.0, accent);
-        ui.text(
-            header,
-            ctx.tr()
-                .settings
-                .tag(&section.tag, ctx.tr().macros.others)
-                .to_uppercase(),
-            TextStyle::new(font::SIZE_BODY, Weight::Black)
-                .tracking(font::TRACKING_LABEL)
-                .middle(),
-            theme::TEXT_DIM,
-        );
-        content.skip_top(SECTION_HEADER_GAP);
+        let label = ctx.tr().settings.tag(&section.tag, ctx.tr().macros.others);
+        let content = widgets::card(ui, rect, Some(CardHeader::new(label, "dir").marker(accent)));
 
         for (index, id) in section.ids.iter().enumerate() {
-            let cell_rect = grid_cell(content, GRID_COLS, cell, GRID_GAP, index);
+            let cell_rect = grid_cell(
+                content,
+                GRID_COLS,
+                widgets::tile_height(cell),
+                GRID_GAP,
+                index,
+            );
             if cell_rect.bottom() < view.y || cell_rect.y > view.bottom() {
                 continue;
             }
@@ -380,25 +348,30 @@ impl MacroTab {
                 CardState {
                     disabled: is_disabled(strat, equipped, self.active_slot),
                     in_active_slot: ctx.slots[self.active_slot] == Some(*id),
-                    accent,
                 },
             );
         }
     }
 
-    /// Barra dos quatro slots, centralizada no rodapé da aba.
+    /// Barra dos quatro slots, centralizada no rodapé da aba: um painel com
+    /// moldura e sombra dura.
     fn slot_bar(&self, ui: &mut Ui, measure: &mut dyn Measure, rect: Rect, ctx: &Ctx) {
+        let palette = theme::palette();
         let width = widgets::SLOT_SIZE * SLOT_COUNT as f32
             + SLOT_BAR_GAP * (SLOT_COUNT - 1) as f32
             + SLOT_BAR_PADDING * 2.0;
-        let panel = rect.centered(width, slot_bar_height());
-        ui.fill(panel, SLOT_BAR_RADIUS, theme::SURFACE);
-        ui.stroke(
-            panel,
-            SLOT_BAR_RADIUS,
-            theme::HAIRLINE_WIDTH,
-            theme::HAIRLINE,
+        let panel = Rect::new(
+            rect.center_x() - width / 2.0,
+            rect.y,
+            width,
+            slot_bar_height(),
         );
+        ui.fill(
+            panel.translate(theme::SHADOW, theme::SHADOW),
+            palette.shadow,
+        );
+        ui.fill(panel, palette.base_200);
+        ui.stroke(panel, theme::BORDER, palette.base_300);
 
         let equipped = ctx.data.resolve(&ctx.slots);
         let mut x = panel.x + SLOT_BAR_PADDING;
@@ -418,6 +391,7 @@ impl MacroTab {
                 *strat,
                 shortcut,
                 index == self.active_slot,
+                ctx.tr().macros.empty,
             );
             x += widgets::SLOT_SIZE + SLOT_BAR_GAP;
         }
@@ -489,27 +463,26 @@ fn tag_rank(tag: &str) -> usize {
         .unwrap_or(TAG_ORDER.len())
 }
 
-/// Cor da categoria, igual à da v1: ofensivo vermelho, defensivo verde e o
-/// resto ciano.
+/// Cor da categoria, vinda dos status do tema: ofensivo é erro, defensivo é
+/// sucesso e o resto (suprimento) é info. Aparece como quadrado de cor — no
+/// canto do tile e na barra da seção —, nunca como moldura.
 fn tag_color(tag: &str) -> Color {
+    let palette = theme::palette();
     match tag {
-        "Offensive" => theme::RED,
-        "Defensive" => theme::GREEN,
-        _ => theme::CYAN,
+        "Offensive" => palette.error.fill,
+        "Defensive" => palette.success.fill,
+        _ => palette.info.fill,
     }
 }
 
-/// Lado do card quadrado numa seção de `width` de largura.
+/// Largura do tile numa seção de `width` de largura.
 fn cell_size(width: f32) -> f32 {
-    let inner = width - SECTION_PADDING * 2.0;
+    let inner = width - widgets::CARD_PADDING * 2.0;
     ((inner - GRID_GAP * (GRID_COLS - 1) as f32) / GRID_COLS as f32).max(0.0)
 }
 
 fn section_height(count: usize, cell: f32) -> f32 {
-    SECTION_PADDING * 2.0
-        + SECTION_HEADER
-        + SECTION_HEADER_GAP
-        + grid_height(count, GRID_COLS, cell, GRID_GAP)
+    widgets::card_chrome(true) + grid_height(count, GRID_COLS, widgets::tile_height(cell), GRID_GAP)
 }
 
 /// Um card só é clicável se couber no slot em edição (`isCardDisabled` da v1).
@@ -529,6 +502,7 @@ fn is_disabled(strat: &Stratagem, equipped: &[Option<&Stratagem>], active: usize
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::ui::toolkit::TextStyle;
     use crate::ui::toolkit::Visual;
 
     /// Medidor de largura fixa: o layout só precisa de uma largura plausível.
@@ -757,7 +731,7 @@ mod tests {
             Some(Action::ClearSearch)
         );
         // O × só existe com texto na busca; sem ele, o campo responde inteiro.
-        let inside_clear = (770.0, 68.0);
+        let inside_clear = (776.0, 39.0);
         assert_eq!(
             ui.frame().hit_at(inside_clear.0, inside_clear.1),
             Some(clear_search_id())

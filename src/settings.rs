@@ -100,6 +100,50 @@ impl<'de> Deserialize<'de> for Language {
     }
 }
 
+/// Tema da interface (skin `retro` do styleguide): `Rose` é o escuro e
+/// `Crimson` o claro.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "lowercase")]
+pub enum Theme {
+    Rose,
+    Crimson,
+}
+
+impl Theme {
+    pub const ALL: [Theme; 2] = [Theme::Rose, Theme::Crimson];
+
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Theme::Rose => "rose",
+            Theme::Crimson => "crimson",
+        }
+    }
+
+    /// O outro tema — é o que o toggle da topbar e o `Shift+T` escolhem.
+    pub fn toggled(self) -> Theme {
+        match self {
+            Theme::Rose => Theme::Crimson,
+            Theme::Crimson => Theme::Rose,
+        }
+    }
+
+    /// `None` para valor desconhecido: aí o app volta a seguir o sistema, em
+    /// vez de invalidar o arquivo inteiro.
+    pub fn from_str_opt(value: &str) -> Option<Theme> {
+        match value {
+            "rose" => Some(Theme::Rose),
+            "crimson" => Some(Theme::Crimson),
+            _ => None,
+        }
+    }
+}
+
+impl fmt::Display for Theme {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.as_str())
+    }
+}
+
 /// Atalhos dos 4 slots de macro.
 pub const SLOT_COUNT: usize = 4;
 /// Atalhos dos 3 estratagemas de apoio fixo.
@@ -122,6 +166,10 @@ pub struct Settings {
     pub build_match_set: bool,
     pub build_balanced: bool,
     pub build_max_one_sentry: bool,
+    /// Tema escolhido à mão. `None` segue o modo claro/escuro do Windows — é o
+    /// que vale até o primeiro clique no toggle.
+    #[serde(deserialize_with = "de_theme", skip_serializing_if = "Option::is_none")]
+    pub theme: Option<Theme>,
 }
 
 impl Default for Settings {
@@ -143,6 +191,7 @@ impl Default for Settings {
             build_match_set: true,
             build_balanced: false,
             build_max_one_sentry: false,
+            theme: None,
         }
     }
 }
@@ -230,6 +279,15 @@ where
     Ok(fixed(Vec::<Option<String>>::deserialize(deserializer)?))
 }
 
+fn de_theme<'de, D>(deserializer: D) -> Result<Option<Theme>, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    Ok(Option::<String>::deserialize(deserializer)?
+        .as_deref()
+        .and_then(Theme::from_str_opt))
+}
+
 fn de_support_shortcuts<'de, D>(
     deserializer: D,
 ) -> Result<[Option<String>; SUPPORT_COUNT], D::Error>
@@ -311,6 +369,44 @@ mod tests {
             Settings::from_json(br#"{"macroSpeed":"ludicrous","language":"tlh"}"#).unwrap();
         assert_eq!(settings.macro_speed, Speed::Normal);
         assert_eq!(settings.language, Language::Pt);
+    }
+
+    #[test]
+    fn the_theme_follows_the_system_until_it_is_chosen() {
+        assert_eq!(Settings::default().theme, None);
+        // Arquivo da v1 ou de antes do tema: nada escolhido.
+        assert_eq!(Settings::from_json(V1_JSON).unwrap().theme, None);
+
+        let chosen = Settings::from_json(br#"{"theme":"crimson"}"#).unwrap();
+        assert_eq!(chosen.theme, Some(Theme::Crimson));
+        let round = serde_json::to_vec(&chosen).unwrap();
+        assert_eq!(
+            Settings::from_json(&round).unwrap().theme,
+            Some(Theme::Crimson)
+        );
+
+        // Valor desconhecido ou nulo volta a seguir o sistema, sem derrubar o
+        // resto do arquivo.
+        let odd = Settings::from_json(br#"{"theme":"sepia","language":"en"}"#).unwrap();
+        assert_eq!(odd.theme, None);
+        assert_eq!(odd.language, Language::En);
+        assert_eq!(
+            Settings::from_json(br#"{"theme":null}"#).unwrap().theme,
+            None
+        );
+
+        // Sem escolha, o campo nem aparece no arquivo.
+        let plain = String::from_utf8(serde_json::to_vec(&Settings::default()).unwrap()).unwrap();
+        assert!(!plain.contains("theme"), "{plain}");
+    }
+
+    #[test]
+    fn toggling_the_theme_alternates_between_the_two() {
+        assert_eq!(Theme::Rose.toggled(), Theme::Crimson);
+        assert_eq!(Theme::Crimson.toggled(), Theme::Rose);
+        for theme in Theme::ALL {
+            assert_eq!(Theme::from_str_opt(theme.as_str()), Some(theme));
+        }
     }
 
     #[test]

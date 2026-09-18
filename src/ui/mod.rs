@@ -4,6 +4,7 @@
 //! só a janela em si (`window`) precisa do Windows.
 
 pub mod build_tab;
+pub mod chrome;
 pub mod macro_tab;
 pub mod modal;
 pub mod settings_tab;

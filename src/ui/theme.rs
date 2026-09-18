@@ -1,14 +1,25 @@
-//! Tokens visuais do tema HD (R5) e a conversão DIP↔pixel.
+//! Tokens visuais da skin `retro` (neobrutal) e a conversão DIP↔pixel.
 //!
-//! Os valores vêm do CSS da v1 (`legacy/src/renderer/index.css` + as classes
-//! Tailwind usadas no JSX). O que lá era `bg-slate-900/40` sobre um fundo opaco
-//! aqui já entra pré-composto: o Direct2D pinta uma camada a menos, e a cor final
-//! é a mesma.
+//! A fonte de verdade é o `styleguide.md` da raiz: os hex das duas paletas, a
+//! fonte e a geometria vêm de lá sem alteração. Aqui eles viram três camadas,
+//! na mesma ordem do guia:
+//!
+//! 1. [`raw`] — a paleta bruta. **Hex existe só ali**, uma vez (§2.1).
+//! 2. [`Palette`] — os tokens semânticos de cada tema (§2.2–§2.4). Widget
+//!    nenhum lê a paleta bruta nem pergunta qual é o tema: ele pede
+//!    [`palette()`] e usa o papel (`base_300` é toda moldura, `accent` é todo
+//!    fill de ênfase…). Trocar o tema é trocar a paleta inteira de uma vez.
+//! 3. A geometria (§4, §5): moldura de 2px, sombra dura deslocada, zero raio.
+//!    Não existe constante de raio — o toolkit nem aceita um.
 //!
 //! Tudo é medido em DIP. O render target recebe o DPI do monitor
 //! (`SetDpi`) e faz a multiplicação sozinho, então nenhum widget precisa saber a
 //! escala — ela só aparece onde o Win32 fala em pixel: tamanho de janela, posição
 //! do mouse e bounds persistidos.
+
+use std::sync::atomic::{AtomicU8, Ordering};
+
+pub use crate::settings::Theme;
 
 /// Cor RGBA com alfa direto (não pré-multiplicado), do jeito que o
 /// `D2D1_COLOR_F` espera.
@@ -40,10 +51,25 @@ impl Color {
         Color { a, ..self }
     }
 
+    /// Multiplica o alfa — é assim que um bloco inteiro apaga junto (estado
+    /// `:disabled`, saída de um toast) sem virar outra cor.
+    pub const fn faded(self, factor: f32) -> Color {
+        Color {
+            a: self.a * factor,
+            ..self
+        }
+    }
+
     /// Interpola até `other`. Serve pros fades de hover, que andam por um valor
     /// 0..1 vindo do toolkit.
     pub fn mix(self, other: Color, t: f32) -> Color {
-        let t = t.clamp(0.0, 1.0);
+        // Nas pontas a cor é a do token, bit a bit — sem o resíduo da conta.
+        if t <= 0.0 {
+            return self;
+        }
+        if t >= 1.0 {
+            return other;
+        }
         Color {
             r: self.r + (other.r - self.r) * t,
             g: self.g + (other.g - self.g) * t,
@@ -52,8 +78,8 @@ impl Color {
         }
     }
 
-    /// Compõe `self` sobre `backdrop`, que é como os tokens translúcidos do
-    /// legado viram cor sólida quando o fundo é opaco.
+    /// Compõe `self` sobre `backdrop`: um token translúcido sobre um fundo
+    /// opaco vira a cor sólida que aparece na tela.
     pub fn over(self, backdrop: Color) -> Color {
         let a = self.a + backdrop.a * (1.0 - self.a);
         if a <= f32::EPSILON {
@@ -68,77 +94,302 @@ impl Color {
             a,
         }
     }
+
+    /// Luminância relativa do WCAG, para as contas de contraste dos testes.
+    pub fn luminance(self) -> f32 {
+        let channel = |c: f32| {
+            if c <= 0.039_28 {
+                c / 12.92
+            } else {
+                ((c + 0.055) / 1.055).powf(2.4)
+            }
+        };
+        0.2126 * channel(self.r) + 0.7152 * channel(self.g) + 0.0722 * channel(self.b)
+    }
+
+    /// Razão de contraste do WCAG entre duas cores opacas.
+    pub fn contrast(self, other: Color) -> f32 {
+        let (a, b) = (self.luminance(), other.luminance());
+        (a.max(b) + 0.05) / (a.min(b) + 0.05)
+    }
 }
 
-// --- Paleta (R5) ---
+/// Paleta bruta (§2.1). É o único lugar do app com hex de cor.
+pub mod raw {
+    use super::Color;
 
-/// Fundo da janela (`--color-hd-bg-deep`).
-pub const BG_DEEP: Color = Color::rgb(0x020617);
-/// `bg-slate-900/40` sobre [`BG_DEEP`], já composto.
-pub const CARD_BG: Color = Color::rgb(0x0B1120);
-/// slate-800: borda padrão de cards, inputs e divisores.
-pub const BORDER: Color = Color::rgb(0x1E293B);
-/// slate-200: texto principal.
-pub const TEXT: Color = Color::rgb(0xE2E8F0);
-/// slate-500: labels e texto de apoio.
-pub const TEXT_DIM: Color = Color::rgb(0x64748B);
-/// Acento principal (ativo, slots, aba de configurações).
-pub const YELLOW: Color = Color::rgb(0xFBBF24);
-/// Acento secundário (`--color-hd-primary`) e categoria Supply.
-pub const CYAN: Color = Color::rgb(0x22D3EE);
-/// Categoria Offensive, erros e bloqueio de macro.
-pub const RED: Color = Color::rgb(0xEF4444);
-/// Categoria Defensive e sucesso.
-pub const GREEN: Color = Color::rgb(0x22C55E);
+    pub const CREAM: Color = Color::rgb(0xF2EFE7);
+    pub const WHITE: Color = Color::rgb(0xFFFFFF);
+    pub const INK: Color = Color::rgb(0x1A0A0A);
+    pub const NOIR: Color = Color::rgb(0x121212);
+    pub const NOIR_RAISED: Color = Color::rgb(0x1A1A1A);
+    pub const NEAR_BLACK: Color = Color::rgb(0x0D0D0D);
+    pub const CRIMSON: Color = Color::rgb(0xDC143C);
+    pub const CRIMSON_DEEP: Color = Color::rgb(0xC8102E);
+    pub const ROSE: Color = Color::rgb(0xE8729A);
+    pub const INFO: Color = Color::rgb(0x2563EB);
+    pub const SUCCESS: Color = Color::rgb(0x16A34A);
+    pub const WARNING: Color = Color::rgb(0xD97706);
+    pub const ERROR: Color = Color::rgb(0xDC2626);
+    pub const SUCCESS_DEEP: Color = Color::rgb(0x15803D);
+    pub const WARNING_DEEP: Color = Color::rgb(0xB45309);
+    pub const INFO_SOFT: Color = Color::rgb(0x60A5FA);
+    pub const SUCCESS_SOFT: Color = Color::rgb(0x4ADE80);
+    pub const WARNING_SOFT: Color = Color::rgb(0xFBBF24);
+    pub const ERROR_SOFT: Color = Color::rgb(0xF87171);
+    pub const SCANLINE_LIGHT: Color = Color::rgba(0x000000, 0.05);
+    pub const SCANLINE_DARK: Color = Color::rgba(0x000000, 0.2);
+}
 
-// --- Derivados de uso frequente ---
+/// Um status (§2.2): a cor de fill, o conteúdo que vai por cima dela e a cor
+/// para quando o status é o próprio glifo (§2.4 — fill não serve de texto).
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct Status {
+    pub fill: Color,
+    pub content: Color,
+    pub text: Color,
+}
 
-/// slate-300: texto de item inativo sob o mouse.
-pub const TEXT_HOVER: Color = Color::rgb(0xCBD5E1);
-/// slate-950: texto sobre botão de acento (`hd-btn-primary`).
-pub const TEXT_ON_ACCENT: Color = Color::rgb(0x020617);
-/// `border-white/5`: divisores internos do header e dos cards.
-pub const HAIRLINE: Color = Color::rgba(0xFFFFFF, 0.05);
-/// `bg-slate-950/60`: fundo de input, slot e botão secundário.
-pub const SURFACE: Color = Color::rgba(0x020617, 0.60);
-/// `hover:bg-slate-900/50` das abas inativas.
-pub const SURFACE_HOVER: Color = Color::rgba(0x0F172A, 0.50);
-/// `bg-slate-800/80`: fundo do slot em edição.
-pub const SURFACE_ACTIVE: Color = Color::rgba(0x1E293B, 0.80);
-/// Trilho e polegar da barra de rolagem (`scrollbar-hd`, 5px).
-pub const SCROLL_THUMB: Color = Color::rgba(0x1E293B, 0.80);
+/// Os tokens semânticos de um tema (§2.2 e §2.3).
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct Palette {
+    /// Fundo de página.
+    pub base_100: Color,
+    /// Superfície elevada: painel, campo, dropdown, diálogo.
+    pub base_200: Color,
+    /// Toda moldura. Neutra, nunca accent — no escuro é a cor clara do texto.
+    pub base_300: Color,
+    /// Texto.
+    pub content: Color,
+    /// Micro-texto e rótulo apagados: 60% do `content`. Apagar é cor, nunca
+    /// opacidade de grupo (§2.4).
+    pub muted: Color,
+    /// Ênfase como **fill**: estado ativo, item selecionado, CTA.
+    pub accent: Color,
+    /// O que vai por cima do fill accent.
+    pub accent_content: Color,
+    /// Accent como **glifo** (kicker, número em destaque).
+    pub accent_text: Color,
+    pub info: Status,
+    pub success: Status,
+    pub warning: Status,
+    pub error: Status,
+    /// Cor da sombra dura. No escuro a sombra é accent.
+    pub shadow: Color,
+    /// Linha da textura de scanline, já com a opacidade de 0.3 do motif §4.4.
+    pub scanline: Color,
+}
 
-/// Alfa do brilho que substitui o `box-shadow` do CSS: um traço externo na cor
-/// do acento. Sem blur gaussiano — o custo não pagaria a diferença.
-pub const GLOW_ALPHA: f32 = 0.35;
-/// Espessura do traço de brilho, em DIP.
-pub const GLOW_WIDTH: f32 = 2.5;
+impl Palette {
+    /// Paleta de um tema.
+    pub fn of(theme: Theme) -> &'static Palette {
+        match theme {
+            Theme::Rose => &ROSE,
+            Theme::Crimson => &CRIMSON,
+        }
+    }
 
-// --- Raios e métricas ---
+    /// Fill de hover das linhas e itens de navegação: 8% do texto sobre o que
+    /// estiver atrás (`color-mix(base-content 8%)`).
+    pub fn hover_fill(&self) -> Color {
+        self.content.faded(0.08)
+    }
 
-pub const RADIUS_CARD: f32 = 16.0;
-pub const RADIUS_BUTTON: f32 = 12.0;
-pub const RADIUS_SLOT: f32 = 12.0;
-/// Espessura das bordas e divisores de 1px do legado.
-pub const HAIRLINE_WIDTH: f32 = 1.0;
-/// Largura da barra de rolagem (`scrollbar-hd`).
-pub const SCROLLBAR_WIDTH: f32 = 5.0;
+    /// Divisor de linha de lista (`1px base-300` com `opacity-30`).
+    pub fn rule(&self) -> Color {
+        self.base_300.faded(0.3)
+    }
+}
 
-/// Fonte e tamanhos. A família é carregada de `assets/fonts/` numa coleção
-/// própria do DirectWrite — nada é instalado no sistema.
+/// Opacidade da scanline sobre a cor base do tema (§4.4).
+const SCANLINE_OPACITY: f32 = 0.3;
+
+/// `crimson` — o claro (`color-scheme: light`).
+pub static CRIMSON: Palette = Palette {
+    base_100: raw::CREAM,
+    base_200: raw::WHITE,
+    base_300: raw::INK,
+    content: raw::INK,
+    muted: raw::INK.faded(0.6),
+    accent: raw::CRIMSON,
+    accent_content: raw::WHITE,
+    accent_text: raw::CRIMSON_DEEP,
+    info: Status {
+        fill: raw::INFO,
+        content: raw::WHITE,
+        text: raw::INFO,
+    },
+    success: Status {
+        fill: raw::SUCCESS,
+        content: raw::INK,
+        text: raw::SUCCESS_DEEP,
+    },
+    warning: Status {
+        fill: raw::WARNING,
+        content: raw::INK,
+        text: raw::WARNING_DEEP,
+    },
+    error: Status {
+        fill: raw::ERROR,
+        content: raw::WHITE,
+        text: raw::ERROR,
+    },
+    shadow: raw::INK,
+    scanline: raw::SCANLINE_LIGHT.faded(SCANLINE_OPACITY),
+};
+
+/// `rose` — o escuro (`color-scheme: dark`), padrão do app.
+pub static ROSE: Palette = Palette {
+    base_100: raw::NOIR,
+    base_200: raw::NOIR_RAISED,
+    base_300: raw::CREAM,
+    content: raw::CREAM,
+    muted: raw::CREAM.faded(0.6),
+    accent: raw::ROSE,
+    accent_content: raw::NEAR_BLACK,
+    accent_text: raw::ROSE,
+    info: Status {
+        fill: raw::INFO_SOFT,
+        content: raw::NEAR_BLACK,
+        text: raw::INFO_SOFT,
+    },
+    success: Status {
+        fill: raw::SUCCESS_SOFT,
+        content: raw::NEAR_BLACK,
+        text: raw::SUCCESS_SOFT,
+    },
+    warning: Status {
+        fill: raw::WARNING_SOFT,
+        content: raw::NEAR_BLACK,
+        text: raw::WARNING_SOFT,
+    },
+    error: Status {
+        fill: raw::ERROR_SOFT,
+        content: raw::NEAR_BLACK,
+        text: raw::ERROR_SOFT,
+    },
+    shadow: raw::ROSE,
+    scanline: raw::SCANLINE_DARK.faded(SCANLINE_OPACITY),
+};
+
+/// Tema em uso pelo processo. Um só para a janela e o overlay: a troca vale
+/// para as duas threads na próxima passagem de construção de cada uma.
+static CURRENT: AtomicU8 = AtomicU8::new(0);
+
+fn encode(theme: Theme) -> u8 {
+    match theme {
+        Theme::Rose => 0,
+        Theme::Crimson => 1,
+    }
+}
+
+/// Tema em uso. Padrão `rose` (§0.2).
+pub fn current() -> Theme {
+    match CURRENT.load(Ordering::Relaxed) {
+        1 => Theme::Crimson,
+        _ => Theme::Rose,
+    }
+}
+
+/// Troca o tema do processo. Quem chama refaz as telas.
+pub fn set(theme: Theme) {
+    CURRENT.store(encode(theme), Ordering::Relaxed);
+}
+
+/// Os tokens do tema em uso. É por aqui que todo widget pega cor.
+pub fn palette() -> &'static Palette {
+    Palette::of(current())
+}
+
+// --- Geometria (§4, §5) ---
+
+/// Moldura grossa reta (`--frame-border`, §4.2), em toda caixa e controle.
+pub const BORDER: f32 = 2.0;
+/// Sombra dura deslocada (`--frame-shadow`, §4.1): sem blur, sem spread.
+pub const SHADOW: f32 = 6.0;
+/// `--frame-shadow-sm`: o repouso dos clicáveis e o nível dos popovers.
+pub const SHADOW_SM: f32 = 3.0;
+/// Quanto um clicável sobe no hover (`hover:-translate-y-1`, §4.9).
+pub const LIFT: f32 = 4.0;
+/// Divisor fino de linha de lista.
+pub const HAIRLINE: f32 = 1.0;
+/// Anel de foco (§4.12): 2px sólidos, afastados 2px do controle.
+pub const FOCUS_RING: f32 = 2.0;
+pub const FOCUS_OFFSET: f32 = 2.0;
+/// Barra de rolagem: polegar reto, na cor da moldura.
+pub const SCROLLBAR_WIDTH: f32 = 6.0;
+/// Uma linha de scanline a cada tantos DIP (§4.4).
+pub const SCANLINE_STEP: f32 = 4.0;
+/// `:disabled` (§2.4): a única opacidade legítima num controle.
+pub const DISABLED_ALPHA: f32 = 0.4;
+
+/// Tempos do motion (§4 "Motion").
+pub mod motion {
+    /// `transition-all duration-300` do hover que levanta.
+    pub const HOVER_MS: u32 = 300;
+    /// `animate-enter`: fade + 8px de subida em 200ms, sem overshoot.
+    pub const ENTER_MS: u32 = 200;
+    pub const ENTER_RISE: f32 = 8.0;
+    /// Período do caret piscando (`blink 1s step-end infinite`, §4.5).
+    pub const BLINK_MS: u32 = 1_000;
+    /// Saída de toast e de overlay (fade de 150ms).
+    pub const EXIT_MS: u32 = 150;
+
+    /// `cubic-bezier(0.33, 1, 0.68, 1)` — o ease-out do `animate-enter`, sem
+    /// overshoot. Resolvido por bisseção em `x`, que é monotônico na curva.
+    pub fn ease_out(t: f32) -> f32 {
+        let t = t.clamp(0.0, 1.0);
+        let bezier = |p1: f32, p2: f32, s: f32| {
+            let u = 1.0 - s;
+            3.0 * u * u * s * p1 + 3.0 * u * s * s * p2 + s * s * s
+        };
+        let (mut lo, mut hi) = (0.0f32, 1.0f32);
+        for _ in 0..24 {
+            let mid = (lo + hi) / 2.0;
+            if bezier(0.33, 0.68, mid) < t {
+                lo = mid;
+            } else {
+                hi = mid;
+            }
+        }
+        bezier(1.0, 1.0, (lo + hi) / 2.0)
+    }
+}
+
+/// Tipografia (§3). Uma família para tudo, carregada de `assets/fonts/` numa
+/// coleção própria do DirectWrite — nada é instalado no sistema.
 pub mod font {
-    pub const FAMILY: &str = "Inter";
+    pub const FAMILY: &str = "JetBrains Mono";
 
+    /// Etiqueta de atalho dentro do slot.
     pub const SIZE_TINY: f32 = 9.0;
-    pub const SIZE_LABEL: f32 = 10.0;
-    pub const SIZE_BODY: f32 = 11.0;
-    pub const SIZE_CARD_HEADER: f32 = 13.0;
-    pub const SIZE_TITLE: f32 = 16.0;
+    /// Micro-texto: hora, id, status, kicker, cabeçalho de lista (`text-[10px]`).
+    pub const SIZE_MICRO: f32 = 10.0;
+    /// Rótulo de formulário e texto de botão (`text-xs`).
+    pub const SIZE_LABEL: f32 = 11.0;
+    /// Corpo (`text-sm` na escala da janela de 820 DIP).
+    pub const SIZE_BODY: f32 = 12.0;
+    /// Nome da marca na topbar (`screen-title` pequeno da sidebar).
+    pub const SIZE_BRAND: f32 = 18.0;
+    /// Título de tela e de diálogo (`screen-title`).
+    pub const SIZE_TITLE: f32 = 22.0;
 
-    /// `tracking-[0.25em]` das abas e headers, em EM.
-    pub const TRACKING_WIDE: f32 = 0.25;
-    /// `tracking-widest` dos labels, em EM.
-    pub const TRACKING_LABEL: f32 = 0.2;
+    /// `tracking-[0.2em]` do micro-texto.
+    pub const TRACKING_MICRO: f32 = 0.2;
+    /// `tracking-widest` dos rótulos.
+    pub const TRACKING_WIDEST: f32 = 0.1;
+    /// `letter-spacing: 0.05em` dos botões grandes.
+    pub const TRACKING_BUTTON: f32 = 0.05;
+    /// `tracking-wide` dos itens de navegação.
+    pub const TRACKING_WIDE: f32 = 0.025;
+    /// `tracking-tighter` dos títulos grandes.
+    pub const TRACKING_TIGHTER: f32 = -0.05;
+
+    /// Altura de uma linha em EM: ascendente 1020 + descendente 300 sobre
+    /// 1000 unidades da JetBrains Mono. É o que o DirectWrite mede.
+    pub const LINE: f32 = 1.32;
+    /// Avanço de um caractere em EM — a fonte é monoespaçada.
+    pub const ADVANCE: f32 = 0.6;
 }
 
 /// DPI em que 1 DIP = 1 pixel.
@@ -194,60 +445,130 @@ mod tests {
 
     #[test]
     fn hex_becomes_normalized_channels() {
-        let cyan = Color::rgb(0x22D3EE);
-        assert!(close(cyan.r, 0x22 as f32 / 255.0));
-        assert!(close(cyan.g, 0xD3 as f32 / 255.0));
-        assert!(close(cyan.b, 0xEE as f32 / 255.0));
-        assert!(close(cyan.a, 1.0));
+        let rose = raw::ROSE;
+        assert!(close(rose.r, 0xE8 as f32 / 255.0));
+        assert!(close(rose.g, 0x72 as f32 / 255.0));
+        assert!(close(rose.b, 0x9A as f32 / 255.0));
+        assert!(close(rose.a, 1.0));
 
         assert!(close(Color::rgba(0xFFFFFF, 0.05).a, 0.05));
-        assert!(close(CYAN.alpha(0.1).a, 0.1));
-        assert_eq!(CYAN.alpha(0.1).r, CYAN.r);
+        assert!(close(rose.alpha(0.1).a, 0.1));
+        assert_eq!(rose.alpha(0.1).r, rose.r);
+        assert!(close(rose.alpha(0.5).faded(0.5).a, 0.25));
     }
 
     #[test]
     fn mixing_walks_from_one_color_to_the_other() {
-        assert_eq!(TEXT_DIM.mix(TEXT_HOVER, 0.0), TEXT_DIM);
-        assert_eq!(TEXT_DIM.mix(TEXT_HOVER, 1.0), TEXT_HOVER);
+        let (from, to) = (raw::NOIR, raw::CREAM);
+        assert_eq!(from.mix(to, 0.0), from);
+        assert_eq!(from.mix(to, 1.0), to);
 
-        let half = TEXT_DIM.mix(TEXT_HOVER, 0.5);
-        assert!(close(half.r, (TEXT_DIM.r + TEXT_HOVER.r) / 2.0));
+        let half = from.mix(to, 0.5);
+        assert!(close(half.r, (from.r + to.r) / 2.0));
         // Fora da faixa o valor é preso nas pontas, não extrapolado.
-        assert_eq!(TEXT_DIM.mix(TEXT_HOVER, 5.0), TEXT_HOVER);
-    }
-
-    /// `CARD_BG` é o `bg-slate-900/40` do legado sobre o fundo profundo. O token
-    /// da tabela R5 (`#0B1120`) arredonda essa composição para cima; o teste
-    /// garante que ele continua sendo a mesma cor, e não outra qualquer.
-    #[test]
-    fn card_background_matches_the_legacy_composition() {
-        let composed = Color::rgba(0x0F172A, 0.40).over(BG_DEEP);
-        for (token, exact) in [
-            (CARD_BG.r, composed.r),
-            (CARD_BG.g, composed.g),
-            (CARD_BG.b, composed.b),
-        ] {
-            assert!(
-                (token - exact).abs() < 0.02,
-                "token {token} longe da composição {exact}"
-            );
-        }
-        assert!(close(composed.a, 1.0));
-        assert!(close(CARD_BG.a, 1.0));
+        assert_eq!(from.mix(to, 5.0), to);
     }
 
     #[test]
     fn compositing_over_an_opaque_backdrop_stays_opaque() {
-        let solid = HAIRLINE.over(CARD_BG);
+        let solid = ROSE.hover_fill().over(ROSE.base_100);
         assert!(close(solid.a, 1.0));
-        // Branco a 5% clareia um pouco, sem chegar perto do branco.
-        assert!(solid.r > CARD_BG.r && solid.r < 0.2);
+        // 8% de creme clareia o noir um pouco, sem chegar perto do creme.
+        assert!(solid.r > ROSE.base_100.r && solid.r < 0.2);
     }
 
     #[test]
     fn transparent_over_transparent_is_transparent() {
         let empty = Color::rgba(0xFFFFFF, 0.0).over(Color::rgba(0x000000, 0.0));
         assert_eq!(empty.a, 0.0);
+    }
+
+    /// §2.2: os dois temas copiados do guia, papel por papel.
+    #[test]
+    fn the_two_themes_map_the_raw_palette_like_the_styleguide() {
+        assert_eq!(CRIMSON.base_100, raw::CREAM);
+        assert_eq!(CRIMSON.base_200, raw::WHITE);
+        assert_eq!(CRIMSON.base_300, raw::INK);
+        assert_eq!(CRIMSON.accent, raw::CRIMSON);
+        assert_eq!(CRIMSON.shadow, raw::INK);
+
+        assert_eq!(ROSE.base_100, raw::NOIR);
+        assert_eq!(ROSE.base_200, raw::NOIR_RAISED);
+        // No escuro a moldura é a cor clara do texto, e a sombra é accent.
+        assert_eq!(ROSE.base_300, raw::CREAM);
+        assert_eq!(ROSE.base_300, ROSE.content);
+        assert_eq!(ROSE.shadow, raw::ROSE);
+    }
+
+    /// §2.4: texto a 4.5:1, conferido nos dois temas.
+    ///
+    /// Texto neutro e accent valem nos dois fundos. Os `-text` de status foram
+    /// conferidos pelo guia sobre a superfície elevada (é onde status aparece:
+    /// dentro de painel, toast e banner) — sobre o creme da página o verde e o
+    /// âmbar escuros ficam em 4.4:1, então a página nunca recebe texto de
+    /// status: lá o status vai num quadrado de cor, com o rótulo em `content`.
+    #[test]
+    fn every_text_token_passes_aa_where_it_is_used() {
+        for palette in [&CRIMSON, &ROSE] {
+            for surface in [palette.base_100, palette.base_200] {
+                let tokens = [
+                    ("content", palette.content),
+                    ("muted", palette.muted.over(surface)),
+                    ("accent_text", palette.accent_text),
+                ];
+                for (name, color) in tokens {
+                    let ratio = color.contrast(surface);
+                    assert!(ratio >= 4.5, "{name} a {ratio:.2}:1");
+                }
+            }
+            let surface = palette.base_200;
+            for (name, status) in [
+                ("info", palette.info),
+                ("success", palette.success),
+                ("warning", palette.warning),
+                ("error", palette.error),
+            ] {
+                let ratio = status.text.contrast(surface);
+                assert!(ratio >= 4.5, "{name}-text a {ratio:.2}:1");
+            }
+            // O conteúdo de cada fill também.
+            let fills = [
+                ("accent", palette.accent, palette.accent_content),
+                ("info", palette.info.fill, palette.info.content),
+                ("success", palette.success.fill, palette.success.content),
+                ("warning", palette.warning.fill, palette.warning.content),
+                ("error", palette.error.fill, palette.error.content),
+            ];
+            for (name, fill, content) in fills {
+                let ratio = content.contrast(fill);
+                assert!(ratio >= 4.5, "{name}-content a {ratio:.2}:1");
+            }
+        }
+    }
+
+    /// O global do processo não é trocado aqui: os testes rodam em paralelo e
+    /// leem `palette()`. O que se confere é o mapeamento e o padrão.
+    #[test]
+    fn each_theme_has_its_palette_and_rose_is_the_default() {
+        assert_eq!(Palette::of(Theme::Crimson), &CRIMSON);
+        assert_eq!(Palette::of(Theme::Rose), &ROSE);
+        assert_eq!(current(), Theme::Rose);
+        assert_eq!(palette(), &ROSE);
+        assert_eq!(encode(Theme::Crimson), 1);
+    }
+
+    #[test]
+    fn the_enter_curve_eases_out_without_overshoot() {
+        assert!(close(motion::ease_out(0.0), 0.0));
+        assert!(close(motion::ease_out(1.0), 1.0));
+        let mut previous = 0.0;
+        for step in 1..=20 {
+            let value = motion::ease_out(step as f32 / 20.0);
+            assert!(value >= previous && value <= 1.0 + 1e-4, "{value}");
+            previous = value;
+        }
+        // Ease-out: a primeira metade anda mais que a segunda.
+        assert!(motion::ease_out(0.5) > 0.75);
     }
 
     #[test]

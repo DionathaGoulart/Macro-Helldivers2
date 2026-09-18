@@ -11,27 +11,24 @@
 //! O render target recebe o DPI do monitor, então todo desenho continua em DIP:
 //! a escala é aplicada pelo próprio Direct2D, sem arredondamento manual.
 
-use std::collections::HashMap;
 use std::path::Path;
 use std::sync::OnceLock;
 
 use windows::core::Result;
 use windows::Win32::Foundation::{D2DERR_RECREATE_TARGET, HWND, RECT};
 use windows::Win32::Graphics::Direct2D::Common::{
-    D2D1_ALPHA_MODE_IGNORE, D2D1_ALPHA_MODE_PREMULTIPLIED, D2D1_COLOR_F, D2D1_GRADIENT_STOP,
-    D2D1_PIXEL_FORMAT, D2D_RECT_F, D2D_SIZE_U,
+    D2D1_ALPHA_MODE_IGNORE, D2D1_ALPHA_MODE_PREMULTIPLIED, D2D1_COLOR_F, D2D1_PIXEL_FORMAT,
+    D2D_RECT_F, D2D_SIZE_U,
 };
 use windows::Win32::Graphics::Direct2D::{
     D2D1CreateFactory, ID2D1Brush, ID2D1DCRenderTarget, ID2D1Factory1, ID2D1HwndRenderTarget,
-    ID2D1LinearGradientBrush, ID2D1RenderTarget, ID2D1SolidColorBrush, ID2D1StrokeStyle,
-    D2D1_ANTIALIAS_MODE_ALIASED, D2D1_BITMAP_BRUSH_PROPERTIES,
-    D2D1_BITMAP_INTERPOLATION_MODE_LINEAR, D2D1_CAP_STYLE_ROUND, D2D1_DASH_STYLE_SOLID,
-    D2D1_DEBUG_LEVEL_NONE, D2D1_ELLIPSE, D2D1_EXTEND_MODE_CLAMP, D2D1_FACTORY_OPTIONS,
-    D2D1_FACTORY_TYPE_MULTI_THREADED, D2D1_FEATURE_LEVEL_DEFAULT, D2D1_GAMMA_2_2,
-    D2D1_HWND_RENDER_TARGET_PROPERTIES, D2D1_LINEAR_GRADIENT_BRUSH_PROPERTIES,
-    D2D1_LINE_JOIN_ROUND, D2D1_PRESENT_OPTIONS_NONE, D2D1_RENDER_TARGET_PROPERTIES,
-    D2D1_RENDER_TARGET_TYPE_DEFAULT, D2D1_RENDER_TARGET_USAGE_NONE, D2D1_ROUNDED_RECT,
-    D2D1_STROKE_STYLE_PROPERTIES1, D2D1_STROKE_TRANSFORM_TYPE_NORMAL,
+    ID2D1RenderTarget, ID2D1SolidColorBrush, ID2D1StrokeStyle, D2D1_ANTIALIAS_MODE_ALIASED,
+    D2D1_BITMAP_INTERPOLATION_MODE_LINEAR, D2D1_CAP_STYLE_SQUARE, D2D1_DASH_STYLE_SOLID,
+    D2D1_DEBUG_LEVEL_NONE, D2D1_FACTORY_OPTIONS, D2D1_FACTORY_TYPE_MULTI_THREADED,
+    D2D1_FEATURE_LEVEL_DEFAULT, D2D1_HWND_RENDER_TARGET_PROPERTIES, D2D1_LINE_JOIN_MITER,
+    D2D1_PRESENT_OPTIONS_NONE, D2D1_RENDER_TARGET_PROPERTIES, D2D1_RENDER_TARGET_TYPE_DEFAULT,
+    D2D1_RENDER_TARGET_USAGE_NONE, D2D1_STROKE_STYLE_PROPERTIES1,
+    D2D1_STROKE_TRANSFORM_TYPE_NORMAL,
 };
 use windows::Win32::Graphics::Dxgi::Common::DXGI_FORMAT_B8G8R8A8_UNORM;
 use windows::Win32::Graphics::Gdi::{
@@ -64,10 +61,10 @@ pub fn factory() -> Result<&'static ID2D1Factory1> {
     Ok(FACTORY.get_or_init(|| created))
 }
 
-/// Traço de pontas e junções arredondadas, do jeito que os ícones do legado
-/// (SVG com `stroke-linecap="round"`) desenhavam as setas do codex. É um recurso
-/// da fábrica, não do dispositivo: vale para o processo inteiro.
-fn round_stroke() -> Option<&'static ID2D1StrokeStyle> {
+/// Traço de pontas quadradas e junção em quina: cantos 100% retos também nas
+/// setas do codex e nos ícones desenhados (styleguide §4.3). É um recurso da
+/// fábrica, não do dispositivo: vale para o processo inteiro.
+fn square_stroke() -> Option<&'static ID2D1StrokeStyle> {
     static STYLE: OnceLock<Option<ID2D1StrokeStyle>> = OnceLock::new();
     STYLE
         .get_or_init(|| {
@@ -75,10 +72,10 @@ fn round_stroke() -> Option<&'static ID2D1StrokeStyle> {
             // "normal" é o comportamento da versão antiga (a espessura segue a
             // escala do target, que é como o DPI entra no traço).
             let properties = D2D1_STROKE_STYLE_PROPERTIES1 {
-                startCap: D2D1_CAP_STYLE_ROUND,
-                endCap: D2D1_CAP_STYLE_ROUND,
-                dashCap: D2D1_CAP_STYLE_ROUND,
-                lineJoin: D2D1_LINE_JOIN_ROUND,
+                startCap: D2D1_CAP_STYLE_SQUARE,
+                endCap: D2D1_CAP_STYLE_SQUARE,
+                dashCap: D2D1_CAP_STYLE_SQUARE,
+                lineJoin: D2D1_LINE_JOIN_MITER,
                 miterLimit: 10.0,
                 dashStyle: D2D1_DASH_STYLE_SOLID,
                 dashOffset: 0.0,
@@ -89,7 +86,7 @@ fn round_stroke() -> Option<&'static ID2D1StrokeStyle> {
             match style {
                 Ok(style) => Some(style.into()),
                 Err(err) => {
-                    log::warn!("CreateStrokeStyle falhou ({err}); traços com ponta reta");
+                    log::warn!("CreateStrokeStyle falhou ({err}); traços com ponta padrão");
                     None
                 }
             }
@@ -432,11 +429,6 @@ impl Drop for LayeredSurface {
     }
 }
 
-/// Teto do cache de gradientes. As paradas são constantes do tema na prática,
-/// então o mapa fica pequeno; o teto só impede que uma cor animada num
-/// gradiente vire acúmulo de COM pela sessão inteira.
-const LINEAR_BRUSH_MAX: usize = 64;
-
 /// Pincéis do render target. São recursos de dispositivo: morrem com ele.
 ///
 /// O sólido é um único pincel mutado com `SetColor` a cada uso — o padrão que a
@@ -446,15 +438,9 @@ const LINEAR_BRUSH_MAX: usize = 64;
 #[derive(Default)]
 struct BrushCache {
     solid: Option<ID2D1SolidColorBrush>,
-    linear: HashMap<(u128, u128), ID2D1LinearGradientBrush>,
 }
 
 impl BrushCache {
-    fn key(color: Color) -> u128 {
-        let pack = |value: f32| value.to_bits() as u128;
-        pack(color.r) | pack(color.g) << 32 | pack(color.b) << 64 | pack(color.a) << 96
-    }
-
     fn solid(&mut self, target: &ID2D1RenderTarget, color: Color) -> Option<ID2D1SolidColorBrush> {
         if let Some(brush) = &self.solid {
             // SAFETY: pincel vivo, do mesmo target; a cor vive durante a chamada.
@@ -472,60 +458,8 @@ impl BrushCache {
         }
     }
 
-    fn linear(
-        &mut self,
-        target: &ID2D1RenderTarget,
-        from: Color,
-        to: Color,
-    ) -> Option<ID2D1LinearGradientBrush> {
-        let key = (BrushCache::key(from), BrushCache::key(to));
-        if let Some(brush) = self.linear.get(&key) {
-            return Some(brush.clone());
-        }
-        if self.linear.len() >= LINEAR_BRUSH_MAX {
-            self.linear.clear();
-        }
-        let stops = [
-            D2D1_GRADIENT_STOP {
-                position: 0.0,
-                color: color_f(from),
-            },
-            D2D1_GRADIENT_STOP {
-                position: 1.0,
-                color: color_f(to),
-            },
-        ];
-        // SAFETY: as paradas e as propriedades vivem durante as chamadas.
-        let collection = unsafe {
-            target.CreateGradientStopCollection(&stops, D2D1_GAMMA_2_2, D2D1_EXTEND_MODE_CLAMP)
-        };
-        let collection = match collection {
-            Ok(collection) => collection,
-            Err(err) => {
-                log::warn!("CreateGradientStopCollection falhou: {err}");
-                return None;
-            }
-        };
-        // SAFETY: coleção recém-criada no mesmo target.
-        let brush = unsafe {
-            target.CreateLinearGradientBrush(
-                &D2D1_LINEAR_GRADIENT_BRUSH_PROPERTIES::default(),
-                None,
-                &collection,
-            )
-        };
-        match brush {
-            Ok(brush) => Some(self.linear.entry(key).or_insert(brush).clone()),
-            Err(err) => {
-                log::warn!("CreateLinearGradientBrush falhou: {err}");
-                None
-            }
-        }
-    }
-
     fn clear(&mut self) {
         self.solid = None;
-        self.linear.clear();
     }
 }
 
@@ -544,14 +478,6 @@ fn rect_f(rect: Rect) -> D2D_RECT_F {
         top: rect.y,
         right: rect.right(),
         bottom: rect.bottom(),
-    }
-}
-
-fn rounded(rect: Rect, radius: f32) -> D2D1_ROUNDED_RECT {
-    D2D1_ROUNDED_RECT {
-        rect: rect_f(rect),
-        radiusX: radius,
-        radiusY: radius,
     }
 }
 
@@ -606,46 +532,15 @@ impl toolkit::Painter for D2dPainter<'_> {
         self.clip = clip;
     }
 
-    fn fill(&mut self, rect: Rect, radius: f32, color: Color) {
+    fn fill(&mut self, rect: Rect, color: Color) {
         let Some(brush) = self.brush(color) else {
             return;
         };
         // SAFETY: geometria e pincel vivos durante a chamada.
-        unsafe {
-            if radius > 0.0 {
-                self.target
-                    .FillRoundedRectangle(&rounded(rect, radius), &brush);
-            } else {
-                self.target.FillRectangle(&rect_f(rect), &brush);
-            }
-        }
+        unsafe { self.target.FillRectangle(&rect_f(rect), &brush) };
     }
 
-    fn gradient(&mut self, rect: Rect, radius: f32, from: Color, to: Color) {
-        let Some(brush) = self.brushes.linear(self.target, from, to) else {
-            return;
-        };
-        // SAFETY: o pincel é do mesmo target; pontos e geometria vivem durante
-        // as chamadas.
-        unsafe {
-            brush.SetStartPoint(windows_numerics::Vector2 {
-                X: rect.x,
-                Y: rect.y,
-            });
-            brush.SetEndPoint(windows_numerics::Vector2 {
-                X: rect.x,
-                Y: rect.bottom(),
-            });
-            if radius > 0.0 {
-                self.target
-                    .FillRoundedRectangle(&rounded(rect, radius), &brush);
-            } else {
-                self.target.FillRectangle(&rect_f(rect), &brush);
-            }
-        }
-    }
-
-    fn stroke(&mut self, rect: Rect, radius: f32, width: f32, color: Color) {
+    fn stroke(&mut self, rect: Rect, width: f32, color: Color) {
         let Some(brush) = self.brush(color) else {
             return;
         };
@@ -654,30 +549,9 @@ impl toolkit::Painter for D2dPainter<'_> {
         let rect = rect.inset(width / 2.0);
         // SAFETY: geometria e pincel vivos durante a chamada.
         unsafe {
-            if radius > 0.0 {
-                self.target
-                    .DrawRoundedRectangle(&rounded(rect, radius), &brush, width, None);
-            } else {
-                self.target
-                    .DrawRectangle(&rect_f(rect), &brush, width, None);
-            }
+            self.target
+                .DrawRectangle(&rect_f(rect), &brush, width, square_stroke());
         }
-    }
-
-    fn ellipse(&mut self, rect: Rect, color: Color) {
-        let Some(brush) = self.brush(color) else {
-            return;
-        };
-        let ellipse = D2D1_ELLIPSE {
-            point: windows_numerics::Vector2 {
-                X: rect.center_x(),
-                Y: rect.center_y(),
-            },
-            radiusX: rect.w / 2.0,
-            radiusY: rect.h / 2.0,
-        };
-        // SAFETY: geometria e pincel vivos durante a chamada.
-        unsafe { self.target.FillEllipse(&ellipse, &brush) };
     }
 
     fn line(&mut self, from: (f32, f32), to: (f32, f32), width: f32, color: Color) {
@@ -688,7 +562,7 @@ impl toolkit::Painter for D2dPainter<'_> {
         // SAFETY: pincel e estilo vivos durante a chamada.
         unsafe {
             self.target
-                .DrawLine(point(from), point(to), &brush, width, round_stroke());
+                .DrawLine(point(from), point(to), &brush, width, square_stroke());
         }
     }
 
@@ -704,86 +578,27 @@ impl toolkit::Painter for D2dPainter<'_> {
         let Some(bitmap) = self.images.get(self.target, path) else {
             return;
         };
-        let (opacity, radius, zoom) = (style.opacity, style.radius, style.zoom);
-
-        if style.contain {
-            // Proporção preservada: a imagem cabe inteira e é centralizada, então
-            // não há o que recortar nem que ampliar.
+        let dest = if style.contain {
+            // Proporção preservada: a imagem cabe inteira e é centralizada.
             // SAFETY: leitura do tamanho de um bitmap vivo.
             let size = unsafe { bitmap.GetSize() };
             if size.width <= 0.0 || size.height <= 0.0 {
                 return;
             }
             let scale = (rect.w / size.width).min(rect.h / size.height);
-            let dest = rect.centered(size.width * scale, size.height * scale);
-            // SAFETY: bitmap do mesmo target; o retângulo vive durante a chamada.
-            unsafe {
-                self.target.DrawBitmap(
-                    &bitmap,
-                    Some(&rect_f(dest)),
-                    opacity,
-                    D2D1_BITMAP_INTERPOLATION_MODE_LINEAR,
-                    None,
-                );
-            }
-            return;
-        }
-
-        if radius <= 0.0 && zoom == 1.0 {
-            // SAFETY: bitmap do mesmo target; o retângulo vive durante a chamada.
-            unsafe {
-                self.target.DrawBitmap(
-                    &bitmap,
-                    Some(&rect_f(rect)),
-                    opacity,
-                    D2D1_BITMAP_INTERPOLATION_MODE_LINEAR,
-                    None,
-                );
-            }
-            return;
-        }
-
-        // Com canto arredondado ou zoom o desenho vira o preenchimento de uma
-        // geometria com pincel de bitmap: é o que recorta o que passa da borda,
-        // sem camada de composição. O pincel é criado a cada uso — é um objeto
-        // de CPU, e guardá-lo prenderia o bitmap depois de o cache o descartar.
-        // SAFETY: o bitmap pertence a este target e vive durante a chamada.
-        let size = unsafe { bitmap.GetSize() };
-        if size.width <= 0.0 || size.height <= 0.0 {
-            return;
-        }
-        let properties = D2D1_BITMAP_BRUSH_PROPERTIES {
-            extendModeX: D2D1_EXTEND_MODE_CLAMP,
-            extendModeY: D2D1_EXTEND_MODE_CLAMP,
-            interpolationMode: D2D1_BITMAP_INTERPOLATION_MODE_LINEAR,
+            rect.centered(size.width * scale, size.height * scale)
+        } else {
+            rect
         };
-        // SAFETY: bitmap e propriedades vivos durante a chamada.
-        let brush = match unsafe {
-            self.target
-                .CreateBitmapBrush(Some(&bitmap), Some(&properties), None)
-        } {
-            Ok(brush) => brush,
-            Err(err) => {
-                log::warn!("CreateBitmapBrush falhou para {}: {err}", path.display());
-                return;
-            }
-        };
-
-        // O conteúdo cresce em volta do centro; o retângulo do nó não muda.
-        let dest = rect.inset_xy(rect.w * (1.0 - zoom) / 2.0, rect.h * (1.0 - zoom) / 2.0);
-        // SAFETY: pincel recém-criado; a matriz vive durante a chamada.
+        // SAFETY: bitmap do mesmo target; o retângulo vive durante a chamada.
         unsafe {
-            brush.SetOpacity(opacity);
-            brush.SetTransform(&windows_numerics::Matrix3x2 {
-                M11: dest.w / size.width,
-                M12: 0.0,
-                M21: 0.0,
-                M22: dest.h / size.height,
-                M31: dest.x,
-                M32: dest.y,
-            });
-            self.target
-                .FillRoundedRectangle(&rounded(rect, radius), &brush);
+            self.target.DrawBitmap(
+                &bitmap,
+                Some(&rect_f(dest)),
+                style.opacity,
+                D2D1_BITMAP_INTERPOLATION_MODE_LINEAR,
+                None,
+            );
         }
     }
 }

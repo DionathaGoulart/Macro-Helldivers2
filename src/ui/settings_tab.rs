@@ -14,44 +14,40 @@
 use crate::data::SUPPORT_STRATS;
 use crate::i18n::{self, Tr};
 use crate::keys::{self, Vk};
-use crate::settings::{Language, Settings, Speed, SLOT_COUNT, SUPPORT_COUNT};
-use crate::ui::theme::{self, font, Color};
-use crate::ui::toolkit::{
-    columns, grid_cell, id, id_at, Align, Id, Measure, Rect, TextStyle, Ui, Weight,
-};
-use crate::ui::widgets::{self, ButtonVariant, CardHeader};
+use crate::settings::{Language, Settings, Speed, Theme, SLOT_COUNT, SUPPORT_COUNT};
+use crate::ui::theme::{self, motion};
+use crate::ui::toolkit::{columns, grid_cell, id, id_at, Id, Measure, Rect, TextStyle, Ui};
+use crate::ui::widgets::{self, styles, ButtonVariant, CardHeader};
 
-/// `px-6` da coluna de conteúdo.
+/// `screen-pad` da coluna de conteúdo.
 const PAGE_PADDING: f32 = 24.0;
+const PAGE_TOP: f32 = 20.0;
 /// Espaço reservado à direita para a barra de rolagem.
-const SCROLL_GUTTER: f32 = 12.0;
-/// `gap-6` entre as duas colunas da primeira linha.
-const CARD_GAP: f32 = 12.0;
-/// `space-y-8` entre os blocos.
-const SECTION_GAP: f32 = 20.0;
+const SCROLL_GUTTER: f32 = 14.0;
+/// Espaço entre as colunas e entre os painéis — cabe a sombra dura.
+const CARD_GAP: f32 = 20.0;
+const SECTION_GAP: f32 = 22.0;
 
-/// Altura de um rótulo de campo (`text-[10px]` com folga).
-const LABEL_H: f32 = 14.0;
+/// Altura de um rótulo de campo.
+const LABEL_H: f32 = 16.0;
 const LABEL_GAP: f32 = 8.0;
-/// `py-3` dos botões de escolha.
+/// Botões de escolha.
 const CHOICE_H: f32 = 36.0;
 const CHOICE_GAP: f32 = 8.0;
-/// `py-3.5` dos botões de atalho.
+/// Botões de atalho.
 const KEY_BUTTON_H: f32 = 40.0;
-/// `p-5` da caixa de cada atalho.
-const KEY_BOX_PADDING: f32 = 16.0;
-/// `gap-4` entre as caixas de atalho.
+/// Caixa aninhada de cada atalho.
+const KEY_BOX_PADDING: f32 = 12.0;
 const KEY_BOX_GAP: f32 = 12.0;
-/// `p-4` das linhas de toggle.
-const TOGGLE_H: f32 = 52.0;
-const TOGGLE_GAP: f32 = 12.0;
-/// Espaço entre blocos dentro do card de controles (`space-y-6`).
+/// Linhas de toggle.
+const TOGGLE_H: f32 = 58.0;
+const TOGGLE_GAP: f32 = 10.0;
+/// Espaço entre blocos dentro do painel de controles.
 const ROW_GAP: f32 = 20.0;
-/// `gap-5` entre as três colunas de apoio, e entre o card e o seu botão.
+/// Entre as três colunas de apoio, e entre o card e o seu botão.
 const SUPPORT_GAP: f32 = 16.0;
-/// Linha do aviso de backup, reservada mesmo vazia.
-const STATUS_H: f32 = 16.0;
-const STATUS_GAP: f32 = 8.0;
+/// Canto do toast do backup.
+const TOAST_MARGIN: f32 = 20.0;
 
 /// Quanto tempo o aviso de backup fica na tela (2,5s, como na v1).
 pub const BACKUP_STATUS_MS: u32 = 2_500;
@@ -73,14 +69,22 @@ pub enum BackupStatus {
 /// Uma preferência mudou. A janela aplica, grava e espalha os efeitos.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Change {
-    Shortcut { index: usize, key: String },
-    SupportShortcut { index: usize, key: String },
+    Shortcut {
+        index: usize,
+        key: String,
+    },
+    SupportShortcut {
+        index: usize,
+        key: String,
+    },
     Modifier(String),
     Speed(Speed),
     UseArrows(bool),
     EnableOverlay(bool),
     AlwaysShowSlots(bool),
     Language(Language),
+    /// `None` volta a seguir o modo claro/escuro do Windows.
+    Theme(Option<Theme>),
     // As três opções de sorteio moram na aba de Builds, mas são preferências
     // como as outras: gravam no mesmo arquivo e pelo mesmo caminho.
     BuildMatchSet(bool),
@@ -109,6 +113,7 @@ impl Change {
             Change::EnableOverlay(on) => settings.enable_overlay = *on,
             Change::AlwaysShowSlots(on) => settings.always_show_slots = *on,
             Change::Language(language) => settings.language = *language,
+            Change::Theme(theme) => settings.theme = *theme,
             Change::BuildMatchSet(on) => settings.build_match_set = *on,
             Change::BuildBalanced(on) => settings.build_balanced = *on,
             Change::BuildMaxOneSentry(on) => settings.build_max_one_sentry = *on,
@@ -171,6 +176,14 @@ fn language_id(index: usize) -> Id {
     id_at("settings.language", index)
 }
 
+/// As três escolhas de tema: seguir o sistema, `rose` (escuro) e `crimson`
+/// (claro).
+const THEMES: [Option<Theme>; 3] = [None, Some(Theme::Rose), Some(Theme::Crimson)];
+
+fn theme_id(index: usize) -> Id {
+    id_at("settings.theme", index)
+}
+
 fn export_id() -> Id {
     id("settings.export")
 }
@@ -200,11 +213,11 @@ fn hud_id() -> Id {
 // --- Estilos ---
 
 fn label_style() -> TextStyle {
-    TextStyle::new(font::SIZE_LABEL, Weight::Black).tracking(font::TRACKING_LABEL)
+    styles::label().middle()
 }
 
 fn hint_style() -> TextStyle {
-    TextStyle::new(font::SIZE_TINY, Weight::Regular).wrap()
+    styles::hint()
 }
 
 impl SettingsTab {
@@ -232,44 +245,53 @@ impl SettingsTab {
     // --- Construção ---
 
     pub fn build(&mut self, ui: &mut Ui, measure: &mut dyn Measure, area: Rect, ctx: &Ctx) {
-        let view = area.inset_xy(PAGE_PADDING, 16.0);
+        let view = Rect::new(
+            area.x + PAGE_PADDING,
+            area.y + PAGE_TOP,
+            area.w - PAGE_PADDING * 2.0,
+            area.h - PAGE_TOP,
+        );
         let width = view.w - SCROLL_GUTTER;
         let half = (width - CARD_GAP) / 2.0;
 
         let offset = ui.scroll_begin(scroll_id(), view);
         let mut y = view.y - offset;
 
-        // As duas primeiras colunas terminam na mesma linha, como o grid da v1.
-        let row = shortcuts_height().max(controls_height(measure, half, ctx));
+        // Atalhos, idioma e tema empilhados à esquerda; os controles, que são
+        // o painel mais alto, à direita.
+        let controls = controls_height(measure, half, ctx);
+        let row = left_column_height().max(controls);
         let top = columns(Rect::new(view.x, y, width, row), 2, CARD_GAP);
-        self.shortcuts_card(ui, top[0], ctx);
-        self.controls_card(ui, measure, top[1], ctx);
+        let mut left = top[0];
+        self.shortcuts_card(ui, measure, left.cut_top(shortcuts_height()), ctx);
+        left.skip_top(SECTION_GAP);
+        self.language_card(ui, left.cut_top(language_height()), ctx);
+        left.skip_top(SECTION_GAP);
+        self.theme_card(ui, left.cut_top(language_height()), ctx);
+        self.controls_card(ui, measure, top[1].with_h(controls), ctx);
         y += row + SECTION_GAP;
 
-        let height = language_height();
-        self.language_card(ui, Rect::new(view.x, y, half, height), ctx);
-        y += height + SECTION_GAP;
-
         let height = support_height(width);
-        self.support_card(ui, Rect::new(view.x, y, width, height), ctx);
+        self.support_card(ui, measure, Rect::new(view.x, y, width, height), ctx);
         y += height + SECTION_GAP;
 
         let height = backup_height(measure, width, ctx);
         self.backup_card(ui, measure, Rect::new(view.x, y, width, height), ctx);
-        y += height;
+        // A sombra do último painel e um respiro antes do rodapé.
+        y += height + theme::SHADOW + PAGE_TOP;
 
         ui.scroll_end(scroll_id(), view, y - (view.y - offset));
+
+        // O toast sai por cima da página, no canto de baixo, fora da rolagem.
+        self.backup_toast(ui, area, ctx);
     }
 
     /// Card "Atalhos de Combate": os quatro atalhos de slot, dois por linha.
-    fn shortcuts_card(&self, ui: &mut Ui, rect: Rect, ctx: &Ctx) {
+    fn shortcuts_card(&self, ui: &mut Ui, measure: &mut dyn Measure, rect: Rect, ctx: &Ctx) {
         let content = widgets::card(
             ui,
             rect,
-            Some(CardHeader {
-                title: ctx.tr().settings.keybinding,
-                accent: theme::YELLOW,
-            }),
+            Some(CardHeader::new(ctx.tr().settings.keybinding, "cfg")),
         );
 
         for index in 0..SLOT_COUNT {
@@ -284,6 +306,7 @@ impl SettingsTab {
             );
             self.key_box(
                 ui,
+                measure,
                 box_rect,
                 &format!("{} {}", ctx.tr().settings.shortcut_label, index + 1),
                 shortcut_id(index),
@@ -294,11 +317,12 @@ impl SettingsTab {
         }
     }
 
-    /// Caixa "rótulo + botão de atalho".
+    /// Caixa aninhada "rótulo + botão de atalho".
     #[allow(clippy::too_many_arguments)]
     fn key_box(
         &self,
         ui: &mut Ui,
+        measure: &mut dyn Measure,
         rect: Rect,
         label: &str,
         id: Id,
@@ -306,13 +330,7 @@ impl SettingsTab {
         capture: Capture,
         ctx: &Ctx,
     ) {
-        ui.fill(rect, theme::RADIUS_CARD, theme::SURFACE);
-        ui.stroke(
-            rect,
-            theme::RADIUS_CARD,
-            theme::HAIRLINE_WIDTH,
-            theme::BORDER,
-        );
+        widgets::inset_box(ui, rect, 0.0);
 
         let mut content = rect.inset(KEY_BOX_PADDING);
         let label_row = content.cut_top(LABEL_H);
@@ -320,15 +338,25 @@ impl SettingsTab {
             label_row,
             label.to_uppercase(),
             label_style(),
-            theme::TEXT_DIM,
+            theme::palette().muted,
         );
         content.skip_top(LABEL_GAP);
-        self.key_button(ui, id, content.with_h(KEY_BUTTON_H), bound, capture, ctx);
+        self.key_button(
+            ui,
+            measure,
+            id,
+            content.with_h(KEY_BUTTON_H),
+            bound,
+            capture,
+            ctx,
+        );
     }
 
+    #[allow(clippy::too_many_arguments)]
     fn key_button(
         &self,
         ui: &mut Ui,
+        measure: &mut dyn Measure,
         id: Id,
         rect: Rect,
         bound: Option<&str>,
@@ -341,19 +369,17 @@ impl SettingsTab {
         } else {
             bound.unwrap_or(ctx.tr().macros.bind)
         };
-        widgets::key_button(ui, id, rect, label, capturing);
+        widgets::key_button(ui, measure, id, rect, label, capturing);
     }
 
     /// Card "Config. de Controles": modificador, velocidade e os três toggles.
     fn controls_card(&self, ui: &mut Ui, measure: &mut dyn Measure, rect: Rect, ctx: &Ctx) {
         let tr = ctx.tr();
+        let palette = theme::palette();
         let mut content = widgets::card(
             ui,
             rect,
-            Some(CardHeader {
-                title: tr.settings.controller,
-                accent: theme::YELLOW,
-            }),
+            Some(CardHeader::new(tr.settings.controller, "cfg")),
         );
 
         // Tecla de estratagema do jogo: quatro botões em duas linhas.
@@ -361,7 +387,7 @@ impl SettingsTab {
             content.cut_top(LABEL_H),
             tr.settings.ingame_key.to_uppercase(),
             label_style(),
-            theme::TEXT_DIM,
+            palette.muted,
         );
         content.skip_top(LABEL_GAP);
         let grid = content.cut_top(CHOICE_H * 2.0 + CHOICE_GAP);
@@ -382,7 +408,7 @@ impl SettingsTab {
             content.cut_top(LABEL_H),
             tr.settings.macro_speed.to_uppercase(),
             label_style(),
-            theme::TEXT_DIM,
+            palette.muted,
         );
         content.skip_top(LABEL_GAP);
         let desc_h = measure
@@ -392,12 +418,12 @@ impl SettingsTab {
             content.cut_top(desc_h),
             tr.settings.macro_speed_desc,
             hint_style(),
-            theme::TEXT_DIM,
+            palette.muted,
         );
         content.skip_top(LABEL_GAP);
-        let row = content.cut_top(CHOICE_H);
+        let row = content.cut_top(widgets::CHOICE_SPLIT_HEIGHT);
         for (index, speed) in Speed::ALL.iter().enumerate() {
-            let cell = grid_cell(row, 3, CHOICE_H, CHOICE_GAP, index);
+            let cell = grid_cell(row, 3, widgets::CHOICE_SPLIT_HEIGHT, CHOICE_GAP, index);
             widgets::choice_button(
                 ui,
                 speed_id(index),
@@ -451,10 +477,7 @@ impl SettingsTab {
         let content = widgets::card(
             ui,
             rect,
-            Some(CardHeader {
-                title: ctx.tr().settings.language,
-                accent: theme::YELLOW,
-            }),
+            Some(CardHeader::new(ctx.tr().settings.language, "cfg")),
         );
         let row = content.with_h(CHOICE_H);
         for (index, language) in Language::ALL.iter().enumerate() {
@@ -469,28 +492,55 @@ impl SettingsTab {
         }
     }
 
-    /// Card "Estratagemas de Apoio Fixo": três cards quadrados, cada um com o
-    /// seu botão de atalho.
-    fn support_card(&self, ui: &mut Ui, rect: Rect, ctx: &Ctx) {
+    /// Card "Tema": seguir o sistema, escuro (`rose`) ou claro (`crimson`).
+    /// O toggle da topbar e o `Shift+T` fazem o mesmo, sem a opção do sistema.
+    fn theme_card(&self, ui: &mut Ui, rect: Rect, ctx: &Ctx) {
+        let tr = ctx.tr();
+        let content = widgets::card(ui, rect, Some(CardHeader::new(tr.settings.theme, "cfg")));
+        let row = content.with_h(CHOICE_H);
+        for (index, choice) in THEMES.into_iter().enumerate() {
+            let label = match choice {
+                None => tr.settings.theme_system,
+                Some(Theme::Rose) => tr.settings.theme_dark,
+                Some(Theme::Crimson) => tr.settings.theme_light,
+            };
+            let cell = grid_cell(row, THEMES.len(), CHOICE_H, CHOICE_GAP, index);
+            widgets::choice_button(
+                ui,
+                theme_id(index),
+                cell,
+                label,
+                ctx.settings.theme == choice,
+            );
+        }
+    }
+
+    /// Card "Estratagemas de Apoio Fixo": três tiles, cada um com o seu botão
+    /// de atalho.
+    fn support_card(&self, ui: &mut Ui, measure: &mut dyn Measure, rect: Rect, ctx: &Ctx) {
         let content = widgets::card(
             ui,
             rect,
-            Some(CardHeader {
-                title: ctx.tr().settings.support,
-                accent: theme::YELLOW,
-            }),
+            Some(CardHeader::new(ctx.tr().settings.support, "cfg")),
         );
         let cols = columns(content, SUPPORT_COUNT, SUPPORT_GAP);
 
         for (index, support) in SUPPORT_STRATS.iter().enumerate() {
-            let mut col = cols[index];
-            // O card é quadrado (`aspect-square` da v1), então a coluna manda
-            // na altura dele.
-            let card = col.cut_top(col.w);
+            // Tile e botão com a mesma largura, centralizados na coluna.
+            let column = cols[index];
+            let width = support_tile(column.w);
+            let mut col = Rect::new(
+                column.x + (column.w - width) / 2.0,
+                column.y,
+                width,
+                column.h,
+            );
+            let card = col.cut_top(support_tile_height(column.w));
             widgets::support_card(ui, index, card, support);
             col.skip_top(SUPPORT_GAP);
             self.key_button(
                 ui,
+                measure,
                 support_shortcut_id(index),
                 col.with_h(KEY_BUTTON_H),
                 ctx.settings.support_shortcut(index),
@@ -500,17 +550,10 @@ impl SettingsTab {
         }
     }
 
-    /// Card "Backup": a explicação, os dois botões e o aviso do resultado.
+    /// Card "Backup": a explicação e os dois botões. O resultado sai num toast.
     fn backup_card(&self, ui: &mut Ui, measure: &mut dyn Measure, rect: Rect, ctx: &Ctx) {
         let tr = ctx.tr();
-        let mut content = widgets::card(
-            ui,
-            rect,
-            Some(CardHeader {
-                title: tr.settings.backup,
-                accent: theme::YELLOW,
-            }),
-        );
+        let mut content = widgets::card(ui, rect, Some(CardHeader::new(tr.settings.backup, "dat")));
 
         let desc_h = measure
             .text_size(tr.settings.backup_desc, hint_style(), content.w)
@@ -519,18 +562,17 @@ impl SettingsTab {
             content.cut_top(desc_h),
             tr.settings.backup_desc,
             hint_style(),
-            theme::TEXT_DIM,
+            theme::palette().muted,
         );
-        content.skip_top(LABEL_GAP);
+        content.skip_top(LABEL_GAP + 4.0);
 
-        let buttons = columns(content.cut_top(CHOICE_H), 2, CHOICE_GAP);
+        let buttons = columns(content.cut_top(CHOICE_H), 2, CHOICE_GAP + 4.0);
         widgets::button(
             ui,
             export_id(),
             buttons[0],
             tr.settings.backup_export,
             ButtonVariant::Secondary,
-            theme::YELLOW,
         );
         widgets::button(
             ui,
@@ -538,35 +580,49 @@ impl SettingsTab {
             buttons[1],
             tr.settings.backup_import,
             ButtonVariant::Secondary,
-            theme::YELLOW,
         );
-
-        content.skip_top(STATUS_GAP);
-        self.backup_message(ui, content.with_h(STATUS_H), ctx);
     }
 
-    /// Aviso do último backup, apagando com o pulso disparado pela janela.
-    fn backup_message(&self, ui: &mut Ui, rect: Rect, ctx: &Ctx) {
+    /// Toast do último backup (§6.8), no canto de baixo da aba, apagando com o
+    /// pulso disparado pela janela: fica inteiro e some no fade de saída.
+    fn backup_toast(&self, ui: &mut Ui, area: Rect, ctx: &Ctx) {
         let Some(status) = self.backup_status else {
             return;
         };
-        let alpha = ui.anim(backup_flash_id(), BACKUP_STATUS_MS);
-        if alpha <= 0.0 {
+        let left = ui.anim(backup_flash_id(), BACKUP_STATUS_MS);
+        if left <= 0.0 {
             return;
         }
+        // O pulso anda de 1 a 0 nos 2,5s do aviso; só o fim dele é a saída.
+        let exit = motion::EXIT_MS as f32 / BACKUP_STATUS_MS as f32;
+        let visible = (left / exit).min(1.0);
 
         let tr = ctx.tr();
-        let (text, color): (&str, Color) = match status {
-            BackupStatus::Exported => (tr.settings.backup_exported, theme::GREEN),
-            BackupStatus::Imported => (tr.settings.backup_imported, theme::GREEN),
-            BackupStatus::Failed => (tr.settings.backup_error, theme::RED),
+        let palette = theme::palette();
+        let (title, text, tone) = match status {
+            BackupStatus::Exported => (
+                tr.settings.toast_done,
+                tr.settings.backup_exported,
+                palette.success,
+            ),
+            BackupStatus::Imported => (
+                tr.settings.toast_done,
+                tr.settings.backup_imported,
+                palette.success,
+            ),
+            BackupStatus::Failed => (
+                tr.settings.toast_error,
+                tr.settings.backup_error,
+                palette.error,
+            ),
         };
-        ui.text(
-            rect,
-            text.to_uppercase(),
-            label_style().align(Align::Center).middle(),
-            color.alpha(alpha),
+        let rect = Rect::new(
+            area.right() - TOAST_MARGIN - theme::SHADOW - widgets::TOAST_WIDTH,
+            area.bottom() - TOAST_MARGIN - theme::SHADOW - widgets::TOAST_HEIGHT,
+            widgets::TOAST_WIDTH,
+            widgets::TOAST_HEIGHT,
         );
+        widgets::toast(ui, rect, tone, title, text, visible);
     }
 
     // --- Cliques e teclas ---
@@ -598,6 +654,11 @@ impl SettingsTab {
         for (index, language) in Language::ALL.iter().enumerate() {
             if clicked == language_id(index) {
                 return Some(Action::Setting(Change::Language(*language)));
+            }
+        }
+        for (index, choice) in THEMES.into_iter().enumerate() {
+            if clicked == theme_id(index) {
+                return Some(Action::Setting(Change::Theme(choice)));
             }
         }
 
@@ -673,8 +734,8 @@ fn controls_height(measure: &mut dyn Measure, width: f32, ctx: &Ctx) -> f32 {
         .text_size(ctx.tr().settings.macro_speed_desc, hint_style(), inner)
         .1;
     let modifiers = LABEL_H + LABEL_GAP + CHOICE_H * 2.0 + CHOICE_GAP;
-    let speed = LABEL_H + LABEL_GAP + desc_h + LABEL_GAP + CHOICE_H;
-    let toggles = (TOGGLE_H + TOGGLE_GAP) * 3.0;
+    let speed = LABEL_H + LABEL_GAP + desc_h + LABEL_GAP + widgets::CHOICE_SPLIT_HEIGHT;
+    let toggles = TOGGLE_H * 3.0 + TOGGLE_GAP * 2.0;
     widgets::card_chrome(true) + modifiers + ROW_GAP + speed + ROW_GAP + toggles
 }
 
@@ -682,20 +743,35 @@ fn language_height() -> f32 {
     widgets::card_chrome(true) + CHOICE_H
 }
 
+/// Coluna da esquerda da primeira faixa: atalhos, idioma e tema.
+fn left_column_height() -> f32 {
+    shortcuts_height() + (SECTION_GAP + language_height()) * 2.0
+}
+
 fn backup_height(measure: &mut dyn Measure, width: f32, ctx: &Ctx) -> f32 {
     let inner = width - widgets::CARD_PADDING * 2.0;
     let desc_h = measure
         .text_size(ctx.tr().settings.backup_desc, hint_style(), inner)
         .1;
-    // A linha do aviso entra na conta mesmo vazia: sem isso o card mudaria de
-    // tamanho toda vez que um backup terminasse.
-    widgets::card_chrome(true) + desc_h + LABEL_GAP + CHOICE_H + STATUS_GAP + STATUS_H
+    widgets::card_chrome(true) + desc_h + LABEL_GAP + 4.0 + CHOICE_H
 }
+
+/// Largura de cada tile de apoio: a coluna inteira até um teto — acima dele o
+/// ícone viraria um pôster e empurraria o resto da aba para baixo.
+fn support_tile(column: f32) -> f32 {
+    column.min(SUPPORT_TILE_MAX)
+}
+
+fn support_tile_height(column: f32) -> f32 {
+    widgets::tile_height(support_tile(column))
+}
+
+const SUPPORT_TILE_MAX: f32 = 140.0;
 
 fn support_height(width: f32) -> f32 {
     let inner = width - widgets::CARD_PADDING * 2.0;
     let column = (inner - SUPPORT_GAP * (SUPPORT_COUNT - 1) as f32) / SUPPORT_COUNT as f32;
-    widgets::card_chrome(true) + column + SUPPORT_GAP + KEY_BUTTON_H
+    widgets::card_chrome(true) + support_tile_height(column) + SUPPORT_GAP + KEY_BUTTON_H
 }
 
 #[cfg(test)]
@@ -769,6 +845,7 @@ mod tests {
         expected.extend((0..keys::MODIFIER_KEYS.len()).map(modifier_id));
         expected.extend((0..Speed::ALL.len()).map(speed_id));
         expected.extend((0..Language::ALL.len()).map(language_id));
+        expected.extend((0..THEMES.len()).map(theme_id));
         expected.extend([
             arrows_id(),
             overlay_id(),
@@ -1004,6 +1081,26 @@ mod tests {
     }
 
     #[test]
+    fn the_theme_card_offers_the_system_and_both_themes() {
+        let settings = Settings::default();
+        let mut tab = SettingsTab::new();
+        assert_eq!(
+            tab.on_click(theme_id(0), &ctx(&settings)),
+            Some(Action::Setting(Change::Theme(None)))
+        );
+        assert_eq!(
+            tab.on_click(theme_id(2), &ctx(&settings)),
+            Some(Action::Setting(Change::Theme(Some(Theme::Crimson))))
+        );
+
+        let mut applied = settings.clone();
+        Change::Theme(Some(Theme::Rose)).apply(&mut applied);
+        assert_eq!(applied.theme, Some(Theme::Rose));
+        Change::Theme(None).apply(&mut applied);
+        assert_eq!(applied.theme, None);
+    }
+
+    #[test]
     fn the_backup_buttons_ask_for_the_file_dialogs() {
         let settings = Settings::default();
         let mut tab = SettingsTab::new();
@@ -1054,7 +1151,7 @@ mod tests {
         let before = texts(&ui);
         assert!(before
             .iter()
-            .any(|text| text.contains("ATALHOS DE COMBATE")));
+            .any(|text| text.contains("ATALHOS_DE_COMBATE")));
 
         let en = Settings {
             language: Language::En,
@@ -1062,8 +1159,8 @@ mod tests {
         };
         build(&mut tab, &mut ui, &en);
         let after = texts(&ui);
-        assert!(after.iter().any(|text| text.contains("COMBAT SHORTCUTS")));
-        assert!(!after.iter().any(|text| text.contains("ATALHOS DE COMBATE")));
+        assert!(after.iter().any(|text| text.contains("COMBAT_SHORTCUTS")));
+        assert!(!after.iter().any(|text| text.contains("ATALHOS_DE_COMBATE")));
     }
 
     #[test]
