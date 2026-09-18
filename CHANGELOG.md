@@ -5,7 +5,7 @@ Todas as mudanças relevantes deste projeto são documentadas aqui.
 O formato segue [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/)
 e o versionamento segue [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
-## [2.0.0] - 2026-09-19
+## [2.0.0] - 2026-09-18
 
 **Reescrita completa.** O app deixou de ser um Electron com React e virou um binário
 nativo em **Rust sobre Win32 puro**: um processo, janela e overlay desenhados em
