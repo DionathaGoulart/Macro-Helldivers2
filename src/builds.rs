@@ -358,14 +358,15 @@ pub fn meta_lists(
     equipment: &Equipment,
     map: &StatsMap,
 ) -> MetaLists {
+    let ids = map.stratagem_ids(stats.strategem.items.keys().map(String::as_str), data);
     let mut stratagems: Vec<Pick<u32>> = stats
         .strategem
         .items
         .iter()
         .filter_map(|(slug, stat)| {
-            // Slug desconhecido, ou apontando para um id que saiu do jogo, some
-            // da lista em vez de virar linha vazia.
-            let id = *map.strategem.get(slug)?;
+            // Slug sem par, ou apontando para um id que saiu do jogo, some da
+            // lista em vez de virar linha vazia.
+            let id = *ids.get(slug.as_str())?;
             data.by_id(id)?;
             Some(Pick {
                 item: id,

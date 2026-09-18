@@ -5,7 +5,7 @@
 //! `statsMap.json` somam ~130 KB e só interessam à aba de Builds, então ficam
 //! atrás de um `OnceLock` carregado na primeira visita.
 
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::path::Path;
 use std::sync::OnceLock;
 
@@ -534,6 +534,78 @@ pub struct StatsMap {
     pub armor: HashMap<String, String>,
 }
 
+/// Espelho do `TOKEN_SYNONYMS` de `scripts/build-stats-map.mjs`: pedaços dos
+/// slugs do helldive.live e como eles aparecem nos nomes reais. Vazio casa
+/// sempre (prefixos sem informação, como `sup_`).
+const SLUG_SYNONYMS: [(&str, &[&str]); 11] = [
+    ("sup", &[""]),
+    ("n", &[""]),
+    ("backpack", &["backpack", "pack"]),
+    ("grenade", &["grenade", "g"]),
+    ("encampment", &["emplacement", "battlement"]),
+    ("gl", &["grenadelauncher", "gl"]),
+    ("mg", &["mg", "machinegun"]),
+    ("hmg", &["hmg", "heavymachinegun"]),
+    ("amr", &["amr", "antimaterielrifle"]),
+    ("inc", &["inc", "incendiary"]),
+    ("at", &["at", "antitank"]),
+];
+
+impl StatsMap {
+    /// Estratagema de cada slug de estratagema das estatísticas.
+    ///
+    /// O mapa embarcado resolve os conhecidos. Slug que ele não tem é de
+    /// estratagema lançado depois do release — que o app já tem, via
+    /// `data_sync` — e casa aqui pelos pedaços do slug no nome, como o
+    /// `build-stats-map.mjs` faz. Com duas travas que o script não precisa,
+    /// porque lá alguém confere o resultado: só concorrem estratagemas que o
+    /// mapa ainda não cobre, e o par tem que ser único dos dois lados. Na
+    /// dúvida o slug fica sem par — melhor que mostrar o número de outro item.
+    pub fn stratagem_ids<'a>(
+        &self,
+        slugs: impl IntoIterator<Item = &'a str>,
+        data: &GameData,
+    ) -> HashMap<&'a str, u32> {
+        let mapped: HashSet<u32> = self.strategem.values().copied().collect();
+        let candidates: Vec<(u32, String)> = data
+            .all()
+            .iter()
+            .filter(|strat| !mapped.contains(&strat.id))
+            .map(|strat| (strat.id, match_key(&strat.nome)))
+            .collect();
+
+        let mut ids = HashMap::new();
+        let mut guesses: Vec<(&str, u32)> = Vec::new();
+        for slug in slugs {
+            if let Some(&id) = self.strategem.get(slug) {
+                ids.insert(slug, id);
+                continue;
+            }
+            let mut hits = candidates.iter().filter(|(_, key)| slug_matches(slug, key));
+            if let (Some((id, _)), None) = (hits.next(), hits.next()) {
+                guesses.push((slug, *id));
+            }
+        }
+        for &(slug, id) in &guesses {
+            if guesses.iter().filter(|(_, other)| *other == id).count() == 1 {
+                ids.insert(slug, id);
+            }
+        }
+        ids
+    }
+}
+
+/// Todo pedaço do slug (`eagle_gas`) aparece no nome reduzido do item.
+fn slug_matches(slug: &str, name_key: &str) -> bool {
+    slug.split('_').all(|token| {
+        let token = token.to_ascii_lowercase();
+        match SLUG_SYNONYMS.iter().find(|(known, _)| *known == token) {
+            Some((_, variants)) => variants.iter().any(|v| name_key.contains(v)),
+            None => name_key.contains(&token),
+        }
+    })
+}
+
 static EQUIPMENT: OnceLock<Option<Equipment>> = OnceLock::new();
 static STATS_MAP: OnceLock<Option<StatsMap>> = OnceLock::new();
 
@@ -647,6 +719,59 @@ mod tests {
         let stats = stats_map().expect("statsMap.json do repositório");
         assert!(!stats.strategem.is_empty());
         assert!(stats.weapons.values().all(|w| !w.cat.is_empty()));
+    }
+
+    fn id_named(data: &GameData, nome: &str) -> u32 {
+        data.all().iter().find(|s| s.nome == nome).unwrap().id
+    }
+
+    #[test]
+    fn a_slug_the_map_lacks_matches_a_stratagem_it_does_not_cover() {
+        let data = data();
+        let mut map = stats_map().unwrap().clone();
+        map.strategem.remove("sup_quasar_cannon");
+
+        let ids = map.stratagem_ids(["sup_quasar_cannon", "orbital_laser"], &data);
+        assert_eq!(
+            ids["sup_quasar_cannon"],
+            id_named(&data, "LAS-99 Quasar Cannon")
+        );
+        assert_eq!(ids["orbital_laser"], map.strategem["orbital_laser"]);
+    }
+
+    #[test]
+    fn the_stratagems_the_site_does_not_track_yet_would_match() {
+        // Eagle Gas e Incinerator FRV não têm par no helldive.live hoje; quando
+        // o site os incluir, com slugs no formato dos outros, eles casam.
+        let data = data();
+        let map = stats_map().unwrap();
+        let ids = map.stratagem_ids(["eagle_gas", "frv_incinerator"], &data);
+        assert_eq!(ids["eagle_gas"], id_named(&data, "Eagle Gas Airstrike"));
+        assert_eq!(
+            ids["frv_incinerator"],
+            id_named(&data, "M-104 Incinerator FRV")
+        );
+    }
+
+    #[test]
+    fn an_ambiguous_slug_stays_without_a_pair() {
+        let data = data();
+        let mut map = stats_map().unwrap().clone();
+        map.strategem.remove("sup_quasar_cannon");
+        map.strategem.remove("sup_laser_cannon");
+        // Casa com as duas: nenhuma.
+        assert!(map.stratagem_ids(["sup_cannon"], &data).is_empty());
+
+        // Dois slugs no mesmo estratagema: nenhum dos dois.
+        let mut map = stats_map().unwrap().clone();
+        map.strategem.remove("sup_quasar_cannon");
+        assert!(map
+            .stratagem_ids(["sup_quasar_cannon", "sup_quasar"], &data)
+            .is_empty());
+
+        // Estratagema que o mapa já cobre não concorre.
+        let map = stats_map().unwrap();
+        assert!(map.stratagem_ids(["sup_autocannon_mk2"], &data).is_empty());
     }
 
     #[test]
