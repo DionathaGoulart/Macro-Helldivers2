@@ -210,7 +210,7 @@ com os padrões; o original não é sobrescrito. Ao relatar um problema, anexe o
 
 O app **só roda no Windows**. Em macOS/Linux dá para compilar, checar e rodar os
 testes dos módulos de lógica: todo código de janela, hook e input vive atrás de
-`#[cfg(windows)]`. Detalhes em [CONTRIBUTING.md](CONTRIBUTING.md).
+`#[cfg(windows)]`.
 
 ```bash
 # toolchain (rust-toolchain.toml pina canal, componentes e alvo)
