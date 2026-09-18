@@ -20,8 +20,17 @@ use crate::util;
 
 const API: &str = "https://utm7j5pjvi.us-east-1.awsapprunner.com";
 
-/// Patch "Exo Experts" — atualizar quando o site adicionar patch novo.
-const PATCH_ID: u32 = 12;
+/// Patch "Devoid of Liberty", o mais novo no release. Os seguintes o app
+/// descobre sozinho ([`current_patch`]): o site guarda a lista de patches no
+/// próprio JavaScript e a API não a expõe.
+const PATCH_ID: u32 = 13;
+
+/// Partidas que o patch seguinte precisa ter para ser adotado. Nos primeiros
+/// dias de um patch os números são ruído, e o anterior ainda diz mais.
+const MIN_PATCH_GAMES: u64 = 500;
+
+/// Quantos patches à frente a sondagem vai, no máximo, numa sessão.
+const MAX_PATCH_PROBES: u32 = 10;
 
 /// O mesmo teto da v1 (`AbortSignal.timeout(10000)`), aplicado à requisição
 /// inteira: conexão, TLS e corpo.
@@ -203,10 +212,11 @@ impl Drop for InFlightGuard {
 /// consulta inteira, como o `for` da v1.
 pub fn fetch(faction: Faction, difficulty: u8) -> Result<Stats> {
     let agent = util::http_agent(Some(TIMEOUT));
+    let patch = current_patch(&agent);
 
     let mut sections = Vec::with_capacity(KINDS.len());
     for kind in KINDS {
-        let url = url(faction, difficulty, kind);
+        let url = url(patch, faction, difficulty, kind);
         let section = agent
             .get(&url)
             .call()
@@ -225,12 +235,65 @@ pub fn fetch(faction: Faction, difficulty: u8) -> Result<Stats> {
     })
 }
 
-fn url(faction: Faction, difficulty: u8, kind: &str) -> String {
+fn url(patch: u32, faction: Faction, difficulty: u8, kind: &str) -> String {
     format!(
-        "{API}/items_stats?faction={}&patch_id={PATCH_ID}&difficulty={difficulty}\
+        "{API}/items_stats?faction={}&patch_id={patch}&difficulty={difficulty}\
          &mission=All&modifier=ALL&type={kind}",
         faction.slug()
     )
+}
+
+/// Patch descoberto nesta sessão.
+static PATCH: Mutex<Option<u32>> = Mutex::new(None);
+
+/// Patch mais novo com dados, descoberto uma vez por sessão.
+///
+/// Sem isto o app ficaria preso no patch do release — e estratagema lançado
+/// depois dele nem existe nos números desse patch.
+fn current_patch(agent: &ureq::Agent) -> u32 {
+    if let Some(patch) = *lock(&PATCH) {
+        return patch;
+    }
+    let (patch, settled) = discover_patch(PATCH_ID, |id| games_in(agent, id));
+    // Sondagem que caiu no meio (rede) não vale para a sessão inteira: a
+    // próxima consulta tenta de novo.
+    if settled {
+        *lock(&PATCH) = Some(patch);
+    }
+    if patch != PATCH_ID {
+        log::info!("helldive.live: usando o patch {patch}");
+    }
+    patch
+}
+
+/// Anda para o patch seguinte enquanto ele tiver partidas suficientes. Devolve
+/// o patch escolhido e se a sondagem terminou sem erro de rede.
+fn discover_patch(known: u32, mut games: impl FnMut(u32) -> Result<u64>) -> (u32, bool) {
+    let mut patch = known;
+    for _ in 0..MAX_PATCH_PROBES {
+        match games(patch + 1) {
+            Ok(count) if count >= MIN_PATCH_GAMES => patch += 1,
+            Ok(_) => return (patch, true),
+            Err(err) => {
+                log::warn!("sondagem do patch {} falhou: {err:#}", patch + 1);
+                return (patch, false);
+            }
+        }
+    }
+    (patch, true)
+}
+
+/// Partidas registradas num patch (Terminid, todas as dificuldades).
+fn games_in(agent: &ureq::Agent, patch: u32) -> Result<u64> {
+    let url = url(patch, Faction::Terminid, 0, KINDS[0]);
+    let section = agent
+        .get(&url)
+        .call()
+        .with_context(|| format!("GET {url}"))?
+        .body_mut()
+        .read_json::<Section>()
+        .context("resposta inesperada do helldive.live")?;
+    Ok(section.total.games)
 }
 
 /// Uma entrada do arquivo de cache, no formato do R9.
@@ -350,11 +413,11 @@ mod tests {
 
     #[test]
     fn the_url_carries_every_parameter_the_api_expects() {
-        let url = url(Faction::Automaton, 9, "weapons");
+        let url = url(14, Faction::Automaton, 9, "weapons");
         assert!(url.starts_with(&format!("{API}/items_stats?")));
         for part in [
             "faction=automaton",
-            "patch_id=12",
+            "patch_id=14",
             "difficulty=9",
             "mission=All",
             "modifier=ALL",
@@ -416,6 +479,49 @@ mod tests {
             .items
             .values()
             .any(|stat| stat.loadouts_percentage > 0.0));
+    }
+
+    #[test]
+    fn patch_discovery_walks_forward_while_the_next_one_has_games() {
+        let games = |counts: &'static [(u32, u64)]| {
+            move |id: u32| Ok(counts.iter().find(|(p, _)| *p == id).map_or(0, |(_, n)| *n))
+        };
+        // Nada depois do conhecido: fica nele.
+        assert_eq!(discover_patch(13, games(&[])), (13, true));
+        // Dois patches novos com dados.
+        assert_eq!(
+            discover_patch(13, games(&[(14, 3000), (15, 900)])),
+            (15, true)
+        );
+        // Patch recém-aberto, ainda com pouca partida: fica no anterior.
+        assert_eq!(discover_patch(13, games(&[(14, 40)])), (13, true));
+    }
+
+    #[test]
+    fn a_network_error_stops_the_probe_without_settling() {
+        let failing = |id: u32| {
+            if id == 14 {
+                Ok(5000)
+            } else {
+                anyhow::bail!("sem rede")
+            }
+        };
+        assert_eq!(discover_patch(13, failing), (14, false));
+    }
+
+    #[test]
+    fn the_probe_is_bounded() {
+        let (patch, settled) = discover_patch(13, |_| Ok(10_000));
+        assert_eq!(patch, 13 + MAX_PATCH_PROBES);
+        assert!(settled);
+    }
+
+    #[test]
+    #[ignore = "depende de rede"]
+    fn the_live_site_has_data_for_the_release_patch() {
+        let agent = util::http_agent(Some(TIMEOUT));
+        assert!(games_in(&agent, PATCH_ID).expect("patch do release") >= MIN_PATCH_GAMES);
+        assert!(current_patch(&agent) >= PATCH_ID);
     }
 
     #[test]
