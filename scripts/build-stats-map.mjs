@@ -1,6 +1,6 @@
 // Gera assets/data/statsMap.json: mapeia os slugs da API do helldive.live
 // (ex.: "sentry_gatling", "coyote", "OXYGENATOR") para os itens do app.
-// Uso: npm run stats-map — iterar a tabela ALIAS até o log de não-casados zerar.
+// Uso: npm run stats-map. Iterar a tabela ALIAS até o log de não-casados zerar.
 
 import fs from 'node:fs'
 import path from 'node:path'
@@ -34,7 +34,7 @@ const TOKEN_SYNONYMS = {
   at: ['at', 'antitank'],
 }
 
-// Casos que o auto-match não resolve (typos da API, apelidos) — slug: nome exato do item
+// Casos que o auto-match não resolve (typos da API, apelidos), no formato slug: nome exato do item
 const ALIAS = {
   strategem: {
     backpack_ballistic: 'SH-20 Ballistic Shield Backpack',

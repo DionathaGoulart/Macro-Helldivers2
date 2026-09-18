@@ -21,11 +21,11 @@ const sleep = (ms) => new Promise(r => setTimeout(r, ms))
 // --refresh rebaixa tudo, inclusive o que já está em disco. O padrão reaproveita
 // PNG já baixado (o mesmo run pode citar a mesma arte duas vezes), mas nunca SVG:
 // esses sobrevivem ao `optimize-images` com o nome final, então o teste de
-// existência os congelava para sempre — foi assim que o ícone da passiva
+// existência os congelava para sempre. Foi assim que o ícone da passiva
 // True Grit ficou preso na versão PNG antiga depois que a wiki trocou por SVG.
 const REFRESH = process.argv.includes('--refresh')
 
-// A API devolve strings com entidades HTML ("Liberty&#39;s Herald") — decodifica tudo
+// A API devolve strings com entidades HTML ("Liberty&#39;s Herald"); decodifica tudo
 const decodeEntities = (s) => typeof s === 'string'
   ? s.replace(/&#0?39;|&apos;/g, "'").replace(/&quot;/g, '"').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&')
   : s
@@ -148,7 +148,7 @@ async function getPassives() {
 }
 
 // Metadados dos estratagemas: tipo (Support Weapon/Backpack/Sentry/...) e se ocupa mochila.
-// Usado pelos filtros de build (balanceado, máx 1 torreta) — sem imagens, o app já tem as suas.
+// Usado pelos filtros de build (balanceado, máx 1 torreta). Sem imagens, o app já tem as suas.
 async function getStratagemInfo() {
   const rows = await cargoAll('Stratagems', '_pageName=page,title,stratagem_type,traits')
   const seen = new Set()
@@ -224,7 +224,7 @@ async function downloadImage(file, destBase, width = 200) {
 }
 
 async function attachImages(items, categoria) {
-  // Capas de warbond são banners 2:1 — 200px de largura fica ilegível
+  // Capas de warbond são banners 2:1; 200px de largura fica ilegível
   const width = categoria === 'warbond' ? 400 : 200
   // Sequencial de propósito: paralelismo dispara o rate-limit da wiki (429)
   for (let i = 0; i < items.length; i++) {
@@ -268,7 +268,7 @@ async function main() {
   console.log('Contagens:', Object.fromEntries(Object.entries(data).map(([k, v]) => [k, v.length])))
   const empty = Object.entries(data).filter(([, v]) => v.length === 0).map(([k]) => k)
   if (empty.length) {
-    console.error(`✖ Categorias vazias: ${empty.join(', ')} — abortando sem escrever.`)
+    console.error(`✖ Categorias vazias: ${empty.join(', ')}. Abortando sem escrever.`)
     process.exit(1)
   }
 

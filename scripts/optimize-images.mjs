@@ -1,6 +1,6 @@
 // Converte os PNG de assets/icons/ para WebP e reescreve as referências nos dados.
 //
-// Motivo: a pasta de equipamentos tinha 423 PNG somando ~19 MB — que viram ~3,7 MB em WebP
+// Motivo: a pasta de equipamentos tinha 423 PNG somando ~19 MB, que viram ~3,7 MB em WebP
 // com as MESMAS dimensões (o app nunca reescala essas imagens pra cima). Isso é
 // instalador menor, menos I/O de disco e menos memória de imagem decodificada.
 //
@@ -22,7 +22,7 @@ const DRY = process.argv.includes('--dry')
 
 // icon.png é o ícone da aplicação: assets/icon.ico é gerado a partir dele, então o
 // PNG grande fica. Em troca geramos tray.png (64px), que é o que o ícone da bandeja
-// realmente desenha — decodificar um bitmap de 1024 pra 16px é desperdício puro.
+// realmente desenha. Decodificar um bitmap de 1024 pra 16px é desperdício puro.
 const KEEP_PNG = new Set(['icon.png'])
 
 // Arquivos que citam caminhos de imagem e precisam ser reescritos junto.
@@ -50,7 +50,7 @@ function human(bytes) {
 
 const pngs = listPngs(ICONS)
 if (!pngs.length) {
-  console.log('Nenhum PNG para converter — nada a fazer.')
+  console.log('Nenhum PNG para converter: nada a fazer.')
   process.exit(0)
 }
 

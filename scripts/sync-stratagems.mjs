@@ -28,7 +28,7 @@ const MIN_LOADOUT = 80
 
 const PERMIT_TAG = { offensive: 'Offensive', supply: 'Supply', defensive: 'Defensive' }
 
-// Reforço, Ressuprimento e Rearme da Águia — os mesmos de SUPPORT_STRATS em src/data.rs.
+// Reforço, Ressuprimento e Rearme da Águia: os mesmos de SUPPORT_STRATS em src/data.rs.
 const SUPPORT_CODEX = {
   Reinforce: ['UP', 'DOWN', 'RIGHT', 'LEFT', 'UP'],
   Resupply: ['DOWN', 'DOWN', 'UP', 'RIGHT'],
@@ -36,7 +36,7 @@ const SUPPORT_CODEX = {
 }
 const DIR = { up: 'UP', down: 'DOWN', left: 'LEFT', right: 'RIGHT' }
 
-// FNV-1a de 32 bits com o bit alto ligado — tem que dar o mesmo que o
+// FNV-1a de 32 bits com o bit alto ligado; tem que dar o mesmo que o
 // `stable_id` de src/data_sync.rs (o teste de lá fixa dois valores).
 function stableId(slug) {
   let hash = 0x811c9dc5
@@ -120,7 +120,7 @@ async function main() {
     s.availability === 'loadout' && PERMIT_TAG[s.permitType] && s.code?.length && s.code.every(d => DIR[d]))
 
   if (api.length < MIN_LOADOUT) {
-    console.error(`✖ Só ${api.length} estratagemas de loadout — a API mudou de formato? Abortando sem escrever.`)
+    console.error(`✖ Só ${api.length} estratagemas de loadout. A API mudou de formato? Abortando sem escrever.`)
     process.exit(1)
   }
   console.log(`  dados de ${meta?.dataVersion ?? '?'}`)
@@ -200,7 +200,7 @@ async function main() {
     for (const item of novos) {
       await downloadIcon(item, path.join(ICON_DIR, `${item.id}.webp`))
     }
-    console.log('  Novos (entraram no fim do subgrupo — mova para a posição do jogo):')
+    console.log('  Novos (entraram no fim do subgrupo; mova para a posição do jogo):')
     for (const item of novos) {
       const at = result.findIndex(s => s.slug === item.id)
       console.log(`    #${at} ${item.name} (depois de ${result[at - 1]?.nome ?? 'nada'})`)
