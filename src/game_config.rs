@@ -1,11 +1,11 @@
 //! Modo de vídeo do Helldivers 2, lido do `user_settings.config` do jogo.
 //!
 //! O HD2 em "Tela Cheia" (DXGI exclusivo) se auto-minimiza quando QUALQUER
-//! janela desenha por cima dele — comportamento do jogo, sem relação com foco.
+//! janela desenha por cima dele (comportamento do jogo, sem relação com foco).
 //! Overlay de janela só funciona em "Tela Cheia sem Borda", então o app detecta
 //! o modo e avisa em vez de deixar o overlay quebrar a partida.
 //!
-//! Porte de `legacy/src/main/index.js` (~31–44), inclusive o cache: o arquivo é
+//! Porte de `legacy/src/main/index.js` (~31-44), inclusive o cache: o arquivo é
 //! consultado a cada troca de foco e de estado do overlay, e reler algumas
 //! dezenas de KB nesse ritmo não se paga. O `mtime` decide se a leitura vale.
 
@@ -26,7 +26,7 @@ pub fn config_path() -> PathBuf {
         .join(CONFIG_FILE)
 }
 
-/// Última leitura. `mtime` em `None` significa "nada válido em cache" — arquivo
+/// Última leitura. `mtime` em `None` significa "nada válido em cache": arquivo
 /// ausente (jogo nunca aberto) ou ilegível.
 struct Cache {
     mtime: Option<SystemTime>,
@@ -79,7 +79,7 @@ fn forget() {
     cache.value = false;
 }
 
-/// `^\s*fullscreen\s*=\s*true` sem `^\s*borderless_fullscreen\s*=\s*true` — as
+/// `^\s*fullscreen\s*=\s*true` sem `^\s*borderless_fullscreen\s*=\s*true`: as
 /// duas expressões da v1, sem crate de regex.
 ///
 /// "sem borda" liga as duas chaves no arquivo do jogo, e é a chave da borda que

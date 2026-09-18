@@ -5,7 +5,7 @@
 //! O JSON embarcado continua mandando na ordem curada igual à do jogo, nos nomes
 //! e nas tags. Da API entram duas coisas:
 //!
-//! - estratagema novo, no fim do subgrupo dele ([`group_of`]) — perto de onde o
+//! - estratagema novo, no fim do subgrupo dele ([`group_of`]): perto de onde o
 //!   jogo o mostra, não exatamente lá. O próximo release traz a posição certa;
 //! - codex trocado num patch ([`update_codexes`]): sem isso o macro digitaria a
 //!   sequência velha até o próximo release.
@@ -15,7 +15,7 @@
 //! `GameData` é um `Arc` imutável dividido por janela, overlay e hooks, e trocar
 //! a lista no meio da sessão mudaria os atalhos debaixo do hook.
 //!
-//! O codex vira `SendInput`, então tudo o que vem de fora é validado — na
+//! O codex vira `SendInput`, então tudo o que vem de fora é validado: na
 //! chegada e de novo ao ler o cache, que fica numa pasta gravável pelo usuário.
 
 use std::collections::{HashMap, HashSet};
@@ -53,7 +53,7 @@ const ICON_PREFIX: &str = "remote/";
 /// A lista pesa ~800 KB crus (~70 KB com gzip); o prazo cobre conexão lenta.
 const TIMEOUT: Duration = Duration::from_secs(30);
 
-/// Teto do corpo da lista e de cada ícone — defesa contra resposta sem fim.
+/// Teto do corpo da lista e de cada ícone: defesa contra resposta sem fim.
 const MAX_LIST_BYTES: u64 = 16 * 1024 * 1024;
 const MAX_ICON_BYTES: u64 = 1024 * 1024;
 
@@ -77,7 +77,7 @@ const USER_AGENT: &str = concat!("macro-helldivers2/", env!("CARGO_PKG_VERSION")
 pub struct RemoteStratagem {
     pub slug: String,
     pub nome: String,
-    /// `Offensive` | `Supply` | `Defensive` — o mesmo texto da tag embarcada.
+    /// `Offensive` | `Supply` | `Defensive` (o mesmo texto da tag embarcada).
     pub permit: String,
     /// `orbital`, `eagle`, `support_weapon`, `backpack`, `vehicle`, `sentry`,
     /// `emplacement`…
@@ -169,7 +169,7 @@ pub fn group_of(remote: &RemoteStratagem) -> String {
 /// Id numérico de um estratagema que chegou pela API.
 ///
 /// Derivado do slug (FNV-1a de 32 bits com o bit alto ligado), para dar o mesmo
-/// número em toda instalação — backup exportado de um PC abre no outro — e para
+/// número em toda instalação (backup exportado de um PC abre no outro) e para
 /// o `scripts/sync-stratagems.mjs` gravar esse mesmo id quando o estratagema
 /// entrar no JSON embarcado: slot salvo antes do release continua valendo
 /// depois dele. O bit alto separa estes dos ids curados, que são pequenos.
@@ -185,7 +185,7 @@ pub fn stable_id(slug: &str) -> u32 {
 /// O JSON embarcado com os codex que a API trocou e os estratagemas que ele
 /// não tem.
 ///
-/// Cada novo entra no fim da primeira sequência do seu subgrupo — a primeira,
+/// Cada novo entra no fim da primeira sequência do seu subgrupo. A primeira,
 /// porque o jogo tem exceções no meio (a Tesla Tower é sentinela e fica entre
 /// as emplacements). Subgrupo que ainda não existe vai para o fim da seção da
 /// cor.
@@ -229,7 +229,7 @@ pub fn merge(mut bundled: Vec<Stratagem>, remote: &[RemoteStratagem]) -> Vec<Str
 /// Troca o codex dos estratagemas que a API diz ter mudado.
 ///
 /// A trava é a regra que o jogo segue: nenhum codex igual a outro nem começando
-/// com outro — senão o menor dispararia no meio do maior. As trocas são
+/// com outro, senão o menor dispararia no meio do maior. As trocas são
 /// conferidas juntas, contra a lista já trocada (dois estratagemas que trocam
 /// de codex entre si passam); a que conflita volta ao codex embarcado, e a
 /// conferência se repete até nada mais conflitar.
@@ -514,7 +514,7 @@ static AUTO_SYNCED: AtomicBool = AtomicBool::new(false);
 
 /// Sincronização da sessão: no máximo uma, e nunca com o jogo em foco.
 ///
-/// Chamada junto com o check do updater — depois da primeira pintura e na
+/// Chamada junto com o check do updater: depois da primeira pintura e na
 /// primeira perda de foco. Com o jogo na frente a chamada não gasta a vez.
 pub fn auto_sync(shared: &Arc<Shared>) {
     if shared.is_game_focused() {
@@ -610,7 +610,7 @@ fn download_icon(agent: &ureq::Agent, item: &RemoteStratagem, path: &Path) -> Re
     checked
 }
 
-/// Apaga os ícones que nenhum estratagema novo usa mais — os que entraram no
+/// Apaga os ícones que nenhum estratagema novo usa mais: os que entraram no
 /// JSON embarcado num release e os de uma versão anterior da arte.
 fn prune_icons(dir: &Path, fresh: &[&RemoteStratagem]) {
     let keep: HashSet<&str> = fresh.iter().map(|r| r.icon_file()).collect();
@@ -669,7 +669,7 @@ mod tests {
         std::fs::read(path).expect("fixture da API")
     }
 
-    /// Os estratagemas de loadout da fixture — os 92 do JSON embarcado.
+    /// Os estratagemas de loadout da fixture: os 92 do JSON embarcado.
     fn api_snapshot() -> Vec<RemoteStratagem> {
         parse_api(&fixture()).expect("fixture válida").0
     }

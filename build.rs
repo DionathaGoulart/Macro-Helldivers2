@@ -3,13 +3,13 @@
 //! O manifesto responde por duas coisas que o app não consegue pedir sozinho a
 //! tempo: a elevação (o `SendInput` precisa da mesma integridade da janela que
 //! recebe as teclas) e a consciência de DPI por monitor, que tem de valer desde
-//! o primeiro pixel — a chamada equivalente em `ui/window.rs` só existe para o
+//! o primeiro pixel. A chamada equivalente em `ui/window.rs` só existe para o
 //! `cargo run`, que roda o exe sem instalador.
 //!
 //! Cross-compilando de fora do Windows não há compilador de recursos: o build
 //! segue sem eles e avisa. O binário distribuído vem da CI, que roda no Windows.
 
-/// Ícone de id 1 — é o que o Explorer mostra e o que a janela carrega com
+/// Ícone de id 1: é o que o Explorer mostra e o que a janela carrega com
 /// `LoadIconW(instance, PCWSTR(1))`.
 const ICON: &str = "assets/icon.ico";
 
@@ -52,8 +52,8 @@ fn main() {
     resources.set_icon(ICON);
     resources.set_manifest(MANIFEST);
     if let Err(err) = resources.compile() {
-        // Na CI isto é fatal: um exe publicado sem o manifesto perde a elevação
-        // — e o `SendInput` no jogo elevado simplesmente para de funcionar, em
+        // Na CI isto é fatal: um exe publicado sem o manifesto perde a elevação,
+        // e o `SendInput` no jogo elevado simplesmente para de funcionar, em
         // silêncio. No desenvolvimento fora do Windows (sem `rc.exe`/`llvm-rc`)
         // o build segue: o que se perde é só o ícone e o manifesto do exe local.
         if std::env::var_os("CI").is_some() {

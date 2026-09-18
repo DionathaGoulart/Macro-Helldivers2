@@ -11,7 +11,7 @@
 //!    use o padrão `UP DOWN RIGHT LEFT UP` (Reforço) numa partida em que ele
 //!    esteja disponível.
 //! 3. Deixe o jogo em foco e rode: `soak.exe -n 1000 --speed turbo`.
-//! 4. Repita com o jogo travado em **60fps** e depois em **30fps** — é o cap de
+//! 4. Repita com o jogo travado em **60fps** e depois em **30fps**: é o cap de
 //!    30 que expõe um `hold` curto demais.
 //! 5. Aprovado = 1.000 chamadas do estratagema no jogo, zero falhas, e o
 //!    relatório sem violações de desvio.
@@ -36,7 +36,7 @@ const CODEX: [Dir; 5] = [Dir::Up, Dir::Down, Dir::Right, Dir::Left, Dir::Up];
 const VIOLATION_MS: f64 = 5.0;
 
 const HELP: &str = "\
-soak — mil sequências em série contra o jogo
+soak: mil sequências em série contra o jogo
 
 USO:
     soak [opções]

@@ -1,6 +1,6 @@
 // Ponto de entrada do binário nativo. A ordem do boot é a que o plano define:
 // instância única, estado compartilhado, threads de motor e hooks e, por
-// último, a janela — que a partir daqui é quem segura o processo de pé.
+// último, a janela, que a partir daqui é quem segura o processo de pé.
 //
 // O app só é útil no Windows. No host de desenvolvimento (macOS/Linux) o crate
 // compila, roda os testes de lógica e este resumo de sanidade.
@@ -39,7 +39,7 @@ fn main() -> ExitCode {
 fn boot() -> Result<()> {
     // O guard vive até o fim do `boot`: enquanto o app roda, uma segunda
     // execução encontra o mutex, devolve o foco para a janela que já existe e
-    // sai — abrir dois processos instalaria dois hooks de teclado, e cada
+    // sai. Abrir dois processos instalaria dois hooks de teclado, e cada
     // atalho dispararia a sequência duas vezes.
     #[cfg(windows)]
     let _instance = {
@@ -99,7 +99,7 @@ fn boot() -> Result<()> {
         ui::window::run(Arc::clone(&shared), Arc::clone(&data), receivers.ui)?;
     } else {
         println!(
-            "{} v{} — {}",
+            "{} v{}: {}",
             env!("CARGO_PKG_NAME"),
             env!("CARGO_PKG_VERSION"),
             text.tabs.macro_tab

@@ -2,21 +2,21 @@
 //!
 //! A regra que manda em tudo aqui vem da v1 (`legacy/src/main/index.js` ~13-19):
 //! **as janelas nunca são escondidas**. Mostrar uma janela transparente no
-//! Windows a ativa, e ativar qualquer coisa rouba o foco do jogo — que, em tela
+//! Windows a ativa, e ativar qualquer coisa rouba o foco do jogo, que, em tela
 //! cheia, se minimiza. O que muda entre os estados são os *bounds*: `hidden`
 //! encolhe as duas para 1×1 num canto, onde o compositor praticamente não tem o
 //! que compor.
 //!
-//! - `strip` — barra de slots, sempre click-through (`WS_EX_TRANSPARENT`).
-//! - `panel` — painel interativo; recebe o mouse por ser `WS_EX_NOACTIVATE`, que
+//! - `strip`: barra de slots, sempre click-through (`WS_EX_TRANSPARENT`).
+//! - `panel`: painel interativo; recebe o mouse por ser `WS_EX_NOACTIVATE`, que
 //!   deixa a janela clicável sem nunca virar a janela ativa.
 //!
 //! A thread só existe enquanto `enableOverlay` estiver ligado ([`set_enabled`]).
 //! Ela é dona das duas janelas, do seu próprio pump e dos alvos de render; o
 //! resto do app fala com ela pelo canal de [`OverlayCmd`](crate::shared::OverlayCmd).
 //!
-//! Este módulo guarda a parte que não depende do Windows — a geometria dos
-//! estados e o que o atalho faz —, testada no host.
+//! Este módulo guarda a parte que não depende do Windows (a geometria dos
+//! estados e o que o atalho faz), testada no host.
 
 pub mod panel;
 pub mod strip;
@@ -55,7 +55,7 @@ pub fn toggled(state: OverlayState, always_show_slots: bool) -> OverlayState {
 }
 
 /// Bounds de uma das janelas no estado dado, em pixels do monitor primário
-/// (R11 — o overlay vive no primário, como na v1).
+/// (R11: o overlay vive no primário, como na v1).
 ///
 /// A janela que não tem o que mostrar naquele estado vai para 1×1 no canto:
 /// continua viva, e o compositor não paga por ela.
@@ -269,7 +269,7 @@ mod platform {
         };
 
         // O id só é anunciado com o boot inteiro de pé: um worker que falhou
-        // aqui nunca vira `Worker` — o `start` enxerga o canal fechado e
+        // aqui nunca vira `Worker`; o `start` enxerga o canal fechado e
         // devolve `None`, em vez de guardar um id de thread morta que o
         // `set_enabled(false)` mandaria um WM_QUIT às cegas.
         // SAFETY: leitura do id da própria thread.
@@ -658,7 +658,7 @@ mod platform {
                 }
             }
             // Sobrou trabalho depois do teto: em vez de girar, devolve o
-            // controle à fila e agenda outra passada — sem isto o resto
+            // controle à fila e agenda outra passada. Sem isto o resto
             // esperaria a próxima mensagem qualquer.
             if EVENTS.with(|events| !events.borrow().is_empty()) {
                 // SAFETY: post assíncrono para a janela do strip, viva
@@ -712,7 +712,7 @@ mod platform {
                     }
                     // O jogo re-agarra o topo do z-order em alt-tab e em troca
                     // de modo de vídeo. Quem vigia isso é o timer de 5s da
-                    // thread de hooks, que já revalida o foco no mesmo ritmo —
+                    // thread de hooks, que já revalida o foco no mesmo ritmo;
                     // um segundo timer aqui só repetiria o trabalho dela.
                     OverlayCmd::Reassert => self.reassert(),
                     OverlayCmd::FullscreenWarning(warning) => {
@@ -1011,7 +1011,7 @@ mod platform {
                     // Estas duas chegam por `SendMessage`, despachadas por
                     // dentro do `GetMessageW` sem fazê-lo retornar: sem um post
                     // o evento empilhado esperaria a próxima mensagem qualquer
-                    // (o Reassert de 5s — ou nada, com o jogo fora de foco).
+                    // (o Reassert de 5s, ou nada com o jogo fora de foco).
                     // SAFETY: post assíncrono para a própria janela.
                     let _ = PostMessageW(Some(hwnd), WM_NULL, WPARAM(0), LPARAM(0));
                     LRESULT(0)
@@ -1029,7 +1029,7 @@ mod platform {
 
     // --- Utilidades ---
 
-    /// Bounds e DPI do monitor primário — o único que o overlay usa (R11).
+    /// Bounds e DPI do monitor primário, o único que o overlay usa (R11).
     fn primary_monitor() -> (Bounds, u32) {
         // SAFETY: a origem do desktop virtual está sempre no monitor primário.
         let monitor = unsafe { MonitorFromPoint(POINT { x: 0, y: 0 }, MONITOR_DEFAULTTOPRIMARY) };

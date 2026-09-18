@@ -3,9 +3,9 @@
 //! São dois destinos, com o mesmo painter em cima (é o que o trait
 //! [`Painter`](crate::ui::toolkit::Painter) resolve):
 //!
-//! - [`WindowTarget`] — `ID2D1HwndRenderTarget` da janela principal, que
+//! - [`WindowTarget`]: `ID2D1HwndRenderTarget` da janela principal, que
 //!   apresenta sozinho e sobrevive a perda de dispositivo recriando tudo.
-//! - [`LayeredSurface`] — DIB de 32 bits pré-multiplicado + `ID2D1DCRenderTarget`,
+//! - [`LayeredSurface`]: DIB de 32 bits pré-multiplicado + `ID2D1DCRenderTarget`,
 //!   o par que o `UpdateLayeredWindow` do overlay exige (Fase 9).
 //!
 //! O render target recebe o DPI do monitor, então todo desenho continua em DIP:
@@ -286,7 +286,7 @@ impl LayeredSurface {
                 biSize: size_of::<BITMAPINFOHEADER>() as u32,
                 biWidth: width,
                 // Altura negativa: linhas de cima para baixo, na mesma ordem do
-                // Direct2D — sem isso a janela sai de cabeça para baixo.
+                // Direct2D. Sem isso a janela sai de cabeça para baixo.
                 biHeight: -height,
                 biPlanes: 1,
                 biBitCount: 32,
@@ -338,7 +338,7 @@ impl LayeredSurface {
     /// Desenha a lista no DIB. O fundo entra transparente: quem compõe é o
     /// `UpdateLayeredWindow`, com o jogo atrás.
     ///
-    /// Devolve `false` quando o frame não saiu inteiro — o chamador não deve
+    /// Devolve `false` quando o frame não saiu inteiro: o chamador não deve
     /// apresentar o DIB, que ficou com o conteúdo do frame anterior (ou lixo).
     pub fn draw(&mut self, text: &mut Text, frame: &Frame) -> bool {
         if self.dc.is_invalid() {
@@ -431,7 +431,7 @@ impl Drop for LayeredSurface {
 
 /// Pincéis do render target. São recursos de dispositivo: morrem com ele.
 ///
-/// O sólido é um único pincel mutado com `SetColor` a cada uso — o padrão que a
+/// O sólido é um único pincel mutado com `SetColor` a cada uso, o padrão que a
 /// documentação do Direct2D recomenda. Um mapa por cor aqui seria um vazamento:
 /// flashes e fades produzem uma cor nova (bits de f32 únicos) a cada tick de
 /// 16ms, e cada uma viraria um objeto COM vivo até o fim da sessão.

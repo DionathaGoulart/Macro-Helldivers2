@@ -3,7 +3,7 @@
 //! A v1 usava o `electron-updater` (`legacy/src/main/index.js` ~588-663), que
 //! arrastava js-yaml, semver e lodash só para ler um JSON e baixar um arquivo.
 //! Aqui o ciclo é o mesmo, escrito à mão: consulta o release mais recente,
-//! compara versões, e — **só quando o usuário manda** — baixa o instalador e o
+//! compara versões e, **só quando o usuário manda**, baixa o instalador e o
 //! executa.
 //!
 //! Duas regras vêm inteiras da v1:
@@ -45,8 +45,8 @@ const CHECK_TIMEOUT: Duration = Duration::from_secs(10);
 
 /// Prazo total do download do instalador. Generoso para conexão lenta, mas
 /// finito: o `timeout_recv_response` do agent cobre só os headers, e um stall
-/// silencioso do CDN no meio do corpo deixaria o worker preso — e o updater
-/// travado em "Baixando…" — até o fim da sessão.
+/// silencioso do CDN no meio do corpo deixaria o worker preso (e o updater
+/// travado em "Baixando…") até o fim da sessão.
 const DOWNLOAD_TIMEOUT: Duration = Duration::from_secs(15 * 60);
 
 /// Pedaço lido por vez do instalador.
@@ -152,7 +152,7 @@ struct Installer {
 
 /// Estado do ciclo de atualização, compartilhado entre a janela e os workers.
 struct State {
-    /// Release do último check com novidade — é dele que sai o download.
+    /// Release do último check com novidade. É dele que sai o download.
     latest: Mutex<Option<Release>>,
     /// Instalador já no disco, esperando o "Reiniciar Agora".
     installer: Mutex<Option<Installer>>,
@@ -179,7 +179,7 @@ fn lock<T>(mutex: &Mutex<T>) -> MutexGuard<'_, T> {
 /// Check automático da sessão: no máximo um, e nunca com o jogo em foco.
 ///
 /// Chamado no boot (depois da primeira pintura) e na primeira perda de foco. Se
-/// o jogo estava na frente, a chamada não gasta a única tentativa — é o que faz
+/// o jogo estava na frente, a chamada não gasta a única tentativa. É o que faz
 /// o check adiado da v1 acontecer mais tarde.
 pub fn auto_check(shared: &Arc<Shared>) {
     if shared.is_game_focused() {
@@ -275,7 +275,7 @@ pub fn install() -> Result<()> {
     let installer = lock(&STATE.installer)
         .clone()
         .context("nenhum instalador baixado")?;
-    // O exe esperou em %TEMP% — gravável por qualquer processo do usuário —
+    // O exe esperou em %TEMP% (gravável por qualquer processo do usuário)
     // entre o download e este clique. Re-conferir o hash aqui fecha a janela de
     // troca antes de executá-lo com o token elevado herdado do app.
     let actual = file_sha256(&installer.path)?;
@@ -473,7 +473,7 @@ fn download_dir() -> PathBuf {
 /// barra entra, e qualquer coisa que não sirva de nome de arquivo vira o
 /// padrão. Sem isso um asset chamado `..\algo.exe` escreveria fora da pasta
 /// temporária. As duas barras são tratadas na mão porque o alvo é o Windows,
-/// onde as duas separam caminho — e porque o teste roda no host, onde a
+/// onde as duas separam caminho, e porque o teste roda no host, onde a
 /// contrabarra é um caractere comum.
 fn installer_file_name(asset_name: &str) -> PathBuf {
     let name = asset_name
@@ -489,7 +489,7 @@ fn installer_file_name(asset_name: &str) -> PathBuf {
     PathBuf::from(name)
 }
 
-/// Progresso em 0..=100. Total desconhecido fica em zero — barra parada é
+/// Progresso em 0..=100. Total desconhecido fica em zero: barra parada é
 /// melhor que barra mentindo.
 fn percent_of(done: u64, total: u64) -> f32 {
     if total == 0 {
@@ -593,7 +593,7 @@ mod tests {
         assert!(!is_newer("v2.0.1", "não-é-versão"));
     }
 
-    /// A versão do `Cargo.toml` precisa continuar comparável — é o outro lado
+    /// A versão do `Cargo.toml` precisa continuar comparável: é o outro lado
     /// de toda comparação de update.
     #[test]
     fn the_running_version_is_a_valid_semver() {
@@ -688,7 +688,7 @@ mod tests {
         assert_eq!(percent_of(10, 0), 0.0);
     }
 
-    /// Consulta de verdade — fora do `cargo test` padrão porque depende de rede
+    /// Consulta de verdade, fora do `cargo test` padrão porque depende de rede
     /// e do repositório ter release publicado.
     #[test]
     #[ignore = "depende de rede"]

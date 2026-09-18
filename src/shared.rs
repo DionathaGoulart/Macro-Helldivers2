@@ -2,7 +2,7 @@
 //!
 //! O caminho quente (atalho → primeira tecla) NÃO passa pela UI: o hook manda
 //! direto pro engine e a interface é avisada depois. Por isso os comandos do
-//! engine já chegam com tudo resolvido — nada de consultar settings no meio.
+//! engine já chegam com tudo resolvido: nada de consultar settings no meio.
 
 use std::sync::atomic::{AtomicBool, AtomicIsize, Ordering};
 use std::sync::{Arc, RwLock};
@@ -107,7 +107,7 @@ pub enum OverlayCmd {
     Flash {
         slot: usize,
         /// Apoio fixo, e não slot de macro. O overlay só mostra os quatro slots,
-        /// então descarta esses — sem a marca, um Reforço acenderia o slot 1.
+        /// então descarta esses. Sem a marca, um Reforço acenderia o slot 1.
         support: bool,
         kind: FlashKind,
     },
@@ -119,7 +119,7 @@ pub enum OverlayCmd {
 /// Teto da fila do overlay. Com a thread desligada (`enableOverlay` off)
 /// ninguém lê o canal, e comando de overlay velho não tem valor nenhum: em vez
 /// de guardar lixo para sempre, a fila para de crescer e o excedente é
-/// descartado. Sessenta e quatro é folga de sobra para as rajadas reais — uma
+/// descartado. Sessenta e quatro é folga de sobra para as rajadas reais: uma
 /// piscada por macro disparado.
 const OVERLAY_QUEUE: usize = 64;
 
@@ -194,7 +194,7 @@ impl Shared {
     }
 
     // Os locks guardam dado puro: se uma thread entrou em panic com o lock em
-    // mãos, a cópia anterior continua válida — matar em cascata a thread do
+    // mãos, a cópia anterior continua válida. Matar em cascata a thread do
     // overlay ou o callback do hook por envenenamento seria o pior desfecho.
 
     /// Cópia dos settings. Leitores de longa duração devem travar direto.

@@ -3,7 +3,7 @@
 //! A decodificação é do host (crate `image`), então é testável fora do Windows.
 //! O que depende do D2D é só a virada do buffer em `ID2D1Bitmap`.
 //!
-//! Os arquivos da wiki são 256×256 — 256KB por ícone em BGRA, e são 91
+//! Os arquivos da wiki são 256×256: 256KB por ícone em BGRA, e são 91
 //! estratagemas mais 470 equipamentos. Guardar tudo estouraria sozinho o
 //! orçamento de 20MB de RAM do app, então cada imagem entra reduzida ao maior
 //! tamanho que a UI usa ([`MAX_EDGE_PX`]) e o cache tem teto: quando passa,
@@ -41,7 +41,7 @@ pub enum Alpha {
     /// Canais já multiplicados pelo alfa, que é o que os render targets do
     /// Direct2D e as janelas layered esperam.
     Premultiplied,
-    /// Canais independentes do alfa — o formato dos ícones do Win32
+    /// Canais independentes do alfa, o formato dos ícones do Win32
     /// (`CreateIconIndirect`), que fazem a composição eles mesmos.
     Straight,
 }
@@ -228,7 +228,7 @@ mod windows_impl {
             }
         }
 
-        /// Esvazia o cache — chamado quando o render target é recriado.
+        /// Esvazia o cache. Chamado quando o render target é recriado.
         pub fn clear(&mut self) {
             self.entries.clear();
             self.broken.clear();
@@ -269,7 +269,7 @@ mod tests {
         assert!(decoded.width > 0);
     }
 
-    /// O ícone da bandeja vira `HICON`, e o Win32 compõe alfa direto — o
+    /// O ícone da bandeja vira `HICON`, e o Win32 compõe alfa direto, o
     /// contrário do Direct2D. Nenhum asset do repositório tem transparência
     /// parcial hoje, então a diferença é medida num arquivo escrito na hora.
     #[test]

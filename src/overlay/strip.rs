@@ -1,10 +1,10 @@
 //! Conteúdo do strip: os quatro slots de macro desenhados por cima do jogo.
 //!
-//! É a barra de slots da janela principal a 70% — o painel com moldura e
+//! É a barra de slots da janela principal a 70%: o painel com moldura e
 //! sombra dura, os slots quadrados com a etiqueta do atalho colada na borda.
 //! Como a janela é click-through, aqui não há hover, botão de limpar nem slot em
-//! edição: sobra o que o jogador precisa ver de relance — ícone, atalho e as
-//! piscadas de disparo e bloqueio.
+//! edição: sobra o que o jogador precisa ver de relance (ícone, atalho e as
+//! piscadas de disparo e bloqueio).
 //!
 //! O módulo é puro (só empurra nós num [`Ui`]), então roda e é testado no host.
 
@@ -17,7 +17,7 @@ use crate::ui::widgets;
 
 /// Escala do strip em relação à barra da janela principal.
 pub const SCALE: f32 = 0.70;
-/// Folga entre a barra e a base da tela — cabe a sombra dura.
+/// Folga entre a barra e a base da tela: cabe a sombra dura.
 const BOTTOM_MARGIN: f32 = 8.0;
 /// Padding e espaço da barra, antes da escala. O de cima cabe a etiqueta.
 const PADDING: f32 = 18.0;
@@ -87,7 +87,7 @@ pub fn build(ui: &mut Ui, measure: &mut dyn Measure, area: Rect, ctx: &Ctx) {
 }
 
 /// Um slot do strip. Mesma leitura do `slot_square` da janela principal, com as
-/// medidas proporcionais ao quadrado — na escala do strip, as constantes em DIP
+/// medidas proporcionais ao quadrado: na escala do strip, as constantes em DIP
 /// da versão grande sairiam desproporcionais.
 fn square(
     ui: &mut Ui,

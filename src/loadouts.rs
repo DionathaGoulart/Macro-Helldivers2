@@ -5,7 +5,7 @@
 //! `stratagems.json` não deixa o slot com dados velhos, e um estratagema que
 //! saiu do jogo vira slot vazio na leitura em vez de quebrar o arquivo.
 //!
-//! O backup, ao contrário, é byte a byte o formato da v1 — é o único caminho de
+//! O backup, ao contrário, é byte a byte o formato da v1: é o único caminho de
 //! migração dos slots e das builds antigas, que moravam no `localStorage` do
 //! Electron e não têm como ser lidos daqui.
 
@@ -25,7 +25,7 @@ pub const SLOTS_FILE: &str = "slots.json";
 /// Arquivo com as builds salvas, em `config_dir`.
 pub const LOADOUTS_FILE: &str = "loadouts.json";
 
-/// Lê os slots do disco. Sem arquivo — ou com um arquivo ilegível — o app abre
+/// Lê os slots do disco. Sem arquivo (ou com um arquivo ilegível) o app abre
 /// com os quatro vazios, que é o mesmo estado de uma instalação nova.
 pub fn load_slots(data: &GameData) -> Slots {
     let path = util::config_path(SLOTS_FILE);
@@ -65,9 +65,9 @@ pub fn save_to(path: &Path, slots: &Slots) -> Result<()> {
 
 /// Resolve os ids contra os dados atuais e limpa o que não pode coexistir.
 ///
-/// Porte de `legacy/src/renderer/App.jsx` (~82–98): cada slot é conferido
-/// contra os anteriores, e o segundo exo (ou veículo) de uma dupla cai fora —
-/// um save antigo pode ter nascido antes de a regra de exclusividade existir.
+/// Porte de `legacy/src/renderer/App.jsx` (~82-98): cada slot é conferido
+/// contra os anteriores, e o segundo exo (ou veículo) de uma dupla cai fora.
+/// Um save antigo pode ter nascido antes de a regra de exclusividade existir.
 pub fn sanitize(ids: &[Option<u32>], data: &GameData) -> Slots {
     let mut slots = Slots::default();
     let mut kept: Vec<Option<&Stratagem>> = Vec::with_capacity(SLOT_COUNT);
@@ -103,7 +103,7 @@ pub struct Loadout {
     pub equip: Option<HashMap<String, String>>,
 }
 
-/// Lê as builds salvas. Arquivo ausente ou ilegível vira lista vazia — nenhuma
+/// Lê as builds salvas. Arquivo ausente ou ilegível vira lista vazia: nenhuma
 /// build é melhor que o app não abrir.
 pub fn load_loadouts() -> Vec<Loadout> {
     let path = util::config_path(LOADOUTS_FILE);
@@ -115,7 +115,7 @@ pub fn load_loadouts() -> Vec<Loadout> {
         Err(err) => {
             log::warn!("loadouts.json ilegível ({err:#}); começando sem builds salvas");
             // Sem afastar o arquivo, o primeiro "salvar build" da sessão
-            // publicaria a lista vazia por cima de todas as builds do usuário —
+            // publicaria a lista vazia por cima de todas as builds do usuário,
             // que podem estar intactas (leitura bloqueada por antivírus).
             util::quarantine(&path);
             Vec::new()
@@ -144,7 +144,7 @@ pub fn save_loadouts_to(path: &Path, loadouts: &[Loadout]) -> Result<()> {
 /// Marca do app no arquivo de backup. O import recusa qualquer outro valor,
 /// como a v1 fazia.
 pub const BACKUP_APP: &str = "macro-helldivers2";
-/// Nome sugerido no diálogo de exportação — o mesmo da v1.
+/// Nome sugerido no diálogo de exportação, o mesmo da v1.
 pub const BACKUP_FILE_NAME: &str = "macro-helldivers2-backup.json";
 
 /// Arquivo de backup, **exatamente** no formato da v1 (R9). Os campos são
@@ -162,7 +162,7 @@ pub struct Backup {
     /// com os padrões.
     #[serde(default)]
     pub settings: serde_json::Value,
-    /// `None` quando o arquivo não traz a lista — e aí a importação não mexe
+    /// `None` quando o arquivo não traz a lista, e aí a importação não mexe
     /// no que já existe, como a v1 fazia com o seu `Array.isArray`.
     #[serde(default)]
     pub loadouts: Option<Vec<Loadout>>,
@@ -182,7 +182,7 @@ impl Backup {
     }
 
     /// Grava indentado com dois espaços, como o `JSON.stringify(data, null, 2)`
-    /// da v1 — o arquivo continua legível a olho nu.
+    /// da v1: o arquivo continua legível a olho nu.
     pub fn write(&self, path: &Path) -> Result<()> {
         let json = serde_json::to_vec_pretty(self).context("falha ao serializar o backup")?;
         util::write_atomic(path, &json)
@@ -199,7 +199,7 @@ impl Backup {
         Ok(backup)
     }
 
-    /// Settings do arquivo por cima dos atuais — o `{ ...settings, ...d.settings }`
+    /// Settings do arquivo por cima dos atuais: o `{ ...settings, ...d.settings }`
     /// da v1. O que o backup não traz continua valendo, e chaves que não existem
     /// mais (`sprintModifier`) são ignoradas na desserialização.
     pub fn merged_settings(&self, current: &Settings) -> Result<Settings> {

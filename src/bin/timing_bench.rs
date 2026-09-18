@@ -4,7 +4,7 @@
 //! dois `SendInput` que a cercam. A meta do projeto é p99 abaixo de 1ms.
 //!
 //! **Isto digita de verdade.** Rode num Windows com um editor de texto em foco,
-//! nunca com o jogo aberto — o objetivo aqui é o relógio, não o jogo (para o
+//! nunca com o jogo aberto: o objetivo aqui é o relógio, não o jogo (para o
 //! jogo existe o `soak`). Fora do Windows o envio é ignorado e o que sobra é a
 //! aferição do sono, útil só para conferir a bancada em si.
 
@@ -24,7 +24,7 @@ const CODEX: [Dir; 4] = [Dir::Up, Dir::Left, Dir::Down, Dir::Right];
 const TARGET_P99_MS: f64 = 1.0;
 
 const HELP: &str = "\
-timing_bench — desvio de timing do motor de macro
+timing_bench: desvio de timing do motor de macro
 
 USO:
     timing_bench [opções]
@@ -39,7 +39,7 @@ OPÇÕES:
 
 COMO RODAR:
     1. Windows, sem o jogo aberto.
-    2. Abra um editor de texto vazio e deixe-o em foco — a bancada digita
+    2. Abra um editor de texto vazio e deixe-o em foco: a bancada digita
        Ctrl + WASD de verdade, uma sequência por vez.
     3. Rode e não toque no teclado até o relatório sair.
     4. Feche o que estiver disputando CPU: o que se mede aqui é o escalonador.
@@ -156,7 +156,7 @@ fn main() -> ExitCode {
     if !cfg!(windows) {
         // Sem `timeBeginPeriod` e com outro escalonador, o número daqui não diz
         // nada sobre o alvo; serve só para conferir a própria bancada.
-        println!("\np99 {p99:.3}ms — veredito só vale num Windows real.");
+        println!("\np99 {p99:.3}ms. Veredito só vale num Windows real.");
         return ExitCode::SUCCESS;
     }
     if p99 < TARGET_P99_MS {

@@ -37,7 +37,7 @@ impl Dir {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Stratagem {
     pub id: u32,
-    /// Id do estratagema na API de dados — o que casa o JSON embarcado com o
+    /// Id do estratagema na API de dados: o que casa o JSON embarcado com o
     /// que [`crate::data_sync`] baixa. O `id` numérico continua sendo a chave
     /// dos saves.
     #[serde(default)]
@@ -66,7 +66,7 @@ impl Stratagem {
     }
 }
 
-/// Estratagema de apoio fixo — não ocupa slot e o codex nunca muda.
+/// Estratagema de apoio fixo: não ocupa slot e o codex nunca muda.
 #[derive(Debug, Clone, Copy)]
 pub struct SupportStrat {
     pub nome: &'static str,
@@ -98,7 +98,7 @@ pub const SUPPORT_STRATS: [SupportStrat; 3] = [
 pub const EXCLUSIVE_TAGS: [&str; 2] = ["Mecha", "Vehicle"];
 
 /// Um estratagema exclusivo conflita se outro slot já carrega a mesma tag.
-/// `slots` pode ser mais curto que `active_slot` — a importação de backup checa
+/// `slots` pode ser mais curto que `active_slot`: a importação de backup checa
 /// cada slot contra os anteriores.
 pub fn has_exclusive_conflict(
     strat: &Stratagem,
@@ -153,7 +153,7 @@ pub struct GameData {
 }
 
 impl GameData {
-    /// Lê `assets/data/stratagems.json` — só o que veio no instalador.
+    /// Lê `assets/data/stratagems.json` (só o que veio no instalador).
     pub fn load() -> Result<GameData> {
         GameData::load_from(&util::asset_path("data/stratagems.json"))
     }
@@ -311,7 +311,7 @@ impl EquipSlot {
         EquipSlot::Booster,
     ];
 
-    /// Posição na ordem canônica — índice dos vetores de build e de locks.
+    /// Posição na ordem canônica: índice dos vetores de build e de locks.
     pub fn index(self) -> usize {
         self as usize
     }
@@ -380,7 +380,7 @@ impl<'a> Item<'a> {
         }
     }
 
-    /// Warbond do item, onde ela existe — é o que casa a capa com a armadura.
+    /// Warbond do item, onde ela existe. É o que casa a capa com a armadura.
     pub fn warbond(self) -> Option<&'a str> {
         match self {
             Item::Armor(item) => Some(&item.warbond),
@@ -404,7 +404,7 @@ impl Equipment {
         }
     }
 
-    /// Item pela posição na lista — o que a lista rolável do dropdown e o
+    /// Item pela posição na lista: o que a lista rolável do dropdown e o
     /// sorteio usam, sem montar vetor nenhum.
     pub fn at(&self, slot: EquipSlot, index: usize) -> Option<Item<'_>> {
         match slot {
@@ -425,7 +425,7 @@ impl Equipment {
             .find(|item| item.id() == id)
     }
 
-    /// Armadura pelo id — a ficha completa (peso, ARM/VEL/STA, passiva) só
+    /// Armadura pelo id. A ficha completa (peso, ARM/VEL/STA, passiva) só
     /// existe nesta categoria.
     pub fn armor_by_id(&self, id: &str) -> Option<&Armor> {
         self.armor.iter().find(|armor| armor.id == id)
@@ -448,7 +448,7 @@ pub struct StratKind {
 }
 
 impl StratKind {
-    /// Nem apoio, nem mochila, nem sentinela — também o que sai de um nome que
+    /// Nem apoio, nem mochila, nem sentinela; também o que sai de um nome que
     /// não casou com nada.
     pub const NONE: StratKind = StratKind {
         support: false,
@@ -459,10 +459,10 @@ impl StratKind {
 
 /// Classificação de cada estratagema, casada com o `stratagemInfo` da wiki.
 ///
-/// O casamento é por nome normalizado e reproduz o do legado (~70–101): exato
+/// O casamento é por nome normalizado e reproduz o do legado (~70-101): exato
 /// primeiro; substring só a partir de [`MIN_PARTIAL`] caracteres, ficando com o
-/// candidato mais longo (o mais específico); e, por último, a designação — o
-/// primeiro token do nome, que salva os apelidos que a wiki não registra.
+/// candidato mais longo (o mais específico); e, por último, a designação (o
+/// primeiro token do nome, que salva os apelidos que a wiki não registra).
 #[derive(Debug, Clone, Default)]
 pub struct StratMeta {
     kinds: HashMap<u32, StratKind>,
@@ -596,12 +596,12 @@ impl StatsMap {
     /// Estratagema de cada slug de estratagema das estatísticas.
     ///
     /// O mapa embarcado resolve os conhecidos. Slug que ele não tem é de
-    /// estratagema lançado depois do release — que o app já tem, via
-    /// `data_sync` — e casa aqui pelos pedaços do slug no nome, como o
+    /// estratagema lançado depois do release (que o app já tem, via
+    /// `data_sync`) e casa aqui pelos pedaços do slug no nome, como o
     /// `build-stats-map.mjs` faz. Com duas travas que o script não precisa,
     /// porque lá alguém confere o resultado: só concorrem estratagemas que o
     /// mapa ainda não cobre, e o par tem que ser único dos dois lados. Na
-    /// dúvida o slug fica sem par — melhor que mostrar o número de outro item.
+    /// dúvida o slug fica sem par. Melhor que mostrar o número de outro item.
     pub fn stratagem_ids<'a>(
         &self,
         slugs: impl IntoIterator<Item = &'a str>,

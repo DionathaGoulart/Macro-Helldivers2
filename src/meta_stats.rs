@@ -4,8 +4,8 @@
 //! structs são tolerantes (campo ausente vira o padrão) e uma falha degrada com
 //! o aviso genérico da v1 em vez de derrubar a aba.
 //!
-//! Porte de `legacy/src/main/index.js` (~680–698) e do cache de 6h que o
-//! renderer guardava no `localStorage` (`BuildTab.jsx` ~285–311). Aqui o cache é
+//! Porte de `legacy/src/main/index.js` (~680-698) e do cache de 6h que o
+//! renderer guardava no `localStorage` (`BuildTab.jsx` ~285-311). Aqui o cache é
 //! um arquivo em `config_dir` (R9), o que também o faz sobreviver ao boot.
 
 use std::collections::{HashMap, HashSet};
@@ -58,7 +58,7 @@ pub enum Faction {
 impl Faction {
     pub const ALL: [Faction; 3] = [Faction::Terminid, Faction::Automaton, Faction::Illuminate];
 
-    /// Valor do parâmetro `faction` — também a primeira metade da chave de cache.
+    /// Valor do parâmetro `faction`, também a primeira metade da chave de cache.
     pub fn slug(self) -> &'static str {
         match self {
             Faction::Terminid => "terminid",
@@ -128,7 +128,7 @@ pub struct MetaResult {
     /// Combinação consultada; uma resposta que não é da combinação em tela é
     /// descartada (o usuário pode ter trocado de facção no meio).
     pub key: String,
-    /// `None` quando a consulta falhou — a tela mostra o aviso genérico da v1.
+    /// `None` quando a consulta falhou: a tela mostra o aviso genérico da v1.
     pub stats: Option<Arc<Stats>>,
 }
 
@@ -139,7 +139,7 @@ pub fn cache_key(faction: Faction, difficulty: u8) -> String {
 
 /// Pede as estatísticas de uma combinação.
 ///
-/// Cache fresco responde na hora, sem thread nem rede — é o que a v1 fazia com o
+/// Cache fresco responde na hora, sem thread nem rede. É o que a v1 fazia com o
 /// `localStorage`, e é o que evita a tela piscar "consultando" a cada troca de
 /// aba. Sem cache, um worker efêmero consulta os três endpoints e o resultado
 /// volta por `UiEvent::MetaStats`.
@@ -248,7 +248,7 @@ static PATCH: Mutex<Option<u32>> = Mutex::new(None);
 
 /// Patch mais novo com dados, descoberto uma vez por sessão.
 ///
-/// Sem isto o app ficaria preso no patch do release — e estratagema lançado
+/// Sem isto o app ficaria preso no patch do release, e estratagema lançado
 /// depois dele nem existe nos números desse patch.
 fn current_patch(agent: &ureq::Agent) -> u32 {
     if let Some(patch) = *lock(&PATCH) {
@@ -463,7 +463,7 @@ mod tests {
         assert!(fresh(&entry, 0));
     }
 
-    /// Consulta de verdade — fica de fora do `cargo test` padrão porque depende
+    /// Consulta de verdade. Fica de fora do `cargo test` padrão porque depende
     /// de rede e do site estar de pé. Rodar com
     /// `cargo test -- --ignored a_live_query` ao mexer no cliente.
     #[test]

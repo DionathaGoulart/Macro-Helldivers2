@@ -3,7 +3,7 @@
 //! É o que mantém o app útil com a janela fechada: minimizar e fechar escondem
 //! a janela, os hooks continuam vivos e o ícone é o caminho de volta. A v1
 //! (`legacy/src/main/index.js` ~385-433) tinha a mesma regra, junto com a
-//! proteção que copiamos aqui: **sem ícone, fechar encerra de verdade** — uma
+//! proteção que copiamos aqui: **sem ícone, fechar encerra de verdade**. Uma
 //! janela escondida sem bandeja seria irrecuperável.
 //!
 //! O ícone vive na thread da janela principal, porque é ela que recebe o
@@ -50,12 +50,12 @@ mod platform {
     use crate::gfx::images::{self, Alpha};
     use crate::util;
 
-    /// Arquivo do ícone. É a versão de 64px — decodificar o `icon.png` de 1024
+    /// Arquivo do ícone. É a versão de 64px: decodificar o `icon.png` de 1024
     /// para desenhar 16px na barra de tarefas seria desperdício (mesma escolha
     /// da v1).
     const ICON_ASSET: &str = "icons/tray.png";
 
-    /// Id do ícone dentro da janela. Um só, então qualquer valor serve — mas
+    /// Id do ícone dentro da janela. Um só, então qualquer valor serve, mas
     /// tem que ser o mesmo na adição e na remoção.
     const ICON_ID: u32 = 1;
 
@@ -75,7 +75,7 @@ mod platform {
         /// Põe o ícone na bandeja. `message` é a mensagem `WM_APP` que a janela
         /// vai receber a cada evento de mouse sobre ele.
         ///
-        /// `None` quando o ícone não pôde ser criado ou registrado — e aí a
+        /// `None` quando o ícone não pôde ser criado ou registrado, e aí a
         /// janela volta a encerrar o app ao ser fechada.
         pub fn new(hwnd: HWND, message: u32, tooltip: &str) -> Option<Tray> {
             let icon = match create_icon() {
@@ -167,7 +167,7 @@ mod platform {
         }
 
         // O menu de uma bandeja só desaparece ao clicar fora se a janela dona
-        // estiver em primeiro plano — é a receita da própria documentação da
+        // estiver em primeiro plano: é a receita da própria documentação da
         // API, junto com o `WM_NULL` depois de fechar.
         // SAFETY: janela viva; trazer para a frente uma janela escondida não a
         // mostra, só a torna a ativa.
@@ -247,7 +247,7 @@ mod platform {
             );
         }
 
-        // SAFETY: máscara monocromática do mesmo tamanho, sem dados iniciais —
+        // SAFETY: máscara monocromática do mesmo tamanho, sem dados iniciais:
         // zerada, que é o que faz o alfa do bitmap colorido mandar sozinho.
         let mask = unsafe { CreateBitmap(decoded.width as i32, decoded.height as i32, 1, 1, None) };
         if mask.is_invalid() {

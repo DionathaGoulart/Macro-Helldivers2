@@ -1,14 +1,14 @@
 //! DirectWrite: a JetBrains Mono embutida, formatos cacheados e o desenho de
 //! texto.
 //!
-//! Uma família para tudo (styleguide §3). As quatro faces que a interface usa —
-//! Regular 400, Bold 700, ExtraBold 800 e o itálico do 800, que é o dos títulos
-//! de display — vêm de `assets/fonts/` para uma coleção privada do processo:
+//! Uma família para tudo (styleguide §3). As quatro faces que a interface usa
+//! (Regular 400, Bold 700, ExtraBold 800 e o itálico do 800, que é o dos títulos
+//! de display) vêm de `assets/fonts/` para uma coleção privada do processo:
 //! nada é instalado no sistema, e o app não depende de o usuário ter a fonte.
 //! Se a carga falhar, o texto cai na monoespaçada do Windows em vez de sumir.
 //!
 //! O `tracking` do tema (`letter-spacing` do CSS) só existe em
-//! `IDWriteTextLayout`, então todo texto vira layout — que também é o que mede.
+//! `IDWriteTextLayout`, então todo texto vira layout, que também é o que mede.
 //! Layouts prontos ficam num cache: uma repintura reaproveita os da anterior, e
 //! só o que mudou é remontado.
 
@@ -45,7 +45,7 @@ const FONT_FILES: [&str; 4] = [
 /// disso (busca digitada rápido, por exemplo) o cache recomeça do zero.
 const LAYOUT_CACHE_MAX: usize = 512;
 
-/// Largura usada quando a medição pede "sem limite" — o DirectWrite não aceita
+/// Largura usada quando a medição pede "sem limite": o DirectWrite não aceita
 /// infinito.
 const UNBOUNDED: f32 = 100_000.0;
 
@@ -137,8 +137,8 @@ impl Text {
             return Ok(format.clone());
         }
 
-        // `font-black` (900) resolve para a face mais pesada embutida, a 800 —
-        // comportamento herdado do guia e aprovado (§3).
+        // `font-black` (900) resolve para a face mais pesada embutida, a 800.
+        // Comportamento herdado do guia e aprovado (§3).
         let weight = match style.weight {
             Weight::Regular => DWRITE_FONT_WEIGHT_NORMAL,
             Weight::Bold => DWRITE_FONT_WEIGHT_BOLD,

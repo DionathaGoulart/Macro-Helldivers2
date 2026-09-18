@@ -9,7 +9,7 @@ use anyhow::{Context, Result};
 use directories::BaseDirs;
 
 /// Pasta de dados do usuário. No Windows resolve para
-/// `%APPDATA%\Macro Helldivers 2` — o caminho exato que o desinstalador preserva.
+/// `%APPDATA%\Macro Helldivers 2`, o caminho exato que o desinstalador preserva.
 pub const APP_DIR_NAME: &str = "Macro Helldivers 2";
 
 /// Subpasta que a v1 (Electron) criava dentro do `userData`.
@@ -20,7 +20,7 @@ const LEGACY_SUBDIR: &str = "Helldivers Macro";
 /// quando não; tentamos os dois porque o instalador antigo circulou nas duas formas.
 const LEGACY_APP_DIRS: [&str; 2] = ["Macro Helldivers 2", "helldivers-macro"];
 
-/// Raiz da configuração do usuário — no Windows, `%APPDATA%`. É onde moram
+/// Raiz da configuração do usuário (no Windows, `%APPDATA%`). É onde moram
 /// tanto a pasta do app quanto a do jogo (`Arrowhead\Helldivers2`).
 pub fn appdata_dir() -> PathBuf {
     BaseDirs::new()
@@ -134,7 +134,7 @@ pub fn write_atomic(path: &Path, bytes: &[u8]) -> Result<()> {
 /// Afasta um arquivo de configuração ilegível para `<nome>.bad`.
 ///
 /// O chamador vai seguir com dados padrão, e o próximo save sobrescreveria o
-/// original — que pode estar intacto (leitura que falhou por bloqueio
+/// original, que pode estar intacto (leitura que falhou por bloqueio
 /// transitório de antivírus/backup) ou ser recuperável à mão. Afastado, ele
 /// sobrevive à sessão.
 pub fn quarantine(path: &Path) {
@@ -216,7 +216,7 @@ const RESPONSE_TIMEOUT: std::time::Duration = std::time::Duration::from_secs(30)
 
 /// Agente HTTP dos dois clientes do app (estatísticas da comunidade e updater).
 ///
-/// `global` limita a chamada inteira — conexão, TLS e corpo — e é o que serve
+/// `global` limita a chamada inteira (conexão, TLS e corpo) e é o que serve
 /// para respostas pequenas. Um download de instalador passa `None`, porque o
 /// tamanho do arquivo é que manda no tempo; ele fica protegido pelos prazos de
 /// conexão e de resposta, que valem sempre.
@@ -257,7 +257,7 @@ pub const JSON_FILTER: FileFilter<'static> = FileFilter {
     extension: "json",
 };
 
-/// Diálogo "salvar como". `Ok(None)` quando o usuário cancela — que não é erro
+/// Diálogo "salvar como". `Ok(None)` quando o usuário cancela, que não é erro
 /// e não vira aviso na tela.
 #[cfg(windows)]
 pub fn save_dialog(
@@ -354,8 +354,8 @@ fn show_dialog(
 
 /// COM inicializado enquanto o diálogo está de pé.
 ///
-/// A thread da janela não inicializa COM no boot — só os diálogos precisam
-/// dele —, então cada abertura entra e sai do apartamento.
+/// A thread da janela não inicializa COM no boot (só os diálogos precisam
+/// dele), então cada abertura entra e sai do apartamento.
 #[cfg(windows)]
 struct ComScope {
     /// Falso quando a thread já estava em outro apartamento: aí o
@@ -467,7 +467,7 @@ impl Drop for InstanceLock {
 /// `second-instance` do Electron). A janela pode estar escondida na bandeja ou
 /// minimizada, então os dois casos são desfeitos antes de pedir o foco.
 ///
-/// `false` quando não há janela com essa classe — a primeira instância pode
+/// `false` quando não há janela com essa classe: a primeira instância pode
 /// estar no meio do boot, ainda sem tê-la criado.
 #[cfg(windows)]
 pub fn focus_running_instance(class_name: &str) -> bool {
@@ -525,7 +525,7 @@ pub fn fatal_dialog(message: &str) {
 
 /// Liga o logger. Em debug ele escreve no console (é por onde `RUST_LOG=debug
 /// cargo run` mostra os logs); em release, que não tem console, os avisos vão
-/// para `app.log` na pasta de configuração — sem ele, toda falha pós-boot
+/// para `app.log` na pasta de configuração. Sem ele, toda falha pós-boot
 /// (updater, tray, overlay) morreria sem deixar rastro.
 pub fn init_logging() {
     let filter = std::env::var("RUST_LOG").unwrap_or_else(|_| "info".to_string());

@@ -4,7 +4,7 @@
 //! acelerador a cada mudança de foco. Aqui o hook fica instalado o tempo todo e
 //! quem decide é uma tabela pré-resolvida: o callback compara um virtual-key,
 //! encontra um comando pronto e o manda pro engine. Nada de consultar settings,
-//! resolver estratagema ou alocar no caminho quente — o Windows derruba um
+//! resolver estratagema ou alocar no caminho quente: o Windows derruba um
 //! `WH_KEYBOARD_LL` que passe do `LowLevelHooksTimeout` (~300ms por padrão), e
 //! um hook derrubado é um macro que deixa de funcionar até o app reiniciar.
 //!
@@ -18,7 +18,7 @@
 //!    que o título da janela contenha "HELLDIVERS" (R10 classifica por título).
 //! 3. Com o Notepad em foco, `F1` digita a sequência do estratagema (Ctrl mais
 //!    as direções em WASD) e **não** deixa o `F1` chegar no Notepad.
-//! 4. `Shift+F1` e `Ctrl+F1` disparam igual — qualquer modificador seguro serve,
+//! 4. `Shift+F1` e `Ctrl+F1` disparam igual: qualquer modificador seguro serve,
 //!    que é o motivo de o "modificador de sprint" da v1 ter sido removido.
 //! 5. Segurar `F1` dispara uma vez só: o auto-repeat do teclado é engolido.
 //! 6. Alt-tab pro terminal e `F1` não dispara mais nada (foco perdido).
@@ -89,7 +89,7 @@ impl Bindings {
 
         let mut push = |vk: Vk, slot: usize, support: bool, codex: Arc<[Dir]>| {
             // Mesmo virtual-key em dois atalhos: o primeiro fica. A v1 chegava
-            // no mesmo lugar por outro caminho — o segundo `globalShortcut`
+            // no mesmo lugar por outro caminho: o segundo `globalShortcut`
             // com o mesmo acelerador falhava no registro.
             if entries.iter().any(|entry| entry.vk == vk) {
                 log::warn!(
@@ -181,7 +181,7 @@ pub fn decide(bindings: &Bindings, vk: Vk, ctrl_down: bool, armed: bool) -> Deci
 /// Conjunto de virtual-keys (0..=255) em quatro palavras atômicas.
 ///
 /// Guarda quais teclas foram engolidas na descida, para engolir também a subida
-/// — o app em foco nunca vê meio evento — e para reconhecer o auto-repeat.
+/// (o app em foco nunca vê meio evento) e para reconhecer o auto-repeat.
 struct KeySet([AtomicU64; 4]);
 
 impl KeySet {
@@ -323,7 +323,7 @@ fn run() {
     // `SKIPOWNPROCESS` corta os eventos das nossas próprias janelas, e isso é
     // seguro: janela principal e overlay classificam como "em foco" (R10), então
     // não ver a troca entre elas e o jogo dá exatamente o mesmo estado. O que
-    // interessa — o foco indo para um app de terceiros — sempre chega.
+    // interessa (o foco indo para um app de terceiros) sempre chega.
     //
     // SAFETY: callback do próprio módulo; o guard desfaz o registro.
     let win_event = unsafe {
@@ -339,7 +339,7 @@ fn run() {
     };
     let _win_event = if win_event.is_invalid() {
         // Sem o evento sobra o timer: mais lento para reagir, mas o app continua
-        // correto — nenhum estado depende de o evento ter chegado.
+        // correto. Nenhum estado depende de o evento ter chegado.
         log::warn!("SetWinEventHook recusado; o foco passa a depender só do timer");
         None
     } else {
@@ -377,7 +377,7 @@ fn run() {
 
 /// Rede de segurança do foco: um evento perdido (janela que troca sem gerar
 /// `EVENT_SYSTEM_FOREGROUND`, hook recusado) se corrige no próximo tique. É
-/// também o batimento que reafirma o overlay no topo do z-order — os mesmos ~5s
+/// também o batimento que reafirma o overlay no topo do z-order, os mesmos ~5s
 /// que a v1 usava, lá contados em tiques de polling.
 #[cfg(windows)]
 const FOCUS_TIMER_MS: u32 = 5_000;
@@ -520,7 +520,7 @@ fn refresh_focus(hwnd: Option<windows::Win32::Foundation::HWND>) {
     apply(runtime, window, &title, effects);
 }
 
-// A máquina de estados só é tocada pela thread de hooks — o evento de
+// A máquina de estados só é tocada pela thread de hooks: o evento de
 // foreground e o timer chegam os dois pela fila dela.
 #[cfg(windows)]
 thread_local! {

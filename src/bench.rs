@@ -217,7 +217,7 @@ mod tests {
     }
 
     /// Sink que não dorme: cada espera pedida vira tempo real zero, então o
-    /// desvio observado é o negativo do que foi pedido — previsível o bastante
+    /// desvio observado é o negativo do que foi pedido, previsível o bastante
     /// para conferir o pareamento.
     struct Instant0;
 
@@ -249,8 +249,8 @@ mod tests {
         let phases: Vec<Phase> = deviations.iter().map(|(phase, _)| *phase).collect();
         // Uma direção: lead, hold, e o gap+tail fechados pelo tail.
         assert_eq!(phases, vec![Phase::Lead, Phase::Hold, Phase::Tail]);
-        // Sem dormir de verdade, o desvio é o que se pediu, com o sinal trocado —
-        // e o último trecho cobra os 6ms de gap somados aos 30ms de tail.
+        // Sem dormir de verdade, o desvio é o que se pediu, com o sinal trocado.
+        // E o último trecho cobra os 6ms de gap somados aos 30ms de tail.
         assert!(
             (deviations[2].1 + 36.0).abs() < 1.0,
             "trecho final: {}",

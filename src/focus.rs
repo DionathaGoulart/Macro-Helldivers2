@@ -184,7 +184,7 @@ mod tests {
         assert_eq!(classify("helldivers 2"), Window::Game);
         assert_eq!(classify("hd2_overlay panel"), Window::Overlay);
         // Um documento aberto no bloco de notas com o nome do jogo conta como
-        // jogo — é assim que o teste manual do hook funciona.
+        // jogo: é assim que o teste manual do hook funciona.
         assert_eq!(
             classify("helldivers-notas.txt - Bloco de Notas"),
             Window::Game

@@ -3,13 +3,13 @@
 //! É a parte mais sensível do app. Três regras mandam aqui:
 //!
 //! 1. **Input primeiro, aviso depois.** O press do modificador acontece antes de
-//!    qualquer notificação para a UI — feedback visual atrasado ninguém percebe,
+//!    qualquer notificação para a UI: feedback visual atrasado ninguém percebe,
 //!    input atrasado sim (mesma ordem da v1, `legacy/src/main/index.js` ~336-342).
 //! 2. **Fila de tamanho zero.** Um segundo atalho durante a execução é rejeitado
 //!    com aviso de bloqueio, nunca enfileirado: uma sequência que chega tarde no
 //!    jogo é pior do que uma que não chega.
 //! 3. **Nada fica preso.** Toda tecla pressionada é registrada num guard RAII, e
-//!    o `Drop` solta tudo em ordem inversa — vale para retorno normal, aborto por
+//!    o `Drop` solta tudo em ordem inversa. Vale para retorno normal, aborto por
 //!    perda de foco e panic (em debug, onde há unwind).
 //!
 //! O envio usa `SendInput` com scancode: o jogo lê o teclado por scancode, e um
@@ -164,7 +164,7 @@ pub fn jittered_ms(base_ms: u32, floor_ms: u32, offset_ms: f64) -> f64 {
     (f64::from(base_ms) + offset_ms).max(f64::from(floor_ms))
 }
 
-/// O que executar. Tudo já resolvido pelo remetente — o engine não consulta
+/// O que executar. Tudo já resolvido pelo remetente: o engine não consulta
 /// settings no meio de uma sequência.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Sequence {
@@ -238,7 +238,7 @@ impl<'a, S: InputSink> Held<'a, S> {
 impl<S: InputSink> Drop for Held<'_, S> {
     fn drop(&mut self) {
         // Ordem inversa: primeiro a última tecla presa (a direção), depois o
-        // modificador — do jeito que a mão soltaria.
+        // modificador, do jeito que a mão soltaria.
         for slot in self.down.iter_mut().rev() {
             if let Some(scan) = slot.take() {
                 self.sink.send(KeyEvent { scan, up: true });
@@ -283,7 +283,7 @@ pub fn run_sequence<S: InputSink>(
 /// Solta todas as teclas que uma sequência pode estar segurando agora.
 ///
 /// É a rede de segurança do panic hook: em release o perfil usa `panic =
-/// "abort"`, que mata o processo sem rodar o `Drop` do guard — e um panic em
+/// "abort"`, que mata o processo sem rodar o `Drop` do guard, e um panic em
 /// qualquer thread no meio de uma sequência deixaria o modificador logicamente
 /// preso no sistema até o usuário apertar a tecla física, no meio da partida.
 /// Key-up de tecla que não está pressionada é inofensivo, então soltamos o
@@ -472,7 +472,7 @@ impl Recorder {
         self.events.iter().map(|(_, event)| *event).collect()
     }
 
-    /// Esperas em milissegundos, arredondadas — sem jitter elas são exatas.
+    /// Esperas em milissegundos, arredondadas. Sem jitter elas são exatas.
     pub fn wait_ms(&self) -> Vec<(Phase, u64)> {
         self.waits
             .iter()

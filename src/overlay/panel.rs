@@ -2,12 +2,12 @@
 //! build salva, tudo pelo mouse, sem sair do jogo.
 //!
 //! **Escopo enxuto (decisão do plano, §Fase 9):** só as duas seções acima.
-//! Configurações e geração de builds continuam só na janela principal — o painel
+//! Configurações e geração de builds continuam só na janela principal: o painel
 //! existe para o que se faz no meio da partida.
 //!
 //! A janela é `WS_EX_NOACTIVATE`: recebe o mouse sem roubar o foco do jogo, mas
 //! por isso mesmo nunca recebe o teclado. Por isso a grade vem sem campo de
-//! busca ([`MacroTab::for_overlay`]) e as builds salvas só podem ser aplicadas —
+//! busca ([`MacroTab::for_overlay`]) e as builds salvas só podem ser aplicadas:
 //! nomear, salvar e excluir exigiriam digitação. A v1 tinha a mesma limitação.
 //!
 //! Como as abas da janela principal, o módulo é puro: entra estado, saem nós e

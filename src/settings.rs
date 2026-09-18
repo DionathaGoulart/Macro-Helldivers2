@@ -119,7 +119,7 @@ impl Theme {
         }
     }
 
-    /// O outro tema — é o que o toggle da topbar e o `Shift+T` escolhem.
+    /// O outro tema. É o que o toggle da topbar e o `Shift+T` escolhem.
     pub fn toggled(self) -> Theme {
         match self {
             Theme::Rose => Theme::Crimson,
@@ -166,7 +166,7 @@ pub struct Settings {
     pub build_match_set: bool,
     pub build_balanced: bool,
     pub build_max_one_sentry: bool,
-    /// Tema escolhido à mão. `None` segue o modo claro/escuro do Windows — é o
+    /// Tema escolhido à mão. `None` segue o modo claro/escuro do Windows. É o
     /// que vale até o primeiro clique no toggle.
     #[serde(deserialize_with = "de_theme", skip_serializing_if = "Option::is_none")]
     pub theme: Option<Theme>,

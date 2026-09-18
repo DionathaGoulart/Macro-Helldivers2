@@ -1,12 +1,12 @@
 //! Builds: sorteio de loadout, regras de balanceamento, sets de armadura e as
 //! operações das builds salvas.
 //!
-//! Tudo aqui é lógica pura — nenhuma chamada de Windows, nenhum estado de tela.
+//! Tudo aqui é lógica pura: nenhuma chamada de Windows, nenhum estado de tela.
 //! O `cargo test` do host cobre exatamente o que roda em produção, e a aba
 //! (`ui/build_tab.rs`) só decide quando chamar. O sorteio recebe o gerador por
 //! parâmetro para os testes poderem rodá-lo centenas de vezes.
 //!
-//! Porte de `legacy/src/renderer/components/BuildTab.jsx` (~114–281).
+//! Porte de `legacy/src/renderer/components/BuildTab.jsx` (~114-281).
 
 use std::collections::HashMap;
 
@@ -54,7 +54,7 @@ impl Build {
         equipment.find(slot, self.equip(slot)?)
     }
 
-    /// Capacete ou capa que fecham o set da armadura equipada — o que ganha a
+    /// Capacete ou capa que fecham o set da armadura equipada: o que ganha a
     /// etiqueta "SET" na tela (mesma regra do legado: capacete de nome idêntico,
     /// capa da mesma warbond).
     pub fn is_set_piece(&self, equipment: &Equipment, slot: EquipSlot) -> bool {
@@ -122,7 +122,7 @@ impl Locks {
 
 /// Sorteia uma build inteira, preservando o que está travado.
 ///
-/// Porte de `generateFullBuild` (~168–212): a build balanceada coloca primeiro
+/// Porte de `generateFullBuild` (~168-212): a build balanceada coloca primeiro
 /// uma arma de apoio e um item de mochila (um apoio que já vem com mochila conta
 /// pelos dois), e só então os slots restantes saem de uma pool embaralhada.
 pub fn generate<R: Rng + ?Sized>(
@@ -258,7 +258,7 @@ fn random_item<'a, R: Rng + ?Sized>(
 }
 
 /// Fecha o set da armadura sorteada: capacete de nome idêntico e capa da mesma
-/// warbond. Set sem capa correspondente mantém a aleatória (~156–166).
+/// warbond. Set sem capa correspondente mantém a aleatória (~156-166).
 fn apply_set_matching<R: Rng + ?Sized>(
     build: &mut Build,
     locks: &Locks,
@@ -300,7 +300,7 @@ fn apply_set_matching<R: Rng + ?Sized>(
 
 // --- Build meta ---
 
-/// Quantos estratagemas do topo entram no sorteio meta — e são os mesmos que a
+/// Quantos estratagemas do topo entram no sorteio meta, e são os mesmos que a
 /// tela lista (`TOP_STRATS` do legado).
 pub const META_TOP_STRATS: usize = 10;
 /// Armas exibidas (e sorteadas) por categoria.
@@ -320,11 +320,11 @@ pub struct Pick<T> {
 }
 
 /// As listas da sub-aba Meta, resolvidas contra os nossos JSONs e ordenadas por
-/// pick rate (`metaLists` do legado, ~318–335).
+/// pick rate (`metaLists` do legado, ~318-335).
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct MetaLists {
     pub stratagems: Vec<Pick<u32>>,
-    /// Armas por categoria, indexadas por [`EquipSlot::index`] — primária,
+    /// Armas por categoria, indexadas por [`EquipSlot::index`]: primária,
     /// secundária e granada são justamente as três primeiras.
     weapons: [Vec<Pick<String>>; 3],
     /// Passivas pelo nome com que a armadura as referencia.
@@ -342,7 +342,7 @@ impl MetaLists {
         }
     }
 
-    /// Sem nada resolvido não há o que mostrar nem o que sortear — é o caso de
+    /// Sem nada resolvido não há o que mostrar nem o que sortear. É o caso de
     /// uma resposta vazia ou de um `statsMap.json` defasado.
     pub fn is_empty(&self) -> bool {
         self.stratagems.is_empty()
@@ -434,7 +434,7 @@ fn sort_picks<T: Ord>(picks: &mut [Pick<T>]) {
     });
 }
 
-/// Sorteio ponderado pelo pick rate (`weightedFrom` do legado, ~338–347).
+/// Sorteio ponderado pelo pick rate (`weightedFrom` do legado, ~338-347).
 fn weighted<'a, T, R: Rng + ?Sized>(list: &[&'a Pick<T>], rng: &mut R) -> Option<&'a Pick<T>> {
     let total: f64 = list.iter().map(|pick| pick.stat.loadouts_percentage).sum();
     // Lista sem peso nenhum (site zerado, todos empatados em 0) devolve o
@@ -454,7 +454,7 @@ fn weighted<'a, T, R: Rng + ?Sized>(list: &[&'a Pick<T>], rng: &mut R) -> Option
 
 /// Sorteia uma build a partir das estatísticas.
 ///
-/// Porte de `generateMetaBuild` (~349–424): mesmas regras da build aleatória,
+/// Porte de `generateMetaBuild` (~349-424): mesmas regras da build aleatória,
 /// mas a pool é o topo exibido na tela, e o peso de cada item é o pick rate.
 #[allow(clippy::too_many_arguments)]
 pub fn generate_meta<R: Rng + ?Sized>(
@@ -588,8 +588,8 @@ fn place_meta<R: Rng + ?Sized>(
 /// Escolhe um estratagema entre os mais usados que cabem na build.
 ///
 /// Só o topo mostrado na tela entra. Se as regras ativas exigirem algo que não
-/// está lá — balanceado precisa de mochila e o top 10 não tem —, a escolha cai
-/// nos [`META_FALLBACK`] mais usados da lista inteira que atendam (~367–380).
+/// está lá (balanceado precisa de mochila e o top 10 não tem), a escolha cai
+/// nos [`META_FALLBACK`] mais usados da lista inteira que atendam (~367-380).
 fn pick_meta<R: Rng + ?Sized>(
     strats: &Slots,
     lists: &MetaLists,
@@ -638,7 +638,7 @@ pub fn custom_disabled(build: &Build, slot: usize, strat: &Stratagem, data: &Gam
 }
 
 /// Equipa (ou desequipa) o estratagema no slot em edição. `false` quando a
-/// regra recusa a jogada — o slot em edição avança de qualquer jeito, como na
+/// regra recusa a jogada. O slot em edição avança de qualquer jeito, como na
 /// v1, onde o avanço acontecia fora do `setState`.
 pub fn custom_assign(build: &mut Build, slot: usize, strat: &Stratagem, data: &GameData) -> bool {
     // Recusa como os demais caminhos de erro, em vez de estourar no índice.
@@ -691,7 +691,7 @@ pub fn custom_list(data: &GameData, search: &str) -> Vec<u32> {
 /// Nome sugerido quando o campo fica em branco: o primeiro `Build {n}` livre.
 ///
 /// A v1 usava `Build {contagem+1}`, que depois de uma exclusão podia colidir
-/// com uma build existente — e a colisão a sobrescreveria em silêncio.
+/// com uma build existente, e a colisão a sobrescreveria em silêncio.
 pub fn default_name(loadouts: &[Loadout]) -> String {
     (1..)
         .map(|n| format!("Build {n}"))
@@ -704,7 +704,7 @@ pub fn default_name(loadouts: &[Loadout]) -> String {
 }
 
 /// Salva a build exibida. Um nome já usado (sem diferenciar maiúsculas)
-/// sobrescreve a build existente em vez de criar outra — `handleSaveBuild`.
+/// sobrescreve a build existente em vez de criar outra (`handleSaveBuild`).
 pub fn save(loadouts: &mut Vec<Loadout>, name: &str, build: &Build) -> bool {
     if !build.has_stratagem() {
         return false;
@@ -740,7 +740,7 @@ pub fn save(loadouts: &mut Vec<Loadout>, name: &str, build: &Build) -> bool {
 }
 
 /// Id no formato da v1 (`Date.now()` em texto). Duas builds salvas no mesmo
-/// milissegundo receberiam o mesmo id — o relógio só anda de 1 em 1ms —, então o
+/// milissegundo receberiam o mesmo id (o relógio só anda de 1 em 1ms), então o
 /// valor é empurrado até ser inédito.
 fn next_id(loadouts: &[Loadout]) -> String {
     let mut id = util::epoch_millis();
@@ -759,7 +759,7 @@ pub struct Applied {
     pub build: Build,
 }
 
-/// Aplica uma build salva (`handleApplyLoadout`, ~130–148).
+/// Aplica uma build salva (`handleApplyLoadout`, ~130-148).
 ///
 /// Os três casos da v1: build com equipamento substitui a tela inteira; build
 /// antiga (salva antes de o equipamento existir) só troca os estratagemas da
@@ -791,11 +791,11 @@ pub fn apply(
     Applied { slots, build }
 }
 
-/// Índice da build salva que bate com os slots atuais — o chip em destaque.
+/// Índice da build salva que bate com os slots atuais: o chip em destaque.
 ///
 /// A comparação usa a lista saneada, que é o que `apply` põe nos slots: sem
 /// isso, uma build com id morto, lista curta (v1) ou conflito herdado nunca
-/// acenderia — justamente logo depois de ser aplicada.
+/// acenderia, justamente logo depois de ser aplicada.
 pub fn active_loadout(loadouts: &[Loadout], slots: Slots, data: &GameData) -> Option<usize> {
     loadouts
         .iter()
@@ -900,7 +900,7 @@ mod tests {
                 ids.iter().any(|id| meta.is_backpack(*id)),
                 "build balanceada sem item de mochila"
             );
-            // E nunca dois do mesmo tipo — a regra também é de exclusão.
+            // E nunca dois do mesmo tipo: a regra também é de exclusão.
             assert_eq!(ids.iter().filter(|id| meta.is_support(**id)).count(), 1);
             assert_eq!(ids.iter().filter(|id| meta.is_backpack(**id)).count(), 1);
         }
@@ -1641,8 +1641,8 @@ mod tests {
         let mut loadouts = Vec::new();
         save(&mut loadouts, "Build 1", &build);
         save(&mut loadouts, "Build 2", &build);
-        // "Build 1" foi excluída; o próximo nome em branco era "Build 2" na v1
-        // — e sobrescreveria a sobrevivente.
+        // "Build 1" foi excluída; o próximo nome em branco era "Build 2" na v1,
+        // e sobrescreveria a sobrevivente.
         loadouts.remove(0);
 
         assert_eq!(default_name(&loadouts), "Build 1");

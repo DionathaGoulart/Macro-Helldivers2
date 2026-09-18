@@ -1,6 +1,6 @@
 //! Tabelas canônicas de teclas.
 //!
-//! Os nomes são exatamente os que a v1 gravava em `settings.json` — trocá-los
+//! Os nomes são exatamente os que a v1 gravava em `settings.json`: trocá-los
 //! invalidaria os atalhos de quem migra. Deles saem duas coisas: o virtual-key
 //! que o hook de teclado compara, e o scancode que o `SendInput` do engine
 //! manda (o jogo lê scancode; VK não chega nele).
@@ -153,7 +153,7 @@ pub fn is_modifier_vk(vk: Vk) -> bool {
 /// Teclas de estratagema aceitas pelo jogo, na ordem em que a UI as mostra.
 pub const MODIFIER_KEYS: [&str; 4] = ["LeftControl", "LeftAlt", "Equal", "Minus"];
 
-/// Rótulo curto do modificador na tela de configurações. Não é traduzido — na
+/// Rótulo curto do modificador na tela de configurações. Não é traduzido: na
 /// v1 também era o mesmo nos dois idiomas.
 pub fn modifier_label(name: &str) -> &str {
     match name {
