@@ -89,6 +89,12 @@ slugs do helldive.live. O `sync-stratagems` casa por código de entrada e preser
 IDs — nunca renumere estratagemas à mão, ou slots e builds salvas dos usuários passam
 a apontar para outro item.
 
+## Licença
+
+O projeto é distribuído sob uma licença de uso pessoal com crédito obrigatório
+([`LICENSE`](LICENSE)). Ao enviar uma contribuição, você concorda que ela seja
+distribuída sob essa mesma licença.
+
 ## Commits
 
 Conventional Commits, em inglês, pequenos e atômicos. A mensagem diz o QUE e o

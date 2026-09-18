@@ -273,6 +273,23 @@ e Napalm Airstrike saírem sem a carga.
 
 ---
 
+## 📜 Licença
+
+**Uso pessoal e não comercial, com crédito obrigatório.** O texto completo está em
+[LICENSE](LICENSE); em resumo:
+
+- ✅ usar, estudar e modificar o app para uso próprio;
+- ✅ publicar o app, original ou modificado, sem fins comerciais, e mostrá-lo em
+  vídeos, lives e posts (inclusive em canais monetizados) — sempre com o crédito
+  **"Macro Helldivers 2, criado por DionathaGoulart"** e o link deste repositório;
+- ❌ vender, cobrar pelo acesso, incluir em produto ou serviço comercial, remover os
+  créditos ou redistribuir sob outra licença.
+
+Uso comercial só com autorização por escrito. A licença não cobre a fonte nem o
+conteúdo do jogo, listados abaixo.
+
+---
+
 ## 🙏 Créditos
 
 - Dados e ícones do jogo: [Helldivers 2 Wiki](https://helldivers.wiki.gg) da comunidade.

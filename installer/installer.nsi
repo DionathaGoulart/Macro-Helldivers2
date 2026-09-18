@@ -270,6 +270,9 @@ Section "-Instalar"
   ;; de onde saiu o `tray.png`. Juntos são ~800 KB que ninguém lê em execução —
   ;; se algum código passar a abri-los, tire a exclusão correspondente.
   File /r /x ".DS_Store" /x "Thumbs.db" /x "icon.ico" /x "icon.png" "${ASSETS_SOURCE}"
+  ;; A licença exige que toda cópia a leve junto. Com `.txt` ela abre no
+  ;; Bloco de Notas com dois cliques.
+  File "/oname=LICENSE.txt" "..\LICENSE"
 
   WriteUninstaller "$INSTDIR\Uninstall.exe"
 
@@ -305,6 +308,7 @@ Section "Uninstall"
 
   RMDir /r "$INSTDIR\assets"
   Delete "$INSTDIR\${EXE_NAME}"
+  Delete "$INSTDIR\LICENSE.txt"
   Delete "$INSTDIR\Uninstall.exe"
   ;; Sem `/r`: o que o usuário tiver deixado na pasta não é nosso para apagar.
   RMDir "$INSTDIR"

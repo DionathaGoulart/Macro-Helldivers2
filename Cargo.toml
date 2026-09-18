@@ -5,7 +5,7 @@ edition = "2021"
 rust-version = "1.85"
 description = "Ferramenta de macros otimizada para Helldivers 2"
 authors = ["DionathaGoulart"]
-license = "MIT"
+license-file = "LICENSE"
 repository = "https://github.com/DionathaGoulart/Macro-Helldivers2"
 publish = false
 

@@ -45,6 +45,10 @@ versão 1.x.
   acontecem depois do boot.
 - **Aviso de erro no boot**: se a instalação estiver sem a pasta `assets/`, o app
   explica em uma caixa de diálogo em vez de morrer em silêncio.
+- **Licença de uso pessoal** (`LICENSE`, instalada junto como `LICENSE.txt`): uso
+  pessoal e não comercial; publicar o app, original ou modificado, ou mostrá-lo em
+  vídeos e posts exige crédito ao autor. Até aqui o repositório não tinha arquivo de
+  licença — só o `Cargo.toml` declarava MIT.
 
 ### Alterado
 

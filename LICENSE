@@ -1,0 +1,172 @@
+LICENÇA DE USO PESSOAL — MACRO HELLDIVERS 2
+
+Copyright (c) 2026 DionathaGoulart (https://github.com/DionathaGoulart)
+Todos os direitos reservados, exceto os concedidos abaixo.
+
+1. DEFINIÇÕES
+
+   "Software": o código-fonte, os executáveis, o instalador, a documentação e os
+   demais arquivos deste repositório criados por DionathaGoulart.
+
+   "Uso pessoal": uso por uma pessoa física, para si mesma, sem fins comerciais.
+
+   "Publicar": tornar disponível a outras pessoas, por qualquer meio, o Software
+   ou uma obra derivada dele (fork público, reupload, espelho, pacote, mod), ou
+   um conteúdo que o mostre ou apresente (vídeo, transmissão ao vivo, post,
+   artigo, tutorial).
+
+2. O QUE É PERMITIDO
+
+   Desde que as condições das seções 3 e 4 sejam respeitadas, você pode:
+
+   a) baixar, instalar e usar o Software para uso pessoal;
+   b) estudar o código e modificá-lo para uso pessoal;
+   c) publicar o Software, original ou modificado, sem fins comerciais;
+   d) mostrar o Software em vídeos, transmissões ao vivo, posts e artigos,
+      inclusive em canais monetizados.
+
+3. CRÉDITO OBRIGATÓRIO
+
+   Toda publicação deve trazer, em lugar visível ao público (descrição do vídeo,
+   README do fork, página de download, legenda do post), o crédito:
+
+       Macro Helldivers 2, criado por DionathaGoulart
+       https://github.com/DionathaGoulart/Macro-Helldivers2
+
+   Uma versão modificada deve informar que foi modificada e não pode dar a
+   entender que é a versão oficial ou que tem o endosso do autor.
+
+   Toda cópia do Software, original ou modificada, deve incluir este arquivo sem
+   alterações e manter os avisos de autoria existentes.
+
+4. O QUE É PROIBIDO
+
+   a) vender, alugar ou sublicenciar o Software ou obra derivada, ou cobrar pelo
+      acesso a ele (inclusive por assinatura, paywall ou doação obrigatória);
+   b) incluir o Software, no todo ou em parte, em produto ou serviço comercial;
+   c) remover ou alterar os avisos de autoria, ou apresentar o Software como
+      obra própria;
+   d) distribuir o Software ou obra derivada sob outra licença.
+
+   Qualquer uso fora do que a seção 2 permite, como o uso comercial, depende de
+   autorização por escrito do autor.
+
+5. CONTEÚDO DE TERCEIROS
+
+   Esta licença não cobre o que não é obra do autor, que segue os termos dos
+   respectivos titulares:
+
+   - a fonte JetBrains Mono, sob a SIL Open Font License 1.1
+     (assets/fonts/OFL.txt);
+   - nomes, ícones, imagens e demais elementos do jogo Helldivers 2, de
+     propriedade da Arrowhead Game Studios e da Sony Interactive Entertainment,
+     obtidos da Helldivers 2 Wiki (helldivers.wiki.gg);
+   - as estatísticas de uso fornecidas pelo helldive.live.
+
+   Este é um projeto de fã, sem vínculo com a Arrowhead Game Studios ou a Sony
+   Interactive Entertainment.
+
+6. SEM GARANTIA
+
+   O SOFTWARE É FORNECIDO "NO ESTADO EM QUE SE ENCONTRA", SEM GARANTIA DE
+   QUALQUER TIPO, EXPRESSA OU IMPLÍCITA. EM NENHUM CASO O AUTOR SERÁ RESPONSÁVEL
+   POR QUALQUER REIVINDICAÇÃO, DANO OU OUTRA RESPONSABILIDADE DECORRENTE DO USO
+   DO SOFTWARE, INCLUSIVE SANÇÕES APLICADAS À SUA CONTA NO JOGO. CABE A VOCÊ
+   RESPEITAR OS TERMOS DE USO DO JOGO E DAS PLATAFORMAS EM QUE O UTILIZA.
+
+7. TÉRMINO
+
+   Descumprir qualquer condição desta licença encerra automaticamente as
+   permissões que ela concede.
+
+Em caso de divergência entre este texto e a tradução abaixo, vale o texto em
+português.
+
+--------------------------------------------------------------------------------
+
+PERSONAL USE LICENSE — MACRO HELLDIVERS 2 (English translation)
+
+Copyright (c) 2026 DionathaGoulart (https://github.com/DionathaGoulart)
+All rights reserved, except those granted below.
+
+1. DEFINITIONS
+
+   "Software": the source code, executables, installer, documentation and other
+   files in this repository created by DionathaGoulart.
+
+   "Personal use": use by an individual, for themselves, for non-commercial
+   purposes.
+
+   "Publish": to make available to other people, by any means, the Software or
+   a work derived from it (public fork, reupload, mirror, package, mod), or
+   content that shows or presents it (video, live stream, post, article,
+   tutorial).
+
+2. WHAT IS ALLOWED
+
+   As long as the conditions in sections 3 and 4 are met, you may:
+
+   a) download, install and use the Software for personal use;
+   b) study the code and modify it for personal use;
+   c) publish the Software, original or modified, for non-commercial purposes;
+   d) show the Software in videos, live streams, posts and articles, including
+      on monetized channels.
+
+3. REQUIRED CREDIT
+
+   Every publication must carry, somewhere visible to the public (video
+   description, fork README, download page, post caption), the credit:
+
+       Macro Helldivers 2, created by DionathaGoulart
+       https://github.com/DionathaGoulart/Macro-Helldivers2
+
+   A modified version must say that it was modified and must not suggest that it
+   is the official version or that it is endorsed by the author.
+
+   Every copy of the Software, original or modified, must include this file
+   unchanged and keep the existing authorship notices.
+
+4. WHAT IS FORBIDDEN
+
+   a) selling, renting or sublicensing the Software or a derived work, or
+      charging for access to it (including through subscriptions, paywalls or
+      mandatory donations);
+   b) including the Software, in whole or in part, in a commercial product or
+      service;
+   c) removing or altering the authorship notices, or presenting the Software as
+      your own work;
+   d) distributing the Software or a derived work under another license.
+
+   Any use beyond what section 2 allows, such as commercial use, requires the
+   author's written permission.
+
+5. THIRD-PARTY CONTENT
+
+   This license does not cover what is not the author's work, which remains
+   under the terms of its respective owners:
+
+   - the JetBrains Mono typeface, under the SIL Open Font License 1.1
+     (assets/fonts/OFL.txt);
+   - names, icons, images and other elements of the game Helldivers 2, owned by
+     Arrowhead Game Studios and Sony Interactive Entertainment, taken from the
+     Helldivers 2 Wiki (helldivers.wiki.gg);
+   - the usage statistics provided by helldive.live.
+
+   This is a fan project, not affiliated with Arrowhead Game Studios or Sony
+   Interactive Entertainment.
+
+6. NO WARRANTY
+
+   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+   IMPLIED. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY CLAIM, DAMAGES OR
+   OTHER LIABILITY ARISING FROM THE USE OF THE SOFTWARE, INCLUDING PENALTIES
+   APPLIED TO YOUR GAME ACCOUNT. YOU ARE RESPONSIBLE FOR COMPLYING WITH THE TERMS
+   OF USE OF THE GAME AND OF THE PLATFORMS YOU USE IT ON.
+
+7. TERMINATION
+
+   Breaking any condition of this license automatically ends the permissions it
+   grants.
+
+If this translation and the Portuguese text above differ, the Portuguese text
+prevails.
