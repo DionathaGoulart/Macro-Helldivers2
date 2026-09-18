@@ -1,6 +1,7 @@
 [
   {
     "id": 0,
+    "slug": "orbital-precision-strike",
     "nome": "Orbital Precision Strike",
     "imagem": "stratagems/Orbital_Precision_Strike_Stratagem_Icon.webp",
     "tag": [
@@ -14,6 +15,7 @@
   },
   {
     "id": 1,
+    "slug": "orbital-gatling-barrage",
     "nome": "Orbital Gatling Barrage",
     "imagem": "stratagems/Orbital_Gatling_Barrage_Stratagem_Icon.webp",
     "tag": [
@@ -29,6 +31,7 @@
   },
   {
     "id": 2,
+    "slug": "orbital-airburst-strike",
     "nome": "Orbital Airburst Strike",
     "imagem": "stratagems/Orbital_Airburst_Strike_Stratagem_Icon.webp",
     "tag": [
@@ -42,6 +45,7 @@
   },
   {
     "id": 3,
+    "slug": "orbital-napalm-barrage",
     "nome": "Orbital Napalm Barrage",
     "imagem": "stratagems/Orbital_Napalm_Barrage_Stratagem_Icon.webp",
     "tag": [
@@ -58,6 +62,7 @@
   },
   {
     "id": 4,
+    "slug": "orbital-120mm-he-barrage",
     "nome": "Orbital 120mm HE Barrage",
     "imagem": "stratagems/Orbital_120mm_HE_Barrage_Stratagem_Icon.webp",
     "tag": [
@@ -74,6 +79,7 @@
   },
   {
     "id": 5,
+    "slug": "orbital-walking-barrage",
     "nome": "Orbital Walking Barrage",
     "imagem": "stratagems/Orbital_Walking_Barrage_Stratagem_Icon.webp",
     "tag": [
@@ -90,6 +96,7 @@
   },
   {
     "id": 6,
+    "slug": "orbital-380mm-he-barrage",
     "nome": "Orbital 380mm HE Barrage",
     "imagem": "stratagems/Orbital_380mm_HE_Barrage_Stratagem_Icon.webp",
     "tag": [
@@ -107,6 +114,7 @@
   },
   {
     "id": 7,
+    "slug": "orbital-railcannon-strike",
     "nome": "Orbital Railcannon Strike",
     "imagem": "stratagems/Orbital_Railcannon_Strike_Stratagem_Icon.webp",
     "tag": [
@@ -122,6 +130,7 @@
   },
   {
     "id": 8,
+    "slug": "orbital-laser",
     "nome": "Orbital Laser",
     "imagem": "stratagems/Orbital_Laser_Stratagem_Icon.webp",
     "tag": [
@@ -137,6 +146,7 @@
   },
   {
     "id": 9,
+    "slug": "orbital-ems-strike",
     "nome": "Orbital EMS Strike",
     "imagem": "stratagems/Orbital_EMS_Strike_Stratagem_Icon.webp",
     "tag": [
@@ -151,6 +161,7 @@
   },
   {
     "id": 10,
+    "slug": "orbital-gas-strike",
     "nome": "Orbital Gas Strike",
     "imagem": "stratagems/Orbital_Gas_Strike_Stratagem_Icon.webp",
     "tag": [
@@ -165,6 +176,7 @@
   },
   {
     "id": 11,
+    "slug": "orbital-smoke-strike",
     "nome": "Orbital Smoke Strike",
     "imagem": "stratagems/Orbital_Smoke_Strike_Stratagem_Icon.webp",
     "tag": [
@@ -179,6 +191,7 @@
   },
   {
     "id": 12,
+    "slug": "eagle-500kg-bomb",
     "nome": "Eagle 500kg Bomb",
     "imagem": "stratagems/Eagle_500kg_Bomb_Stratagem_Icon.webp",
     "tag": [
@@ -194,6 +207,7 @@
   },
   {
     "id": 13,
+    "slug": "eagle-strafing-run",
     "nome": "Eagle Strafing Run",
     "imagem": "stratagems/Eagle_Strafing_Run_Stratagem_Icon.webp",
     "tag": [
@@ -207,6 +221,7 @@
   },
   {
     "id": 14,
+    "slug": "eagle-110mm-rocket-pods",
     "nome": "Eagle 110mm Rocket Pods",
     "imagem": "stratagems/Eagle_110mm_Rocket_Pods_Stratagem_Icon.webp",
     "tag": [
@@ -221,6 +236,7 @@
   },
   {
     "id": 15,
+    "slug": "eagle-airstrike",
     "nome": "Eagle Airstrike",
     "imagem": "stratagems/Eagle_Airstrike_Stratagem_Icon.webp",
     "tag": [
@@ -235,6 +251,7 @@
   },
   {
     "id": 16,
+    "slug": "eagle-cluster-bomb",
     "nome": "Eagle Cluster Bomb",
     "imagem": "stratagems/Eagle_Cluster_Bomb_Stratagem_Icon.webp",
     "tag": [
@@ -250,6 +267,7 @@
   },
   {
     "id": 91,
+    "slug": "eagle-gas-airstrike",
     "nome": "Eagle Gas Airstrike",
     "imagem": "stratagems/Eagle_Gas_Airstrike_Stratagem_Icon.webp",
     "tag": [
@@ -264,6 +282,7 @@
   },
   {
     "id": 17,
+    "slug": "eagle-napalm-airstrike",
     "nome": "Eagle Napalm Airstrike",
     "imagem": "stratagems/Eagle_Napalm_Airstrike_Stratagem_Icon.webp",
     "tag": [
@@ -278,6 +297,7 @@
   },
   {
     "id": 18,
+    "slug": "eagle-smoke-strike",
     "nome": "Eagle Smoke Strike",
     "imagem": "stratagems/Eagle_Smoke_Strike_Stratagem_Icon.webp",
     "tag": [
@@ -292,6 +312,7 @@
   },
   {
     "id": 19,
+    "slug": "cqc-9-defoliation-tool",
     "nome": "CQC-9 Defoliation Tool",
     "imagem": "stratagems/CQC-9_Defoliation_Tool_Stratagem_Icon.webp",
     "tag": [
@@ -307,6 +328,7 @@
   },
   {
     "id": 20,
+    "slug": "cqc-20-breaching-hammer",
     "nome": "CQC-20 Breaching Hammer",
     "imagem": "stratagems/Breaching_Hammer_Stratagem_Icon.webp",
     "tag": [
@@ -322,6 +344,7 @@
   },
   {
     "id": 21,
+    "slug": "cqc-1-one-true-flag",
     "nome": "CQC-1 One True Flag",
     "imagem": "stratagems/CQC-1_One_True_Flag_Stratagem_Icon.webp",
     "tag": [
@@ -337,6 +360,7 @@
   },
   {
     "id": 22,
+    "slug": "mg-43-machine-gun",
     "nome": "MG-43 Machine Gun",
     "imagem": "stratagems/Machine_Gun_Stratagem_Icon.webp",
     "tag": [
@@ -352,6 +376,7 @@
   },
   {
     "id": 23,
+    "slug": "m-105-stalwart",
     "nome": "M-105 Stalwart",
     "imagem": "stratagems/Stalwart_Stratagem_Icon.webp",
     "tag": [
@@ -368,6 +393,7 @@
   },
   {
     "id": 24,
+    "slug": "mg-206-heavy-machine-gun",
     "nome": "MG-206 Heavy Machine Gun",
     "imagem": "stratagems/Heavy_Machine_Gun_Stratagem_Icon.webp",
     "tag": [
@@ -383,6 +409,7 @@
   },
   {
     "id": 25,
+    "slug": "rs-422-railgun",
     "nome": "RS-422 Railgun",
     "imagem": "stratagems/Railgun_Stratagem_Icon.webp",
     "tag": [
@@ -399,6 +426,7 @@
   },
   {
     "id": 26,
+    "slug": "s-11-speargun",
     "nome": "S-11 Speargun",
     "imagem": "stratagems/S-11_Speargun_Stratagem_Icon.webp",
     "tag": [
@@ -415,6 +443,7 @@
   },
   {
     "id": 27,
+    "slug": "apw-1-anti-materiel-rifle",
     "nome": "APW-1 Anti-Materiel Rifle",
     "imagem": "stratagems/Anti-Materiel_Rifle_Stratagem_Icon.webp",
     "tag": [
@@ -430,6 +459,7 @@
   },
   {
     "id": 28,
+    "slug": "plas-45-epoch",
     "nome": "PLAS-45 Epoch",
     "imagem": "stratagems/PLAS-45_Epoch_Stratagem_Icon.webp",
     "tag": [
@@ -445,6 +475,7 @@
   },
   {
     "id": 29,
+    "slug": "gl-21-grenade-launcher",
     "nome": "GL-21 Grenade Launcher",
     "imagem": "stratagems/Grenade_Launcher_Stratagem_Icon.webp",
     "tag": [
@@ -460,6 +491,7 @@
   },
   {
     "id": 90,
+    "slug": "40-k-meltagun",
     "nome": "40-K Meltagun",
     "imagem": "stratagems/Meltagun_Stratagem_Icon.webp",
     "tag": [
@@ -476,6 +508,7 @@
   },
   {
     "id": 30,
+    "slug": "gl-52-de-escalator",
     "nome": "GL-52 De-Escalator",
     "imagem": "stratagems/GL-52_De-Escalator_Stratagem_Icon.webp",
     "tag": [
@@ -491,6 +524,7 @@
   },
   {
     "id": 31,
+    "slug": "tx-41-sterilizer",
     "nome": "TX-41 Sterilizer",
     "imagem": "stratagems/Sterilizer_Stratagem_Icon.webp",
     "tag": [
@@ -506,6 +540,7 @@
   },
   {
     "id": 32,
+    "slug": "flam-40-flamethrower",
     "nome": "FLAM-40 Flamethrower",
     "imagem": "stratagems/Flamethrower_Stratagem_Icon.webp",
     "tag": [
@@ -521,6 +556,7 @@
   },
   {
     "id": 33,
+    "slug": "las-98-laser-cannon",
     "nome": "LAS-98 Laser Cannon",
     "imagem": "stratagems/Laser_Cannon_Stratagem_Icon.webp",
     "tag": [
@@ -536,6 +572,7 @@
   },
   {
     "id": 34,
+    "slug": "las-99-quasar-cannon",
     "nome": "LAS-99 Quasar Cannon",
     "imagem": "stratagems/Quasar_Cannon_Stratagem_Icon.webp",
     "tag": [
@@ -551,6 +588,7 @@
   },
   {
     "id": 35,
+    "slug": "arc-3-arc-thrower",
     "nome": "ARC-3 Arc Thrower",
     "imagem": "stratagems/Arc_Thrower_Stratagem_Icon.webp",
     "tag": [
@@ -567,6 +605,7 @@
   },
   {
     "id": 36,
+    "slug": "mls-4x-commando",
     "nome": "MLS-4X Commando",
     "imagem": "stratagems/Commando_Stratagem_Icon.webp",
     "tag": [
@@ -582,6 +621,7 @@
   },
   {
     "id": 37,
+    "slug": "eat-411-leveller",
     "nome": "EAT-411 Leveller",
     "imagem": "stratagems/Leveller_Stratagem_Icon.webp",
     "tag": [
@@ -597,6 +637,7 @@
   },
   {
     "id": 38,
+    "slug": "eat-700-expendable-napalm",
     "nome": "EAT-700 Expendable Napalm",
     "imagem": "stratagems/EAT-700_Expendable_Napalm_Stratagem_Icon.webp",
     "tag": [
@@ -612,6 +653,7 @@
   },
   {
     "id": 39,
+    "slug": "ms-11-solo-silo",
     "nome": "MS-11 Solo Silo",
     "imagem": "stratagems/MS-11_Stratagem_Icon.webp",
     "tag": [
@@ -626,6 +668,8 @@
     ]
   },
   {
+    "id": 40,
+    "slug": "mgx-42-bullet-storm",
     "nome": "MGX-42 Bullet Storm",
     "imagem": "stratagems/Bullet_Storm_Stratagem_Icon.webp",
     "tag": [
@@ -638,11 +682,11 @@
       "RIGHT",
       "UP",
       "LEFT"
-    ],
-    "id": 40
+    ]
   },
   {
     "id": 41,
+    "slug": "eat-17-expendable-anti-tank",
     "nome": "EAT-17 Expendable Anti-Tank",
     "imagem": "stratagems/Expendable_Anti-Tank_Stratagem_Icon.webp",
     "tag": [
@@ -658,6 +702,7 @@
   },
   {
     "id": 42,
+    "slug": "ac-8-autocannon",
     "nome": "AC-8 Autocannon",
     "imagem": "stratagems/Autocannon_Stratagem_Icon.webp",
     "tag": [
@@ -674,6 +719,7 @@
   },
   {
     "id": 43,
+    "slug": "rl-77-airburst-rocket-launcher",
     "nome": "RL-77 Airburst Rocket Launcher",
     "imagem": "stratagems/RL-77_Airburst_Rocket_Launcher_Stratagem_Icon.webp",
     "tag": [
@@ -689,6 +735,7 @@
   },
   {
     "id": 44,
+    "slug": "faf-14-spear",
     "nome": "FAF-14 Spear",
     "imagem": "stratagems/Spear_Stratagem_Icon.webp",
     "tag": [
@@ -704,6 +751,7 @@
   },
   {
     "id": 45,
+    "slug": "b-flam-80-cremator",
     "nome": "B/FLAM-80 Cremator",
     "imagem": "stratagems/Cremator_Stratagem_Icon.webp",
     "tag": [
@@ -720,6 +768,7 @@
   },
   {
     "id": 46,
+    "slug": "sta-x3-wasp-launcher",
     "nome": "StA-X3 W.A.S.P. Launcher",
     "imagem": "stratagems/StA-X3_W.A.S.P._Launcher_Stratagem_Icon.webp",
     "tag": [
@@ -735,6 +784,7 @@
   },
   {
     "id": 47,
+    "slug": "m-1000-maxigun",
     "nome": "M-1000 Maxigun",
     "imagem": "stratagems/M-1000_Maxigun_Stratagem_Icon.webp",
     "tag": [
@@ -751,6 +801,7 @@
   },
   {
     "id": 48,
+    "slug": "gl-28-belt-fed-grenade-launcher",
     "nome": "GL-28 Belt-Fed Grenade Launcher",
     "imagem": "stratagems/Belt-Fed_Grenade_Launcher_Stratagem_Icon.webp",
     "tag": [
@@ -767,6 +818,7 @@
   },
   {
     "id": 49,
+    "slug": "gr-8-recoilless-rifle",
     "nome": "GR-8 Recoilless Rifle",
     "imagem": "stratagems/Recoilless_Rifle_Stratagem_Icon.webp",
     "tag": [
@@ -782,6 +834,7 @@
   },
   {
     "id": 50,
+    "slug": "b-md-c4-pack",
     "nome": "B/MD C4 Pack",
     "imagem": "stratagems/B-MD_C4_Pack_Stratagem_Icon.webp",
     "tag": [
@@ -798,6 +851,7 @@
   },
   {
     "id": 51,
+    "slug": "b-1-supply-pack",
     "nome": "B-1 Supply Pack",
     "imagem": "stratagems/Supply_Pack_Stratagem_Icon.webp",
     "tag": [
@@ -814,6 +868,7 @@
   },
   {
     "id": 52,
+    "slug": "b-100-portable-hellbomb",
     "nome": "B-100 Portable Hellbomb",
     "imagem": "stratagems/Portable_Hellbomb_Stratagem_Icon.webp",
     "tag": [
@@ -829,6 +884,7 @@
   },
   {
     "id": 53,
+    "slug": "lift-182-warp-pack",
     "nome": "LIFT-182 Warp Pack",
     "imagem": "stratagems/LIFT-182_Warp_Pack_Stratagem_Icon.webp",
     "tag": [
@@ -845,6 +901,7 @@
   },
   {
     "id": 54,
+    "slug": "lift-860-hover-pack",
     "nome": "LIFT-860 Hover Pack",
     "imagem": "stratagems/Hover_Pack_Stratagem_Icon.webp",
     "tag": [
@@ -861,6 +918,7 @@
   },
   {
     "id": 55,
+    "slug": "lift-850-jump-pack",
     "nome": "LIFT-850 Jump Pack",
     "imagem": "stratagems/Jump_Pack_Stratagem_Icon.webp",
     "tag": [
@@ -876,6 +934,7 @@
   },
   {
     "id": 56,
+    "slug": "sh-32-shield-generator-pack",
     "nome": "SH-32 Shield Generator Pack",
     "imagem": "stratagems/Shield_Generator_Pack_Stratagem_Icon.webp",
     "tag": [
@@ -892,6 +951,7 @@
   },
   {
     "id": 57,
+    "slug": "sh-51-directional-shield",
     "nome": "SH-51 Directional Shield",
     "imagem": "stratagems/SH-51_Directional_Shield_Stratagem_Icon.webp",
     "tag": [
@@ -908,6 +968,7 @@
   },
   {
     "id": 58,
+    "slug": "sh-20-ballistic-shield-backpack",
     "nome": "SH-20 Ballistic Shield Backpack",
     "imagem": "stratagems/Ballistic_Shield_Backpack_Stratagem_Icon.webp",
     "tag": [
@@ -924,6 +985,7 @@
   },
   {
     "id": 59,
+    "slug": "ax-arc-3-k-9",
     "nome": "AX/ARC-3 K-9",
     "imagem": "stratagems/AX_ARC-3__Guard_Dog__K-9_Stratagem_Icon.webp",
     "tag": [
@@ -940,6 +1002,7 @@
   },
   {
     "id": 60,
+    "slug": "ax-flam-75-hot-dog",
     "nome": "AX/FLAM-75 Hot Dog",
     "imagem": "stratagems/AX_FLAM-75_Guard_Dog_Hot_Dog_Stratagem_Icon.webp",
     "tag": [
@@ -956,6 +1019,7 @@
   },
   {
     "id": 61,
+    "slug": "ax-ar-23-guard-dog",
     "nome": "AX/AR-23 Guard Dog",
     "imagem": "stratagems/Guard_Dog_Stratagem_Icon.webp",
     "tag": [
@@ -972,6 +1036,7 @@
   },
   {
     "id": 62,
+    "slug": "ax-las-5-rover",
     "nome": "AX/LAS-5 Rover",
     "imagem": "stratagems/Guard_Dog_Rover_Stratagem_Icon.webp",
     "tag": [
@@ -988,6 +1053,7 @@
   },
   {
     "id": 63,
+    "slug": "ax-tx-13-dog-breath",
     "nome": "AX/TX-13 Dog Breath",
     "imagem": "stratagems/Guard_Dog_Dog_Breath_Stratagem_Icon.webp",
     "tag": [
@@ -1004,6 +1070,7 @@
   },
   {
     "id": 64,
+    "slug": "td-220-bastion-mk-xvi",
     "nome": "TD-220 Bastion MK XVI",
     "imagem": "stratagems/Bastion_MK_XVI_Stratagem_Icon.webp",
     "tag": [
@@ -1023,6 +1090,7 @@
   },
   {
     "id": 89,
+    "slug": "m-104-incinerator-frv",
     "nome": "M-104 Incinerator FRV",
     "imagem": "stratagems/Incinerator_FRV_Stratagem_Icon.webp",
     "tag": [
@@ -1041,6 +1109,7 @@
   },
   {
     "id": 88,
+    "slug": "m-103-supply-frv",
     "nome": "M-103 Supply FRV",
     "imagem": "stratagems/Supply_FRV_Stratagem_Icon.webp",
     "tag": [
@@ -1059,6 +1128,7 @@
   },
   {
     "id": 65,
+    "slug": "m-102-gunner-frv",
     "nome": "M-102 Gunner FRV",
     "imagem": "stratagems/M-102_Fast_Recon_Vehicle_Stratagem_Icon.webp",
     "tag": [
@@ -1077,6 +1147,7 @@
   },
   {
     "id": 66,
+    "slug": "exo-49-emancipator-exosuit",
     "nome": "EXO-49 Emancipator Exosuit",
     "imagem": "stratagems/EXO-49_Emancipator_Exosuit_Stratagem_Icon.webp",
     "tag": [
@@ -1095,6 +1166,7 @@
   },
   {
     "id": 67,
+    "slug": "exo-45-patriot-exosuit",
     "nome": "EXO-45 Patriot Exosuit",
     "imagem": "stratagems/EXO-45_Patriot_Exosuit_Stratagem_Icon.webp",
     "tag": [
@@ -1113,6 +1185,7 @@
   },
   {
     "id": 68,
+    "slug": "exo-55-breakthrough-exosuit",
     "nome": "EXO-55 Breakthrough Exosuit",
     "imagem": "stratagems/Breakthrough_Exosuit_Stratagem_Icon.webp",
     "tag": [
@@ -1131,6 +1204,7 @@
   },
   {
     "id": 69,
+    "slug": "exo-51-lumberer-exosuit",
     "nome": "EXO-51 Lumberer Exosuit",
     "imagem": "stratagems/Lumberer_Exosuit_Stratagem_Icon.webp",
     "tag": [
@@ -1149,6 +1223,7 @@
   },
   {
     "id": 70,
+    "slug": "a-g-16-gatling-sentry",
     "nome": "A/G-16 Gatling Sentry",
     "imagem": "stratagems/Gatling_Sentry_Stratagem_Icon.webp",
     "tag": [
@@ -1163,6 +1238,7 @@
   },
   {
     "id": 71,
+    "slug": "a-mg-43-machine-gun-sentry",
     "nome": "A/MG-43 Machine Gun Sentry",
     "imagem": "stratagems/Machine_Gun_Sentry_Stratagem_Icon.webp",
     "tag": [
@@ -1178,6 +1254,7 @@
   },
   {
     "id": 72,
+    "slug": "a-flam-40-flame-sentry",
     "nome": "A/FLAM-40 Flame Sentry",
     "imagem": "stratagems/A_FLAM-40_Flame_Sentry_Stratagem_Icon.webp",
     "tag": [
@@ -1194,6 +1271,7 @@
   },
   {
     "id": 73,
+    "slug": "a-las-98-laser-sentry",
     "nome": "A/LAS-98 Laser Sentry",
     "imagem": "stratagems/A_LAS-98_Laser_Sentry_Stratagem_Icon.webp",
     "tag": [
@@ -1210,6 +1288,7 @@
   },
   {
     "id": 74,
+    "slug": "a-mls-4x-rocket-sentry",
     "nome": "A/MLS-4X Rocket Sentry",
     "imagem": "stratagems/Rocket_Sentry_Stratagem_Icon.webp",
     "tag": [
@@ -1225,6 +1304,7 @@
   },
   {
     "id": 75,
+    "slug": "a-ac-8-autocannon-sentry",
     "nome": "A/AC-8 Autocannon Sentry",
     "imagem": "stratagems/Autocannon_Sentry_Stratagem_Icon.webp",
     "tag": [
@@ -1241,6 +1321,7 @@
   },
   {
     "id": 76,
+    "slug": "a-m-23-ems-mortar-sentry",
     "nome": "A/M-23 EMS Mortar Sentry",
     "imagem": "stratagems/AM-23_EMS_Mortar_Sentry_Stratagem_Icon.webp",
     "tag": [
@@ -1256,6 +1337,7 @@
   },
   {
     "id": 77,
+    "slug": "a-gm-17-gas-mortar-sentry",
     "nome": "A/GM-17 Gas Mortar Sentry",
     "imagem": "stratagems/Gas_Mortar_Sentry_Stratagem_Icon.webp",
     "tag": [
@@ -1271,6 +1353,7 @@
   },
   {
     "id": 78,
+    "slug": "a-m-12-mortar-sentry",
     "nome": "A/M-12 Mortar Sentry",
     "imagem": "stratagems/Mortar_Sentry_Stratagem_Icon.webp",
     "tag": [
@@ -1286,6 +1369,7 @@
   },
   {
     "id": 79,
+    "slug": "fx-12-shield-generator-relay",
     "nome": "FX-12 Shield Generator Relay",
     "imagem": "stratagems/Shield_Generator_Relay_Stratagem_Icon.webp",
     "tag": [
@@ -1302,6 +1386,7 @@
   },
   {
     "id": 80,
+    "slug": "e-gl-21-grenadier-battlement",
     "nome": "E/GL-21 Grenadier Battlement",
     "imagem": "stratagems/GL-21_Grenadier_Battlement_Stratagem_Icon.webp",
     "tag": [
@@ -1317,6 +1402,7 @@
   },
   {
     "id": 81,
+    "slug": "e-at-12-anti-tank-emplacement",
     "nome": "E/AT-12 Anti-Tank Emplacement",
     "imagem": "stratagems/E_AT-12_Anti-Tank_Emplacement_Stratagem_Icon.webp",
     "tag": [
@@ -1333,6 +1419,7 @@
   },
   {
     "id": 82,
+    "slug": "e-mg-101-hmg-emplacement",
     "nome": "E/MG-101 HMG Emplacement",
     "imagem": "stratagems/HMG_Emplacement_Stratagem_Icon.webp",
     "tag": [
@@ -1349,6 +1436,7 @@
   },
   {
     "id": 83,
+    "slug": "a-arc-3-tesla-tower",
     "nome": "A/ARC-3 Tesla Tower",
     "imagem": "stratagems/Tesla_Tower_Stratagem_Icon.webp",
     "tag": [
@@ -1365,6 +1453,7 @@
   },
   {
     "id": 84,
+    "slug": "md-17-anti-tank-mines",
     "nome": "MD-17 Anti-Tank Mines",
     "imagem": "stratagems/MD-17_Anti-Tank_Mines_Stratagem_Icon.webp",
     "tag": [
@@ -1379,6 +1468,7 @@
   },
   {
     "id": 85,
+    "slug": "md-8-gas-mines",
     "nome": "MD-8 Gas Mines",
     "imagem": "stratagems/Gas_Minefield_Stratagem_Icon.webp",
     "tag": [
@@ -1393,6 +1483,7 @@
   },
   {
     "id": 86,
+    "slug": "md-6-anti-personnel-minefield",
     "nome": "MD-6 Anti-Personnel Minefield",
     "imagem": "stratagems/Anti-Personnel_Minefield_Stratagem_Icon.webp",
     "tag": [
@@ -1407,6 +1498,7 @@
   },
   {
     "id": 87,
+    "slug": "md-i4-incendiary-mines",
     "nome": "MD-I4 Incendiary Mines",
     "imagem": "stratagems/Incendiary_Mines_Stratagem_Icon.webp",
     "tag": [

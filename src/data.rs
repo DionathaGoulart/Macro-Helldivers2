@@ -37,12 +37,22 @@ impl Dir {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Stratagem {
     pub id: u32,
+    /// Id do estratagema na API de dados — o que casa o JSON embarcado com o
+    /// que [`crate::data_sync`] baixa. O `id` numérico continua sendo a chave
+    /// dos saves.
+    #[serde(default)]
+    pub slug: String,
     pub nome: String,
     /// Caminho relativo a `assets/icons/` (ex.: `stratagems/Foo_Icon.webp`).
+    /// Os baixados da API vivem sob `remote/`, fora da pasta de instalação.
     pub imagem: String,
     #[serde(default)]
     pub tag: Vec<String>,
     pub codex: Vec<Dir>,
+    /// Classificação que veio da API, para os estratagemas que o
+    /// `stratagemInfo` do `equipment.json` ainda não conhece.
+    #[serde(skip)]
+    pub kind_hint: Option<StratKind>,
 }
 
 impl Stratagem {
@@ -143,9 +153,20 @@ pub struct GameData {
 }
 
 impl GameData {
-    /// Lê `assets/data/stratagems.json`.
+    /// Lê `assets/data/stratagems.json` — só o que veio no instalador.
     pub fn load() -> Result<GameData> {
         GameData::load_from(&util::asset_path("data/stratagems.json"))
+    }
+
+    /// O JSON embarcado mais os estratagemas que a última sincronização com a
+    /// API trouxe e ele ainda não tem. É o que o app usa; os testes ficam no
+    /// [`GameData::load`], que não depende do que houver em `config_dir`.
+    pub fn load_with_updates() -> Result<GameData> {
+        let bundled = GameData::load()?.stratagems;
+        let remote = crate::data_sync::load_cache();
+        Ok(GameData::from_list(crate::data_sync::merge(
+            bundled, &remote,
+        )))
     }
 
     pub fn load_from(path: &Path) -> Result<GameData> {
@@ -157,12 +178,16 @@ impl GameData {
     pub fn from_json(bytes: &[u8]) -> Result<GameData> {
         let stratagems: Vec<Stratagem> =
             serde_json::from_slice(bytes).context("stratagems.json inválido")?;
+        Ok(GameData::from_list(stratagems))
+    }
+
+    pub fn from_list(stratagems: Vec<Stratagem>) -> GameData {
         let index = stratagems
             .iter()
             .enumerate()
             .map(|(i, s)| (s.id, i))
             .collect();
-        Ok(GameData { stratagems, index })
+        GameData { stratagems, index }
     }
 
     pub fn all(&self) -> &[Stratagem] {
@@ -422,6 +447,16 @@ pub struct StratKind {
     pub sentry: bool,
 }
 
+impl StratKind {
+    /// Nem apoio, nem mochila, nem sentinela — também o que sai de um nome que
+    /// não casou com nada.
+    pub const NONE: StratKind = StratKind {
+        support: false,
+        backpack: false,
+        sentry: false,
+    };
+}
+
 /// Classificação de cada estratagema, casada com o `stratagemInfo` da wiki.
 ///
 /// O casamento é por nome normalizado e reproduz o do legado (~70–101): exato
@@ -447,7 +482,13 @@ impl StratMeta {
 
         let mut kinds = HashMap::with_capacity(data.all().len());
         for strat in data.all() {
-            kinds.insert(strat.id, classify(&strat.nome, &infos));
+            let kind = match classify(&strat.nome, &infos) {
+                // Estratagema que chegou pela API depois do último release: o
+                // `stratagemInfo` ainda não o tem, e a API sabe o tipo dele.
+                StratKind::NONE => strat.kind_hint.unwrap_or_default(),
+                kind => kind,
+            };
+            kinds.insert(strat.id, kind);
         }
         StratMeta { kinds }
     }
@@ -658,6 +699,20 @@ mod tests {
                 strat.imagem
             );
             assert_eq!(data.by_id(strat.id).map(|s| &s.nome), Some(&strat.nome));
+        }
+    }
+
+    #[test]
+    fn every_stratagem_carries_a_unique_api_slug() {
+        let data = data();
+        let mut seen = std::collections::HashSet::new();
+        for strat in data.all() {
+            assert!(!strat.slug.is_empty(), "{} sem slug", strat.nome);
+            assert!(
+                seen.insert(strat.slug.as_str()),
+                "slug repetido: {}",
+                strat.slug
+            );
         }
     }
 

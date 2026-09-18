@@ -554,6 +554,7 @@ fn apply(runtime: &Runtime, window: focus::Window, title: &str, effects: focus::
             // O check que o boot adiou por causa do jogo em foco acontece
             // agora, na primeira perda de foco (semântica da v1).
             crate::updater::auto_check(&runtime.shared);
+            crate::data_sync::auto_sync(&runtime.shared);
         }
     }
 

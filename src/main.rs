@@ -54,7 +54,9 @@ fn boot() -> Result<()> {
 
     let settings = Settings::load();
     let text = i18n::tr(settings.language);
-    let data = Arc::new(GameData::load()?);
+    // O JSON do instalador mais os estratagemas novos que a última
+    // sincronização com a API trouxe (`data_sync`).
+    let data = Arc::new(GameData::load_with_updates()?);
 
     // Os slots são resolvidos contra os dados atuais já na leitura: id que sumiu
     // do jogo e conflito de exclusividade herdado saem antes de virarem atalho.

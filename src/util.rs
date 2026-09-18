@@ -69,6 +69,22 @@ pub fn asset_path(rel: &str) -> PathBuf {
     assets_dir().join(rel)
 }
 
+/// Prefixo, nos caminhos relativos a `assets/`, dos ícones baixados em runtime.
+pub const DOWNLOADED_ICONS_PREFIX: &str = "icons/remote/";
+
+/// Pasta em `config_dir` onde esses ícones ficam: a de instalação está em
+/// Program Files e não é gravável sem elevação.
+pub const DOWNLOADED_ICONS_DIR: &str = "remote-icons";
+
+/// Arquivo por trás de um caminho que a UI desenha: o que veio no instalador
+/// sai de `assets/`, o que foi baixado depois sai de `config_dir`.
+pub fn resource_path(rel: &str) -> PathBuf {
+    match rel.strip_prefix(DOWNLOADED_ICONS_PREFIX) {
+        Some(file) => config_dir().join(DOWNLOADED_ICONS_DIR).join(file),
+        None => asset_path(rel),
+    }
+}
+
 /// Grava criando o diretório se preciso, via arquivo temporário + rename, para
 /// que uma queda no meio da escrita nunca deixe um JSON truncado no lugar do bom.
 pub fn write_atomic(path: &Path, bytes: &[u8]) -> Result<()> {

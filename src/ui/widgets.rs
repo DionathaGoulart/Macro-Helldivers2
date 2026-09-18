@@ -2016,10 +2016,12 @@ mod tests {
     fn stratagem(codex: &[Dir]) -> Stratagem {
         Stratagem {
             id: 7,
+            slug: "orbital-precision-strike".into(),
             nome: "Orbital Precision Strike".into(),
             imagem: "stratagems/Orbital.webp".into(),
             tag: vec!["Offensive".into()],
             codex: codex.to_vec(),
+            kind_hint: None,
         }
     }
 

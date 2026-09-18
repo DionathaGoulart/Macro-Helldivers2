@@ -154,7 +154,7 @@ mod windows_impl {
                 return None;
             }
 
-            let path = util::asset_path(&rel.to_string_lossy());
+            let path = util::resource_path(&rel.to_string_lossy());
             let decoded = match super::decode(&path) {
                 Ok(decoded) => decoded,
                 Err(err) => {

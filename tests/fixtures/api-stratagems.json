@@ -1,0 +1,2491 @@
+{
+  "meta": {
+    "apiVersion": "v1",
+    "dataVersion": "2026-09-17.3301d4f5"
+  },
+  "data": [
+    {
+      "id": "40-k-meltagun",
+      "name": "40-K Meltagun",
+      "permitType": "supply",
+      "availability": "loadout",
+      "kind": "support_weapon",
+      "traitIds": [
+        "support-weapon",
+        "chargeup",
+        "anti-tank"
+      ],
+      "code": [
+        "down",
+        "left",
+        "up",
+        "left",
+        "left",
+        "down"
+      ],
+      "image": {
+        "url": "/images/v1/stratagems/40-k-meltagun.aec56553.webp"
+      }
+    },
+    {
+      "id": "a-ac-8-autocannon-sentry",
+      "name": "A/AC-8 Autocannon Sentry",
+      "permitType": "defensive",
+      "availability": "loadout",
+      "kind": "sentry",
+      "traitIds": [
+        "hellpod",
+        "sentry",
+        "anti-tank"
+      ],
+      "code": [
+        "down",
+        "up",
+        "right",
+        "up",
+        "left",
+        "up"
+      ],
+      "image": {
+        "url": "/images/v1/stratagems/a-ac-8-autocannon-sentry.d5826d49.webp"
+      }
+    },
+    {
+      "id": "a-arc-3-tesla-tower",
+      "name": "A/ARC-3 Tesla Tower",
+      "permitType": "defensive",
+      "availability": "loadout",
+      "kind": "sentry",
+      "traitIds": [
+        "hellpod",
+        "sentry",
+        "arc"
+      ],
+      "code": [
+        "down",
+        "up",
+        "right",
+        "up",
+        "left",
+        "right"
+      ],
+      "image": {
+        "url": "/images/v1/stratagems/a-arc-3-tesla-tower.61059edc.webp"
+      }
+    },
+    {
+      "id": "a-flam-40-flame-sentry",
+      "name": "A/FLAM-40 Flame Sentry",
+      "permitType": "defensive",
+      "availability": "loadout",
+      "kind": "sentry",
+      "traitIds": [
+        "hellpod",
+        "incendiary",
+        "sentry"
+      ],
+      "code": [
+        "down",
+        "up",
+        "right",
+        "down",
+        "up",
+        "up"
+      ],
+      "image": {
+        "url": "/images/v1/stratagems/a-flam-40-flame-sentry.3cd56e3f.webp"
+      }
+    },
+    {
+      "id": "a-g-16-gatling-sentry",
+      "name": "A/G-16 Gatling Sentry",
+      "permitType": "defensive",
+      "availability": "loadout",
+      "kind": "sentry",
+      "traitIds": [
+        "hellpod",
+        "sentry",
+        "medium-armor-penetrating"
+      ],
+      "code": [
+        "down",
+        "up",
+        "right",
+        "left"
+      ],
+      "image": {
+        "url": "/images/v1/stratagems/a-g-16-gatling-sentry.80acd6d5.webp"
+      }
+    },
+    {
+      "id": "a-gm-17-gas-mortar-sentry",
+      "name": "A/GM-17 Gas Mortar Sentry",
+      "permitType": "defensive",
+      "availability": "loadout",
+      "kind": "sentry",
+      "traitIds": [
+        "hellpod",
+        "caustic",
+        "sentry"
+      ],
+      "code": [
+        "down",
+        "up",
+        "right",
+        "down",
+        "left"
+      ],
+      "image": {
+        "url": "/images/v1/stratagems/a-gm-17-gas-mortar-sentry.bdfb4f98.webp"
+      }
+    },
+    {
+      "id": "a-las-98-laser-sentry",
+      "name": "A/LAS-98 Laser Sentry",
+      "permitType": "defensive",
+      "availability": "loadout",
+      "kind": "sentry",
+      "traitIds": [
+        "hellpod",
+        "sentry",
+        "heavy-armor-penetrating",
+        "heat",
+        "beam"
+      ],
+      "code": [
+        "down",
+        "up",
+        "right",
+        "down",
+        "up",
+        "right"
+      ],
+      "image": {
+        "url": "/images/v1/stratagems/a-las-98-laser-sentry.548dc1be.webp"
+      }
+    },
+    {
+      "id": "a-m-12-mortar-sentry",
+      "name": "A/M-12 Mortar Sentry",
+      "permitType": "defensive",
+      "availability": "loadout",
+      "kind": "sentry",
+      "traitIds": [
+        "hellpod",
+        "explosive",
+        "sentry",
+        "medium-armor-penetrating"
+      ],
+      "code": [
+        "down",
+        "up",
+        "right",
+        "right",
+        "down"
+      ],
+      "image": {
+        "url": "/images/v1/stratagems/a-m-12-mortar-sentry.8abd9c62.webp"
+      }
+    },
+    {
+      "id": "a-m-23-ems-mortar-sentry",
+      "name": "A/M-23 EMS Mortar Sentry",
+      "permitType": "defensive",
+      "availability": "loadout",
+      "kind": "sentry",
+      "traitIds": [
+        "hellpod",
+        "explosive",
+        "sentry",
+        "stun"
+      ],
+      "code": [
+        "down",
+        "up",
+        "right",
+        "down",
+        "right"
+      ],
+      "image": {
+        "url": "/images/v1/stratagems/a-m-23-ems-mortar-sentry.8cd0455f.webp"
+      }
+    },
+    {
+      "id": "a-mg-43-machine-gun-sentry",
+      "name": "A/MG-43 Machine Gun Sentry",
+      "permitType": "defensive",
+      "availability": "loadout",
+      "kind": "sentry",
+      "traitIds": [
+        "hellpod",
+        "sentry",
+        "medium-armor-penetrating"
+      ],
+      "code": [
+        "down",
+        "up",
+        "right",
+        "right",
+        "up"
+      ],
+      "image": {
+        "url": "/images/v1/stratagems/a-mg-43-machine-gun-sentry.edffbb5c.webp"
+      }
+    },
+    {
+      "id": "a-mls-4x-rocket-sentry",
+      "name": "A/MLS-4X Rocket Sentry",
+      "permitType": "defensive",
+      "availability": "loadout",
+      "kind": "sentry",
+      "traitIds": [
+        "hellpod",
+        "explosive",
+        "sentry",
+        "anti-tank"
+      ],
+      "code": [
+        "down",
+        "up",
+        "right",
+        "right",
+        "left"
+      ],
+      "image": {
+        "url": "/images/v1/stratagems/a-mls-4x-rocket-sentry.aa367ac5.webp"
+      }
+    },
+    {
+      "id": "ac-8-autocannon",
+      "name": "AC-8 Autocannon",
+      "permitType": "supply",
+      "availability": "loadout",
+      "kind": "support_weapon",
+      "traitIds": [
+        "support-weapon",
+        "backpack",
+        "heavy-armor-penetrating",
+        "stationary-reload"
+      ],
+      "code": [
+        "down",
+        "left",
+        "down",
+        "up",
+        "up",
+        "right"
+      ],
+      "image": {
+        "url": "/images/v1/stratagems/ac-8-autocannon.72699b68.webp"
+      }
+    },
+    {
+      "id": "activate-e-711-extraction-drill",
+      "name": "Activate E-711 Extraction Drill",
+      "permitType": "mission",
+      "availability": "objective",
+      "kind": "mission",
+      "traitIds": [],
+      "code": [
+        "down",
+        "down",
+        "left",
+        "left",
+        "down",
+        "down"
+      ],
+      "image": {
+        "url": "/images/v1/stratagems/activate-e-711-extraction-drill.f9b44190.webp"
+      }
+    },
+    {
+      "id": "apw-1-anti-materiel-rifle",
+      "name": "APW-1 Anti-Materiel Rifle",
+      "permitType": "supply",
+      "availability": "loadout",
+      "kind": "support_weapon",
+      "traitIds": [
+        "support-weapon",
+        "heavy-armor-penetrating"
+      ],
+      "code": [
+        "down",
+        "left",
+        "right",
+        "up",
+        "down"
+      ],
+      "image": {
+        "url": "/images/v1/stratagems/apw-1-anti-materiel-rifle.c8291f72.webp"
+      }
+    },
+    {
+      "id": "aquifer-drill",
+      "name": "Aquifer Drill",
+      "permitType": "mission",
+      "availability": "objective",
+      "kind": "mission",
+      "traitIds": [],
+      "code": [
+        "left",
+        "left",
+        "left",
+        "up",
+        "down",
+        "right",
+        "down",
+        "down"
+      ],
+      "image": {
+        "url": "/images/v1/stratagems/aquifer-drill.f9b44190.webp"
+      }
+    },
+    {
+      "id": "arc-3-arc-thrower",
+      "name": "ARC-3 Arc Thrower",
+      "permitType": "supply",
+      "availability": "loadout",
+      "kind": "support_weapon",
+      "traitIds": [
+        "support-weapon",
+        "anti-tank",
+        "chargeup",
+        "arc"
+      ],
+      "code": [
+        "down",
+        "right",
+        "down",
+        "up",
+        "left",
+        "left"
+      ],
+      "image": {
+        "url": "/images/v1/stratagems/arc-3-arc-thrower.8e02e511.webp"
+      }
+    },
+    {
+      "id": "ax-ar-23-guard-dog",
+      "name": "AX/AR-23 Guard Dog",
+      "permitType": "supply",
+      "availability": "loadout",
+      "kind": "backpack",
+      "traitIds": [
+        "hellpod",
+        "backpack",
+        "medium-armor-penetrating"
+      ],
+      "code": [
+        "down",
+        "up",
+        "left",
+        "up",
+        "right",
+        "down"
+      ],
+      "image": {
+        "url": "/images/v1/stratagems/ax-ar-23-guard-dog.0d6312ac.webp"
+      }
+    },
+    {
+      "id": "ax-arc-3-k-9",
+      "name": "AX/ARC-3 K-9",
+      "permitType": "supply",
+      "availability": "loadout",
+      "kind": "backpack",
+      "traitIds": [
+        "hellpod",
+        "backpack",
+        "anti-tank",
+        "arc"
+      ],
+      "code": [
+        "down",
+        "up",
+        "left",
+        "up",
+        "right",
+        "left"
+      ],
+      "image": {
+        "url": "/images/v1/stratagems/ax-arc-3-k-9.757e68dc.webp"
+      }
+    },
+    {
+      "id": "ax-flam-75-hot-dog",
+      "name": "AX/FLAM-75 Hot Dog",
+      "permitType": "supply",
+      "availability": "loadout",
+      "kind": "backpack",
+      "traitIds": [
+        "hellpod",
+        "backpack",
+        "incendiary"
+      ],
+      "code": [
+        "down",
+        "up",
+        "left",
+        "up",
+        "left",
+        "left"
+      ],
+      "image": {
+        "url": "/images/v1/stratagems/ax-flam-75-hot-dog.73c2b5e7.webp"
+      }
+    },
+    {
+      "id": "ax-las-5-rover",
+      "name": "AX/LAS-5 Rover",
+      "permitType": "supply",
+      "availability": "loadout",
+      "kind": "backpack",
+      "traitIds": [
+        "hellpod",
+        "backpack",
+        "light-armor-penetrating",
+        "beam"
+      ],
+      "code": [
+        "down",
+        "up",
+        "left",
+        "up",
+        "right",
+        "right"
+      ],
+      "image": {
+        "url": "/images/v1/stratagems/ax-las-5-rover.e25b554a.webp"
+      }
+    },
+    {
+      "id": "ax-tx-13-dog-breath",
+      "name": "AX/TX-13 Dog Breath",
+      "permitType": "supply",
+      "availability": "loadout",
+      "kind": "backpack",
+      "traitIds": [
+        "hellpod",
+        "backpack",
+        "caustic"
+      ],
+      "code": [
+        "down",
+        "up",
+        "left",
+        "up",
+        "right",
+        "up"
+      ],
+      "image": {
+        "url": "/images/v1/stratagems/ax-tx-13-dog-breath.6523751c.webp"
+      }
+    },
+    {
+      "id": "b-1-supply-pack",
+      "name": "B-1 Supply Pack",
+      "permitType": "supply",
+      "availability": "loadout",
+      "kind": "backpack",
+      "traitIds": [
+        "hellpod",
+        "backpack"
+      ],
+      "code": [
+        "down",
+        "left",
+        "down",
+        "up",
+        "up",
+        "down"
+      ],
+      "image": {
+        "url": "/images/v1/stratagems/b-1-supply-pack.f12b0fc6.webp"
+      }
+    },
+    {
+      "id": "b-100-portable-hellbomb",
+      "name": "B-100 Portable Hellbomb",
+      "permitType": "supply",
+      "availability": "loadout",
+      "kind": "backpack",
+      "traitIds": [
+        "hellpod",
+        "explosive",
+        "backpack",
+        "anti-tank"
+      ],
+      "code": [
+        "down",
+        "right",
+        "up",
+        "up",
+        "up"
+      ],
+      "image": {
+        "url": "/images/v1/stratagems/b-100-portable-hellbomb.a9883609.webp"
+      }
+    },
+    {
+      "id": "b-flam-80-cremator",
+      "name": "B/FLAM-80 Cremator",
+      "permitType": "supply",
+      "availability": "loadout",
+      "kind": "support_weapon",
+      "traitIds": [
+        "support-weapon",
+        "hellpod",
+        "backpack",
+        "incendiary"
+      ],
+      "code": [
+        "down",
+        "down",
+        "right",
+        "down",
+        "up",
+        "up"
+      ],
+      "image": {
+        "url": "/images/v1/stratagems/b-flam-80-cremator.49246a1c.webp"
+      }
+    },
+    {
+      "id": "b-md-c4-pack",
+      "name": "B/MD C4 Pack",
+      "permitType": "supply",
+      "availability": "loadout",
+      "kind": "support_weapon",
+      "traitIds": [
+        "support-weapon",
+        "backpack",
+        "anti-tank",
+        "sticky"
+      ],
+      "code": [
+        "down",
+        "right",
+        "up",
+        "up",
+        "right",
+        "up"
+      ],
+      "image": {
+        "url": "/images/v1/stratagems/b-md-c4-pack.ad38ed22.webp"
+      }
+    },
+    {
+      "id": "call-in-super-destroyer",
+      "name": "Call In Super Destroyer",
+      "permitType": "mission",
+      "availability": "mission",
+      "kind": "mission",
+      "traitIds": [],
+      "code": [
+        "up",
+        "up",
+        "down",
+        "down",
+        "left",
+        "right",
+        "left",
+        "right"
+      ],
+      "image": {
+        "url": "/images/v1/stratagems/call-in-super-destroyer.23d0ec25.webp"
+      }
+    },
+    {
+      "id": "cargo-container",
+      "name": "Cargo Container",
+      "permitType": "mission",
+      "availability": "objective",
+      "kind": "mission",
+      "traitIds": [],
+      "code": [
+        "up",
+        "up",
+        "down",
+        "down",
+        "right",
+        "down"
+      ],
+      "image": {
+        "url": "/images/v1/stratagems/cargo-container.b153c351.webp"
+      }
+    },
+    {
+      "id": "cqc-1-one-true-flag",
+      "name": "CQC-1 One True Flag",
+      "permitType": "supply",
+      "availability": "loadout",
+      "kind": "support_weapon",
+      "traitIds": [
+        "support-weapon",
+        "medium-armor-penetrating",
+        "melee",
+        "one-handed"
+      ],
+      "code": [
+        "down",
+        "left",
+        "right",
+        "right",
+        "up"
+      ],
+      "image": {
+        "url": "/images/v1/stratagems/cqc-1-one-true-flag.50bb2152.webp"
+      }
+    },
+    {
+      "id": "cqc-20-breaching-hammer",
+      "name": "CQC-20 Breaching Hammer",
+      "permitType": "supply",
+      "availability": "loadout",
+      "kind": "support_weapon",
+      "traitIds": [
+        "support-weapon",
+        "explosive",
+        "anti-tank",
+        "melee"
+      ],
+      "code": [
+        "down",
+        "left",
+        "right",
+        "left",
+        "up"
+      ],
+      "image": {
+        "url": "/images/v1/stratagems/cqc-20-breaching-hammer.9e1cc1c6.webp"
+      }
+    },
+    {
+      "id": "cqc-9-defoliation-tool",
+      "name": "CQC-9 Defoliation Tool",
+      "permitType": "supply",
+      "availability": "loadout",
+      "kind": "support_weapon",
+      "traitIds": [
+        "support-weapon",
+        "anti-tank",
+        "melee"
+      ],
+      "code": [
+        "down",
+        "left",
+        "right",
+        "right",
+        "down"
+      ],
+      "image": {
+        "url": "/images/v1/stratagems/cqc-9-defoliation-tool.2fd606d1.webp"
+      }
+    },
+    {
+      "id": "dark-fluid-vessel",
+      "name": "Dark Fluid Vessel",
+      "permitType": "mission",
+      "availability": "objective",
+      "kind": "mission",
+      "traitIds": [
+        "hellpod",
+        "backpack"
+      ],
+      "code": [
+        "up",
+        "left",
+        "right",
+        "down",
+        "up",
+        "up"
+      ],
+      "image": {
+        "url": "/images/v1/stratagems/dark-fluid-vessel.767c10c9.webp"
+      }
+    },
+    {
+      "id": "e-at-12-anti-tank-emplacement",
+      "name": "E/AT-12 Anti-Tank Emplacement",
+      "permitType": "defensive",
+      "availability": "loadout",
+      "kind": "emplacement",
+      "traitIds": [
+        "hellpod",
+        "anti-tank"
+      ],
+      "code": [
+        "down",
+        "up",
+        "left",
+        "right",
+        "right",
+        "right"
+      ],
+      "image": {
+        "url": "/images/v1/stratagems/e-at-12-anti-tank-emplacement.ec0c4751.webp"
+      }
+    },
+    {
+      "id": "e-gl-21-grenadier-battlement",
+      "name": "E/GL-21 Grenadier Battlement",
+      "permitType": "defensive",
+      "availability": "loadout",
+      "kind": "emplacement",
+      "traitIds": [
+        "hellpod",
+        "explosive",
+        "medium-armor-penetrating"
+      ],
+      "code": [
+        "down",
+        "right",
+        "down",
+        "left",
+        "right"
+      ],
+      "image": {
+        "url": "/images/v1/stratagems/e-gl-21-grenadier-battlement.f8abc7a8.webp"
+      }
+    },
+    {
+      "id": "e-mg-101-hmg-emplacement",
+      "name": "E/MG-101 HMG Emplacement",
+      "permitType": "defensive",
+      "availability": "loadout",
+      "kind": "emplacement",
+      "traitIds": [
+        "hellpod",
+        "heavy-armor-penetrating"
+      ],
+      "code": [
+        "down",
+        "up",
+        "left",
+        "right",
+        "right",
+        "left"
+      ],
+      "image": {
+        "url": "/images/v1/stratagems/e-mg-101-hmg-emplacement.a700e960.webp"
+      }
+    },
+    {
+      "id": "eagle-110mm-rocket-pods",
+      "name": "Eagle 110mm Rocket Pods",
+      "permitType": "offensive",
+      "availability": "loadout",
+      "kind": "eagle",
+      "traitIds": [
+        "explosive",
+        "eagle",
+        "anti-tank"
+      ],
+      "code": [
+        "up",
+        "right",
+        "up",
+        "left"
+      ],
+      "image": {
+        "url": "/images/v1/stratagems/eagle-110mm-rocket-pods.f12bdca1.webp"
+      }
+    },
+    {
+      "id": "eagle-500kg-bomb",
+      "name": "Eagle 500kg Bomb",
+      "permitType": "offensive",
+      "availability": "loadout",
+      "kind": "eagle",
+      "traitIds": [
+        "explosive",
+        "eagle",
+        "anti-tank"
+      ],
+      "code": [
+        "up",
+        "right",
+        "down",
+        "down",
+        "down"
+      ],
+      "image": {
+        "url": "/images/v1/stratagems/eagle-500kg-bomb.e8fab6dc.webp"
+      }
+    },
+    {
+      "id": "eagle-airstrike",
+      "name": "Eagle Airstrike",
+      "permitType": "offensive",
+      "availability": "loadout",
+      "kind": "eagle",
+      "traitIds": [
+        "explosive",
+        "eagle",
+        "anti-tank"
+      ],
+      "code": [
+        "up",
+        "right",
+        "down",
+        "right"
+      ],
+      "image": {
+        "url": "/images/v1/stratagems/eagle-airstrike.198907ba.webp"
+      }
+    },
+    {
+      "id": "eagle-cluster-bomb",
+      "name": "Eagle Cluster Bomb",
+      "permitType": "offensive",
+      "availability": "loadout",
+      "kind": "eagle",
+      "traitIds": [
+        "explosive",
+        "eagle",
+        "medium-armor-penetrating"
+      ],
+      "code": [
+        "up",
+        "right",
+        "down",
+        "down",
+        "right"
+      ],
+      "image": {
+        "url": "/images/v1/stratagems/eagle-cluster-bomb.8b9cf426.webp"
+      }
+    },
+    {
+      "id": "eagle-gas-airstrike",
+      "name": "Eagle Gas Airstrike",
+      "permitType": "offensive",
+      "availability": "loadout",
+      "kind": "eagle",
+      "traitIds": [
+        "explosive",
+        "eagle",
+        "caustic"
+      ],
+      "code": [
+        "up",
+        "right",
+        "left",
+        "right"
+      ],
+      "image": {
+        "url": "/images/v1/stratagems/eagle-gas-airstrike.62eb8bf5.webp"
+      }
+    },
+    {
+      "id": "eagle-napalm-airstrike",
+      "name": "Eagle Napalm Airstrike",
+      "permitType": "offensive",
+      "availability": "loadout",
+      "kind": "eagle",
+      "traitIds": [
+        "explosive",
+        "eagle",
+        "incendiary"
+      ],
+      "code": [
+        "up",
+        "right",
+        "down",
+        "up"
+      ],
+      "image": {
+        "url": "/images/v1/stratagems/eagle-napalm-airstrike.657ccea2.webp"
+      }
+    },
+    {
+      "id": "eagle-rearm",
+      "name": "Eagle Rearm",
+      "permitType": "mission",
+      "availability": "mission",
+      "kind": "mission",
+      "traitIds": [],
+      "code": [
+        "up",
+        "up",
+        "left",
+        "up",
+        "right"
+      ],
+      "image": {
+        "url": "/images/v1/stratagems/eagle-rearm.bcc019bc.webp"
+      }
+    },
+    {
+      "id": "eagle-smoke-strike",
+      "name": "Eagle Smoke Strike",
+      "permitType": "offensive",
+      "availability": "loadout",
+      "kind": "eagle",
+      "traitIds": [
+        "explosive",
+        "eagle"
+      ],
+      "code": [
+        "up",
+        "right",
+        "up",
+        "down"
+      ],
+      "image": {
+        "url": "/images/v1/stratagems/eagle-smoke-strike.d380471c.webp"
+      }
+    },
+    {
+      "id": "eagle-strafing-run",
+      "name": "Eagle Strafing Run",
+      "permitType": "offensive",
+      "availability": "loadout",
+      "kind": "eagle",
+      "traitIds": [
+        "eagle",
+        "anti-tank"
+      ],
+      "code": [
+        "up",
+        "right",
+        "right"
+      ],
+      "image": {
+        "url": "/images/v1/stratagems/eagle-strafing-run.94ea6dce.webp"
+      }
+    },
+    {
+      "id": "eat-17-expendable-anti-tank",
+      "name": "EAT-17 Expendable Anti-Tank",
+      "permitType": "supply",
+      "availability": "loadout",
+      "kind": "support_weapon",
+      "traitIds": [
+        "support-weapon",
+        "anti-tank",
+        "expendable"
+      ],
+      "code": [
+        "down",
+        "down",
+        "left",
+        "up",
+        "right"
+      ],
+      "image": {
+        "url": "/images/v1/stratagems/eat-17-expendable-anti-tank.f4b89acb.webp"
+      }
+    },
+    {
+      "id": "eat-411-leveller",
+      "name": "EAT-411 Leveller",
+      "permitType": "supply",
+      "availability": "loadout",
+      "kind": "support_weapon",
+      "traitIds": [
+        "support-weapon",
+        "anti-tank",
+        "expendable"
+      ],
+      "code": [
+        "down",
+        "down",
+        "left",
+        "up",
+        "down"
+      ],
+      "image": {
+        "url": "/images/v1/stratagems/eat-411-leveller.d185898e.webp"
+      }
+    },
+    {
+      "id": "eat-700-expendable-napalm",
+      "name": "EAT-700 Expendable Napalm",
+      "permitType": "supply",
+      "availability": "loadout",
+      "kind": "support_weapon",
+      "traitIds": [
+        "support-weapon",
+        "incendiary",
+        "expendable"
+      ],
+      "code": [
+        "down",
+        "down",
+        "left",
+        "up",
+        "left"
+      ],
+      "image": {
+        "url": "/images/v1/stratagems/eat-700-expendable-napalm.5fa3ddbc.webp"
+      }
+    },
+    {
+      "id": "exo-45-patriot-exosuit",
+      "name": "EXO-45 Patriot Exosuit",
+      "permitType": "supply",
+      "availability": "loadout",
+      "kind": "vehicle",
+      "traitIds": [
+        "explosive",
+        "vehicle",
+        "anti-tank",
+        "medium-armor-penetrating"
+      ],
+      "code": [
+        "left",
+        "down",
+        "right",
+        "up",
+        "left",
+        "down",
+        "down"
+      ],
+      "image": {
+        "url": "/images/v1/stratagems/exo-45-patriot-exosuit.76c9e391.webp"
+      }
+    },
+    {
+      "id": "exo-49-emancipator-exosuit",
+      "name": "EXO-49 Emancipator Exosuit",
+      "permitType": "supply",
+      "availability": "loadout",
+      "kind": "vehicle",
+      "traitIds": [
+        "explosive",
+        "vehicle",
+        "anti-tank"
+      ],
+      "code": [
+        "left",
+        "down",
+        "right",
+        "up",
+        "left",
+        "down",
+        "up"
+      ],
+      "image": {
+        "url": "/images/v1/stratagems/exo-49-emancipator-exosuit.43c72b92.webp"
+      }
+    },
+    {
+      "id": "exo-51-lumberer-exosuit",
+      "name": "EXO-51 Lumberer Exosuit",
+      "permitType": "supply",
+      "availability": "loadout",
+      "kind": "vehicle",
+      "traitIds": [
+        "explosive",
+        "vehicle",
+        "incendiary",
+        "anti-tank"
+      ],
+      "code": [
+        "left",
+        "down",
+        "right",
+        "up",
+        "right",
+        "left",
+        "up"
+      ],
+      "image": {
+        "url": "/images/v1/stratagems/exo-51-lumberer-exosuit.16063df3.webp"
+      }
+    },
+    {
+      "id": "exo-55-breakthrough-exosuit",
+      "name": "EXO-55 Breakthrough Exosuit",
+      "permitType": "supply",
+      "availability": "loadout",
+      "kind": "vehicle",
+      "traitIds": [
+        "vehicle",
+        "heavy-armor-penetrating"
+      ],
+      "code": [
+        "left",
+        "down",
+        "right",
+        "left",
+        "right",
+        "down",
+        "up"
+      ],
+      "image": {
+        "url": "/images/v1/stratagems/exo-55-breakthrough-exosuit.cd35468c.webp"
+      }
+    },
+    {
+      "id": "faf-14-spear",
+      "name": "FAF-14 Spear",
+      "permitType": "supply",
+      "availability": "loadout",
+      "kind": "support_weapon",
+      "traitIds": [
+        "support-weapon",
+        "backpack",
+        "anti-tank",
+        "stationary-reload",
+        "guided"
+      ],
+      "code": [
+        "down",
+        "down",
+        "up",
+        "down",
+        "down"
+      ],
+      "image": {
+        "url": "/images/v1/stratagems/faf-14-spear.24defcf0.webp"
+      }
+    },
+    {
+      "id": "flam-40-flamethrower",
+      "name": "FLAM-40 Flamethrower",
+      "permitType": "supply",
+      "availability": "loadout",
+      "kind": "support_weapon",
+      "traitIds": [
+        "support-weapon",
+        "hellpod",
+        "incendiary"
+      ],
+      "code": [
+        "down",
+        "left",
+        "up",
+        "down",
+        "up"
+      ],
+      "image": {
+        "url": "/images/v1/stratagems/flam-40-flamethrower.a7396398.webp"
+      }
+    },
+    {
+      "id": "fx-12-shield-generator-relay",
+      "name": "FX-12 Shield Generator Relay",
+      "permitType": "defensive",
+      "availability": "loadout",
+      "kind": "emplacement",
+      "traitIds": [
+        "hellpod"
+      ],
+      "code": [
+        "down",
+        "down",
+        "left",
+        "right",
+        "left",
+        "right"
+      ],
+      "image": {
+        "url": "/images/v1/stratagems/fx-12-shield-generator-relay.b4a84dee.webp"
+      }
+    },
+    {
+      "id": "gl-21-grenade-launcher",
+      "name": "GL-21 Grenade Launcher",
+      "permitType": "supply",
+      "availability": "loadout",
+      "kind": "support_weapon",
+      "traitIds": [
+        "support-weapon",
+        "explosive",
+        "medium-armor-penetrating"
+      ],
+      "code": [
+        "down",
+        "left",
+        "up",
+        "left",
+        "down"
+      ],
+      "image": {
+        "url": "/images/v1/stratagems/gl-21-grenade-launcher.0f5dee69.webp"
+      }
+    },
+    {
+      "id": "gl-28-belt-fed-grenade-launcher",
+      "name": "GL-28 Belt-Fed Grenade Launcher",
+      "permitType": "supply",
+      "availability": "loadout",
+      "kind": "support_weapon",
+      "traitIds": [
+        "support-weapon",
+        "backpack",
+        "heavy-armor-penetrating",
+        "explosive"
+      ],
+      "code": [
+        "down",
+        "left",
+        "up",
+        "left",
+        "up",
+        "up"
+      ],
+      "image": {
+        "url": "/images/v1/stratagems/gl-28-belt-fed-grenade-launcher.f3c84373.webp"
+      }
+    },
+    {
+      "id": "gl-52-de-escalator",
+      "name": "GL-52 De-Escalator",
+      "permitType": "supply",
+      "availability": "loadout",
+      "kind": "support_weapon",
+      "traitIds": [
+        "support-weapon",
+        "explosive",
+        "heavy-armor-penetrating",
+        "arc"
+      ],
+      "code": [
+        "down",
+        "right",
+        "up",
+        "left",
+        "right"
+      ],
+      "image": {
+        "url": "/images/v1/stratagems/gl-52-de-escalator.76493c9d.webp"
+      }
+    },
+    {
+      "id": "gr-8-recoilless-rifle",
+      "name": "GR-8 Recoilless Rifle",
+      "permitType": "supply",
+      "availability": "loadout",
+      "kind": "support_weapon",
+      "traitIds": [
+        "support-weapon",
+        "backpack",
+        "anti-tank",
+        "stationary-reload"
+      ],
+      "code": [
+        "down",
+        "left",
+        "right",
+        "right",
+        "left"
+      ],
+      "image": {
+        "url": "/images/v1/stratagems/gr-8-recoilless-rifle.61ebe33a.webp"
+      }
+    },
+    {
+      "id": "hive-breaker-drill",
+      "name": "Hive Breaker Drill",
+      "permitType": "mission",
+      "availability": "objective",
+      "kind": "mission",
+      "traitIds": [],
+      "code": [
+        "left",
+        "up",
+        "down",
+        "right",
+        "down",
+        "down"
+      ],
+      "image": {
+        "url": "/images/v1/stratagems/hive-breaker-drill.f9b44190.webp"
+      }
+    },
+    {
+      "id": "las-98-laser-cannon",
+      "name": "LAS-98 Laser Cannon",
+      "permitType": "supply",
+      "availability": "loadout",
+      "kind": "support_weapon",
+      "traitIds": [
+        "support-weapon",
+        "hellpod",
+        "heavy-armor-penetrating",
+        "heat",
+        "beam"
+      ],
+      "code": [
+        "down",
+        "left",
+        "down",
+        "up",
+        "left"
+      ],
+      "image": {
+        "url": "/images/v1/stratagems/las-98-laser-cannon.22750656.webp"
+      }
+    },
+    {
+      "id": "las-99-quasar-cannon",
+      "name": "LAS-99 Quasar Cannon",
+      "permitType": "supply",
+      "availability": "loadout",
+      "kind": "support_weapon",
+      "traitIds": [
+        "support-weapon",
+        "anti-tank",
+        "chargeup"
+      ],
+      "code": [
+        "down",
+        "down",
+        "up",
+        "left",
+        "right"
+      ],
+      "image": {
+        "url": "/images/v1/stratagems/las-99-quasar-cannon.c46fb4c2.webp"
+      }
+    },
+    {
+      "id": "lift-182-warp-pack",
+      "name": "LIFT-182 Warp Pack",
+      "permitType": "supply",
+      "availability": "loadout",
+      "kind": "backpack",
+      "traitIds": [
+        "hellpod",
+        "backpack"
+      ],
+      "code": [
+        "down",
+        "left",
+        "right",
+        "down",
+        "left",
+        "right"
+      ],
+      "image": {
+        "url": "/images/v1/stratagems/lift-182-warp-pack.adea2ae2.webp"
+      }
+    },
+    {
+      "id": "lift-850-jump-pack",
+      "name": "LIFT-850 Jump Pack",
+      "permitType": "supply",
+      "availability": "loadout",
+      "kind": "backpack",
+      "traitIds": [
+        "hellpod",
+        "backpack"
+      ],
+      "code": [
+        "down",
+        "up",
+        "up",
+        "down",
+        "up"
+      ],
+      "image": {
+        "url": "/images/v1/stratagems/lift-850-jump-pack.1ae094ed.webp"
+      }
+    },
+    {
+      "id": "lift-860-hover-pack",
+      "name": "Hover Pack",
+      "permitType": "supply",
+      "availability": "loadout",
+      "kind": "backpack",
+      "traitIds": [
+        "hellpod",
+        "backpack"
+      ],
+      "code": [
+        "down",
+        "up",
+        "up",
+        "down",
+        "left",
+        "right"
+      ],
+      "image": {
+        "url": "/images/v1/stratagems/lift-860-hover-pack.69822030.webp"
+      }
+    },
+    {
+      "id": "m-1000-maxigun",
+      "name": "M-1000 Maxigun",
+      "permitType": "supply",
+      "availability": "loadout",
+      "kind": "support_weapon",
+      "traitIds": [
+        "support-weapon",
+        "medium-armor-penetrating",
+        "backpack"
+      ],
+      "code": [
+        "down",
+        "left",
+        "right",
+        "down",
+        "up",
+        "up"
+      ],
+      "image": {
+        "url": "/images/v1/stratagems/m-1000-maxigun.8ac5b316.webp"
+      }
+    },
+    {
+      "id": "m-102-gunner-frv",
+      "name": "M-102 Gunner FRV",
+      "permitType": "supply",
+      "availability": "loadout",
+      "kind": "vehicle",
+      "traitIds": [
+        "vehicle",
+        "heavy-armor-penetrating"
+      ],
+      "code": [
+        "left",
+        "down",
+        "right",
+        "down",
+        "right",
+        "down",
+        "up"
+      ],
+      "image": {
+        "url": "/images/v1/stratagems/m-102-gunner-frv.8d45e19a.webp"
+      }
+    },
+    {
+      "id": "m-103-supply-frv",
+      "name": "M-103 Supply FRV",
+      "permitType": "supply",
+      "availability": "loadout",
+      "kind": "vehicle",
+      "traitIds": [
+        "vehicle",
+        "medium-armor-penetrating"
+      ],
+      "code": [
+        "left",
+        "down",
+        "left",
+        "left",
+        "down",
+        "up",
+        "right"
+      ],
+      "image": {
+        "url": "/images/v1/stratagems/m-103-supply-frv.44f8c909.webp"
+      }
+    },
+    {
+      "id": "m-104-incinerator-frv",
+      "name": "M-104 Incinerator FRV",
+      "permitType": "supply",
+      "availability": "loadout",
+      "kind": "vehicle",
+      "traitIds": [
+        "vehicle",
+        "incendiary"
+      ],
+      "code": [
+        "left",
+        "down",
+        "right",
+        "left",
+        "down",
+        "up",
+        "up"
+      ],
+      "image": {
+        "url": "/images/v1/stratagems/m-104-incinerator-frv.58c79032.webp"
+      }
+    },
+    {
+      "id": "m-105-stalwart",
+      "name": "M-105 Stalwart",
+      "permitType": "supply",
+      "availability": "loadout",
+      "kind": "support_weapon",
+      "traitIds": [
+        "support-weapon",
+        "light-armor-penetrating"
+      ],
+      "code": [
+        "down",
+        "left",
+        "down",
+        "up",
+        "up",
+        "left"
+      ],
+      "image": {
+        "url": "/images/v1/stratagems/m-105-stalwart.b65d3263.webp"
+      }
+    },
+    {
+      "id": "md-17-anti-tank-mines",
+      "name": "MD-17 Anti-Tank Mines",
+      "permitType": "defensive",
+      "availability": "loadout",
+      "kind": "emplacement",
+      "traitIds": [
+        "hellpod",
+        "explosive",
+        "anti-tank"
+      ],
+      "code": [
+        "down",
+        "left",
+        "up",
+        "up"
+      ],
+      "image": {
+        "url": "/images/v1/stratagems/md-17-anti-tank-mines.3f4e88f9.webp"
+      }
+    },
+    {
+      "id": "md-6-anti-personnel-minefield",
+      "name": "MD-6 Anti-Personnel Minefield",
+      "permitType": "defensive",
+      "availability": "loadout",
+      "kind": "emplacement",
+      "traitIds": [
+        "hellpod",
+        "explosive",
+        "medium-armor-penetrating"
+      ],
+      "code": [
+        "down",
+        "left",
+        "up",
+        "right"
+      ],
+      "image": {
+        "url": "/images/v1/stratagems/md-6-anti-personnel-minefield.d665f206.webp"
+      }
+    },
+    {
+      "id": "md-8-gas-mines",
+      "name": "MD-8 Gas Mines",
+      "permitType": "defensive",
+      "availability": "loadout",
+      "kind": "emplacement",
+      "traitIds": [
+        "hellpod",
+        "explosive",
+        "caustic"
+      ],
+      "code": [
+        "down",
+        "left",
+        "left",
+        "right"
+      ],
+      "image": {
+        "url": "/images/v1/stratagems/md-8-gas-mines.c286179f.webp"
+      }
+    },
+    {
+      "id": "md-i4-incendiary-mines",
+      "name": "MD-I4 Incendiary Mines",
+      "permitType": "defensive",
+      "availability": "loadout",
+      "kind": "emplacement",
+      "traitIds": [
+        "hellpod",
+        "explosive",
+        "incendiary"
+      ],
+      "code": [
+        "down",
+        "left",
+        "left",
+        "down"
+      ],
+      "image": {
+        "url": "/images/v1/stratagems/md-i4-incendiary-mines.91bca3cb.webp"
+      }
+    },
+    {
+      "id": "mg-206-heavy-machine-gun",
+      "name": "MG-206 Heavy Machine Gun",
+      "permitType": "supply",
+      "availability": "loadout",
+      "kind": "support_weapon",
+      "traitIds": [
+        "support-weapon",
+        "heavy-armor-penetrating",
+        "stationary-reload"
+      ],
+      "code": [
+        "down",
+        "left",
+        "up",
+        "down",
+        "down"
+      ],
+      "image": {
+        "url": "/images/v1/stratagems/mg-206-heavy-machine-gun.e30a3949.webp"
+      }
+    },
+    {
+      "id": "mg-43-machine-gun",
+      "name": "MG-43 Machine Gun",
+      "permitType": "supply",
+      "availability": "loadout",
+      "kind": "support_weapon",
+      "traitIds": [
+        "support-weapon",
+        "medium-armor-penetrating",
+        "stationary-reload"
+      ],
+      "code": [
+        "down",
+        "left",
+        "down",
+        "up",
+        "right"
+      ],
+      "image": {
+        "url": "/images/v1/stratagems/mg-43-machine-gun.d3665a8a.webp"
+      }
+    },
+    {
+      "id": "mgx-42-bullet-storm",
+      "name": "MGX-42 Bullet Storm",
+      "permitType": "supply",
+      "availability": "loadout",
+      "kind": "support_weapon",
+      "traitIds": [
+        "support-weapon",
+        "light-armor-penetrating",
+        "expendable"
+      ],
+      "code": [
+        "down",
+        "left",
+        "down",
+        "right",
+        "up",
+        "left"
+      ],
+      "image": {
+        "url": "/images/v1/stratagems/mgx-42-bullet-storm.b5aafab1.webp"
+      }
+    },
+    {
+      "id": "mls-4x-commando",
+      "name": "MLS-4X Commando",
+      "permitType": "supply",
+      "availability": "loadout",
+      "kind": "support_weapon",
+      "traitIds": [
+        "support-weapon",
+        "anti-tank",
+        "expendable"
+      ],
+      "code": [
+        "down",
+        "left",
+        "up",
+        "down",
+        "right"
+      ],
+      "image": {
+        "url": "/images/v1/stratagems/mls-4x-commando.0a3ccb6f.webp"
+      }
+    },
+    {
+      "id": "ms-11-solo-silo",
+      "name": "MS-11 Solo Silo",
+      "permitType": "supply",
+      "availability": "loadout",
+      "kind": "support_weapon",
+      "traitIds": [
+        "support-weapon",
+        "explosive",
+        "anti-tank",
+        "expendable"
+      ],
+      "code": [
+        "down",
+        "up",
+        "right",
+        "down",
+        "down"
+      ],
+      "image": {
+        "url": "/images/v1/stratagems/ms-11-solo-silo.6e0bf856.webp"
+      }
+    },
+    {
+      "id": "nux-223-hellbomb",
+      "name": "Hellbomb",
+      "permitType": "mission",
+      "availability": "objective",
+      "kind": "mission",
+      "traitIds": [],
+      "code": [
+        "down",
+        "up",
+        "left",
+        "down",
+        "up",
+        "right",
+        "down",
+        "up"
+      ],
+      "image": {
+        "url": "/images/v1/stratagems/nux-223-hellbomb.67b5a819.webp"
+      }
+    },
+    {
+      "id": "orbital-120mm-he-barrage",
+      "name": "Orbital 120mm HE Barrage",
+      "permitType": "offensive",
+      "availability": "loadout",
+      "kind": "orbital",
+      "traitIds": [
+        "explosive",
+        "orbital",
+        "anti-tank"
+      ],
+      "code": [
+        "right",
+        "right",
+        "down",
+        "left",
+        "right",
+        "down"
+      ],
+      "image": {
+        "url": "/images/v1/stratagems/orbital-120mm-he-barrage.e40dba5a.webp"
+      }
+    },
+    {
+      "id": "orbital-380mm-he-barrage",
+      "name": "Orbital 380mm HE Barrage",
+      "permitType": "offensive",
+      "availability": "loadout",
+      "kind": "orbital",
+      "traitIds": [
+        "explosive",
+        "orbital",
+        "anti-tank"
+      ],
+      "code": [
+        "right",
+        "down",
+        "up",
+        "up",
+        "left",
+        "down",
+        "down"
+      ],
+      "image": {
+        "url": "/images/v1/stratagems/orbital-380mm-he-barrage.111357ba.webp"
+      }
+    },
+    {
+      "id": "orbital-airburst-strike",
+      "name": "Orbital Airburst Strike",
+      "permitType": "offensive",
+      "availability": "loadout",
+      "kind": "orbital",
+      "traitIds": [
+        "explosive",
+        "orbital",
+        "medium-armor-penetrating"
+      ],
+      "code": [
+        "right",
+        "right",
+        "right"
+      ],
+      "image": {
+        "url": "/images/v1/stratagems/orbital-airburst-strike.bf277138.webp"
+      }
+    },
+    {
+      "id": "orbital-ems-strike",
+      "name": "Orbital EMS Strike",
+      "permitType": "offensive",
+      "availability": "loadout",
+      "kind": "orbital",
+      "traitIds": [
+        "orbital",
+        "anti-tank",
+        "stun"
+      ],
+      "code": [
+        "right",
+        "right",
+        "left",
+        "down"
+      ],
+      "image": {
+        "url": "/images/v1/stratagems/orbital-ems-strike.bf679220.webp"
+      }
+    },
+    {
+      "id": "orbital-gas-strike",
+      "name": "Orbital Gas Strike",
+      "permitType": "offensive",
+      "availability": "loadout",
+      "kind": "orbital",
+      "traitIds": [
+        "explosive",
+        "orbital",
+        "caustic"
+      ],
+      "code": [
+        "right",
+        "right",
+        "down",
+        "right"
+      ],
+      "image": {
+        "url": "/images/v1/stratagems/orbital-gas-strike.09531e51.webp"
+      }
+    },
+    {
+      "id": "orbital-gatling-barrage",
+      "name": "Orbital Gatling Barrage",
+      "permitType": "offensive",
+      "availability": "loadout",
+      "kind": "orbital",
+      "traitIds": [
+        "explosive",
+        "orbital",
+        "heavy-armor-penetrating"
+      ],
+      "code": [
+        "right",
+        "down",
+        "left",
+        "up",
+        "up"
+      ],
+      "image": {
+        "url": "/images/v1/stratagems/orbital-gatling-barrage.3ddd5f2a.webp"
+      }
+    },
+    {
+      "id": "orbital-illumination-flare",
+      "name": "Orbital Illumination Flare",
+      "permitType": "mission",
+      "availability": "unavailable",
+      "kind": "mission",
+      "traitIds": [],
+      "code": [
+        "right",
+        "right",
+        "left",
+        "left"
+      ],
+      "image": {
+        "url": "/images/v1/stratagems/orbital-illumination-flare.e4792b22.webp"
+      }
+    },
+    {
+      "id": "orbital-laser",
+      "name": "Orbital Laser",
+      "permitType": "offensive",
+      "availability": "loadout",
+      "kind": "orbital",
+      "traitIds": [
+        "orbital",
+        "anti-tank",
+        "beam"
+      ],
+      "code": [
+        "right",
+        "down",
+        "up",
+        "right",
+        "down"
+      ],
+      "image": {
+        "url": "/images/v1/stratagems/orbital-laser.0f35a480.webp"
+      }
+    },
+    {
+      "id": "orbital-napalm-barrage",
+      "name": "Orbital Napalm Barrage",
+      "permitType": "offensive",
+      "availability": "loadout",
+      "kind": "orbital",
+      "traitIds": [
+        "explosive",
+        "orbital",
+        "incendiary"
+      ],
+      "code": [
+        "right",
+        "right",
+        "down",
+        "left",
+        "right",
+        "up"
+      ],
+      "image": {
+        "url": "/images/v1/stratagems/orbital-napalm-barrage.c5391076.webp"
+      }
+    },
+    {
+      "id": "orbital-precision-strike",
+      "name": "Orbital Precision Strike",
+      "permitType": "offensive",
+      "availability": "loadout",
+      "kind": "orbital",
+      "traitIds": [
+        "explosive",
+        "orbital",
+        "anti-tank"
+      ],
+      "code": [
+        "right",
+        "right",
+        "up"
+      ],
+      "image": {
+        "url": "/images/v1/stratagems/orbital-precision-strike.6815c83d.webp"
+      }
+    },
+    {
+      "id": "orbital-railcannon-strike",
+      "name": "Orbital Railcannon Strike",
+      "permitType": "offensive",
+      "availability": "loadout",
+      "kind": "orbital",
+      "traitIds": [
+        "orbital",
+        "anti-tank"
+      ],
+      "code": [
+        "right",
+        "up",
+        "down",
+        "down",
+        "right"
+      ],
+      "image": {
+        "url": "/images/v1/stratagems/orbital-railcannon-strike.d58ff598.webp"
+      }
+    },
+    {
+      "id": "orbital-smoke-strike",
+      "name": "Orbital Smoke Strike",
+      "permitType": "offensive",
+      "availability": "loadout",
+      "kind": "orbital",
+      "traitIds": [
+        "explosive",
+        "orbital"
+      ],
+      "code": [
+        "right",
+        "right",
+        "down",
+        "up"
+      ],
+      "image": {
+        "url": "/images/v1/stratagems/orbital-smoke-strike.38bfd999.webp"
+      }
+    },
+    {
+      "id": "orbital-walking-barrage",
+      "name": "Orbital Walking Barrage",
+      "permitType": "offensive",
+      "availability": "loadout",
+      "kind": "orbital",
+      "traitIds": [
+        "explosive",
+        "orbital",
+        "anti-tank"
+      ],
+      "code": [
+        "right",
+        "down",
+        "right",
+        "down",
+        "right",
+        "down"
+      ],
+      "image": {
+        "url": "/images/v1/stratagems/orbital-walking-barrage.3b2359dc.webp"
+      }
+    },
+    {
+      "id": "plas-45-epoch",
+      "name": "PLAS-45 Epoch",
+      "permitType": "supply",
+      "availability": "loadout",
+      "kind": "support_weapon",
+      "traitIds": [
+        "support-weapon",
+        "explosive",
+        "heavy-armor-penetrating",
+        "stationary-reload",
+        "chargeup"
+      ],
+      "code": [
+        "down",
+        "left",
+        "up",
+        "left",
+        "right"
+      ],
+      "image": {
+        "url": "/images/v1/stratagems/plas-45-epoch.32169c6c.webp"
+      }
+    },
+    {
+      "id": "portable-comms-relay",
+      "name": "Portable Comms Relay",
+      "permitType": "mission",
+      "availability": "objective",
+      "kind": "mission",
+      "traitIds": [],
+      "code": [
+        "up",
+        "up",
+        "down",
+        "down",
+        "left",
+        "left",
+        "down"
+      ],
+      "image": {
+        "url": "/images/v1/stratagems/portable-comms-relay.b153c351.webp"
+      }
+    },
+    {
+      "id": "prospecting-drill",
+      "name": "Prospecting Drill",
+      "permitType": "mission",
+      "availability": "objective",
+      "kind": "mission",
+      "traitIds": [],
+      "code": [
+        "down",
+        "down",
+        "left",
+        "right",
+        "down",
+        "down"
+      ],
+      "image": {
+        "url": "/images/v1/stratagems/prospecting-drill.f9b44190.webp"
+      }
+    },
+    {
+      "id": "reinforce",
+      "name": "Reinforce",
+      "permitType": "mission",
+      "availability": "mission",
+      "kind": "mission",
+      "traitIds": [],
+      "code": [
+        "up",
+        "down",
+        "right",
+        "left",
+        "up"
+      ],
+      "image": {
+        "url": "/images/v1/stratagems/reinforce.f99efa77.webp"
+      }
+    },
+    {
+      "id": "reinforcement-pods",
+      "name": "Link Hellpods to Destroyer",
+      "permitType": "mission",
+      "availability": "objective",
+      "kind": "mission",
+      "traitIds": [],
+      "code": [
+        "left",
+        "right",
+        "up",
+        "up",
+        "up"
+      ],
+      "image": {
+        "url": "/images/v1/stratagems/reinforcement-pods.35622ca5.webp"
+      }
+    },
+    {
+      "id": "resupply",
+      "name": "Resupply",
+      "permitType": "mission",
+      "availability": "mission",
+      "kind": "mission",
+      "traitIds": [],
+      "code": [
+        "down",
+        "down",
+        "up",
+        "right"
+      ],
+      "image": {
+        "url": "/images/v1/stratagems/resupply.6f747da5.webp"
+      }
+    },
+    {
+      "id": "rl-77-airburst-rocket-launcher",
+      "name": "RL-77 Airburst Rocket Launcher",
+      "permitType": "supply",
+      "availability": "loadout",
+      "kind": "support_weapon",
+      "traitIds": [
+        "support-weapon",
+        "backpack",
+        "medium-armor-penetrating",
+        "stationary-reload"
+      ],
+      "code": [
+        "down",
+        "up",
+        "up",
+        "left",
+        "right"
+      ],
+      "image": {
+        "url": "/images/v1/stratagems/rl-77-airburst-rocket-launcher.7136f815.webp"
+      }
+    },
+    {
+      "id": "rs-422-railgun",
+      "name": "RS-422 Railgun",
+      "permitType": "supply",
+      "availability": "loadout",
+      "kind": "support_weapon",
+      "traitIds": [
+        "support-weapon",
+        "anti-tank",
+        "chargeup"
+      ],
+      "code": [
+        "down",
+        "right",
+        "down",
+        "up",
+        "left",
+        "right"
+      ],
+      "image": {
+        "url": "/images/v1/stratagems/rs-422-railgun.f32ae89f.webp"
+      }
+    },
+    {
+      "id": "s-11-speargun",
+      "name": "S-11 Speargun",
+      "permitType": "supply",
+      "availability": "loadout",
+      "kind": "support_weapon",
+      "traitIds": [
+        "support-weapon",
+        "caustic",
+        "anti-tank"
+      ],
+      "code": [
+        "down",
+        "right",
+        "down",
+        "left",
+        "up",
+        "right"
+      ],
+      "image": {
+        "url": "/images/v1/stratagems/s-11-speargun.e7834964.webp"
+      }
+    },
+    {
+      "id": "seaf-artillery",
+      "name": "SEAF Artillery",
+      "permitType": "mission",
+      "availability": "objective",
+      "kind": "mission",
+      "traitIds": [],
+      "code": [
+        "right",
+        "up",
+        "up",
+        "down"
+      ],
+      "image": {
+        "url": "/images/v1/stratagems/seaf-artillery.d0605594.webp"
+      }
+    },
+    {
+      "id": "seismic-probe",
+      "name": "Seismic Probe",
+      "permitType": "mission",
+      "availability": "objective",
+      "kind": "mission",
+      "traitIds": [],
+      "code": [
+        "up",
+        "up",
+        "left",
+        "right",
+        "down",
+        "down"
+      ],
+      "image": {
+        "url": "/images/v1/stratagems/seismic-probe.f0c30593.webp"
+      }
+    },
+    {
+      "id": "sh-20-ballistic-shield-backpack",
+      "name": "SH-20 Ballistic Shield Backpack",
+      "permitType": "supply",
+      "availability": "loadout",
+      "kind": "backpack",
+      "traitIds": [
+        "hellpod",
+        "backpack"
+      ],
+      "code": [
+        "down",
+        "left",
+        "down",
+        "down",
+        "up",
+        "left"
+      ],
+      "image": {
+        "url": "/images/v1/stratagems/sh-20-ballistic-shield-backpack.ce6c2968.webp"
+      }
+    },
+    {
+      "id": "sh-32-shield-generator-pack",
+      "name": "SH-32 Shield Generator Pack",
+      "permitType": "supply",
+      "availability": "loadout",
+      "kind": "backpack",
+      "traitIds": [
+        "hellpod",
+        "backpack"
+      ],
+      "code": [
+        "down",
+        "up",
+        "left",
+        "right",
+        "left",
+        "right"
+      ],
+      "image": {
+        "url": "/images/v1/stratagems/sh-32-shield-generator-pack.974dd7b7.webp"
+      }
+    },
+    {
+      "id": "sh-51-directional-shield",
+      "name": "SH-51 Directional Shield",
+      "permitType": "supply",
+      "availability": "loadout",
+      "kind": "backpack",
+      "traitIds": [
+        "hellpod",
+        "backpack"
+      ],
+      "code": [
+        "down",
+        "up",
+        "left",
+        "right",
+        "up",
+        "up"
+      ],
+      "image": {
+        "url": "/images/v1/stratagems/sh-51-directional-shield.5395d773.webp"
+      }
+    },
+    {
+      "id": "sos-beacon",
+      "name": "SoS Beacon",
+      "permitType": "mission",
+      "availability": "mission",
+      "kind": "mission",
+      "traitIds": [],
+      "code": [
+        "up",
+        "down",
+        "right",
+        "up"
+      ],
+      "image": {
+        "url": "/images/v1/stratagems/sos-beacon.8458afe0.webp"
+      }
+    },
+    {
+      "id": "sssd-delivery",
+      "name": "SSSD Delivery",
+      "permitType": "mission",
+      "availability": "objective",
+      "kind": "mission",
+      "traitIds": [],
+      "code": [
+        "down",
+        "down",
+        "down",
+        "down",
+        "down",
+        "up",
+        "up"
+      ],
+      "image": {
+        "url": "/images/v1/stratagems/sssd-delivery.35622ca5.webp"
+      }
+    },
+    {
+      "id": "sta-x3-wasp-launcher",
+      "name": "StA-X3 W.A.S.P. Launcher",
+      "permitType": "supply",
+      "availability": "loadout",
+      "kind": "support_weapon",
+      "traitIds": [
+        "support-weapon",
+        "anti-tank",
+        "backpack",
+        "stationary-reload",
+        "guided"
+      ],
+      "code": [
+        "down",
+        "down",
+        "up",
+        "down",
+        "right"
+      ],
+      "image": {
+        "url": "/images/v1/stratagems/sta-x3-wasp-launcher.f6beca75.webp"
+      }
+    },
+    {
+      "id": "super-earth-flag",
+      "name": "Super Earth Flag",
+      "permitType": "mission",
+      "availability": "objective",
+      "kind": "mission",
+      "traitIds": [],
+      "code": [
+        "down",
+        "up",
+        "down",
+        "up"
+      ],
+      "image": {
+        "url": "/images/v1/stratagems/super-earth-flag.a7811b5e.webp"
+      }
+    },
+    {
+      "id": "tactical-video-camera",
+      "name": "Tactical Video Camera",
+      "permitType": "mission",
+      "availability": "objective",
+      "kind": "mission",
+      "traitIds": [
+        "hellpod"
+      ],
+      "code": [
+        "right",
+        "down",
+        "down",
+        "up",
+        "left",
+        "left",
+        "up"
+      ],
+      "image": {
+        "url": "/images/v1/stratagems/tactical-video-camera.e0fc637c.webp"
+      }
+    },
+    {
+      "id": "td-220-bastion-mk-xvi",
+      "name": "TD-220 Bastion MK XVI",
+      "permitType": "supply",
+      "availability": "loadout",
+      "kind": "vehicle",
+      "traitIds": [
+        "vehicle",
+        "explosive",
+        "anti-tank",
+        "heavy-armor-penetrating"
+      ],
+      "code": [
+        "left",
+        "down",
+        "right",
+        "down",
+        "left",
+        "down",
+        "up",
+        "down",
+        "up"
+      ],
+      "image": {
+        "url": "/images/v1/stratagems/td-220-bastion-mk-xvi.39d96a04.webp"
+      }
+    },
+    {
+      "id": "tectonic-drill",
+      "name": "Tectonic Drill",
+      "permitType": "mission",
+      "availability": "objective",
+      "kind": "mission",
+      "traitIds": [],
+      "code": [
+        "up",
+        "down",
+        "up",
+        "down",
+        "up",
+        "down"
+      ],
+      "image": {
+        "url": "/images/v1/stratagems/tectonic-drill.f9b44190.webp"
+      }
+    },
+    {
+      "id": "tx-41-sterilizer",
+      "name": "TX-41 Sterilizer",
+      "permitType": "supply",
+      "availability": "loadout",
+      "kind": "support_weapon",
+      "traitIds": [
+        "support-weapon",
+        "caustic"
+      ],
+      "code": [
+        "down",
+        "left",
+        "up",
+        "down",
+        "left"
+      ],
+      "image": {
+        "url": "/images/v1/stratagems/tx-41-sterilizer.f11ef386.webp"
+      }
+    },
+    {
+      "id": "upload-data",
+      "name": "Upload Data",
+      "permitType": "mission",
+      "availability": "objective",
+      "kind": "mission",
+      "traitIds": [],
+      "code": [
+        "left",
+        "right",
+        "up",
+        "up",
+        "up"
+      ],
+      "image": {
+        "url": "/images/v1/stratagems/upload-data.35622ca5.webp"
+      }
+    }
+  ]
+}

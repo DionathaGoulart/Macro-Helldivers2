@@ -1988,6 +1988,7 @@ mod platform {
                         // fica adiada para a primeira perda de foco (Fase 3).
                         if let Some(app) = app_mut(hwnd) {
                             updater::auto_check(&app.shared);
+                            crate::data_sync::auto_sync(&app.shared);
                         }
                         LRESULT(0)
                     }
