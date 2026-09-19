@@ -39,8 +39,6 @@ O que mudou em cada versão está no [CHANGELOG](CHANGELOG.md).
 - **Bandeja do sistema**: minimizar ou fechar recolhe o app e os macros seguem ativos.
 - **Idiomas**: português e inglês.
 - **Tema escuro e claro**, que segue o Windows até você escolher.
-- **Aba Sobre**: versão, licença, créditos das fontes de dados e um atalho para a
-  pasta onde ficam as configurações, as builds salvas e o log.
 
 ## 💻 Requisitos
 

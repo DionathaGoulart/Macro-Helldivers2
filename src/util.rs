@@ -461,41 +461,6 @@ impl Drop for InstanceLock {
     }
 }
 
-/// Abre um endereço ou uma pasta no aplicativo padrão do sistema.
-///
-/// É o que a aba "Sobre" usa para o navegador e para o Explorer. O app roda
-/// elevado, e `ShellExecuteW` a partir de um processo elevado abriria o alvo
-/// também elevado; `explorer.exe` é quem devolve o processo ao usuário comum,
-/// então ele é o executor em vez do verbo `open` direto.
-///
-/// O alvo vem sempre de constante do código ou de um caminho do próprio app:
-/// nada que venha de arquivo, tradução ou rede chega aqui.
-#[cfg(windows)]
-pub fn open_in_shell(target: &str) -> Result<()> {
-    use std::os::windows::process::CommandExt;
-    use std::process::{Command, Stdio};
-
-    /// Sem console novo para o Explorer: o app de release não tem um.
-    const CREATE_NO_WINDOW: u32 = 0x0800_0000;
-
-    Command::new("explorer.exe")
-        .arg(target)
-        .stdin(Stdio::null())
-        .stdout(Stdio::null())
-        .stderr(Stdio::null())
-        .creation_flags(CREATE_NO_WINDOW)
-        .spawn()
-        .with_context(|| format!("explorer.exe {target}"))?;
-    Ok(())
-}
-
-/// Fora do Windows não há shell para abrir nada: a aba existe, o botão não faz
-/// efeito, e o teste de layout continua rodando no host.
-#[cfg(not(windows))]
-pub fn open_in_shell(_target: &str) -> Result<()> {
-    anyhow::bail!("abrir no shell só existe no Windows")
-}
-
 /// Traz a janela da instância que já está rodando para a frente.
 ///
 /// É o que a segunda execução faz antes de sair (a v1 fazia o mesmo no evento

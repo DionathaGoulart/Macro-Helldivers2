@@ -5,16 +5,6 @@ Todas as mudanças relevantes deste projeto são documentadas aqui.
 O formato segue [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/)
 e o versionamento segue [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
-## [Não lançado]
-
-### Adicionado
-
-- **Aba Sobre**: versão compilada, autor, licença e tecnologia do app; links para o
-  repositório, a última versão e os problemas abertos; crédito às fontes de dados
-  (helldivers.wiki.gg e helldive.live) e o aviso de projeto de fã; e o caminho da
-  pasta de dados do usuário, com um botão que a abre no Explorer (é de lá que sai o
-  `app.log` quando algo dá errado).
-
 ## [2.0.0] - 2026-09-18
 
 **Reescrita completa.** O app deixou de ser um Electron com React e virou um binário
