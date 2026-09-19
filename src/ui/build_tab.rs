@@ -58,8 +58,12 @@ const GENERATE_WIDTH: f32 = 280.0;
 const CUSTOM_SLOT_HEIGHT: f32 = 124.0;
 const CUSTOM_SLOT_IMAGE: f32 = 56.0;
 const CUSTOM_SLOT_BAR: f32 = 24.0;
-/// Colunas da grade personalizada.
-const CUSTOM_GRID_COLS: usize = 5;
+/// Colunas da grade personalizada na janela em tamanho padrão, e o piso quando
+/// ela encolhe. Como na aba de macros, a grade ganha colunas numa janela larga
+/// em vez de esticar os tiles além do tamanho do ícone.
+const CUSTOM_GRID_MIN_COLS: usize = 5;
+/// Largura de referência de um tile da grade personalizada.
+const CUSTOM_TILE_TARGET: f32 = 150.0;
 /// Altura máxima da grade: passando disso ela rola por dentro.
 const CUSTOM_GRID_MAX_HEIGHT: f32 = 440.0;
 const GRID_GAP: f32 = 12.0;
@@ -873,7 +877,7 @@ impl BuildTab {
         // A folga de baixo é a sombra do tile, que também precisa caber.
         (grid_height(
             self.list.len(),
-            CUSTOM_GRID_COLS,
+            custom_cols(width),
             widgets::tile_height(cell),
             GRID_GAP,
         ) + theme::SHADOW)
@@ -1087,12 +1091,8 @@ impl BuildTab {
     /// macros, só que mexendo na build, e não nos slots.
     fn custom_grid(&self, ui: &mut Ui, view: Rect, ctx: &Ctx) {
         let cell = custom_cell(view.w);
-        let content = grid_height(
-            self.list.len(),
-            CUSTOM_GRID_COLS,
-            widgets::tile_height(cell),
-            GRID_GAP,
-        );
+        let cols = custom_cols(view.w);
+        let content = grid_height(self.list.len(), cols, widgets::tile_height(cell), GRID_GAP);
         let empty = Build::default();
         let build = self.build.as_ref().unwrap_or(&empty);
 
@@ -1101,7 +1101,7 @@ impl BuildTab {
         for (index, strat_id) in self.list.iter().enumerate() {
             let rect = grid_cell(
                 Rect::new(view.x, view.y - offset, view.w, view.h),
-                CUSTOM_GRID_COLS,
+                cols,
                 widgets::tile_height(cell),
                 GRID_GAP,
                 index,
@@ -2033,8 +2033,14 @@ fn cell_width(width: f32, cols: usize) -> f32 {
     ((width - GRID_GAP * (cols - 1) as f32) / cols as f32).max(0.0)
 }
 
+/// Colunas que cabem numa grade personalizada de `width` de largura.
+fn custom_cols(width: f32) -> usize {
+    let fits = ((width + GRID_GAP) / (CUSTOM_TILE_TARGET + GRID_GAP)).floor();
+    (fits.max(0.0) as usize).max(CUSTOM_GRID_MIN_COLS)
+}
+
 fn custom_cell(width: f32) -> f32 {
-    cell_width(width, CUSTOM_GRID_COLS)
+    cell_width(width, custom_cols(width))
 }
 
 fn stratagems_height(measure: &mut dyn Measure, width: f32, build: &Build, ctx: &Ctx) -> f32 {

@@ -15,9 +15,12 @@ use anyhow::{Context, Result};
 use image::imageops::FilterType;
 use image::ImageReader;
 
-/// Maior lado guardado em memória. O maior ícone desenhado é o card de
-/// estratagema (~140 DIP), o que ainda deixa margem para 150% de DPI.
-pub const MAX_EDGE_PX: u32 = 192;
+/// Maior lado guardado em memória, que é o tamanho de origem dos ícones da
+/// wiki: nada é reduzido na entrada. A grade limita o tile a ~184 DIP, então
+/// 256px cobrem com folga até 125% de DPI sem ampliar o bitmap, que era o que
+/// deixava o ícone borrado com a janela maximizada. O teto do cache abaixo é
+/// quem segura a memória.
+pub const MAX_EDGE_PX: u32 = 256;
 
 /// Imagem pronta para virar `ID2D1Bitmap`: BGRA de 8 bits com alfa
 /// pré-multiplicado, que é o formato dos nossos render targets.
@@ -118,8 +121,11 @@ mod windows_impl {
 
     use crate::util;
 
-    /// Teto de memória do cache. Uma tela cheia de cards usa ~3MB.
-    const BUDGET_BYTES: usize = 8 * 1024 * 1024;
+    /// Teto de memória do cache. Uma janela no tamanho padrão usa ~4MB; uma
+    /// maximizada, que mostra bem mais tiles ao mesmo tempo, chega perto de
+    /// 10MB, e o teto precisa caber isso: abaixo dele o cache despejaria e
+    /// redecodificaria os mesmos ícones a cada quadro.
+    const BUDGET_BYTES: usize = 16 * 1024 * 1024;
 
     struct Entry {
         bitmap: ID2D1Bitmap,
@@ -261,6 +267,15 @@ mod tests {
         let path = util::asset_path("icons/stratagems/A_FLAM-40_Flame_Sentry_Stratagem_Icon.webp");
         let decoded = decode(&path).unwrap();
         assert!(decoded.width.max(decoded.height) <= MAX_EDGE_PX);
+    }
+
+    /// O ícone da wiki tem 256px e o teto é 256: ele entra inteiro, sem
+    /// reamostragem. É o que mantém o tile nítido numa janela larga.
+    #[test]
+    fn a_wiki_icon_keeps_its_native_size() {
+        let path = util::asset_path("icons/stratagems/A_FLAM-40_Flame_Sentry_Stratagem_Icon.webp");
+        let decoded = decode(&path).unwrap();
+        assert_eq!(decoded.width.max(decoded.height), MAX_EDGE_PX);
     }
 
     #[test]

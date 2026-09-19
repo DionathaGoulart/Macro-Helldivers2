@@ -5,6 +5,27 @@ Todas as mudanças relevantes deste projeto são documentadas aqui.
 O formato segue [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/)
 e o versionamento segue [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
+## [Não lançado]
+
+### Alterado
+
+- **A janela abre maior**: 900x820 em vez de 820x640, o que mostra duas linhas
+  inteiras da grade e a barra de slots sem rolar. O tamanho novo é travado na área
+  útil do monitor, então numa tela baixa a janela nasce cabendo nela. Quem já usa o
+  app mantém o tamanho salvo no `window-bounds.json`.
+- **A grade ganha colunas em vez de esticar os tiles**: numa janela larga (ou
+  maximizada) a aba de macros e a grade da build personalizada acrescentam colunas,
+  mantendo o tile perto de 184 DIP. Antes as quatro colunas fixas levavam o tile a
+  mais de 400 DIP com a janela maximizada.
+
+### Corrigido
+
+- **Ícones borrados com a janela grande.** O cache guardava cada ícone reduzido a
+  192px e a grade os desenhava bem maiores que isso, ampliando o bitmap. Os ícones
+  agora entram no tamanho de origem (256px) e o teto do cache subiu para 16MB, que é
+  o que uma janela maximizada precisa para não redecodificar os mesmos arquivos a
+  cada quadro.
+
 ## [2.0.0] - 2026-09-18
 
 **Reescrita completa.** O app deixou de ser um Electron com React e virou um binário

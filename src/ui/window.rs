@@ -20,9 +20,12 @@ pub const BOUNDS_FILE: &str = "window-bounds.json";
 /// primeira (`util::focus_running_instance`).
 pub const CLASS_NAME: &str = "MacroHelldivers2Main";
 
-/// Tamanho inicial, em DIP: o mesmo da v1.
-pub const DEFAULT_WIDTH: f32 = 820.0;
-pub const DEFAULT_HEIGHT: f32 = 640.0;
+/// Tamanho inicial, em DIP. A v1 abria em 820x640, o que mostrava pouco mais
+/// de uma linha e meia da grade; a janela abre mais alta para caber duas linhas
+/// inteiras de estratagemas e a barra de slots. Quem já usou o app tem o
+/// tamanho salvo no `window-bounds.json` e não é afetado.
+pub const DEFAULT_WIDTH: f32 = 900.0;
+pub const DEFAULT_HEIGHT: f32 = 820.0;
 /// Abaixo disto a grade de 4 colunas não fecha.
 pub const MIN_WIDTH: f32 = 720.0;
 pub const MIN_HEIGHT: f32 = 520.0;
@@ -321,11 +324,37 @@ mod platform {
                 dpi,
             )
         };
+        // Numa tela baixa (um notebook de 768px, por exemplo) o padrão não
+        // cabe: sem a trava a janela nasceria com a barra de slots fora do
+        // monitor.
+        let work = primary_work_area();
         Bounds {
             x: CW_USEDEFAULT,
             y: CW_USEDEFAULT,
-            width: rect.right - rect.left,
-            height: rect.bottom - rect.top,
+            width: (rect.right - rect.left).min(work.0),
+            height: (rect.bottom - rect.top).min(work.1),
+        }
+    }
+
+    /// Largura e altura úteis do monitor primário, descontada a barra de
+    /// tarefas. É onde o Windows põe a janela quando a posição é
+    /// `CW_USEDEFAULT`.
+    fn primary_work_area() -> (i32, i32) {
+        let mut rect = RECT::default();
+        // SAFETY: retângulo próprio, preenchido pela chamada.
+        let ok = unsafe {
+            SystemParametersInfoW(
+                SPI_GETWORKAREA,
+                0,
+                Some(&mut rect as *mut RECT as *mut std::ffi::c_void),
+                SYSTEM_PARAMETERS_INFO_UPDATE_FLAGS(0),
+            )
+        }
+        .is_ok();
+        if ok && rect.right > rect.left && rect.bottom > rect.top {
+            (rect.right - rect.left, rect.bottom - rect.top)
+        } else {
+            (i32::MAX, i32::MAX)
         }
     }
 

@@ -26,7 +26,12 @@ const HEADER_GAP: f32 = 24.0;
 const BLOCK_GAP: f32 = 16.0;
 /// Espaço entre seções: cabe a sombra dura da de cima.
 const SECTION_GAP: f32 = 24.0;
-const GRID_COLS: usize = 4;
+/// Colunas da grade na janela em tamanho padrão, e o piso quando ela encolhe.
+const GRID_MIN_COLS: usize = 4;
+/// Largura de referência de um tile. A grade ganha colunas conforme a janela
+/// cresce em vez de esticar as quatro: o ícone do jogo tem 256px de origem, e
+/// um tile de 400 DIP o mostraria ampliado e borrado.
+const TILE_TARGET: f32 = 184.0;
 const GRID_GAP: f32 = 12.0;
 /// Espaço à direita reservado para a barra de rolagem, para ela não cair em
 /// cima da sombra dos painéis.
@@ -286,11 +291,12 @@ impl MacroTab {
     /// As seções, dentro do container rolável.
     fn grid(&self, ui: &mut Ui, view: Rect, ctx: &Ctx) {
         let width = view.w - SCROLL_GUTTER;
+        let cols = grid_cols(width);
         let cell = cell_size(width);
         let content: f32 = self
             .sections
             .iter()
-            .map(|section| section_height(section.ids.len(), cell) + SECTION_GAP)
+            .map(|section| section_height(section.ids.len(), cols, cell) + SECTION_GAP)
             .sum::<f32>()
             - SECTION_GAP;
 
@@ -298,12 +304,12 @@ impl MacroTab {
         let offset = ui.scroll_begin(grid_id(), view);
         let mut y = view.y - offset;
         for section in &self.sections {
-            let height = section_height(section.ids.len(), cell);
+            let height = section_height(section.ids.len(), cols, cell);
             let rect = Rect::new(view.x, y, width, height);
             // Fora da janela visível não há o que desenhar: é o que segura o
             // custo de uma grade de 91 ícones.
             if rect.bottom() + theme::SHADOW >= view.y && rect.y <= view.bottom() {
-                self.section(ui, rect, section, cell, view, &equipped, ctx);
+                self.section(ui, rect, section, cols, cell, view, &equipped, ctx);
             }
             y += height + SECTION_GAP;
         }
@@ -317,6 +323,7 @@ impl MacroTab {
         ui: &mut Ui,
         rect: Rect,
         section: &Section,
+        cols: usize,
         cell: f32,
         view: Rect,
         equipped: &[Option<&Stratagem>],
@@ -327,13 +334,7 @@ impl MacroTab {
         let content = widgets::card(ui, rect, Some(CardHeader::new(label, "dir").marker(accent)));
 
         for (index, id) in section.ids.iter().enumerate() {
-            let cell_rect = grid_cell(
-                content,
-                GRID_COLS,
-                widgets::tile_height(cell),
-                GRID_GAP,
-                index,
-            );
+            let cell_rect = grid_cell(content, cols, widgets::tile_height(cell), GRID_GAP, index);
             if cell_rect.bottom() < view.y || cell_rect.y > view.bottom() {
                 continue;
             }
@@ -475,14 +476,23 @@ fn tag_color(tag: &str) -> Color {
     }
 }
 
-/// Largura do tile numa seção de `width` de largura.
-fn cell_size(width: f32) -> f32 {
+/// Colunas que cabem numa seção de `width` de largura, sem deixar o tile
+/// passar muito de [`TILE_TARGET`].
+fn grid_cols(width: f32) -> usize {
     let inner = width - widgets::CARD_PADDING * 2.0;
-    ((inner - GRID_GAP * (GRID_COLS - 1) as f32) / GRID_COLS as f32).max(0.0)
+    let fits = ((inner + GRID_GAP) / (TILE_TARGET + GRID_GAP)).floor();
+    (fits.max(0.0) as usize).max(GRID_MIN_COLS)
 }
 
-fn section_height(count: usize, cell: f32) -> f32 {
-    widgets::card_chrome(true) + grid_height(count, GRID_COLS, widgets::tile_height(cell), GRID_GAP)
+/// Largura do tile numa seção de `width` de largura.
+fn cell_size(width: f32) -> f32 {
+    let cols = grid_cols(width);
+    let inner = width - widgets::CARD_PADDING * 2.0;
+    ((inner - GRID_GAP * (cols - 1) as f32) / cols as f32).max(0.0)
+}
+
+fn section_height(count: usize, cols: usize, cell: f32) -> f32 {
+    widgets::card_chrome(true) + grid_height(count, cols, widgets::tile_height(cell), GRID_GAP)
 }
 
 /// Um card só é clicável se couber no slot em edição (`isCardDisabled` da v1).
