@@ -12,6 +12,10 @@ use crate::ui::theme;
 use crate::ui::toolkit::{id, Align, Id, Measure, Rect, Ui};
 use crate::ui::widgets::{self, styles, Glyph, Tone, TAB_BAR_HEIGHT};
 
+/// Abas da janela principal: macros, builds, configurações e sobre. A janela
+/// usa para saber quais cliques do `tab_bar` são dela.
+pub const TAB_COUNT: usize = 4;
+
 /// Rodapé com a versão, o estado do jogo e o updater.
 pub const FOOTER_HEIGHT: f32 = 36.0;
 /// Banner de "tela cheia exclusiva" abaixo da topbar.
@@ -64,6 +68,7 @@ pub fn build(
         chrome.tr.tabs.macro_tab,
         chrome.tr.tabs.build,
         chrome.tr.tabs.settings,
+        chrome.tr.tabs.about,
     ];
     widgets::tab_bar(ui, measure, header, &tabs, chrome.tab);
 

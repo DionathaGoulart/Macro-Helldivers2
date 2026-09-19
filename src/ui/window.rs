@@ -111,6 +111,7 @@ mod platform {
     use crate::shared::{
         FlashKind, OverlayCmd, OverlayState, Shared, Slots, UiEvent, UpdateStatus, WM_APP_UI_EVENT,
     };
+    use crate::ui::about_tab::{self, AboutTab};
     use crate::ui::build_tab::{self, BuildTab};
     use crate::ui::chrome::{self, Chrome};
     use crate::ui::macro_tab::{self, Action, MacroTab};
@@ -423,6 +424,7 @@ mod platform {
         macro_tab: MacroTab,
         build_tab: BuildTab,
         settings_tab: SettingsTab,
+        about_tab: AboutTab,
         /// Diálogo de backup pedido e ainda não aberto (ver [`App::request_backup`]).
         pending_backup: Option<BackupRequest>,
         /// Chamadas de `EDIT` agendadas e ainda não executadas.
@@ -482,6 +484,7 @@ mod platform {
                 macro_tab: MacroTab::new(),
                 build_tab: BuildTab::new(),
                 settings_tab: SettingsTab::new(),
+                about_tab: AboutTab::new(),
                 pending_backup: None,
                 pending_edit_ops: Vec::new(),
                 edits: Vec::new(),
@@ -707,7 +710,9 @@ mod platform {
                 self.toggle_theme();
                 return;
             }
-            if let Some(index) = (0..3).find(|index| widgets::tab_id(*index) == clicked) {
+            if let Some(index) =
+                (0..chrome::TAB_COUNT).find(|index| widgets::tab_id(*index) == clicked)
+            {
                 if self.tab != index {
                     self.tab = index;
                     // Sair da aba desiste da captura em curso: o hook não pode
@@ -754,6 +759,12 @@ mod platform {
                     };
                     if let Some(action) = self.settings_tab.on_click(clicked, &ctx) {
                         self.apply_settings(action);
+                        return;
+                    }
+                }
+                3 => {
+                    if let Some(action) = self.about_tab.on_click(clicked) {
+                        self.apply_about(action);
                         return;
                     }
                 }
@@ -844,6 +855,20 @@ mod platform {
         fn save_loadouts(&mut self) {
             loadouts::save_loadouts(self.build_tab.loadouts());
             self.shared.send_overlay(OverlayCmd::LoadoutsChanged);
+            self.rebuild();
+        }
+
+        /// A aba Sobre só abre endereços e a pasta de dados: o shell responde,
+        /// e uma falha (navegador ausente, pasta removida) vira log, não
+        /// diálogo - não há nada que o usuário possa fazer a respeito.
+        fn apply_about(&mut self, action: about_tab::Action) {
+            let target = match action {
+                about_tab::Action::OpenUrl(url) => url.to_string(),
+                about_tab::Action::OpenDataFolder => util::config_dir().display().to_string(),
+            };
+            if let Err(err) = util::open_in_shell(&target) {
+                log::warn!("não foi possível abrir {target}: {err:#}");
+            }
             self.rebuild();
         }
 
@@ -1418,10 +1443,12 @@ mod platform {
             let slots = self.shared.slots();
             let focused_edit = self.focused_edit;
             let data = &self.data;
-            let (macro_tab, build_tab, settings_tab) = (
+            let data_dir = util::config_dir().display().to_string();
+            let (macro_tab, build_tab, settings_tab, about_tab) = (
                 &mut self.macro_tab,
                 &mut self.build_tab,
                 &mut self.settings_tab,
+                &mut self.about_tab,
             );
             chrome::build(
                 &mut self.ui,
@@ -1447,11 +1474,18 @@ mod platform {
                         };
                         build_tab.build(ui, measure, body, &ctx);
                     }
-                    _ => {
+                    2 => {
                         let ctx = settings_tab::Ctx {
                             settings: &settings,
                         };
                         settings_tab.build(ui, measure, body, &ctx);
+                    }
+                    _ => {
+                        let ctx = about_tab::Ctx {
+                            settings: &settings,
+                            data_dir: &data_dir,
+                        };
+                        about_tab.build(ui, measure, body, &ctx);
                     }
                 },
             );

@@ -14,6 +14,7 @@ pub struct Tr {
     pub macros: Macros,
     pub build: Build,
     pub settings: SettingsText,
+    pub about: About,
     pub overlay: Overlay,
     pub update: Update,
     pub tray: Tray,
@@ -23,6 +24,35 @@ pub struct Tabs {
     pub macro_tab: &'static str,
     pub build: &'static str,
     pub settings: &'static str,
+    pub about: &'static str,
+}
+
+/// Textos da aba "Sobre". O nome do app, o autor e a pilha não entram aqui:
+/// são nomes próprios, iguais nos dois idiomas.
+pub struct About {
+    /// Nome da "ficha" na barra do painel.
+    pub title: &'static str,
+    pub app_name: &'static str,
+    pub description: &'static str,
+    pub author: &'static str,
+    pub license: &'static str,
+    pub license_value: &'static str,
+    pub stack: &'static str,
+    pub links: &'static str,
+    pub link_repo: &'static str,
+    pub link_releases: &'static str,
+    pub link_issues: &'static str,
+    pub credits: &'static str,
+    pub source_wiki: &'static str,
+    pub source_wiki_desc: &'static str,
+    pub source_meta: &'static str,
+    pub source_meta_desc: &'static str,
+    pub disclaimer: &'static str,
+    /// Rótulo do `icon-btn` que abre um endereço.
+    pub open: &'static str,
+    pub files: &'static str,
+    pub files_desc: &'static str,
+    pub open_folder: &'static str,
 }
 
 pub struct Macros {
@@ -246,6 +276,7 @@ pub static PT: Tr = Tr {
         macro_tab: "Configurar Macros",
         build: "Builds",
         settings: "Configurações",
+        about: "Sobre",
     },
     macros: Macros {
         select_title: "Selecionar Estratagemas para o Slot",
@@ -374,6 +405,29 @@ pub static PT: Tr = Tr {
         toast_done: "Concluído",
         toast_error: "Erro",
     },
+    about: About {
+        title: "Sobre",
+        app_name: "Macro Helldivers 2",
+        description: "Macro de estratagemas para Helldivers 2: quatro slots com atalho, três apoios fixos, overlay no jogo e gerador de builds. Nativo em Rust sobre Win32, um processo só, sem tocar no processo do jogo.",
+        author: "Autor",
+        license: "Licença",
+        license_value: "Uso pessoal, com crédito obrigatório",
+        stack: "Tecnologia",
+        links: "Links",
+        link_repo: "Repositório",
+        link_releases: "Baixar a última versão",
+        link_issues: "Relatar um problema",
+        credits: "Créditos",
+        source_wiki: "helldivers.wiki.gg",
+        source_wiki_desc: "Estratagemas, sequências e equipamento vêm da wiki da comunidade.",
+        source_meta: "helldive.live",
+        source_meta_desc: "As estatísticas da sub-aba Meta vêm daqui, por facção e dificuldade.",
+        disclaimer: "Projeto de fã, sem vínculo com a Arrowhead Game Studios ou a Sony. Helldivers e as demais marcas pertencem aos seus donos.",
+        open: "Abrir",
+        files: "Seus dados",
+        files_desc: "Preferências, builds salvas e o log ficam nesta pasta. Ela sobrevive à desinstalação.",
+        open_folder: "Abrir pasta",
+    },
     overlay: Overlay {
         warning_title: "Aviso",
         fullscreen_warning: "O jogo está em \"Tela Cheia\": nesse modo o Windows minimiza o \
@@ -398,6 +452,7 @@ pub static EN: Tr = Tr {
         macro_tab: "Configure Macros",
         build: "Builds",
         settings: "Settings",
+        about: "About",
     },
     macros: Macros {
         select_title: "Select Stratagems for Slot",
@@ -524,6 +579,29 @@ pub static EN: Tr = Tr {
         toast_done: "Done",
         toast_error: "Error",
     },
+    about: About {
+        title: "About",
+        app_name: "Macro Helldivers 2",
+        description: "Stratagem macros for Helldivers 2: four slots with shortcuts, three fixed supports, an in-game overlay and a build generator. Native Rust on Win32, a single process, and it never touches the game process.",
+        author: "Author",
+        license: "License",
+        license_value: "Personal use, credit required",
+        stack: "Technology",
+        links: "Links",
+        link_repo: "Repository",
+        link_releases: "Download the latest version",
+        link_issues: "Report a problem",
+        credits: "Credits",
+        source_wiki: "helldivers.wiki.gg",
+        source_wiki_desc: "Stratagems, codes and equipment come from the community wiki.",
+        source_meta: "helldive.live",
+        source_meta_desc: "The Meta sub-tab statistics come from here, by faction and difficulty.",
+        disclaimer: "A fan project, not affiliated with Arrowhead Game Studios or Sony. Helldivers and the other marks belong to their owners.",
+        open: "Open",
+        files: "Your data",
+        files_desc: "Preferences, saved builds and the log live in this folder. It survives an uninstall.",
+        open_folder: "Open folder",
+    },
     overlay: Overlay {
         warning_title: "Warning",
         fullscreen_warning: "The game is in \"Fullscreen\" mode: Windows minimizes it whenever \
@@ -551,6 +629,8 @@ mod tests {
     fn both_languages_resolve() {
         assert_eq!(tr(Language::Pt).tabs.settings, "Configurações");
         assert_eq!(tr(Language::En).tabs.settings, "Settings");
+        assert_eq!(tr(Language::Pt).tabs.about, "Sobre");
+        assert_eq!(tr(Language::En).tabs.about, "About");
         assert_eq!(language_name(Language::Pt), "Português");
         assert_eq!(language_name(Language::En), "English");
     }
@@ -622,6 +702,22 @@ mod tests {
                 t.tabs.macro_tab,
                 t.tabs.build,
                 t.tabs.settings,
+                t.tabs.about,
+                t.about.app_name,
+                t.about.description,
+                t.about.author,
+                t.about.license,
+                t.about.license_value,
+                t.about.stack,
+                t.about.link_repo,
+                t.about.link_releases,
+                t.about.link_issues,
+                t.about.source_wiki_desc,
+                t.about.source_meta_desc,
+                t.about.disclaimer,
+                t.about.open,
+                t.about.files_desc,
+                t.about.open_folder,
                 t.macros.select_title,
                 t.macros.others,
                 t.macros.listening,
