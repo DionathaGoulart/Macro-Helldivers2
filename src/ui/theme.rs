@@ -115,24 +115,25 @@ impl Color {
 }
 
 /// Paleta bruta (§2.1). É o único lugar do app com hex de cor.
+///
+/// A identidade vem do logo: amarelo `#fbee23` e preto `#000000`. O claro é
+/// amarelo com preto de apoio; o escuro, o contrário.
 pub mod raw {
     use super::Color;
 
-    pub const CREAM: Color = Color::rgb(0xF2EFE7);
+    pub const YELLOW: Color = Color::rgb(0xFBEE23);
+    pub const YELLOW_RAISED: Color = Color::rgb(0xFDF699);
+    pub const BLACK: Color = Color::rgb(0x000000);
+    pub const BLACK_RAISED: Color = Color::rgb(0x141414);
     pub const WHITE: Color = Color::rgb(0xFFFFFF);
-    pub const INK: Color = Color::rgb(0x1A0A0A);
-    pub const NOIR: Color = Color::rgb(0x121212);
-    pub const NOIR_RAISED: Color = Color::rgb(0x1A1A1A);
-    pub const NEAR_BLACK: Color = Color::rgb(0x0D0D0D);
-    pub const CRIMSON: Color = Color::rgb(0xDC143C);
-    pub const CRIMSON_DEEP: Color = Color::rgb(0xC8102E);
-    pub const ROSE: Color = Color::rgb(0xE8729A);
     pub const INFO: Color = Color::rgb(0x2563EB);
     pub const SUCCESS: Color = Color::rgb(0x16A34A);
     pub const WARNING: Color = Color::rgb(0xD97706);
     pub const ERROR: Color = Color::rgb(0xDC2626);
-    pub const SUCCESS_DEEP: Color = Color::rgb(0x15803D);
-    pub const WARNING_DEEP: Color = Color::rgb(0xB45309);
+    pub const INFO_DEEP: Color = Color::rgb(0x1D4ED8);
+    pub const SUCCESS_DEEP: Color = Color::rgb(0x166534);
+    pub const WARNING_DEEP: Color = Color::rgb(0x92400E);
+    pub const ERROR_DEEP: Color = Color::rgb(0xB91C1C);
     pub const INFO_SOFT: Color = Color::rgb(0x60A5FA);
     pub const SUCCESS_SOFT: Color = Color::rgb(0x4ADE80);
     pub const WARNING_SOFT: Color = Color::rgb(0xFBBF24);
@@ -204,71 +205,73 @@ impl Palette {
 /// Opacidade da scanline sobre a cor base do tema (§4.4).
 const SCANLINE_OPACITY: f32 = 0.3;
 
-/// `crimson`: o claro (`color-scheme: light`).
+/// `crimson`: o claro (`color-scheme: light`). Amarelo na frente, preto de
+/// apoio: fundo amarelo, moldura, texto e fill de ênfase pretos.
 pub static CRIMSON: Palette = Palette {
-    base_100: raw::CREAM,
-    base_200: raw::WHITE,
-    base_300: raw::INK,
-    content: raw::INK,
-    muted: raw::INK.faded(0.6),
-    accent: raw::CRIMSON,
-    accent_content: raw::WHITE,
-    accent_text: raw::CRIMSON_DEEP,
+    base_100: raw::YELLOW,
+    base_200: raw::YELLOW_RAISED,
+    base_300: raw::BLACK,
+    content: raw::BLACK,
+    muted: raw::BLACK.faded(0.6),
+    accent: raw::BLACK,
+    accent_content: raw::YELLOW,
+    accent_text: raw::BLACK,
     info: Status {
         fill: raw::INFO,
         content: raw::WHITE,
-        text: raw::INFO,
+        text: raw::INFO_DEEP,
     },
     success: Status {
         fill: raw::SUCCESS,
-        content: raw::INK,
+        content: raw::BLACK,
         text: raw::SUCCESS_DEEP,
     },
     warning: Status {
         fill: raw::WARNING,
-        content: raw::INK,
+        content: raw::BLACK,
         text: raw::WARNING_DEEP,
     },
     error: Status {
         fill: raw::ERROR,
         content: raw::WHITE,
-        text: raw::ERROR,
+        text: raw::ERROR_DEEP,
     },
-    shadow: raw::INK,
+    shadow: raw::BLACK,
     scanline: raw::SCANLINE_LIGHT.faded(SCANLINE_OPACITY),
 };
 
-/// `rose`: o escuro (`color-scheme: dark`), padrão do app.
+/// `rose`: o escuro (`color-scheme: dark`), padrão do app. Preto na frente,
+/// amarelo de apoio: moldura, texto, ênfase e sombra amarelos.
 pub static ROSE: Palette = Palette {
-    base_100: raw::NOIR,
-    base_200: raw::NOIR_RAISED,
-    base_300: raw::CREAM,
-    content: raw::CREAM,
-    muted: raw::CREAM.faded(0.6),
-    accent: raw::ROSE,
-    accent_content: raw::NEAR_BLACK,
-    accent_text: raw::ROSE,
+    base_100: raw::BLACK,
+    base_200: raw::BLACK_RAISED,
+    base_300: raw::YELLOW,
+    content: raw::YELLOW,
+    muted: raw::YELLOW.faded(0.6),
+    accent: raw::YELLOW,
+    accent_content: raw::BLACK,
+    accent_text: raw::YELLOW,
     info: Status {
         fill: raw::INFO_SOFT,
-        content: raw::NEAR_BLACK,
+        content: raw::BLACK,
         text: raw::INFO_SOFT,
     },
     success: Status {
         fill: raw::SUCCESS_SOFT,
-        content: raw::NEAR_BLACK,
+        content: raw::BLACK,
         text: raw::SUCCESS_SOFT,
     },
     warning: Status {
         fill: raw::WARNING_SOFT,
-        content: raw::NEAR_BLACK,
+        content: raw::BLACK,
         text: raw::WARNING_SOFT,
     },
     error: Status {
         fill: raw::ERROR_SOFT,
-        content: raw::NEAR_BLACK,
+        content: raw::BLACK,
         text: raw::ERROR_SOFT,
     },
-    shadow: raw::ROSE,
+    shadow: raw::YELLOW,
     scanline: raw::SCANLINE_DARK.faded(SCANLINE_OPACITY),
 };
 
@@ -445,10 +448,10 @@ mod tests {
 
     #[test]
     fn hex_becomes_normalized_channels() {
-        let rose = raw::ROSE;
-        assert!(close(rose.r, 0xE8 as f32 / 255.0));
-        assert!(close(rose.g, 0x72 as f32 / 255.0));
-        assert!(close(rose.b, 0x9A as f32 / 255.0));
+        let rose = raw::YELLOW;
+        assert!(close(rose.r, 0xFB as f32 / 255.0));
+        assert!(close(rose.g, 0xEE as f32 / 255.0));
+        assert!(close(rose.b, 0x23 as f32 / 255.0));
         assert!(close(rose.a, 1.0));
 
         assert!(close(Color::rgba(0xFFFFFF, 0.05).a, 0.05));
@@ -459,7 +462,7 @@ mod tests {
 
     #[test]
     fn mixing_walks_from_one_color_to_the_other() {
-        let (from, to) = (raw::NOIR, raw::CREAM);
+        let (from, to) = (raw::BLACK, raw::YELLOW);
         assert_eq!(from.mix(to, 0.0), from);
         assert_eq!(from.mix(to, 1.0), to);
 
@@ -473,7 +476,7 @@ mod tests {
     fn compositing_over_an_opaque_backdrop_stays_opaque() {
         let solid = ROSE.hover_fill().over(ROSE.base_100);
         assert!(close(solid.a, 1.0));
-        // 8% de creme clareia o noir um pouco, sem chegar perto do creme.
+        // 8% de amarelo clareia o preto um pouco, sem chegar perto do amarelo.
         assert!(solid.r > ROSE.base_100.r && solid.r < 0.2);
     }
 
@@ -486,26 +489,29 @@ mod tests {
     /// §2.2: os dois temas copiados do guia, papel por papel.
     #[test]
     fn the_two_themes_map_the_raw_palette_like_the_styleguide() {
-        assert_eq!(CRIMSON.base_100, raw::CREAM);
-        assert_eq!(CRIMSON.base_200, raw::WHITE);
-        assert_eq!(CRIMSON.base_300, raw::INK);
-        assert_eq!(CRIMSON.accent, raw::CRIMSON);
-        assert_eq!(CRIMSON.shadow, raw::INK);
+        // Claro: amarelo na frente, preto de apoio.
+        assert_eq!(CRIMSON.base_100, raw::YELLOW);
+        assert_eq!(CRIMSON.base_200, raw::YELLOW_RAISED);
+        assert_eq!(CRIMSON.base_300, raw::BLACK);
+        assert_eq!(CRIMSON.accent, raw::BLACK);
+        assert_eq!(CRIMSON.accent_content, raw::YELLOW);
+        assert_eq!(CRIMSON.shadow, raw::BLACK);
 
-        assert_eq!(ROSE.base_100, raw::NOIR);
-        assert_eq!(ROSE.base_200, raw::NOIR_RAISED);
+        // Escuro: o contrário.
+        assert_eq!(ROSE.base_100, raw::BLACK);
+        assert_eq!(ROSE.base_200, raw::BLACK_RAISED);
         // No escuro a moldura é a cor clara do texto, e a sombra é accent.
-        assert_eq!(ROSE.base_300, raw::CREAM);
+        assert_eq!(ROSE.base_300, raw::YELLOW);
         assert_eq!(ROSE.base_300, ROSE.content);
-        assert_eq!(ROSE.shadow, raw::ROSE);
+        assert_eq!(ROSE.accent, raw::YELLOW);
+        assert_eq!(ROSE.shadow, raw::YELLOW);
     }
 
     /// §2.4: texto a 4.5:1, conferido nos dois temas.
     ///
     /// Texto neutro e accent valem nos dois fundos. Os `-text` de status foram
     /// conferidos pelo guia sobre a superfície elevada (é onde status aparece:
-    /// dentro de painel, toast e banner). Sobre o creme da página o verde e o
-    /// âmbar escuros ficam em 4.4:1, então a página nunca recebe texto de
+    /// dentro de painel, toast e banner). A página nunca recebe texto de
     /// status: lá o status vai num quadrado de cor, com o rótulo em `content`.
     #[test]
     fn every_text_token_passes_aa_where_it_is_used() {
