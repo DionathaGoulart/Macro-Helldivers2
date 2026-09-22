@@ -1,5 +1,5 @@
-//! Aba de builds: opções de sorteio, as sub-abas Meta/Aleatória/Personalizada e
-//! a build exibida.
+//! Aba de builds: opções de sorteio, as sub-abas Meta/Aleatória/Personalizada/
+//! Salvas e a build exibida.
 //!
 //! Como as demais abas, a tela é uma função do estado: entram settings, slots e
 //! a build atual, saem nós e áreas clicáveis. As regras de sorteio e de montagem
@@ -14,7 +14,10 @@
 //!
 //! [`set_meta`]: BuildTab::set_meta
 
-use crate::builds::{self, Build, Locks, MetaLists, Rules};
+use rand::seq::IndexedRandom;
+use rand::Rng;
+
+use crate::builds::{self, Build, Locks, MetaLists, Rules, SaveError};
 use crate::data::{self, EquipSlot, Equipment, GameData, Item, StratMeta, Stratagem};
 use crate::i18n::{self, Tr};
 use crate::loadouts::{self, Loadout};
@@ -28,7 +31,8 @@ use crate::ui::toolkit::{
     Ui, Weight,
 };
 use crate::ui::widgets::{
-    self, styles, ButtonVariant, CardHeader, CardState, ChipLayout, Glyph, ItemCard, Tone,
+    self, styles, ButtonVariant, CardHeader, CardMotion, CardState, Glyph, ItemCard, ReelFrame,
+    Tone,
 };
 
 /// `screen-pad` da coluna de conteúdo.
@@ -70,8 +74,18 @@ const GRID_GAP: f32 = 12.0;
 /// Colunas do equipamento, e o espaço entre as linhas de campos.
 const EQUIP_COLS: usize = 4;
 const EQUIP_ROW_GAP: f32 = 12.0;
-/// Espaço entre os chips das builds salvas e a linha do nome.
-const SAVED_ROW_GAP: f32 = 16.0;
+/// Linha de uma build salva: os quatro ícones, o nome e as ações.
+const SAVED_ROW_HEIGHT: f32 = 64.0;
+const SAVED_ROW_GAP: f32 = 10.0;
+const SAVED_ROW_PADDING: f32 = 12.0;
+const SAVED_ICON: f32 = 40.0;
+const SAVED_ICON_GAP: f32 = 6.0;
+/// Estado vazio da lista.
+const SAVED_EMPTY_HEIGHT: f32 = 64.0;
+/// Linha de estado do card da build atual: cabe o `icon-btn` de descartar.
+const STATUS_HEIGHT: f32 = widgets::ICON_BTN_HEIGHT;
+/// Folga do texto dos botões do salvar.
+const BUTTON_PADDING: f32 = 20.0;
 /// × que esvazia um slot em edição, e o de limpar a busca.
 const CLEAR_SIZE: f32 = 20.0;
 const SEARCH_CLEAR_SIZE: f32 = 22.0;
@@ -98,29 +112,55 @@ const META_NEW_WIDTH: f32 = 38.0;
 const META_CHANGE_WIDTH: f32 = 40.0;
 const META_PERCENT_WIDTH: f32 = 46.0;
 
-/// Largura do campo de nome da build e do botão de salvar. Os chips em si vêm
-/// de `widgets`: o painel do overlay mostra a mesma fileira.
-const NAME_WIDTH: f32 = 200.0;
+/// Largura mínima dos botões do salvar.
 const SAVE_WIDTH: f32 = 120.0;
 /// `maxLength={24}` do campo de nome da v1.
 const NAME_MAX_CHARS: usize = 24;
 
-/// Sub-abas da tela, na ordem da v1.
+/// Confirmação inline de ação destrutiva (§6.8): o botão vira `CONFIRMAR?`
+/// por 3s e volta.
+const CONFIRM_MS: u32 = 3_000;
+/// Toast do salvar, aplicar e excluir: o mesmo tempo do toast do backup.
+const NOTICE_MS: u32 = 2_500;
+const TOAST_MARGIN: f32 = 20.0;
+
+/// Sorteio animado: o primeiro card gira por `SPIN_MS`, cada card seguinte para
+/// `SPIN_STAGGER_MS` depois do anterior, e a chegada dura `LAND_MS`. O último
+/// dos 11 cards assenta em pouco mais de um segundo.
+const SPIN_MS: u32 = 480;
+const SPIN_STAGGER_MS: u32 = 55;
+const LAND_MS: u32 = 220;
+/// Quadros do rolo, contando o item que sai e o sorteado.
+const REEL_FRAMES: usize = 6;
+/// Itens sorteados só para passar pelo rolo de cada card. Poucos de propósito:
+/// cada ícone novo é um bitmap de 256px decodificado e guardado no cache.
+const REEL_SAMPLES: usize = 2;
+
+/// Deslize da página até a build recém-sorteada.
+const REVEAL_MS: u32 = 320;
+const REVEAL_MARGIN: f32 = 12.0;
+/// A build conta como à vista quando o topo dela está pelo menos isto acima da
+/// borda de baixo: aí a página não se mexe.
+const REVEAL_VISIBLE: f32 = 220.0;
+
+/// Sub-abas da tela: as três da v1 e a lista das builds salvas.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum SubTab {
     Meta,
     Random,
     Custom,
+    Saved,
 }
 
 impl SubTab {
-    const ALL: [SubTab; 3] = [SubTab::Meta, SubTab::Random, SubTab::Custom];
+    const ALL: [SubTab; 4] = [SubTab::Meta, SubTab::Random, SubTab::Custom, SubTab::Saved];
 
     fn label(self, tr: &'static Tr) -> &'static str {
         match self {
             SubTab::Meta => tr.build.sub_meta,
             SubTab::Random => tr.build.sub_random,
             SubTab::Custom => tr.build.sub_custom,
+            SubTab::Saved => tr.build.sub_saved,
         }
     }
 }
@@ -136,12 +176,15 @@ pub enum Action {
     SlotsChanged(Slots),
     /// As builds salvas mudaram: gravar `loadouts.json` e avisar o overlay.
     LoadoutsChanged,
-    /// Uma build foi salva: além de gravar, o campo de nome é esvaziado.
-    Saved,
+    /// Uma build foi gravada: além de salvar o arquivo, o campo de nome passa a
+    /// mostrar o nome com que ela ficou.
+    Saved(String),
+    /// Uma build salva foi para os slots de macro; o campo de nome mostra qual.
+    Applied { slots: Slots, name: String },
     /// Trazer um `EDIT` da aba para a frente.
     FocusEdit(Id),
-    /// Esvaziar um `EDIT` da aba.
-    ClearEdit(Id),
+    /// Trocar o texto de `EDIT`s da aba (esvaziar é trocar por "").
+    SetEdits(Vec<(Id, String)>),
 }
 
 /// O que a aba precisa saber do resto do app.
@@ -191,6 +234,11 @@ fn meta_generate_id() -> Id {
 
 fn apply_id() -> Id {
     id("build.apply")
+}
+
+/// "Rolar de novo" da barra da build atual.
+fn reroll_id() -> Id {
+    id("build.reroll")
 }
 
 fn import_slots_id() -> Id {
@@ -256,12 +304,31 @@ fn scrim_id() -> Id {
     id("build.dropdown.scrim")
 }
 
-fn loadout_id(index: usize) -> Id {
-    id_at("build.loadout", index)
+fn loadout_apply_id(index: usize) -> Id {
+    id_at("build.loadout.apply", index)
+}
+
+fn loadout_edit_id(index: usize) -> Id {
+    id_at("build.loadout.edit", index)
 }
 
 fn loadout_delete_id(index: usize) -> Id {
     id_at("build.loadout.delete", index)
+}
+
+/// Pulso do rolo de um card: estratagemas de 0 a 3, equipamento depois.
+fn roll_id(card: usize) -> Id {
+    id_at("build.roll", card)
+}
+
+/// Pulso dos 3s da confirmação inline.
+fn confirm_flash_id() -> Id {
+    id("build.confirm")
+}
+
+/// Pulso do toast.
+fn notice_flash_id() -> Id {
+    id("build.notice")
 }
 
 /// `TENTAR DE NOVO` do banner de erro da sub-aba Meta.
@@ -277,6 +344,18 @@ pub fn name_id() -> Id {
 
 fn save_id() -> Id {
     id("build.save")
+}
+
+fn save_changes_id() -> Id {
+    id("build.save.changes")
+}
+
+fn save_as_new_id() -> Id {
+    id("build.save.new")
+}
+
+fn discard_id() -> Id {
+    id("build.discard")
 }
 
 // --- Estilos ---
@@ -334,6 +413,45 @@ impl MetaView {
     }
 }
 
+/// Ação destrutiva esperando o segundo clique (§6.8).
+#[derive(Debug, Clone, PartialEq, Eq)]
+enum Confirm {
+    /// Salvar com o nome de uma build que já existe (id da dona).
+    Replace(String),
+    /// Excluir a build salva de tal id.
+    Delete(String),
+}
+
+/// Como a build exibida está em relação às salvas.
+#[derive(Debug, Clone, Copy)]
+enum SaveState<'a> {
+    /// Build nova, sem build salva por trás.
+    New,
+    /// Veio de uma build salva e continua igual a ela.
+    Saved(&'a Loadout),
+    /// Veio de uma build salva e mudou: itens ou o nome no campo.
+    Changed(&'a Loadout),
+}
+
+/// Sorteio em animação.
+struct Roll {
+    /// Os pulsos ainda não foram acesos: quem os dispara é a próxima construção,
+    /// com o relógio da passagem.
+    pending: bool,
+    /// Quadros do rolo de cada card, na ordem da tela (os 4 estratagemas, depois
+    /// o equipamento). Vazio é card parado: travado, ou sem item.
+    reels: Vec<Vec<ReelFrame>>,
+}
+
+/// Duração do pulso do card: o giro, o atraso dos anteriores e a chegada.
+fn spin_ms(card: usize) -> u32 {
+    SPIN_MS + SPIN_STAGGER_MS * card as u32
+}
+
+fn roll_ms(card: usize) -> u32 {
+    spin_ms(card) + LAND_MS
+}
+
 /// Estado da aba entre passagens de construção.
 pub struct BuildTab {
     sub: SubTab,
@@ -356,8 +474,23 @@ pub struct BuildTab {
     /// Builds salvas, lidas do disco na primeira visita à aba.
     loadouts: Vec<Loadout>,
     loaded: bool,
-    /// Nome digitado para a próxima build salva.
+    /// Texto do campo de nome da build atual.
     name: String,
+    /// Build salva de onde a exibida veio (aplicada, editada ou recém-salva),
+    /// pelo id. É com ela que o card da build atual compara para dizer se há
+    /// alteração a salvar; sortear outra build desfaz o vínculo.
+    linked: Option<String>,
+    /// O nome no campo é o de outra build salva: o salvar recusou.
+    taken: bool,
+    /// Ação destrutiva armada, e se o pulso dos 3s ainda precisa ser aceso.
+    confirm: Option<Confirm>,
+    confirm_pending: bool,
+    /// Texto do toast, e se o pulso dele ainda precisa ser aceso.
+    notice: Option<String>,
+    notice_pending: bool,
+    roll: Option<Roll>,
+    /// Levar a página até a build na próxima construção.
+    reveal: bool,
 }
 
 impl Default for BuildTab {
@@ -383,6 +516,14 @@ impl BuildTab {
             loadouts: Vec::new(),
             loaded: false,
             name: String::new(),
+            linked: None,
+            taken: false,
+            confirm: None,
+            confirm_pending: false,
+            notice: None,
+            notice_pending: false,
+            roll: None,
+            reveal: false,
         }
     }
 
@@ -402,7 +543,30 @@ impl BuildTab {
     /// Nome novo vindo do `EDIT` nativo.
     pub fn set_name(&mut self, text: String) {
         // O campo da v1 tinha `maxLength={24}`.
-        self.name = text.chars().take(NAME_MAX_CHARS).collect();
+        let name: String = text.chars().take(NAME_MAX_CHARS).collect();
+        if name == self.name {
+            return;
+        }
+        self.name = name;
+        // Nome novo: o aviso de nome ocupado e a pergunta de substituir eram
+        // sobre o anterior.
+        self.taken = false;
+        if matches!(self.confirm, Some(Confirm::Replace(_))) {
+            self.confirm = None;
+        }
+    }
+
+    /// Texto que a aba tem para um `EDIT` dela. A janela o põe no filho nativo
+    /// quando o cria: um nome preenchido pela aba antes de o campo existir não
+    /// pode aparecer em branco.
+    pub fn edit_text(&self, id: Id) -> Option<&str> {
+        if id == search_id() {
+            Some(&self.search)
+        } else if id == name_id() {
+            Some(&self.name)
+        } else {
+            None
+        }
     }
 
     /// Builds salvas, para a janela gravá-las depois de uma mudança.
@@ -414,6 +578,13 @@ impl BuildTab {
     pub fn reload_loadouts(&mut self) {
         self.loadouts = loadouts::load_loadouts();
         self.loaded = true;
+        // O arquivo novo pode não ter mais a build vinculada, nem a armada.
+        if let Some(id) = &self.linked {
+            if builds::index_of(&self.loadouts, id).is_none() {
+                self.linked = None;
+            }
+        }
+        self.confirm = None;
     }
 
     /// Primeira visita à aba: as builds salvas saem do disco.
@@ -466,6 +637,7 @@ impl BuildTab {
             self.dirty = false;
         }
         self.ensure_loaded();
+        self.tick(ui);
         // Primeira visita à aba: é aqui que `equipment.json` sai do disco (R1).
         let equipment = data::equipment();
 
@@ -483,7 +655,7 @@ impl BuildTab {
         y += SUBTAB_HEIGHT + SECTION_GAP;
 
         // As opções valem para os dois sorteios, e não para a montagem à mão.
-        if self.sub != SubTab::Custom {
+        if matches!(self.sub, SubTab::Meta | SubTab::Random) {
             let height = options_height();
             self.options_card(ui, Rect::new(view.x, y, width, height), ctx);
             y += height + SECTION_GAP;
@@ -517,15 +689,30 @@ impl BuildTab {
                 );
                 y += height + SECTION_GAP;
             }
+            SubTab::Saved => {
+                let height = self.saved_height(measure, width, ctx);
+                self.saved_card(ui, measure, Rect::new(view.x, y, width, height), view, ctx);
+                y += height + SECTION_GAP;
+            }
         }
 
-        // As builds salvas ficam entre o sorteio e a build exibida, como na v1.
-        let chips = self.chip_layout(measure, width - widgets::CARD_PADDING * 2.0);
-        let height = saved_height(&chips);
-        self.saved_card(ui, Rect::new(view.x, y, width, height), &chips, ctx);
-        y += height + SECTION_GAP;
+        // A build exibida: o card do salvar em cima (é o que se faz com ela) e
+        // os itens embaixo. Na lista das salvas ela não aparece: lá cada linha
+        // já mostra a sua.
+        if let Some(build) = self.build.clone().filter(|_| self.sub != SubTab::Saved) {
+            if std::mem::take(&mut self.reveal) {
+                reveal(ui, view, y, offset);
+            }
+            let height = current_height();
+            self.current_card(
+                ui,
+                measure,
+                Rect::new(view.x, y, width, height),
+                &build,
+                ctx,
+            );
+            y += height + SECTION_GAP;
 
-        if let Some(build) = self.build.clone() {
             let height = stratagems_height(measure, width, &build, ctx);
             self.stratagems_card(
                 ui,
@@ -564,13 +751,76 @@ impl BuildTab {
         if let Some(slot) = self.open {
             self.dropdown_list(ui, area, slot, ctx, equipment);
         }
+        self.notice_toast(ui, area, ctx);
     }
 
-    /// Grupo das três sub-abas, centralizado: um controle segmentado com
-    /// moldura e sombra `sm`.
+    /// Relógio da aba: acende os pulsos que um clique pediu (o clique não tem o
+    /// `Ui`) e encerra o que já venceu, a confirmação de 3s e o sorteio.
+    fn tick(&mut self, ui: &mut Ui) {
+        if std::mem::take(&mut self.confirm_pending) {
+            ui.flash(confirm_flash_id(), CONFIRM_MS);
+        }
+        if self.confirm.is_some() && ui.anim(confirm_flash_id(), CONFIRM_MS) <= 0.0 {
+            self.confirm = None;
+        }
+
+        if let Some(roll) = &mut self.roll {
+            if std::mem::take(&mut roll.pending) && !ui.reduced_motion() {
+                for (card, reel) in roll.reels.iter().enumerate() {
+                    if !reel.is_empty() {
+                        ui.flash(roll_id(card), roll_ms(card));
+                    }
+                }
+            }
+        }
+        let done = self.roll.as_ref().is_some_and(|roll| {
+            roll.reels
+                .iter()
+                .enumerate()
+                .all(|(card, reel)| reel.is_empty() || ui.anim(roll_id(card), roll_ms(card)) <= 0.0)
+        });
+        if done {
+            self.roll = None;
+        }
+    }
+
+    /// Em que ponto do sorteio está o card: `Spin` com o rolo descendo e
+    /// desacelerando até o item novo, `Land` logo depois de parar.
+    fn card_motion(&self, ui: &mut Ui, card: usize) -> CardMotion<'_> {
+        let Some(frames) = self
+            .roll
+            .as_ref()
+            .and_then(|roll| roll.reels.get(card))
+            .filter(|reel| !reel.is_empty())
+        else {
+            return CardMotion::Still;
+        };
+        let duration = roll_ms(card);
+        let left = ui.anim(roll_id(card), duration);
+        if left <= 0.0 {
+            return CardMotion::Still;
+        }
+        let elapsed = (1.0 - left) * duration as f32;
+        let spin = spin_ms(card) as f32;
+        if elapsed < spin {
+            // O ease-out do guia, sem overshoot: rápido no começo, parando
+            // exatamente no último quadro.
+            let travel = (frames.len() - 1) as f32;
+            CardMotion::Spin {
+                frames,
+                position: travel * motion::ease_out(elapsed / spin),
+            }
+        } else {
+            CardMotion::Land((elapsed - spin) / LAND_MS as f32)
+        }
+    }
+
+    /// Grupo das sub-abas, centralizado: um controle segmentado com moldura e
+    /// sombra `sm`. A das salvas leva a contagem.
     fn sub_tabs(&self, ui: &mut Ui, rect: Rect, ctx: &Ctx) {
         let palette = theme::palette();
-        let width = SUBTAB_WIDTH * SubTab::ALL.len() as f32 + SUBTAB_PADDING * 2.0;
+        let count = SubTab::ALL.len() as f32;
+        let width = SUBTAB_WIDTH * count + SUBTAB_PADDING * 2.0;
         let group = rect.centered(width, SUBTAB_HEIGHT);
         ui.fill(
             group.translate(theme::SHADOW_SM, theme::SHADOW_SM),
@@ -582,18 +832,18 @@ impl BuildTab {
         let inner = group.inset(SUBTAB_PADDING + 1.0);
         for (index, sub) in SubTab::ALL.into_iter().enumerate() {
             let cell = Rect::new(
-                inner.x + (inner.w / 3.0) * index as f32,
+                inner.x + (inner.w / count) * index as f32,
                 inner.y,
-                inner.w / 3.0,
+                inner.w / count,
                 inner.h,
             );
-            sub_tab(
-                ui,
-                sub_tab_id(index),
-                cell,
-                sub.label(ctx.tr()),
-                self.sub == sub,
-            );
+            let label = match sub {
+                SubTab::Saved if !self.loadouts.is_empty() => {
+                    format!("{} ({})", sub.label(ctx.tr()), self.loadouts.len())
+                }
+                _ => sub.label(ctx.tr()).to_string(),
+            };
+            sub_tab(ui, sub_tab_id(index), cell, &label, self.sub == sub);
         }
     }
 
@@ -788,7 +1038,7 @@ impl BuildTab {
                     measure,
                     row,
                     item.nome(),
-                    raster_icon(item.imagem()).as_deref(),
+                    Some(item.imagem()),
                     pick.stat,
                 );
             }
@@ -803,9 +1053,10 @@ impl BuildTab {
             .enumerate()
         {
             let row = meta_row(&mut cursor, index);
-            // O ícone da passiva vem em SVG, que o decodificador não lê: a linha
-            // mostra só o nome, como no legado.
-            meta_item_row(ui, measure, row, &pick.item, None, pick.stat);
+            let icon = equipment
+                .and_then(|equipment| equipment.passive(&pick.item))
+                .map(|passive| passive.imagem.as_str());
+            meta_item_row(ui, measure, row, &pick.item, icon, pick.stat);
         }
     }
 
@@ -1220,60 +1471,383 @@ impl BuildTab {
 
     // --- Builds salvas ---
 
-    /// Onde cada chip cai, respeitando a largura disponível.
-    fn chip_layout(&self, measure: &mut dyn Measure, width: f32) -> ChipLayout {
-        widgets::chip_layout(
-            measure,
-            self.loadouts.iter().map(|loadout| loadout.name.as_str()),
-            width,
-        )
+    /// A build exibida em relação às salvas.
+    fn save_state(&self, build: &Build, data: &GameData) -> SaveState<'_> {
+        let Some(loadout) = self
+            .linked
+            .as_deref()
+            .and_then(|id| builds::index_of(&self.loadouts, id))
+            .map(|index| &self.loadouts[index])
+        else {
+            return SaveState::New;
+        };
+        let typed = self.name.trim();
+        let renamed = !typed.is_empty() && typed != loadout.name;
+        match builds::matches(loadout, build, data) && !renamed {
+            true => SaveState::Saved(loadout),
+            false => SaveState::Changed(loadout),
+        }
     }
 
-    fn saved_card(&self, ui: &mut Ui, rect: Rect, layout: &ChipLayout, ctx: &Ctx) {
-        let tr = ctx.tr();
-        let mut content = widgets::card(ui, rect, Some(CardHeader::new(tr.build.saved, "db")));
+    /// Dá para rolar de novo daqui: nas sub-abas de sorteio, com o que sortear.
+    fn can_reroll(&self) -> bool {
+        match self.sub {
+            SubTab::Random => true,
+            SubTab::Meta => self.stats.lists().is_some(),
+            _ => false,
+        }
+    }
 
-        let area = content.cut_top(layout.height);
-        if self.loadouts.is_empty() {
-            empty_state(ui, area, tr.macros.nothing_here, tr.build.saved_empty);
+    /// Card da build atual: aplicar e rolar de novo na barra, o estado dela em
+    /// relação às salvas e a linha do salvar.
+    fn current_card(
+        &self,
+        ui: &mut Ui,
+        measure: &mut dyn Measure,
+        rect: Rect,
+        build: &Build,
+        ctx: &Ctx,
+    ) {
+        let tr = ctx.tr();
+        let palette = theme::palette();
+        let mut content = widgets::card(ui, rect, Some(CardHeader::new(tr.build.current, "sys")));
+
+        let mut cursor = widgets::card_actions(rect);
+        let width = widgets::icon_btn_width(measure, tr.build.apply_stratagems);
+        widgets::icon_btn(
+            ui,
+            apply_id(),
+            cursor.cut_right(width),
+            Glyph::Text(tr.build.apply_stratagems),
+            Tone::Accent,
+        );
+        if self.can_reroll() {
+            cursor.cut_right(8.0);
+            let width = widgets::icon_btn_width(measure, tr.build.reroll);
+            widgets::icon_btn(
+                ui,
+                reroll_id(),
+                cursor.cut_right(width),
+                Glyph::Text(tr.build.reroll),
+                Tone::Plain,
+            );
+        }
+
+        let state = self.save_state(build, ctx.data);
+        let replacing = matches!(self.confirm, Some(Confirm::Replace(_)));
+        let mut status = content.cut_top(STATUS_HEIGHT);
+        if matches!(state, SaveState::Changed(_)) {
+            let width = widgets::icon_btn_width(measure, tr.build.discard);
+            widgets::icon_btn(
+                ui,
+                discard_id(),
+                status.cut_right(width),
+                Glyph::Text(tr.build.discard),
+                Tone::Plain,
+            );
+            status.cut_right(12.0);
+        }
+        let quoted = |name: &str| format!("\u{201c}{name}\u{201d}");
+        let (color, text) = if replacing {
+            (palette.error.fill, tr.build.status_replace.to_string())
+        } else if self.taken {
+            (palette.error.fill, tr.build.status_taken.to_string())
+        } else if !build.has_stratagem() {
+            (palette.warning.fill, tr.build.status_empty.to_string())
         } else {
-            let active = builds::active_loadout(&self.loadouts, ctx.slots, ctx.data);
-            for chip in &layout.chips {
-                widgets::loadout_chip(
+            match state {
+                SaveState::New => (palette.base_200, tr.build.status_new.to_string()),
+                SaveState::Saved(loadout) => (
+                    palette.success.fill,
+                    format!("{} {}", tr.build.status_saved, quoted(&loadout.name)),
+                ),
+                SaveState::Changed(loadout) => (
+                    palette.warning.fill,
+                    format!(
+                        "{} {} \u{00B7} {}",
+                        tr.build.status_editing,
+                        quoted(&loadout.name),
+                        tr.build.status_unsaved
+                    ),
+                ),
+            }
+        };
+        let square = status.cut_left(10.0).middle_row(10.0);
+        widgets::status_square(ui, square, color);
+        status.cut_left(8.0);
+        let style = styles::micro().middle();
+        ui.text(
+            status,
+            ellipsize(measure, &text.to_uppercase(), style, status.w),
+            style,
+            palette.content,
+        );
+        content.skip_top(LABEL_GAP);
+
+        // Campo à esquerda, botões à direita: a ação principal na ponta.
+        let mut row = content.cut_top(widgets::CONTROL_HEIGHT);
+        let can_save = build.has_stratagem();
+        match state {
+            SaveState::New => {
+                let (label, variant) = match (can_save, replacing) {
+                    (false, _) => (tr.build.save_build, ButtonVariant::Disabled),
+                    (true, true) => (tr.build.replace_build, ButtonVariant::Danger),
+                    (true, false) => (tr.build.save_build, ButtonVariant::Primary),
+                };
+                let button = row.cut_right(button_width(measure, label));
+                widgets::button(ui, save_id(), button, label, variant);
+            }
+            SaveState::Saved(_) | SaveState::Changed(_) => {
+                let changed = matches!(state, SaveState::Changed(_)) && can_save;
+                let label = tr.build.save_changes;
+                let button = row.cut_right(button_width(measure, label));
+                widgets::button(
                     ui,
-                    loadout_id(chip.index),
-                    Some(loadout_delete_id(chip.index)),
-                    chip.rect(area),
-                    &self.loadouts[chip.index].name,
-                    active == Some(chip.index),
+                    save_changes_id(),
+                    button,
+                    label,
+                    if changed {
+                        ButtonVariant::Primary
+                    } else {
+                        ButtonVariant::Disabled
+                    },
+                );
+                row.cut_right(widgets::CHIP_GAP);
+                let label = tr.build.save_as_new;
+                let button = row.cut_right(button_width(measure, label));
+                widgets::button(
+                    ui,
+                    save_as_new_id(),
+                    button,
+                    label,
+                    if can_save {
+                        ButtonVariant::Secondary
+                    } else {
+                        ButtonVariant::Disabled
+                    },
                 );
             }
         }
-        content.skip_top(SAVED_ROW_GAP);
-
-        // Nome e botão, encostados à direita.
-        let mut row = content.cut_top(widgets::CONTROL_HEIGHT);
-        let save = row.cut_right(SAVE_WIDTH);
         row.cut_right(widgets::CHIP_GAP);
-        let field = row.cut_right(NAME_WIDTH);
 
         let focused = ctx.focused_edit == Some(name_id());
         let placeholder = (self.name.is_empty() && !focused).then_some(tr.build.save_placeholder);
-        widgets::edit_host(ui, name_id(), field, focused, placeholder, 0.0);
+        widgets::edit_host(ui, name_id(), row, focused, placeholder, 0.0);
+    }
 
-        // Sem build na tela não há o que salvar: o botão fica `:disabled`.
-        let can_save = self.build.as_ref().is_some_and(Build::has_stratagem);
-        widgets::button(
-            ui,
-            save_id(),
-            save,
-            tr.build.save_build,
-            if can_save {
-                ButtonVariant::Primary
-            } else {
-                ButtonVariant::Disabled
-            },
+    fn saved_height(&self, measure: &mut dyn Measure, width: f32, ctx: &Ctx) -> f32 {
+        if self.loadouts.is_empty() {
+            return widgets::card_chrome(true) + SAVED_EMPTY_HEIGHT;
+        }
+        let inner = width - widgets::CARD_PADDING * 2.0;
+        let hint = measure
+            .text_size(ctx.tr().build.saved_hint, hint_style(), inner)
+            .1;
+        let count = self.loadouts.len() as f32;
+        widgets::card_chrome(true)
+            + hint
+            + LABEL_GAP
+            + 4.0
+            + count * SAVED_ROW_HEIGHT
+            + (count - 1.0) * SAVED_ROW_GAP
+    }
+
+    /// Sub-aba Salvas: a explicação e uma linha por build, com as ações dela.
+    /// Só as linhas dentro de `view` são construídas.
+    fn saved_card(
+        &self,
+        ui: &mut Ui,
+        measure: &mut dyn Measure,
+        rect: Rect,
+        view: Rect,
+        ctx: &Ctx,
+    ) {
+        let tr = ctx.tr();
+        let mut content = widgets::card(ui, rect, Some(CardHeader::new(tr.build.saved, "db")));
+        if self.loadouts.is_empty() {
+            empty_state(ui, content, tr.macros.nothing_here, tr.build.saved_empty);
+            return;
+        }
+
+        let height = measure
+            .text_size(tr.build.saved_hint, hint_style(), content.w)
+            .1;
+        ui.text(
+            content.cut_top(height),
+            tr.build.saved_hint,
+            hint_style(),
+            theme::palette().muted,
         );
+        content.skip_top(LABEL_GAP + 4.0);
+
+        let active = builds::active_loadout(&self.loadouts, ctx.slots, ctx.data);
+        for index in 0..self.loadouts.len() {
+            let row = content.cut_top(SAVED_ROW_HEIGHT);
+            content.skip_top(SAVED_ROW_GAP);
+            if row.bottom() < view.y || row.y > view.bottom() {
+                continue;
+            }
+            self.saved_row(ui, measure, row, index, active == Some(index), ctx);
+        }
+    }
+
+    /// Uma build salva: os quatro estratagemas, o nome com a etiqueta de
+    /// aplicada, o equipamento resumido e as três ações.
+    fn saved_row(
+        &self,
+        ui: &mut Ui,
+        measure: &mut dyn Measure,
+        rect: Rect,
+        index: usize,
+        active: bool,
+        ctx: &Ctx,
+    ) {
+        let tr = ctx.tr();
+        let palette = theme::palette();
+        let loadout = &self.loadouts[index];
+        ui.fill(rect, palette.base_100);
+        let mut inner = rect.inset_xy(SAVED_ROW_PADDING, 0.0);
+
+        // Ações, da direita para a esquerda. Excluir pede o segundo clique.
+        let confirming = matches!(&self.confirm, Some(Confirm::Delete(id)) if *id == loadout.id);
+        let delete_label = match confirming {
+            true => tr.build.confirm_delete,
+            false => tr.build.delete_build,
+        };
+        // O excluir já reserva a largura do "confirmar?": armar a pergunta não
+        // empurra os outros botões para fora do lugar do mouse.
+        let delete_width = widgets::icon_btn_width(measure, tr.build.delete_build)
+            .max(widgets::icon_btn_width(measure, tr.build.confirm_delete));
+        let actions = [
+            (
+                loadout_delete_id(index),
+                delete_label,
+                Tone::Danger,
+                delete_width,
+            ),
+            (
+                loadout_edit_id(index),
+                tr.build.edit_build,
+                Tone::Plain,
+                widgets::icon_btn_width(measure, tr.build.edit_build),
+            ),
+            (
+                loadout_apply_id(index),
+                tr.build.apply_build,
+                Tone::Accent,
+                widgets::icon_btn_width(measure, tr.build.apply_build),
+            ),
+        ];
+        for (id, label, tone, width) in actions {
+            let button = inner.cut_right(width).middle_row(widgets::ICON_BTN_HEIGHT);
+            widgets::icon_btn(ui, id, button, Glyph::Text(label), tone);
+            if id == loadout_delete_id(index) && confirming {
+                // O tempo que falta para a pergunta sumir.
+                let left = ui.anim(confirm_flash_id(), CONFIRM_MS);
+                ui.fill(
+                    Rect::new(button.x, button.bottom() + 3.0, button.w * left, 2.0),
+                    palette.error.fill,
+                );
+            }
+            inner.cut_right(8.0);
+        }
+        inner.cut_right(8.0);
+
+        let slots = loadouts::sanitize(&loadout.slot_ids, ctx.data);
+        for id in slots {
+            let cell = inner.cut_left(SAVED_ICON).middle_row(SAVED_ICON);
+            if let Some(strat) = id.and_then(|id| ctx.data.by_id(id)) {
+                ui.image(cell, format!("icons/{}", strat.imagem), 1.0);
+            }
+            ui.stroke(cell, theme::BORDER, palette.base_300);
+            inner.cut_left(SAVED_ICON_GAP);
+        }
+        inner.cut_left(8.0);
+
+        let mut text = inner.middle_row(34.0);
+        let mut line = text.cut_top(18.0);
+        let name_style = styles::label().middle();
+        let name = loadout.name.to_uppercase();
+        if active {
+            // `tag-accent` logo depois do nome.
+            let label = tr.build.in_slots.to_uppercase();
+            let tag_style = TextStyle::new(font::SIZE_TINY, Weight::Black)
+                .align(Align::Center)
+                .middle();
+            let tag_w = measure.text_size(&label, tag_style, f32::INFINITY).0 + 12.0;
+            let room = (line.w - tag_w - 8.0).max(0.0);
+            let name_w = measure
+                .text_size(&name, name_style, f32::INFINITY)
+                .0
+                .min(room);
+            let name_rect = line.cut_left(name_w);
+            ui.text(
+                name_rect,
+                ellipsize(measure, &name, name_style, name_rect.w),
+                name_style,
+                palette.content,
+            );
+            line.cut_left(8.0);
+            let tag = line.cut_left(tag_w).middle_row(16.0);
+            ui.fill(tag, palette.accent);
+            ui.stroke(tag, theme::BORDER, palette.base_300);
+            ui.text(tag, label, tag_style, palette.accent_content);
+        } else {
+            ui.text(
+                line,
+                ellipsize(measure, &name, name_style, line.w),
+                name_style,
+                palette.content,
+            );
+        }
+        let style = styles::micro().middle();
+        let gear = gear_summary(loadout, data::equipment(), tr);
+        ui.text(
+            text,
+            ellipsize(measure, &gear.to_uppercase(), style, text.w),
+            style,
+            palette.muted,
+        );
+        ui.stroke(rect, theme::BORDER, palette.base_300);
+    }
+
+    /// Toast do último salvar, aplicar ou excluir (§6.8), no canto de baixo,
+    /// como o do backup.
+    fn notice_toast(&mut self, ui: &mut Ui, area: Rect, ctx: &Ctx) {
+        let Some(text) = &self.notice else {
+            return;
+        };
+        if std::mem::take(&mut self.notice_pending) {
+            ui.flash(notice_flash_id(), NOTICE_MS);
+        }
+        let left = ui.anim(notice_flash_id(), NOTICE_MS);
+        if left <= 0.0 {
+            self.notice = None;
+            return;
+        }
+        let exit = motion::EXIT_MS as f32 / NOTICE_MS as f32;
+        let visible = (left / exit).min(1.0);
+        let rect = Rect::new(
+            area.right() - TOAST_MARGIN - theme::SHADOW - widgets::TOAST_WIDTH,
+            area.bottom() - TOAST_MARGIN - theme::SHADOW - widgets::TOAST_HEIGHT,
+            widgets::TOAST_WIDTH,
+            widgets::TOAST_HEIGHT,
+        );
+        let text = text.clone();
+        widgets::toast(
+            ui,
+            rect,
+            theme::palette().success,
+            ctx.tr().settings.toast_done,
+            &text,
+            visible,
+        );
+    }
+
+    /// Mostra um toast novo, que a próxima construção acende.
+    fn notify(&mut self, text: String) {
+        self.notice = Some(text);
+        self.notice_pending = true;
     }
 
     // --- Build exibida ---
@@ -1288,17 +1862,6 @@ impl BuildTab {
     ) {
         let tr = ctx.tr();
         let content = widgets::card(ui, rect, Some(CardHeader::new(tr.build.stratagems, "sys")));
-        // O botão de aplicar mora na barra do painel.
-        let mut cursor = widgets::card_actions(rect);
-        let width = widgets::icon_btn_width(measure, tr.build.apply_stratagems);
-        let apply = cursor.cut_right(width);
-        widgets::icon_btn(
-            ui,
-            apply_id(),
-            apply,
-            Glyph::Text(tr.build.apply_stratagems),
-            Tone::Accent,
-        );
 
         for (index, cell) in columns(content, SLOT_COUNT, GRID_GAP)
             .into_iter()
@@ -1316,12 +1879,14 @@ impl BuildTab {
                 locked: self.locks.stratagem(index),
             };
             let height = widgets::item_card_height(measure, &card, cell.w);
+            let phase = self.card_motion(ui, index);
             widgets::build_item_card(
                 ui,
                 measure,
                 strat_lock_id(index),
                 cell.with_h(height),
                 &card,
+                phase,
             );
         }
     }
@@ -1369,9 +1934,7 @@ impl BuildTab {
                     slot,
                     label: tr.build.equip_label(slot).to_string(),
                     name: item.nome().to_string(),
-                    // Booster e passiva vêm da wiki em SVG, que o decodificador
-                    // não lê: o card mostra o marcador vazio no lugar.
-                    image: raster_icon(item.imagem()),
+                    image: Some(item.imagem().to_string()),
                     subtitle,
                     description,
                     badge: build
@@ -1408,12 +1971,14 @@ impl BuildTab {
                     width,
                     height,
                 );
+                let phase = self.card_motion(ui, SLOT_COUNT + card.slot.index());
                 widgets::build_item_card(
                     ui,
                     measure,
                     equip_lock_id(card.slot),
                     rect,
                     &card.as_item_card(),
+                    phase,
                 );
             }
             y += height + GRID_GAP;
@@ -1431,6 +1996,9 @@ impl BuildTab {
                 return Some(action);
             }
         }
+        // Qualquer clique desarma a confirmação em curso; só o botão que a
+        // armou a consome, no segundo clique.
+        let confirm = self.confirm.take();
 
         for (index, sub) in SubTab::ALL.into_iter().enumerate() {
             if clicked == sub_tab_id(index) {
@@ -1443,13 +2011,11 @@ impl BuildTab {
                 return Some(Action::Setting((option.change)(!option.on)));
             }
         }
-        if clicked == generate_id() {
-            self.generate(ctx);
-            return Some(Action::Redraw);
+        if clicked == generate_id() || (clicked == reroll_id() && self.sub == SubTab::Random) {
+            return Some(self.generate(ctx));
         }
-        if clicked == meta_generate_id() {
-            self.generate_meta(ctx);
-            return Some(Action::Redraw);
+        if clicked == meta_generate_id() || clicked == reroll_id() {
+            return Some(self.generate_meta(ctx));
         }
         if clicked == meta_retry_id() {
             // A próxima construção registra a consulta de novo.
@@ -1477,6 +2043,11 @@ impl BuildTab {
         if clicked == apply_id() {
             let build = self.build.as_ref()?;
             let slots = crate::loadouts::sanitize(&build.stratagems, ctx.data);
+            let text = match self.save_state(build, ctx.data) {
+                SaveState::Saved(loadout) => notice(&loadout.name, ctx.tr().build.notice_applied),
+                _ => ctx.tr().build.notice_applied_current.to_string(),
+            };
+            self.notify(text);
             return Some(Action::SlotsChanged(slots));
         }
         if clicked == import_slots_id() {
@@ -1489,42 +2060,72 @@ impl BuildTab {
             self.build = None;
             self.custom_slot = 0;
             self.locks = Locks::default();
+            self.linked = None;
+            self.taken = false;
             self.set_search(String::new());
-            return Some(Action::ClearEdit(search_id()));
+            self.name.clear();
+            return Some(Action::SetEdits(vec![
+                (search_id(), String::new()),
+                (name_id(), String::new()),
+            ]));
         }
         if clicked == search_id() {
             return Some(Action::FocusEdit(search_id()));
         }
         if clicked == clear_search_id() {
-            return Some(Action::ClearEdit(search_id()));
+            return Some(Action::SetEdits(vec![(search_id(), String::new())]));
         }
         if clicked == name_id() {
             return Some(Action::FocusEdit(name_id()));
         }
         if clicked == save_id() {
-            // Sem estratagema nenhum não há build para salvar: o botão fica
-            // apagado, e o clique não faz nada (a v1 o desabilitava).
-            let build = self.build.clone()?;
-            if !builds::save(&mut self.loadouts, &self.name, &build) {
-                return Some(Action::Redraw);
-            }
-            self.name.clear();
-            return Some(Action::Saved);
+            return self.save_new(ctx, confirm);
+        }
+        if clicked == save_changes_id() {
+            return self.save_changes(ctx);
+        }
+        if clicked == save_as_new_id() {
+            return self.save_copy(ctx);
+        }
+        if clicked == discard_id() {
+            let index = builds::index_of(&self.loadouts, self.linked.as_deref()?)?;
+            let loadout = self.loadouts[index].clone();
+            self.load(&loadout, ctx);
+            return Some(Action::SetEdits(vec![(name_id(), loadout.name)]));
         }
 
         for index in 0..self.loadouts.len() {
-            if clicked == loadout_id(index) {
-                let applied = builds::apply(
-                    &self.loadouts[index],
-                    self.build.as_ref(),
-                    ctx.data,
-                    data::equipment(),
-                );
-                self.build = Some(applied.build);
-                return Some(Action::SlotsChanged(applied.slots));
+            if clicked == loadout_apply_id(index) {
+                let loadout = self.loadouts[index].clone();
+                let slots = self.load(&loadout, ctx);
+                self.notify(notice(&loadout.name, ctx.tr().build.notice_applied));
+                return Some(Action::Applied {
+                    slots,
+                    name: loadout.name,
+                });
+            }
+            if clicked == loadout_edit_id(index) {
+                // O editor é a sub-aba Personalizada, a partir do primeiro slot.
+                let loadout = self.loadouts[index].clone();
+                self.load(&loadout, ctx);
+                self.sub = SubTab::Custom;
+                self.custom_slot = 0;
+                return Some(Action::SetEdits(vec![(name_id(), loadout.name)]));
             }
             if clicked == loadout_delete_id(index) {
-                self.loadouts.remove(index);
+                let id = self.loadouts[index].id.clone();
+                if confirm != Some(Confirm::Delete(id.clone())) {
+                    self.confirm = Some(Confirm::Delete(id));
+                    self.confirm_pending = true;
+                    return Some(Action::Redraw);
+                }
+                let removed = self.loadouts.remove(index);
+                // A build exibida continua na tela, agora sem build salva por
+                // trás: salvar de novo a recria.
+                if self.linked.as_deref() == Some(removed.id.as_str()) {
+                    self.linked = None;
+                }
+                self.notify(notice(&removed.name, ctx.tr().build.notice_deleted));
                 return Some(Action::LoadoutsChanged);
             }
         }
@@ -1588,48 +2189,185 @@ impl BuildTab {
         None
     }
 
+    /// Põe uma build salva na tela, vinculada a ela, e devolve os slots que ela
+    /// define (já saneados).
+    fn load(&mut self, loadout: &Loadout, ctx: &Ctx) -> Slots {
+        let applied = builds::apply(loadout, self.build.as_ref(), ctx.data, data::equipment());
+        self.build = Some(applied.build);
+        self.linked = Some(loadout.id.clone());
+        self.taken = false;
+        self.roll = None;
+        applied.slots
+    }
+
+    /// "Salvar" de uma build nova. Nome de outra build pede confirmação: o
+    /// segundo clique, dentro dos 3s, substitui. Trocar o nome no meio desarma
+    /// a pergunta ([`BuildTab::set_name`]), então ela sempre é sobre o nome que
+    /// está no campo.
+    fn save_new(&mut self, ctx: &Ctx, confirm: Option<Confirm>) -> Option<Action> {
+        let build = self.build.clone()?;
+        let replace = matches!(confirm, Some(Confirm::Replace(_)));
+        match builds::save(&mut self.loadouts, &self.name, &build, replace) {
+            Ok(index) => Some(self.saved(index, ctx.tr().build.notice_saved)),
+            Err(SaveError::NameTaken(index)) => {
+                self.confirm = Some(Confirm::Replace(self.loadouts[index].id.clone()));
+                self.confirm_pending = true;
+                Some(Action::Redraw)
+            }
+            Err(_) => Some(Action::Redraw),
+        }
+    }
+
+    /// "Salvar alterações": grava por cima da build vinculada, com o nome do
+    /// campo (renomear é só trocar o nome e salvar).
+    fn save_changes(&mut self, ctx: &Ctx) -> Option<Action> {
+        let build = self.build.clone()?;
+        let id = self.linked.clone()?;
+        match builds::update(&mut self.loadouts, &id, &self.name, &build) {
+            Ok(index) => Some(self.saved(index, ctx.tr().build.notice_updated)),
+            Err(SaveError::NameTaken(_)) => {
+                self.taken = true;
+                Some(Action::Redraw)
+            }
+            Err(SaveError::Missing) => {
+                self.linked = None;
+                Some(Action::Redraw)
+            }
+            Err(SaveError::Empty) => Some(Action::Redraw),
+        }
+    }
+
+    /// "Salvar como nova": uma cópia, com o nome do campo se ele estiver livre
+    /// ou com um número no fim.
+    fn save_copy(&mut self, ctx: &Ctx) -> Option<Action> {
+        let build = self.build.clone()?;
+        let name = builds::copy_name(&self.loadouts, &self.name, NAME_MAX_CHARS);
+        match builds::save(&mut self.loadouts, &name, &build, false) {
+            Ok(index) => Some(self.saved(index, ctx.tr().build.notice_saved)),
+            Err(_) => Some(Action::Redraw),
+        }
+    }
+
+    /// Depois de gravar: a build exibida passa a ser a salva, o campo mostra o
+    /// nome dela e o toast confirma.
+    fn saved(&mut self, index: usize, suffix: &str) -> Action {
+        let loadout = &self.loadouts[index];
+        let name = loadout.name.clone();
+        self.linked = Some(loadout.id.clone());
+        self.taken = false;
+        self.name = name.chars().take(NAME_MAX_CHARS).collect();
+        self.notify(notice(&name, suffix));
+        Action::Saved(name)
+    }
+
+    /// Build nova na tela: ela deixa de ser a salva de onde veio. O nome que o
+    /// vínculo pôs no campo sai junto; um nome digitado à mão fica.
+    fn unlink(&mut self) -> Action {
+        self.taken = false;
+        let linked = self
+            .linked
+            .take()
+            .and_then(|id| builds::index_of(&self.loadouts, &id))
+            .map(|index| self.loadouts[index].name.clone());
+        match linked {
+            Some(name) if self.name.trim() == name => {
+                self.name.clear();
+                Action::SetEdits(vec![(name_id(), String::new())])
+            }
+            _ => Action::Redraw,
+        }
+    }
+
     /// Sorteia uma build nova, preservando o que está travado.
-    fn generate(&mut self, ctx: &Ctx) {
+    fn generate(&mut self, ctx: &Ctx) -> Action {
         let Some(equipment) = data::equipment() else {
             log::warn!("equipment.json indisponível: nada a sortear");
-            return;
+            return Action::Redraw;
         };
         let meta = self
             .meta
             .get_or_insert_with(|| StratMeta::build(ctx.data, equipment));
-        self.build = Some(builds::generate(
-            self.build.as_ref(),
+        let mut rng = rand::rng();
+        let prev = self.build.take();
+        let next = builds::generate(
+            prev.as_ref(),
             &self.locks,
             Rules::from_settings(ctx.settings),
             ctx.data,
             equipment,
             meta,
-            &mut rand::rng(),
-        ));
+            &mut rng,
+        );
+        let pool: Vec<u32> = ctx.data.all().iter().map(|strat| strat.id).collect();
+        let reels = roll_reels(
+            RollInput {
+                prev: prev.as_ref(),
+                next: &next,
+                locks: &self.locks,
+                data: ctx.data,
+                equipment,
+                stratagems: &pool,
+                weapons: None,
+            },
+            &mut rng,
+        );
+        self.start_roll(next, reels)
     }
 
     /// Sorteia uma build a partir das estatísticas em tela.
-    fn generate_meta(&mut self, ctx: &Ctx) {
+    fn generate_meta(&mut self, ctx: &Ctx) -> Action {
         let Some(lists) = self.stats.lists() else {
-            return;
+            return Action::Redraw;
         };
         let Some(equipment) = data::equipment() else {
             log::warn!("equipment.json indisponível: nada a sortear");
-            return;
+            return Action::Redraw;
         };
         let kinds = self
             .meta
             .get_or_insert_with(|| StratMeta::build(ctx.data, equipment));
-        self.build = Some(builds::generate_meta(
-            self.build.as_ref(),
+        let mut rng = rand::rng();
+        let prev = self.build.take();
+        let next = builds::generate_meta(
+            prev.as_ref(),
             &self.locks,
             Rules::from_settings(ctx.settings),
             lists,
             ctx.data,
             equipment,
             kinds,
-            &mut rand::rng(),
-        ));
+            &mut rng,
+        );
+        let pool: Vec<u32> = lists
+            .stratagems
+            .iter()
+            .take(builds::META_TOP_STRATS)
+            .map(|pick| pick.item)
+            .collect();
+        let reels = roll_reels(
+            RollInput {
+                prev: prev.as_ref(),
+                next: &next,
+                locks: &self.locks,
+                data: ctx.data,
+                equipment,
+                stratagems: &pool,
+                weapons: Some(lists),
+            },
+            &mut rng,
+        );
+        self.start_roll(next, reels)
+    }
+
+    /// A build sorteada entra na tela girando, e a página vai até ela.
+    fn start_roll(&mut self, next: Build, reels: Vec<Vec<ReelFrame>>) -> Action {
+        self.build = Some(next);
+        self.roll = Some(Roll {
+            pending: true,
+            reels,
+        });
+        self.reveal = true;
+        self.unlink()
     }
 
     /// Clique na grade personalizada. O slot em edição avança mesmo quando a
@@ -1643,6 +2381,171 @@ impl BuildTab {
         }
         Some(Action::Redraw)
     }
+}
+
+/// Texto do toast: o nome entre aspas e o que aconteceu com ele.
+fn notice(name: &str, suffix: &str) -> String {
+    format!("\u{201c}{name}\u{201d} {suffix}")
+}
+
+/// Leva a página até a build recém-sorteada, se o topo dela estiver fora de
+/// vista: o botão de sortear fica no alto e a build sai lá embaixo, depois das
+/// listas. `top` é a posição dela na tela nesta passagem.
+fn reveal(ui: &mut Ui, view: Rect, top: f32, offset: f32) {
+    if top >= view.y && top <= view.bottom() - REVEAL_VISIBLE {
+        return;
+    }
+    let target = offset + (top - view.y) - REVEAL_MARGIN;
+    ui.scroll_to(scroll_id(), target, REVEAL_MS);
+}
+
+/// Largura de um botão do salvar: o rótulo com folga, nunca menor que o
+/// "Salvar".
+fn button_width(measure: &mut dyn Measure, label: &str) -> f32 {
+    let text = measure
+        .text_size(&label.to_uppercase(), styles::button(), f32::INFINITY)
+        .0;
+    (text + BUTTON_PADDING * 2.0).max(SAVE_WIDTH)
+}
+
+/// Equipamento da build salva numa linha: os nomes, na ordem da tela.
+fn gear_summary(loadout: &Loadout, equipment: Option<&Equipment>, tr: &Tr) -> String {
+    let names: Vec<&str> = match (equipment, &loadout.equip) {
+        (Some(equipment), Some(equip)) => EquipSlot::ALL
+            .into_iter()
+            .filter_map(|slot| equipment.find(slot, equip.get(slot.key())?))
+            .map(Item::nome)
+            .collect(),
+        _ => Vec::new(),
+    };
+    match names.is_empty() {
+        true => tr.build.saved_no_gear.to_string(),
+        false => names.join(" \u{00B7} "),
+    }
+}
+
+/// O que monta os rolos de um sorteio.
+struct RollInput<'a> {
+    prev: Option<&'a Build>,
+    next: &'a Build,
+    locks: &'a Locks,
+    data: &'a GameData,
+    equipment: &'a Equipment,
+    /// De onde os estratagemas saíram: o topo, na build meta.
+    stratagems: &'a [u32],
+    /// Na build meta, as armas saem do topo de cada categoria.
+    weapons: Option<&'a MetaLists>,
+}
+
+/// Rolo de cada card, na ordem da tela: o item que estava lá, alguns da mesma
+/// pool só para passar, e o sorteado no fim. Card travado, ou que ficou sem
+/// item, não gira.
+fn roll_reels<R: Rng + ?Sized>(input: RollInput, rng: &mut R) -> Vec<Vec<ReelFrame>> {
+    let RollInput {
+        prev,
+        next,
+        locks,
+        data,
+        equipment,
+        stratagems,
+        weapons,
+    } = input;
+    let mut reels = Vec::with_capacity(SLOT_COUNT + data::EQUIP_SLOT_COUNT);
+
+    let strat_frame = |id: u32| {
+        data.by_id(id).map(|strat| ReelFrame {
+            image: Some(strat.imagem.clone()),
+            name: strat.nome.clone(),
+        })
+    };
+    for index in 0..SLOT_COUNT {
+        let reel = match (locks.stratagem(index), next.stratagems[index]) {
+            (false, Some(after)) => {
+                let before = prev.and_then(|build| build.stratagems[index]);
+                let skip: Vec<u32> = before.into_iter().chain([after]).collect();
+                reel(
+                    before.and_then(strat_frame),
+                    samples(stratagems, &skip, rng)
+                        .into_iter()
+                        .filter_map(strat_frame)
+                        .collect(),
+                    strat_frame(after),
+                )
+            }
+            _ => Vec::new(),
+        };
+        reels.push(reel);
+    }
+
+    let item_frame = |slot: EquipSlot, id: &str| {
+        equipment.find(slot, id).map(|item| ReelFrame {
+            image: Some(item.imagem().to_string()),
+            name: item.nome().to_string(),
+        })
+    };
+    for slot in EquipSlot::ALL {
+        let reel = match (locks.equip(slot), next.equip(slot)) {
+            (false, Some(after)) => {
+                let before = prev.and_then(|build| build.equip(slot));
+                let pool: Vec<&str> = match weapons.filter(|_| slot.is_weapon()) {
+                    Some(lists) => lists
+                        .weapons(slot)
+                        .iter()
+                        .take(builds::META_TOP_WEAPONS)
+                        .map(|pick| pick.item.as_str())
+                        .collect(),
+                    None => (0..equipment.count(slot))
+                        .filter_map(|index| equipment.at(slot, index))
+                        .map(Item::id)
+                        .collect(),
+                };
+                let skip: Vec<&str> = before.into_iter().chain([after]).collect();
+                reel(
+                    before.and_then(|id| item_frame(slot, id)),
+                    samples(&pool, &skip, rng)
+                        .into_iter()
+                        .filter_map(|id| item_frame(slot, id))
+                        .collect(),
+                    item_frame(slot, after),
+                )
+            }
+            _ => Vec::new(),
+        };
+        reels.push(reel);
+    }
+    reels
+}
+
+/// Até [`REEL_SAMPLES`] itens da pool, fora os de `skip`.
+fn samples<T: Copy + PartialEq, R: Rng + ?Sized>(pool: &[T], skip: &[T], rng: &mut R) -> Vec<T> {
+    let candidates: Vec<T> = pool
+        .iter()
+        .copied()
+        .filter(|item| !skip.contains(item))
+        .collect();
+    candidates.sample(rng, REEL_SAMPLES).copied().collect()
+}
+
+/// Quadros de um rolo: o que sai, as amostras repetidas até completar, e o que
+/// entra. Sem o item novo não há rolo.
+fn reel(
+    before: Option<ReelFrame>,
+    samples: Vec<ReelFrame>,
+    after: Option<ReelFrame>,
+) -> Vec<ReelFrame> {
+    let Some(after) = after else {
+        return Vec::new();
+    };
+    let mut frames: Vec<ReelFrame> = before.into_iter().collect();
+    for sample in samples
+        .iter()
+        .cycle()
+        .take(REEL_FRAMES.saturating_sub(frames.len() + 1))
+    {
+        frames.push(sample.clone());
+    }
+    frames.push(after);
+    frames
 }
 
 // --- Opções de sorteio ---
@@ -1717,13 +2620,6 @@ impl EquipCard {
             locked: self.locked,
         }
     }
-}
-
-/// Só os formatos que o decodificador lê (R2: WebP e PNG). Os ícones de booster
-/// e de passiva vêm da wiki em SVG e caem no marcador vazio do card.
-fn raster_icon(path: &str) -> Option<String> {
-    let lower = path.to_lowercase();
-    (lower.ends_with(".webp") || lower.ends_with(".png")).then(|| path.to_string())
 }
 
 /// Estado vazio (§8): kicker `> NADA AQUI` e a explicação apagada, sem
@@ -2021,8 +2917,8 @@ fn random_height(measure: &mut dyn Measure, width: f32, ctx: &Ctx) -> f32 {
     widgets::card_chrome(false) + GENERATE_HEIGHT + LABEL_GAP + 6.0 + hint
 }
 
-fn saved_height(layout: &ChipLayout) -> f32 {
-    widgets::card_chrome(true) + layout.height + SAVED_ROW_GAP + widgets::CONTROL_HEIGHT
+fn current_height() -> f32 {
+    widgets::card_chrome(true) + STATUS_HEIGHT + LABEL_GAP + widgets::CONTROL_HEIGHT
 }
 
 fn equip_rows() -> f32 {
@@ -2510,10 +3406,15 @@ mod tests {
         assert_eq!(tab.build.as_ref().unwrap().stratagems, slots);
 
         tab.set_search("orbital".into());
+        tab.set_name("Rascunho".into());
         assert_eq!(
             tab.on_click(reset_id(), &context),
-            Some(Action::ClearEdit(search_id()))
+            Some(Action::SetEdits(vec![
+                (search_id(), String::new()),
+                (name_id(), String::new())
+            ]))
         );
+        assert!(tab.name.is_empty());
         assert!(tab.build.is_none());
         assert_eq!(tab.custom_slot, 0);
         assert!(tab.search().is_empty());
@@ -2536,7 +3437,7 @@ mod tests {
         );
         assert_eq!(
             tab.on_click(clear_search_id(), &ctx(&data, &settings)),
-            Some(Action::ClearEdit(search_id()))
+            Some(Action::SetEdits(vec![(search_id(), String::new())]))
         );
 
         tab.set_search("zzzz".into());
@@ -2666,66 +3567,108 @@ mod tests {
         tab
     }
 
-    #[test]
-    fn saved_builds_show_up_as_chips_and_apply_to_the_slots() {
-        let data = data();
-        let settings = Settings::default();
-        let mut tab = with_loadouts(&data);
-        let mut ui = Ui::new();
-        build(&mut tab, &mut ui, &ctx(&data, &settings));
+    /// Construção numa janela alta, onde a página inteira cabe sem rolar: o
+    /// que os testes de clique procuram fica sempre dentro do recorte.
+    const TALL: Rect = Rect::new(0.0, 0.0, 820.0, 4_000.0);
 
-        assert!(texts(&ui).iter().any(|text| text == "BUG SWEEP"));
-        assert!(ui.frame().has_hit(loadout_id(0)));
-        assert!(ui.frame().has_hit(loadout_id(1)));
+    fn build_tall(tab: &mut BuildTab, ui: &mut Ui, ctx: &Ctx, now: u64) {
+        ui.begin(now);
+        tab.build(ui, &mut Fixed, TALL, ctx);
+        ui.end();
+    }
 
-        let expected: Slots = [Some(data.all()[1].id), Some(data.all()[2].id), None, None];
-        assert_eq!(
-            tab.on_click(loadout_id(1), &ctx(&data, &settings)),
-            Some(Action::SlotsChanged(expected))
-        );
-        // A build aplicada também volta para a tela.
-        assert_eq!(tab.build.as_ref().unwrap().stratagems, expected);
-        // E o chip da build que bate com os slots é o destacado.
-        assert_eq!(
-            builds::active_loadout(tab.loadouts(), expected, &data),
-            Some(1)
-        );
+    /// Duas passagens com tempo de sobra entre elas: rolo, confirmação e
+    /// toast já venceram.
+    fn settle(tab: &mut BuildTab, ui: &mut Ui, ctx: &Ctx) {
+        build_tall(tab, ui, ctx, 0);
+        build_tall(tab, ui, ctx, 10_000);
+    }
+
+    fn saved_tab(data: &GameData) -> BuildTab {
+        let mut tab = with_loadouts(data);
+        tab.sub = SubTab::Saved;
+        tab
     }
 
     #[test]
-    fn the_delete_button_only_exists_under_the_mouse() {
+    fn the_saved_tab_lists_every_build_with_its_actions() {
         let data = data();
         let settings = Settings::default();
-        let mut tab = with_loadouts(&data);
+        let mut tab = saved_tab(&data);
         let mut ui = Ui::new();
-        // Janela alta: os chips ficam abaixo da dobra numa janela padrão, e o
-        // hover não alcança o que está fora do recorte da página.
-        let tall = Rect::new(0.0, 0.0, 820.0, 1_200.0);
-        let build = |tab: &mut BuildTab, ui: &mut Ui, now: u64| {
-            ui.begin(now);
-            tab.build(ui, &mut Fixed, tall, &ctx(&data, &settings));
-            ui.end();
+        build_tall(&mut tab, &mut ui, &ctx(&data, &settings), 0);
+
+        let texts = texts(&ui);
+        assert!(texts.iter().any(|text| text == "BUG SWEEP"));
+        assert!(texts.iter().any(|text| text == "BOT DROP"));
+        // A contagem vai na sub-aba.
+        assert!(texts.iter().any(|text| text == "SALVAS (2)"));
+        for index in 0..2 {
+            assert!(ui.frame().has_hit(loadout_apply_id(index)));
+            assert!(ui.frame().has_hit(loadout_edit_id(index)));
+            // Excluir fica à vista, sem depender do hover.
+            assert!(ui.frame().has_hit(loadout_delete_id(index)));
+        }
+        // Os ícones dos estratagemas de cada build.
+        let icon = format!("icons/{}", data.all()[0].imagem);
+        assert!(ui.frame().nodes.iter().any(
+            |node| matches!(&node.visual, Visual::Image { path, .. } if path.to_string_lossy() == icon)
+        ));
+        // A lista não mostra a build exibida embaixo.
+        assert!(!ui.frame().has_hit(save_id()));
+    }
+
+    #[test]
+    fn applying_a_saved_build_fills_the_slots_and_tags_the_row() {
+        let data = data();
+        let settings = Settings::default();
+        let mut tab = saved_tab(&data);
+        let mut ui = Ui::new();
+        build_tall(&mut tab, &mut ui, &ctx(&data, &settings), 0);
+
+        let expected: Slots = [Some(data.all()[1].id), Some(data.all()[2].id), None, None];
+        assert_eq!(
+            tab.on_click(loadout_apply_id(1), &ctx(&data, &settings)),
+            Some(Action::Applied {
+                slots: expected,
+                name: "Bot Drop".into()
+            })
+        );
+        // A build aplicada volta para a tela, vinculada à salva.
+        assert_eq!(tab.build.as_ref().unwrap().stratagems, expected);
+        assert_eq!(tab.linked.as_deref(), Some("2"));
+
+        // Com os slots novos, a linha ganha a etiqueta, e o toast confirma.
+        let context = Ctx {
+            slots: expected,
+            ..ctx(&data, &settings)
         };
-        build(&mut tab, &mut ui, 0);
-
-        let chip = ui
-            .frame()
-            .nodes
+        build_tall(&mut tab, &mut ui, &context, 0);
+        let texts = texts(&ui);
+        assert!(texts.iter().any(|text| text == "NOS SLOTS"));
+        assert!(texts
             .iter()
-            .find(|node| matches!(&node.visual, Visual::Text { text, .. } if text == "BUG SWEEP"))
-            .expect("chip")
-            .rect;
-        assert!(!ui.frame().has_hit(loadout_delete_id(0)));
+            .any(|text| text.contains("BOT DROP") && text.contains("SLOTS DE MACRO")));
+    }
 
-        // O fade de hover precisa de tempo para abrir.
-        ui.input(Input::Move {
-            x: chip.center_x(),
-            y: chip.center_y(),
-        });
-        build(&mut tab, &mut ui, 0);
-        build(&mut tab, &mut ui, 1_000);
-        assert!(ui.frame().has_hit(loadout_delete_id(0)));
+    #[test]
+    fn deleting_asks_for_a_second_click() {
+        let data = data();
+        let settings = Settings::default();
+        let mut tab = saved_tab(&data);
+        let mut ui = Ui::new();
+        build_tall(&mut tab, &mut ui, &ctx(&data, &settings), 0);
 
+        // O primeiro clique só arma a pergunta.
+        assert_eq!(
+            tab.on_click(loadout_delete_id(0), &ctx(&data, &settings)),
+            Some(Action::Redraw)
+        );
+        assert_eq!(tab.loadouts().len(), 2);
+        build_tall(&mut tab, &mut ui, &ctx(&data, &settings), 0);
+        assert!(texts(&ui).iter().any(|text| text == "CONFIRMAR?"));
+
+        // O segundo exclui.
         assert_eq!(
             tab.on_click(loadout_delete_id(0), &ctx(&data, &settings)),
             Some(Action::LoadoutsChanged)
@@ -2735,45 +3678,263 @@ mod tests {
     }
 
     #[test]
+    fn the_delete_question_goes_away_by_itself_or_with_another_click() {
+        let data = data();
+        let settings = Settings::default();
+        let mut tab = saved_tab(&data);
+        let mut ui = Ui::new();
+        build_tall(&mut tab, &mut ui, &ctx(&data, &settings), 0);
+
+        // Outro clique qualquer desarma.
+        tab.on_click(loadout_delete_id(0), &ctx(&data, &settings));
+        tab.on_click(sub_tab_id(3), &ctx(&data, &settings));
+        assert_eq!(tab.confirm, None);
+        tab.on_click(loadout_delete_id(0), &ctx(&data, &settings));
+        assert_eq!(
+            tab.on_click(loadout_delete_id(0), &ctx(&data, &settings)),
+            Some(Action::LoadoutsChanged)
+        );
+
+        // E, sem clique nenhum, a pergunta some depois de 3s.
+        tab.on_click(loadout_delete_id(0), &ctx(&data, &settings));
+        build_tall(&mut tab, &mut ui, &ctx(&data, &settings), 0);
+        assert!(ui.animating(), "a contagem da pergunta está na tela");
+        build_tall(
+            &mut tab,
+            &mut ui,
+            &ctx(&data, &settings),
+            u64::from(CONFIRM_MS) + 100,
+        );
+        assert_eq!(tab.confirm, None);
+        assert!(!texts(&ui).iter().any(|text| text == "CONFIRMAR?"));
+        assert_eq!(
+            tab.on_click(loadout_delete_id(0), &ctx(&data, &settings)),
+            Some(Action::Redraw),
+            "vencida, o clique arma de novo em vez de excluir"
+        );
+    }
+
+    #[test]
     fn saving_needs_a_build_and_takes_the_typed_name() {
         let data = data();
         let settings = Settings::default();
         let mut tab = with_loadouts(&data);
+        let mut ui = Ui::new();
 
-        // Sem build na tela o botão não salva nada.
+        // Sem build na tela o botão nem existe.
         assert_eq!(tab.on_click(save_id(), &ctx(&data, &settings)), None);
         assert_eq!(tab.loadouts().len(), 2);
 
+        tab.sub = SubTab::Random;
         tab.on_click(generate_id(), &ctx(&data, &settings));
+        settle(&mut tab, &mut ui, &ctx(&data, &settings));
+        assert!(ui.frame().has_hit(save_id()));
+        assert!(texts(&ui).iter().any(|text| text.contains("NOVA BUILD")));
+
         tab.set_name("Minha Build".into());
         assert_eq!(
             tab.on_click(save_id(), &ctx(&data, &settings)),
-            Some(Action::Saved)
+            Some(Action::Saved("Minha Build".into()))
         );
         assert_eq!(tab.loadouts().len(), 3);
         assert_eq!(tab.loadouts()[2].name, "Minha Build");
-        assert!(tab.name.is_empty(), "o campo é esvaziado depois de salvar");
+        // O campo continua com o nome, e a build agora está vinculada.
+        assert_eq!(tab.name, "Minha Build");
+        assert_eq!(tab.linked.as_ref(), Some(&tab.loadouts()[2].id));
 
-        // O mesmo nome sobrescreve em vez de duplicar.
+        settle(&mut tab, &mut ui, &ctx(&data, &settings));
+        let texts = texts(&ui);
+        assert!(texts.iter().any(|text| text.contains("SALVA COMO")));
+        // Sem alteração não há o que salvar por cima.
+        assert!(!ui.frame().has_hit(save_changes_id()));
+        assert!(ui.frame().has_hit(save_as_new_id()));
+    }
+
+    #[test]
+    fn a_taken_name_asks_before_replacing() {
+        let data = data();
+        let settings = Settings::default();
+        let mut tab = with_loadouts(&data);
+        let mut ui = Ui::new();
+        tab.sub = SubTab::Random;
         tab.on_click(generate_id(), &ctx(&data, &settings));
-        tab.set_name("minha build".into());
+
+        tab.set_name("bug sweep".into());
+        assert_eq!(
+            tab.on_click(save_id(), &ctx(&data, &settings)),
+            Some(Action::Redraw)
+        );
+        assert_eq!(tab.loadouts().len(), 2);
+        build_tall(&mut tab, &mut ui, &ctx(&data, &settings), 0);
+        let texts = texts(&ui);
+        assert!(texts.iter().any(|text| text == "SUBSTITUIR?"));
+        assert!(texts.iter().any(|text| text.contains("JÁ EXISTE")));
+
+        // Mudar o nome desarma a pergunta; voltar a ele pergunta de novo.
+        tab.set_name("bug sweep 2".into());
+        assert_eq!(tab.confirm, None);
+        tab.set_name("bug sweep".into());
         tab.on_click(save_id(), &ctx(&data, &settings));
+
+        let rolled = tab.build.clone().unwrap();
+        assert_eq!(
+            tab.on_click(save_id(), &ctx(&data, &settings)),
+            Some(Action::Saved("Bug Sweep".into()))
+        );
+        assert_eq!(tab.loadouts().len(), 2, "substituiu em vez de duplicar");
+        assert_eq!(tab.loadouts()[0].slot_ids, rolled.stratagems.to_vec());
+        assert_eq!(tab.loadouts()[0].id, "1");
+    }
+
+    #[test]
+    fn editing_opens_the_build_in_the_editor_and_saves_it_back() {
+        let data = data();
+        let settings = Settings::default();
+        let mut tab = saved_tab(&data);
+        let mut ui = Ui::new();
+        build_tall(&mut tab, &mut ui, &ctx(&data, &settings), 0);
+
+        assert_eq!(
+            tab.on_click(loadout_edit_id(0), &ctx(&data, &settings)),
+            Some(Action::SetEdits(vec![(name_id(), "Bug Sweep".into())]))
+        );
+        // A janela entrega o texto ao campo, que devolve pela aba.
+        tab.set_name("Bug Sweep".into());
+        assert_eq!(tab.sub, SubTab::Custom);
+        assert_eq!(tab.custom_slot, 0);
+        settle(&mut tab, &mut ui, &ctx(&data, &settings));
+        assert!(texts(&ui).iter().any(|text| text.contains("SALVA COMO")));
+
+        // Troca o segundo slot pela grade: a build fica com alteração.
+        let extra = data.all()[5].id;
+        tab.on_click(custom_slot_id(1), &ctx(&data, &settings));
+        tab.on_click(card_id(extra), &ctx(&data, &settings));
+        settle(&mut tab, &mut ui, &ctx(&data, &settings));
+        let texts = texts(&ui);
+        assert!(texts
+            .iter()
+            .any(|text| text.contains("EDITANDO") && text.contains("NÃO SALVAS")));
+        assert!(ui.frame().has_hit(discard_id()));
+
+        // Salvar alterações grava por cima, no mesmo id, e renomeia junto.
+        tab.set_name("Bug Hunt".into());
+        assert_eq!(
+            tab.on_click(save_changes_id(), &ctx(&data, &settings)),
+            Some(Action::Saved("Bug Hunt".into()))
+        );
+        assert_eq!(tab.loadouts().len(), 2);
+        assert_eq!(tab.loadouts()[0].id, "1");
+        assert_eq!(tab.loadouts()[0].name, "Bug Hunt");
+        assert_eq!(tab.loadouts()[0].slot_ids[1], Some(extra));
+    }
+
+    #[test]
+    fn renaming_onto_another_build_is_refused() {
+        let data = data();
+        let settings = Settings::default();
+        let mut tab = saved_tab(&data);
+        let mut ui = Ui::new();
+        tab.on_click(loadout_edit_id(0), &ctx(&data, &settings));
+        tab.set_name("BOT DROP".into());
+
+        assert_eq!(
+            tab.on_click(save_changes_id(), &ctx(&data, &settings)),
+            Some(Action::Redraw)
+        );
+        assert_eq!(tab.loadouts()[0].name, "Bug Sweep");
+        build_tall(&mut tab, &mut ui, &ctx(&data, &settings), 0);
+        assert!(texts(&ui).iter().any(|text| text.contains("OUTRA BUILD")));
+        // Mudar o nome apaga o aviso.
+        tab.set_name("Bug Hunt".into());
+        assert!(!tab.taken);
+    }
+
+    #[test]
+    fn save_as_new_keeps_the_original_and_names_the_copy() {
+        let data = data();
+        let settings = Settings::default();
+        let mut tab = saved_tab(&data);
+        tab.on_click(loadout_edit_id(0), &ctx(&data, &settings));
+        tab.set_name("Bug Sweep".into());
+
+        assert_eq!(
+            tab.on_click(save_as_new_id(), &ctx(&data, &settings)),
+            Some(Action::Saved("Bug Sweep 2".into()))
+        );
         assert_eq!(tab.loadouts().len(), 3);
+        assert_eq!(tab.loadouts()[0].name, "Bug Sweep");
+        // A tela passa a ser a cópia.
+        assert_eq!(tab.linked.as_ref(), Some(&tab.loadouts()[2].id));
     }
 
     #[test]
-    fn the_name_field_is_capped_like_the_legacy_input() {
-        let mut tab = BuildTab::new();
-        tab.set_name("x".repeat(40));
-        assert_eq!(tab.name.chars().count(), NAME_MAX_CHARS);
+    fn discarding_brings_the_saved_version_back() {
+        let data = data();
+        let settings = Settings::default();
+        let mut tab = saved_tab(&data);
+        tab.on_click(loadout_edit_id(0), &ctx(&data, &settings));
+        tab.set_name("Bug Sweep".into());
+        let saved = tab.build.clone().unwrap();
+
+        tab.on_click(custom_slot_id(3), &ctx(&data, &settings));
+        tab.on_click(card_id(data.all()[9].id), &ctx(&data, &settings));
+        tab.set_name("Outro nome".into());
+        assert_ne!(tab.build.as_ref(), Some(&saved));
+
+        assert_eq!(
+            tab.on_click(discard_id(), &ctx(&data, &settings)),
+            Some(Action::SetEdits(vec![(name_id(), "Bug Sweep".into())]))
+        );
+        assert_eq!(tab.build.as_ref(), Some(&saved));
     }
 
     #[test]
-    fn an_empty_list_says_so_instead_of_showing_chips() {
+    fn rolling_a_new_build_unlinks_it_from_the_saved_one() {
+        let data = data();
+        let settings = Settings::default();
+        let mut tab = saved_tab(&data);
+        tab.on_click(loadout_apply_id(0), &ctx(&data, &settings));
+        tab.set_name("Bug Sweep".into());
+
+        tab.sub = SubTab::Random;
+        // O nome que o vínculo pôs no campo sai junto.
+        assert_eq!(
+            tab.on_click(generate_id(), &ctx(&data, &settings)),
+            Some(Action::SetEdits(vec![(name_id(), String::new())]))
+        );
+        assert_eq!(tab.linked, None);
+        assert!(tab.name.is_empty());
+
+        // Um nome digitado à mão fica.
+        tab.set_name("Rascunho".into());
+        assert_eq!(
+            tab.on_click(generate_id(), &ctx(&data, &settings)),
+            Some(Action::Redraw)
+        );
+        assert_eq!(tab.name, "Rascunho");
+    }
+
+    #[test]
+    fn deleting_the_linked_build_keeps_it_on_screen_to_save_again() {
+        let data = data();
+        let settings = Settings::default();
+        let mut tab = saved_tab(&data);
+        tab.on_click(loadout_apply_id(0), &ctx(&data, &settings));
+        tab.on_click(loadout_delete_id(0), &ctx(&data, &settings));
+        tab.on_click(loadout_delete_id(0), &ctx(&data, &settings));
+
+        assert_eq!(tab.loadouts().len(), 1);
+        assert_eq!(tab.linked, None);
+        assert!(tab.build.is_some());
+    }
+
+    #[test]
+    fn an_empty_list_says_so() {
         let data = data();
         let settings = Settings::default();
         let mut tab = BuildTab::new();
         tab.loaded = true;
+        tab.sub = SubTab::Saved;
         let mut ui = Ui::new();
         build(&mut tab, &mut ui, &ctx(&data, &settings));
 
@@ -2781,9 +3942,210 @@ mod tests {
         let texts = texts(&ui);
         assert!(texts.contains(&tr.build.saved_empty.to_string()));
         assert!(texts.contains(&widgets::sigil(tr.macros.nothing_here)));
-        assert!(!ui.frame().has_hit(loadout_id(0)));
-        // O campo de nome continua lá, com a dica no lugar do filho nativo.
-        assert!(ui.frame().has_hit(name_id()));
+        assert!(!ui.frame().has_hit(loadout_apply_id(0)));
+        // Sem builds, a sub-aba não leva contagem.
+        assert!(texts.iter().any(|text| text == "SALVAS"));
+    }
+
+    // --- Sorteio animado ---
+
+    fn image_paths(ui: &Ui) -> Vec<String> {
+        ui.frame()
+            .nodes
+            .iter()
+            .filter_map(|node| match &node.visual {
+                Visual::Image { path, .. } => Some(path.to_string_lossy().into_owned()),
+                _ => None,
+            })
+            .collect()
+    }
+
+    #[test]
+    fn a_roll_spins_the_cards_and_then_settles() {
+        let data = data();
+        let settings = Settings::default();
+        let mut tab = BuildTab::new();
+        tab.loaded = true;
+        tab.sub = SubTab::Random;
+        let mut ui = Ui::new();
+
+        tab.on_click(generate_id(), &ctx(&data, &settings));
+        settle(&mut tab, &mut ui, &ctx(&data, &settings));
+        let first = tab.build.clone().unwrap();
+
+        tab.on_click(strat_lock_id(0), &ctx(&data, &settings));
+        tab.on_click(reroll_id(), &ctx(&data, &settings));
+        let second = tab.build.clone().unwrap();
+        assert_eq!(second.stratagems[0], first.stratagems[0], "o travado fica");
+
+        build_tall(&mut tab, &mut ui, &ctx(&data, &settings), 1_000);
+        build_tall(&mut tab, &mut ui, &ctx(&data, &settings), 1_100);
+        assert!(ui.animating(), "o rolo pede quadros");
+        let reel = tab.roll.as_ref().expect("sorteio em curso");
+        assert!(reel.reels[0].is_empty(), "card travado não gira");
+        assert!(reel.reels[1..].iter().all(|frames| !frames.is_empty()));
+        // O rolo do segundo slot começa no item que estava lá e termina no novo.
+        let frames = &reel.reels[1];
+        let name_of = |id: Option<u32>| data.by_id(id.unwrap()).unwrap().nome.clone();
+        assert_eq!(frames.first().unwrap().name, name_of(first.stratagems[1]));
+        assert_eq!(frames.last().unwrap().name, name_of(second.stratagems[1]));
+        assert!(frames.len() <= REEL_FRAMES);
+        // Enquanto gira, o nome do item sorteado ainda não está no card.
+        let rolled = name_of(second.stratagems[3]).to_uppercase();
+        assert!(!texts(&ui).contains(&rolled));
+
+        build_tall(&mut tab, &mut ui, &ctx(&data, &settings), 5_000);
+        assert!(tab.roll.is_none());
+        assert!(texts(&ui).contains(&rolled));
+        // Parado, cada card mostra um ícone só: o do item sorteado.
+        let booster = second
+            .item(data::equipment().unwrap(), EquipSlot::Booster)
+            .unwrap();
+        let path = format!("icons/{}", booster.imagem());
+        assert_eq!(
+            image_paths(&ui)
+                .iter()
+                .filter(|image| **image == path)
+                .count(),
+            1
+        );
+        assert!(path.ends_with(".webp"), "o booster tem ícone: {path}");
+        build_tall(&mut tab, &mut ui, &ctx(&data, &settings), 6_000);
+        assert!(!ui.animating(), "tudo parado, sem timer");
+    }
+
+    #[test]
+    fn the_roll_is_skipped_when_motion_is_reduced() {
+        let data = data();
+        let settings = Settings::default();
+        let mut tab = BuildTab::new();
+        tab.sub = SubTab::Random;
+        let mut ui = Ui::new();
+        ui.set_reduced_motion(true);
+
+        tab.on_click(generate_id(), &ctx(&data, &settings));
+        build_tall(&mut tab, &mut ui, &ctx(&data, &settings), 0);
+        assert!(tab.roll.is_none());
+        let name = data
+            .by_id(tab.build.as_ref().unwrap().stratagems[0].unwrap())
+            .unwrap()
+            .nome
+            .to_uppercase();
+        assert!(texts(&ui).contains(&name));
+    }
+
+    #[test]
+    fn rolling_brings_the_page_down_to_the_build() {
+        let data = data();
+        let settings = Settings::default();
+        let mut tab = BuildTab::new();
+        tab.loaded = true;
+        let mut ui = Ui::new();
+        let context = ctx(&data, &settings);
+
+        // Na Meta o botão fica em cima e a build sai depois das listas.
+        build(&mut tab, &mut ui, &context);
+        tab.take_meta_request();
+        answer(&mut tab, &data, true);
+        build(&mut tab, &mut ui, &context);
+        tab.on_click(meta_generate_id(), &context);
+        for now in [0, 50, 200, 1_000] {
+            build_at(&mut tab, &mut ui, &context, now);
+        }
+        let current = ui
+            .frame()
+            .nodes
+            .iter()
+            .find(|node| matches!(&node.visual, Visual::Text { text, .. } if text == "BUILD_ATUAL.SYS"))
+            .expect("barra da build atual")
+            .rect;
+        assert!(
+            current.y >= AREA.y && current.y < AREA.bottom() - REVEAL_VISIBLE + 40.0,
+            "a build ficou fora de vista: {current:?}"
+        );
+
+        // Rolar de novo pela barra da build não mexe na página.
+        let before = current.y;
+        assert!(ui.frame().has_hit(reroll_id()));
+        tab.on_click(reroll_id(), &context);
+        for now in [1_100, 1_400, 3_000] {
+            build_at(&mut tab, &mut ui, &context, now);
+        }
+        let after = ui
+            .frame()
+            .nodes
+            .iter()
+            .find(|node| matches!(&node.visual, Visual::Text { text, .. } if text == "BUILD_ATUAL.SYS"))
+            .unwrap()
+            .rect;
+        assert_eq!(after.y, before);
+    }
+
+    #[test]
+    fn reroll_only_lives_where_there_is_something_to_roll() {
+        let data = data();
+        let settings = Settings::default();
+        let mut tab = BuildTab::new();
+        tab.loaded = true;
+        let mut ui = Ui::new();
+
+        tab.sub = SubTab::Random;
+        tab.on_click(generate_id(), &ctx(&data, &settings));
+        build_tall(&mut tab, &mut ui, &ctx(&data, &settings), 0);
+        assert!(ui.frame().has_hit(reroll_id()));
+
+        // Na montagem à mão não há o que sortear.
+        tab.sub = SubTab::Custom;
+        build_tall(&mut tab, &mut ui, &ctx(&data, &settings), 0);
+        assert!(!ui.frame().has_hit(reroll_id()));
+        assert!(ui.frame().has_hit(apply_id()));
+
+        // Na Meta, só com as estatísticas carregadas.
+        tab.sub = SubTab::Meta;
+        build_tall(&mut tab, &mut ui, &ctx(&data, &settings), 0);
+        assert!(!ui.frame().has_hit(reroll_id()));
+    }
+
+    #[test]
+    fn the_toast_confirms_and_then_leaves() {
+        let data = data();
+        let settings = Settings::default();
+        let mut tab = BuildTab::new();
+        tab.loaded = true;
+        tab.sub = SubTab::Random;
+        let mut ui = Ui::new();
+
+        tab.on_click(generate_id(), &ctx(&data, &settings));
+        tab.set_name("Toast".into());
+        tab.on_click(save_id(), &ctx(&data, &settings));
+        let toast = "\u{201c}TOAST\u{201d} SALVA".to_string();
+        build_tall(&mut tab, &mut ui, &ctx(&data, &settings), 0);
+        assert!(texts(&ui).contains(&toast));
+        build_tall(
+            &mut tab,
+            &mut ui,
+            &ctx(&data, &settings),
+            u64::from(NOTICE_MS) + 100,
+        );
+        assert!(tab.notice.is_none());
+        assert!(!texts(&ui).contains(&toast));
+    }
+
+    #[test]
+    fn the_field_text_is_handed_to_a_new_native_child() {
+        let mut tab = BuildTab::new();
+        tab.set_name("Bug Sweep".into());
+        assert_eq!(tab.edit_text(name_id()), Some("Bug Sweep"));
+        tab.set_search("orb".into());
+        assert_eq!(tab.edit_text(search_id()), Some("orb"));
+        assert_eq!(tab.edit_text(id("outro")), None);
+    }
+
+    #[test]
+    fn the_name_field_is_capped_like_the_legacy_input() {
+        let mut tab = BuildTab::new();
+        tab.set_name("x".repeat(40));
+        assert_eq!(tab.name.chars().count(), NAME_MAX_CHARS);
     }
 
     #[test]

@@ -1515,24 +1515,59 @@ pub fn item_card_height(measure: &mut dyn Measure, card: &ItemCard, width: f32) 
     ITEM_BAR + width + item_card_text_height(measure, card, width)
 }
 
+/// Um item que passa pelo rolo do sorteio.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ReelFrame {
+    /// Caminho relativo a `assets/icons/`.
+    pub image: Option<String>,
+    pub name: String,
+}
+
+/// Em que ponto do sorteio o card está.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum CardMotion<'a> {
+    Still,
+    /// O rolo girando. `position` anda de 0 (o primeiro quadro no lugar) até o
+    /// último índice, que é o item sorteado parado no lugar; a parte
+    /// fracionária é quanto o quadro atual já desceu.
+    Spin {
+        frames: &'a [ReelFrame],
+        position: f32,
+    },
+    /// O rolo acabou de parar. `progress` vai de 0 a 1: o destaque em accent
+    /// apaga e o texto do item entra como o `animate-enter` (§4 Motion).
+    Land(f32),
+}
+
 /// Card de um item da build: caixa aninhada com a barra da categoria, a imagem
 /// e o texto. O cadeado mantém o item no próximo sorteio; travado, a barra
-/// inunda de accent.
+/// inunda de accent. No sorteio, a imagem vira um rolo que desce e para no
+/// item novo ([`CardMotion`]).
 pub fn build_item_card(
     ui: &mut Ui,
     measure: &mut dyn Measure,
     lock: Id,
     rect: Rect,
     card: &ItemCard,
+    phase: CardMotion,
 ) {
     let palette = theme::palette();
     ui.fill(rect, palette.base_100);
+    // Quanto do destaque do sorteio ainda está aceso: inteiro enquanto gira,
+    // apagando na chegada.
+    let glow = match phase {
+        CardMotion::Still => 0.0,
+        CardMotion::Spin { .. } => 1.0,
+        CardMotion::Land(progress) => 1.0 - progress.clamp(0.0, 1.0),
+    };
 
     // Barra: categoria, etiqueta de set e o cadeado.
     let mut body = rect;
     let bar = body.cut_top(ITEM_BAR);
     if card.locked {
         ui.fill(bar, palette.accent);
+    } else if glow > 0.0 {
+        ui.fill(bar, palette.accent.faded(glow));
     }
     ui.fill(
         Rect::new(bar.x, bar.bottom() - theme::BORDER, bar.w, theme::BORDER),
@@ -1578,7 +1613,7 @@ pub fn build_item_card(
         if card.locked {
             palette.accent_content
         } else {
-            palette.muted
+            palette.muted.mix(palette.accent_content, glow)
         },
     );
 
@@ -1586,24 +1621,84 @@ pub fn build_item_card(
     // mais largos que altos e esticá-los deformaria a silhueta.
     let square = body.cut_top(rect.w.min(body.h));
     let picture = square.inset(ITEM_IMAGE_PADDING);
-    match card.image {
+    match phase {
+        CardMotion::Spin { frames, position } if !frames.is_empty() => {
+            reel(ui, square, picture, frames, position);
+            // O nome que está passando pelo meio do rolo, apagado: o do item
+            // sorteado só entra quando ele para.
+            let passing = &frames[(position.round().max(0.0) as usize).min(frames.len() - 1)];
+            ui.text(
+                body.inset(ITEM_TEXT_PADDING),
+                passing.name.to_uppercase(),
+                item_name_style(),
+                palette.muted,
+            );
+        }
+        _ => {
+            item_picture(ui, picture, card.image);
+            let enter = match phase {
+                CardMotion::Land(progress) => motion::ease_out(progress),
+                _ => 1.0,
+            };
+            // Sobe os 8 DIP do `animate-enter` sem vazar do card.
+            ui.push_clip(body);
+            item_card_text(
+                ui,
+                measure,
+                body.translate(0.0, motion::ENTER_RISE * (1.0 - enter)),
+                card,
+                enter,
+            );
+            ui.pop_clip();
+        }
+    }
+
+    ui.stroke(rect, theme::BORDER, palette.base_300);
+    if glow > 0.0 {
+        ui.stroke(rect, theme::BORDER, palette.accent.faded(glow));
+    }
+}
+
+/// Imagem do item, ou o marcador do slot vazio.
+fn item_picture(ui: &mut Ui, picture: Rect, image: Option<&str>) {
+    match image {
         Some(path) => ui.image_styled(picture, format!("icons/{path}"), ImageStyle::FILL.contain()),
-        // Item vazio (e ícone vetorial, que o decodificador não lê).
         None => ui.text(
             picture,
             "\u{25A1}",
             TextStyle::new(28.0, Weight::Regular)
                 .align(Align::Center)
                 .middle(),
-            palette.muted,
+            theme::palette().muted,
         ),
     }
-
-    item_card_text(ui, measure, body, card);
-    ui.stroke(rect, theme::BORDER, palette.base_300);
 }
 
-fn item_card_text(ui: &mut Ui, measure: &mut dyn Measure, rect: Rect, card: &ItemCard) {
+/// O rolo do sorteio: o quadro atual desce e sai por baixo enquanto o próximo
+/// entra por cima, recortados na janela da imagem.
+fn reel(ui: &mut Ui, window: Rect, picture: Rect, frames: &[ReelFrame], position: f32) {
+    let last = frames.len() - 1;
+    let position = position.clamp(0.0, last as f32);
+    let index = (position.floor() as usize).min(last);
+    let fall = position - index as f32;
+
+    ui.push_clip(window);
+    item_picture(
+        ui,
+        picture.translate(0.0, window.h * fall),
+        frames[index].image.as_deref(),
+    );
+    if index < last && fall > 0.0 {
+        item_picture(
+            ui,
+            picture.translate(0.0, window.h * (fall - 1.0)),
+            frames[index + 1].image.as_deref(),
+        );
+    }
+    ui.pop_clip();
+}
+
+fn item_card_text(ui: &mut Ui, measure: &mut dyn Measure, rect: Rect, card: &ItemCard, alpha: f32) {
     let palette = theme::palette();
     let mut text = rect.inset(ITEM_TEXT_PADDING);
     let name = card.name.to_uppercase();
@@ -1612,7 +1707,7 @@ fn item_card_text(ui: &mut Ui, measure: &mut dyn Measure, rect: Rect, card: &Ite
         text.cut_top(height),
         name,
         item_name_style(),
-        palette.content,
+        palette.content.faded(alpha),
     );
 
     if let Some(subtitle) = card.subtitle {
@@ -1625,7 +1720,7 @@ fn item_card_text(ui: &mut Ui, measure: &mut dyn Measure, rect: Rect, card: &Ite
             text.cut_top(height),
             subtitle,
             item_subtitle_style(),
-            palette.accent_text,
+            palette.accent_text.faded(alpha),
         );
     }
     if let Some(description) = card.description {
@@ -1637,7 +1732,7 @@ fn item_card_text(ui: &mut Ui, measure: &mut dyn Measure, rect: Rect, card: &Ite
             text.cut_top(height),
             description,
             item_description_style(),
-            palette.muted,
+            palette.muted.faded(alpha),
         );
     }
 }
@@ -2353,7 +2448,14 @@ mod tests {
         let mut ui = Ui::new();
 
         ui.begin(0);
-        build_item_card(&mut ui, &mut Fixed, id("lock"), rect, &card);
+        build_item_card(
+            &mut ui,
+            &mut Fixed,
+            id("lock"),
+            rect,
+            &card,
+            CardMotion::Still,
+        );
         ui.end();
 
         // O cadeado fica na barra, no canto direito, e é a única área clicável.
@@ -2387,6 +2489,7 @@ mod tests {
             id("lock"),
             Rect::new(0.0, 0.0, 180.0, 280.0),
             &card,
+            CardMotion::Still,
         );
         ui.end();
 
@@ -2396,6 +2499,79 @@ mod tests {
             .iter()
             .any(|node| matches!(node.visual, Visual::Image { .. })));
         assert!(texts(&ui).contains(&"\u{25A1}".to_string()));
+    }
+
+    #[test]
+    fn a_spinning_card_shows_the_reel_and_hides_the_rolled_text() {
+        let card = ItemCard {
+            label: "Booster",
+            name: "Stun Pods",
+            image: Some("equipment/booster-stun-pods.webp"),
+            subtitle: None,
+            description: Some("Hellpods atordoam ao cair."),
+            badge: None,
+            locked: false,
+        };
+        let frames = [
+            ReelFrame {
+                image: Some("equipment/booster-dead-sprint.webp".into()),
+                name: "Dead Sprint".into(),
+            },
+            ReelFrame {
+                image: Some("equipment/booster-stun-pods.webp".into()),
+                name: "Stun Pods".into(),
+            },
+        ];
+        let rect = Rect::new(0.0, 0.0, 180.0, 300.0);
+        let draw = |phase: CardMotion| {
+            let mut ui = Ui::new();
+            ui.begin(0);
+            build_item_card(&mut ui, &mut Fixed, id("lock"), rect, &card, phase);
+            ui.end();
+            ui
+        };
+        let images = |ui: &Ui| -> Vec<(String, Rect)> {
+            ui.frame()
+                .nodes
+                .iter()
+                .filter_map(|node| match &node.visual {
+                    Visual::Image { path, .. } => {
+                        Some((path.to_string_lossy().into_owned(), node.rect))
+                    }
+                    _ => None,
+                })
+                .collect()
+        };
+
+        // No meio do rolo os dois quadros aparecem, um descendo e o outro
+        // entrando por cima, e o texto do item sorteado ainda não.
+        let spinning = draw(CardMotion::Spin {
+            frames: &frames,
+            position: 0.5,
+        });
+        let reel = images(&spinning);
+        assert_eq!(reel.len(), 2);
+        assert!(reel[0].0.contains("dead-sprint") && reel[1].0.contains("stun-pods"));
+        assert!(reel[1].1.y < reel[0].1.y, "o próximo vem de cima");
+        assert!(
+            texts(&spinning).contains(&"DEAD SPRINT".to_string())
+                || texts(&spinning).contains(&"STUN PODS".to_string())
+        );
+        assert!(!texts(&spinning).contains(&card.description.unwrap().to_string()));
+        // O rolo é recortado na janela da imagem.
+        assert!(spinning
+            .frame()
+            .nodes
+            .iter()
+            .filter(|node| matches!(node.visual, Visual::Image { .. }))
+            .all(|node| node.clip.is_some()));
+
+        // Parado, é o card de sempre, com a descrição de volta.
+        let still = draw(CardMotion::Land(1.0));
+        assert_eq!(images(&still).len(), 1);
+        assert!(images(&still)[0].0.contains("stun-pods"));
+        assert!(texts(&still).contains(&card.description.unwrap().to_string()));
+        assert_eq!(texts(&still), texts(&draw(CardMotion::Still)));
     }
 
     #[test]

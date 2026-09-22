@@ -125,6 +125,11 @@ impl Locks {
 /// Porte de `generateFullBuild` (~168-212): a build balanceada coloca primeiro
 /// uma arma de apoio e um item de mochila (um apoio que já vem com mochila conta
 /// pelos dois), e só então os slots restantes saem de uma pool embaralhada.
+///
+/// Rolar de novo não repete o que saiu na rodada anterior (`prev`) enquanto
+/// houver outra opção: o que repete vai para o fim da fila e só volta quando
+/// nada mais cabe. Com poucas opções (a capa de uma warbond que só tem uma, por
+/// exemplo) a repetição é inevitável e acontece.
 pub fn generate<R: Rng + ?Sized>(
     prev: Option<&Build>,
     locks: &Locks,
@@ -141,8 +146,12 @@ pub fn generate<R: Rng + ?Sized>(
         }
     }
 
+    let repeats = rerolled(prev, locks);
     let mut pool: Vec<u32> = data.all().iter().map(|strat| strat.id).collect();
     pool.shuffle(rng);
+    // Ordenação estável: os da rodada anterior vão para o fim sem desfazer o
+    // embaralhamento, e os dois laços abaixo pegam o primeiro que cabe.
+    pool.sort_by_key(|id| repeats.contains(id));
 
     if rules.balanced {
         if !strats.iter().flatten().any(|id| meta.is_support(*id)) {
@@ -176,11 +185,12 @@ pub fn generate<R: Rng + ?Sized>(
     for slot in EquipSlot::ALL {
         let id = match kept_equip(prev, locks, slot) {
             Some(id) => Some(id),
-            None => random_item(equipment, slot, rng).map(|item| item.id().to_string()),
+            None => random_item(equipment, slot, previous(prev, slot), rng)
+                .map(|item| item.id().to_string()),
         };
         build.set_equip(slot, id);
     }
-    apply_set_matching(&mut build, locks, rules, equipment, rng);
+    apply_set_matching(&mut build, prev, locks, rules, equipment, rng);
     build
 }
 
@@ -245,22 +255,75 @@ fn kept_equip(prev: Option<&Build>, locks: &Locks, slot: EquipSlot) -> Option<St
         .map(str::to_string)
 }
 
+/// Estratagemas da rodada anterior que esta vai refazer. Os travados ficam de
+/// fora: eles não saem do lugar, então não há o que evitar.
+fn rerolled(prev: Option<&Build>, locks: &Locks) -> Vec<u32> {
+    let Some(prev) = prev else {
+        return Vec::new();
+    };
+    prev.stratagems
+        .iter()
+        .enumerate()
+        .filter(|(index, _)| !locks.stratagem(*index))
+        .filter_map(|(_, id)| *id)
+        .collect()
+}
+
+/// Item que a categoria tinha na rodada anterior.
+fn previous(prev: Option<&Build>, slot: EquipSlot) -> Option<&str> {
+    prev.and_then(|build| build.equip(slot))
+}
+
+/// Item qualquer da categoria, menos o `previous` quando há outro.
 fn random_item<'a, R: Rng + ?Sized>(
     equipment: &'a Equipment,
     slot: EquipSlot,
+    previous: Option<&str>,
     rng: &mut R,
 ) -> Option<Item<'a>> {
     let count = equipment.count(slot);
     if count == 0 {
         return None;
     }
-    equipment.at(slot, rng.random_range(..count))
+    let skip = previous.and_then(|id| {
+        (0..count).find(|index| {
+            equipment
+                .at(slot, *index)
+                .is_some_and(|item| item.id() == id)
+        })
+    });
+    match skip {
+        // Sorteia entre os outros `count - 1` e pula o índice repetido.
+        Some(skip) if count > 1 => {
+            let index = rng.random_range(..count - 1);
+            equipment.at(slot, if index >= skip { index + 1 } else { index })
+        }
+        _ => equipment.at(slot, rng.random_range(..count)),
+    }
+}
+
+/// Um id da lista, evitando o `previous`, que só volta quando é o único.
+fn choose_fresh<'a, R: Rng + ?Sized>(
+    ids: &[&'a str],
+    previous: Option<&str>,
+    rng: &mut R,
+) -> Option<&'a str> {
+    let fresh: Vec<&str> = ids
+        .iter()
+        .copied()
+        .filter(|id| Some(*id) != previous)
+        .collect();
+    match fresh.is_empty() {
+        true => ids.choose(rng).copied(),
+        false => fresh.choose(rng).copied(),
+    }
 }
 
 /// Fecha o set da armadura sorteada: capacete de nome idêntico e capa da mesma
 /// warbond. Set sem capa correspondente mantém a aleatória (~156-166).
 fn apply_set_matching<R: Rng + ?Sized>(
     build: &mut Build,
+    prev: Option<&Build>,
     locks: &Locks,
     rules: Rules,
     equipment: &Equipment,
@@ -292,8 +355,8 @@ fn apply_set_matching<R: Rng + ?Sized>(
             .filter(|cape| cape.warbond == armor.warbond)
             .map(|cape| cape.id.as_str())
             .collect();
-        if let Some(cape) = capes.choose(rng) {
-            build.set_equip(EquipSlot::Cape, Some((*cape).to_string()));
+        if let Some(cape) = choose_fresh(&capes, previous(prev, EquipSlot::Cape), rng) {
+            build.set_equip(EquipSlot::Cape, Some(cape.to_string()));
         }
     }
 }
@@ -376,9 +439,11 @@ pub fn meta_lists(
         .collect();
     sort_picks(&mut stratagems);
 
+    // Arma e passiva que chegaram pela API depois do release casam pelo nome.
+    let refs = map.weapon_refs(stats.weapons.items.keys().map(String::as_str), equipment);
     let mut weapons: [Vec<Pick<String>>; 3] = Default::default();
     for (slug, stat) in &stats.weapons.items {
-        let Some(reference) = map.weapons.get(slug) else {
+        let Some(reference) = refs.get(slug.as_str()) else {
             continue;
         };
         let Some(slot) = EquipSlot::from_key(&reference.cat).filter(|slot| slot.is_weapon()) else {
@@ -396,12 +461,13 @@ pub fn meta_lists(
         sort_picks(list);
     }
 
+    let names = map.passive_names(stats.armor.items.keys().map(String::as_str), equipment);
     let mut passives: Vec<Pick<String>> = stats
         .armor
         .items
         .iter()
         .filter_map(|(key, stat)| {
-            let name = map.armor.get(key)?;
+            let name = names.get(key.as_str())?;
             // Validada como as outras listas: um `statsMap.json` desatualizado
             // (passiva renomeada) produziria um top sem armadura possível, e a
             // regra de armadura meta falharia em silêncio na geração.
@@ -452,10 +518,27 @@ fn weighted<'a, T, R: Rng + ?Sized>(list: &[&'a Pick<T>], rng: &mut R) -> Option
     list.last().copied()
 }
 
+/// Os itens da lista que não repetem a rodada anterior, ou a lista inteira
+/// quando todos repetem (lista de um item só, por exemplo).
+fn fresh<'a, T>(list: &[&'a Pick<T>], repeats: impl Fn(&T) -> bool) -> Vec<&'a Pick<T>> {
+    let fresh: Vec<&'a Pick<T>> = list
+        .iter()
+        .copied()
+        .filter(|pick| !repeats(&pick.item))
+        .collect();
+    match fresh.is_empty() {
+        true => list.to_vec(),
+        false => fresh,
+    }
+}
+
 /// Sorteia uma build a partir das estatísticas.
 ///
 /// Porte de `generateMetaBuild` (~349-424): mesmas regras da build aleatória,
 /// mas a pool é o topo exibido na tela, e o peso de cada item é o pick rate.
+/// Como no [`generate`], o que saiu na rodada anterior só se repete quando é a
+/// única opção: o topo de armas tem três itens, e sem essa regra o primeiro
+/// colocado saía várias vezes seguidas.
 #[allow(clippy::too_many_arguments)]
 pub fn generate_meta<R: Rng + ?Sized>(
     prev: Option<&Build>,
@@ -474,35 +557,27 @@ pub fn generate_meta<R: Rng + ?Sized>(
         }
     }
 
+    let repeats = rerolled(prev, locks);
+    let pick = MetaPick {
+        lists,
+        rules,
+        data,
+        meta,
+        repeats: &repeats,
+    };
     if rules.balanced {
         if !strats.iter().flatten().any(|id| meta.is_support(*id)) {
-            place_meta(
-                &mut strats,
-                lists,
-                rules,
-                data,
-                meta,
-                Some(&|id| meta.is_support(id)),
-                rng,
-            );
+            pick.place(&mut strats, Some(&|id| meta.is_support(id)), rng);
         }
         if !strats.iter().flatten().any(|id| meta.is_backpack(*id)) {
-            place_meta(
-                &mut strats,
-                lists,
-                rules,
-                data,
-                meta,
-                Some(&|id| meta.is_backpack(id)),
-                rng,
-            );
+            pick.place(&mut strats, Some(&|id| meta.is_backpack(id)), rng);
         }
     }
     for index in 0..SLOT_COUNT {
         if strats[index].is_some() {
             continue;
         }
-        if let Some(id) = pick_meta(&strats, lists, rules, data, meta, None, rng) {
+        if let Some(id) = pick.choose(&strats, None, rng) {
             strats[index] = Some(id);
         }
     }
@@ -518,11 +593,14 @@ pub fn generate_meta<R: Rng + ?Sized>(
         let id = match kept_equip(prev, locks, slot) {
             Some(id) => Some(id),
             None => {
+                let previous = previous(prev, slot);
                 let top: Vec<&Pick<String>> =
                     lists.weapons(slot).iter().take(META_TOP_WEAPONS).collect();
+                let top = fresh(&top, |id| Some(id.as_str()) == previous);
                 match weighted(&top, rng) {
                     Some(pick) => Some(pick.item.clone()),
-                    None => random_item(equipment, slot, rng).map(|item| item.id().to_string()),
+                    None => random_item(equipment, slot, previous, rng)
+                        .map(|item| item.id().to_string()),
                 }
             }
         };
@@ -533,21 +611,28 @@ pub fn generate_meta<R: Rng + ?Sized>(
     let armor = match kept_equip(prev, locks, EquipSlot::Armor) {
         Some(id) => Some(id),
         None => {
-            let top: Vec<&Pick<String>> = lists.passives.iter().take(META_TOP_PASSIVES).collect();
-            let candidates: Vec<&str> = match weighted(&top, rng) {
-                Some(passive) => equipment
+            let previous = previous(prev, EquipSlot::Armor);
+            let armors_of = |passive: &str| -> Vec<&str> {
+                equipment
                     .armor
                     .iter()
-                    .filter(|armor| armor.passive == passive.item)
+                    .filter(|armor| armor.passive == passive)
                     .map(|armor| armor.id.as_str())
-                    .collect(),
-                None => Vec::new(),
+                    .collect()
             };
-            match candidates.choose(rng) {
-                Some(id) => Some((*id).to_string()),
-                None => {
-                    random_item(equipment, EquipSlot::Armor, rng).map(|item| item.id().to_string())
-                }
+            let top: Vec<&Pick<String>> = lists.passives.iter().take(META_TOP_PASSIVES).collect();
+            // Passiva cuja única armadura é a da rodada anterior não traria
+            // nada de novo: ela só entra se todas forem assim.
+            let top = fresh(&top, |passive| {
+                armors_of(passive).iter().all(|id| Some(*id) == previous)
+            });
+            let candidates = weighted(&top, rng)
+                .map(|passive| armors_of(&passive.item))
+                .unwrap_or_default();
+            match choose_fresh(&candidates, previous, rng) {
+                Some(id) => Some(id.to_string()),
+                None => random_item(equipment, EquipSlot::Armor, previous, rng)
+                    .map(|item| item.id().to_string()),
             }
         }
     };
@@ -557,69 +642,82 @@ pub fn generate_meta<R: Rng + ?Sized>(
     for slot in [EquipSlot::Helmet, EquipSlot::Cape, EquipSlot::Booster] {
         let id = match kept_equip(prev, locks, slot) {
             Some(id) => Some(id),
-            None => random_item(equipment, slot, rng).map(|item| item.id().to_string()),
+            None => random_item(equipment, slot, previous(prev, slot), rng)
+                .map(|item| item.id().to_string()),
         };
         build.set_equip(slot, id);
     }
 
-    apply_set_matching(&mut build, locks, rules, equipment, rng);
+    apply_set_matching(&mut build, prev, locks, rules, equipment, rng);
     build
 }
 
-/// Preenche o primeiro slot vazio com um estratagema do topo que atenda ao
-/// predicado (`placeInEmptySlot` da build meta).
-fn place_meta<R: Rng + ?Sized>(
-    strats: &mut Slots,
-    lists: &MetaLists,
+/// O que o sorteio dos estratagemas meta consulta a cada slot.
+struct MetaPick<'a> {
+    lists: &'a MetaLists,
     rules: Rules,
-    data: &GameData,
-    meta: &StratMeta,
-    predicate: Option<&dyn Fn(u32) -> bool>,
-    rng: &mut R,
-) {
-    let Some(index) = strats.iter().position(Option::is_none) else {
-        return;
-    };
-    if let Some(id) = pick_meta(strats, lists, rules, data, meta, predicate, rng) {
-        strats[index] = Some(id);
-    }
+    data: &'a GameData,
+    meta: &'a StratMeta,
+    /// O que saiu na rodada anterior e deve ficar de fora se der.
+    repeats: &'a [u32],
 }
 
-/// Escolhe um estratagema entre os mais usados que cabem na build.
-///
-/// Só o topo mostrado na tela entra. Se as regras ativas exigirem algo que não
-/// está lá (balanceado precisa de mochila e o top 10 não tem), a escolha cai
-/// nos [`META_FALLBACK`] mais usados da lista inteira que atendam (~367-380).
-fn pick_meta<R: Rng + ?Sized>(
-    strats: &Slots,
-    lists: &MetaLists,
-    rules: Rules,
-    data: &GameData,
-    meta: &StratMeta,
-    predicate: Option<&dyn Fn(u32) -> bool>,
-    rng: &mut R,
-) -> Option<u32> {
-    let allowed = |pick: &&Pick<u32>| {
-        predicate.is_none_or(|check| check(pick.item))
-            && can_add(pick.item, strats, rules, data, meta)
-    };
+impl MetaPick<'_> {
+    /// Preenche o primeiro slot vazio com um estratagema do topo que atenda ao
+    /// predicado (`placeInEmptySlot` da build meta).
+    fn place<R: Rng + ?Sized>(
+        &self,
+        strats: &mut Slots,
+        predicate: Option<&dyn Fn(u32) -> bool>,
+        rng: &mut R,
+    ) {
+        let Some(index) = strats.iter().position(Option::is_none) else {
+            return;
+        };
+        if let Some(id) = self.choose(strats, predicate, rng) {
+            strats[index] = Some(id);
+        }
+    }
 
-    let top: Vec<&Pick<u32>> = lists
-        .stratagems
-        .iter()
-        .take(META_TOP_STRATS)
-        .filter(allowed)
-        .collect();
-    let pool = match top.is_empty() {
-        false => top,
-        true => lists
+    /// Escolhe um estratagema entre os mais usados que cabem na build.
+    ///
+    /// Só o topo mostrado na tela entra. Se as regras ativas exigirem algo que
+    /// não está lá (balanceado precisa de mochila e o top 10 não tem), a escolha
+    /// cai nos [`META_FALLBACK`] mais usados da lista inteira que atendam
+    /// (~367-380). Dentro da pool escolhida, o que repete a rodada anterior só
+    /// sai quando é o único que cabe: a regra nunca busca fora do topo só para
+    /// variar.
+    fn choose<R: Rng + ?Sized>(
+        &self,
+        strats: &Slots,
+        predicate: Option<&dyn Fn(u32) -> bool>,
+        rng: &mut R,
+    ) -> Option<u32> {
+        let allowed = |pick: &&Pick<u32>| {
+            predicate.is_none_or(|check| check(pick.item))
+                && can_add(pick.item, strats, self.rules, self.data, self.meta)
+        };
+
+        let top: Vec<&Pick<u32>> = self
+            .lists
             .stratagems
             .iter()
+            .take(META_TOP_STRATS)
             .filter(allowed)
-            .take(META_FALLBACK)
-            .collect(),
-    };
-    weighted(&pool, rng).map(|pick| pick.item)
+            .collect();
+        let pool = match top.is_empty() {
+            false => top,
+            true => self
+                .lists
+                .stratagems
+                .iter()
+                .filter(allowed)
+                .take(META_FALLBACK)
+                .collect(),
+        };
+        let pool = fresh(&pool, |id| self.repeats.contains(id));
+        weighted(&pool, rng).map(|pick| pick.item)
+    }
 }
 
 // --- Build personalizada ---
@@ -703,40 +801,135 @@ pub fn default_name(loadouts: &[Loadout]) -> String {
         .expect("sempre há um número livre")
 }
 
-/// Salva a build exibida. Um nome já usado (sem diferenciar maiúsculas)
-/// sobrescreve a build existente em vez de criar outra (`handleSaveBuild`).
-pub fn save(loadouts: &mut Vec<Loadout>, name: &str, build: &Build) -> bool {
-    if !build.has_stratagem() {
-        return false;
-    }
-    let name = match name.trim() {
+/// Por que uma build não foi gravada.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum SaveError {
+    /// Sem estratagema nenhum não há build: a v1 nem habilitava o botão.
+    Empty,
+    /// Outra build salva já usa o nome (sem diferenciar maiúsculas). O índice
+    /// é o dela: a tela pergunta se substitui.
+    NameTaken(usize),
+    /// A build que estava sendo editada não existe mais.
+    Missing,
+}
+
+/// Nome digitado, ou o primeiro `Build {n}` livre quando o campo está em branco.
+fn typed_or_default(loadouts: &[Loadout], name: &str) -> String {
+    match name.trim() {
         "" => default_name(loadouts),
         typed => typed.to_string(),
-    };
-    let slot_ids = build.stratagems.to_vec();
-    // O mapa entra mesmo vazio: a v1 gravava `equip: {}` numa build sem
-    // equipamento, e é esse campo que decide se aplicar substitui a tela toda.
-    let equip: HashMap<String, String> = EquipSlot::ALL
+    }
+}
+
+/// Índice da build que usa o nome, sem diferenciar maiúsculas.
+fn named(loadouts: &[Loadout], name: &str) -> Option<usize> {
+    loadouts
+        .iter()
+        .position(|loadout| loadout.name.to_lowercase() == name.to_lowercase())
+}
+
+/// Posição da build salva pelo id.
+pub fn index_of(loadouts: &[Loadout], id: &str) -> Option<usize> {
+    loadouts.iter().position(|loadout| loadout.id == id)
+}
+
+/// O equipamento da build no formato do `loadouts.json`. O mapa sai mesmo
+/// vazio: a v1 gravava `equip: {}` numa build sem equipamento, e é esse campo
+/// que decide se aplicar substitui a tela toda.
+fn equip_map(build: &Build) -> HashMap<String, String> {
+    EquipSlot::ALL
         .into_iter()
         .filter_map(|slot| Some((slot.key().to_string(), build.equip(slot)?.to_string())))
-        .collect();
+        .collect()
+}
 
-    match loadouts
-        .iter_mut()
-        .find(|loadout| loadout.name.to_lowercase() == name.to_lowercase())
-    {
-        Some(existing) => {
-            existing.slot_ids = slot_ids;
-            existing.equip = Some(equip);
-        }
-        None => loadouts.push(Loadout {
-            id: next_id(loadouts),
-            name,
-            slot_ids,
-            equip: Some(equip),
-        }),
+/// Salva a build exibida como uma build nova e devolve o índice dela.
+///
+/// A v1 sobrescrevia em silêncio a build de mesmo nome. Aqui o nome repetido é
+/// recusado com [`SaveError::NameTaken`], e só `replace` (a confirmação da tela)
+/// grava por cima, mantendo o id da antiga.
+pub fn save(
+    loadouts: &mut Vec<Loadout>,
+    name: &str,
+    build: &Build,
+    replace: bool,
+) -> Result<usize, SaveError> {
+    if !build.has_stratagem() {
+        return Err(SaveError::Empty);
     }
-    true
+    let name = typed_or_default(loadouts, name);
+    match named(loadouts, &name) {
+        Some(index) if !replace => Err(SaveError::NameTaken(index)),
+        Some(index) => {
+            let existing = &mut loadouts[index];
+            existing.slot_ids = build.stratagems.to_vec();
+            existing.equip = Some(equip_map(build));
+            Ok(index)
+        }
+        None => {
+            loadouts.push(Loadout {
+                id: next_id(loadouts),
+                name,
+                slot_ids: build.stratagems.to_vec(),
+                equip: Some(equip_map(build)),
+            });
+            Ok(loadouts.len() - 1)
+        }
+    }
+}
+
+/// Grava a build exibida por cima da build salva `id`, que é a que está sendo
+/// editada. O nome pode mudar junto (campo em branco mantém o atual), mas não
+/// para o de outra build.
+pub fn update(
+    loadouts: &mut [Loadout],
+    id: &str,
+    name: &str,
+    build: &Build,
+) -> Result<usize, SaveError> {
+    if !build.has_stratagem() {
+        return Err(SaveError::Empty);
+    }
+    let index = index_of(loadouts, id).ok_or(SaveError::Missing)?;
+    let name = match name.trim() {
+        "" => loadouts[index].name.clone(),
+        typed => typed.to_string(),
+    };
+    if let Some(other) = named(loadouts, &name).filter(|other| *other != index) {
+        return Err(SaveError::NameTaken(other));
+    }
+    let loadout = &mut loadouts[index];
+    loadout.name = name;
+    loadout.slot_ids = build.stratagems.to_vec();
+    loadout.equip = Some(equip_map(build));
+    Ok(index)
+}
+
+/// Nome livre para uma cópia: o próprio, se ninguém usa, ou `{nome} 2`,
+/// `{nome} 3`... dentro do limite de caracteres do campo.
+pub fn copy_name(loadouts: &[Loadout], name: &str, max_chars: usize) -> String {
+    let base = typed_or_default(loadouts, name);
+    if named(loadouts, &base).is_none() {
+        return base;
+    }
+    (2..)
+        .map(|n| {
+            let suffix = format!(" {n}");
+            let keep = max_chars.saturating_sub(suffix.chars().count());
+            let head: String = base.chars().take(keep).collect();
+            format!("{}{suffix}", head.trim_end())
+        })
+        .find(|candidate| named(loadouts, candidate).is_none())
+        .expect("sempre há um número livre")
+}
+
+/// A build exibida é a mesma que está gravada? Compara o que `apply` põe na
+/// tela: os slots saneados e o equipamento (build antiga sem o campo vale como
+/// sem equipamento).
+pub fn matches(loadout: &Loadout, build: &Build, data: &GameData) -> bool {
+    let saved = crate::loadouts::sanitize(&loadout.slot_ids, data);
+    let shown = crate::loadouts::sanitize(&build.stratagems, data);
+    saved == shown && loadout.equip.clone().unwrap_or_default() == equip_map(build)
 }
 
 /// Id no formato da v1 (`Date.now()` em texto). Duas builds salvas no mesmo
@@ -1392,6 +1585,206 @@ mod tests {
         }
     }
 
+    // --- Rolar de novo ---
+
+    /// Estratagemas que nenhuma regra de exclusividade separa: qualquer
+    /// quarteto deles é uma build válida.
+    fn plain_ids(data: &GameData, count: usize) -> Vec<u32> {
+        data.all()
+            .iter()
+            .filter(|strat| !data::EXCLUSIVE_TAGS.iter().any(|tag| strat.has_tag(tag)))
+            .take(count)
+            .map(|strat| strat.id)
+            .collect()
+    }
+
+    /// Sem o casamento de set: capacete e capa ficam no sorteio comum, onde a
+    /// regra de não repetir vale sempre.
+    fn no_sets(balanced: bool, max_one_sentry: bool) -> Rules {
+        Rules {
+            match_set: false,
+            ..rules(balanced, max_one_sentry)
+        }
+    }
+
+    fn assert_nothing_repeats(prev: &Build, next: &Build) {
+        for id in next.stratagems.iter().flatten() {
+            assert!(
+                !prev.stratagems.contains(&Some(*id)),
+                "{id} saiu duas vezes seguidas"
+            );
+        }
+        for slot in EquipSlot::ALL {
+            assert_ne!(next.equip(slot), prev.equip(slot), "{} repetiu", slot.key());
+        }
+    }
+
+    #[test]
+    fn a_reroll_changes_every_unlocked_item() {
+        let data = data();
+        let meta = meta(&data);
+        for rules in [no_sets(false, false), no_sets(true, true)] {
+            let mut prev = roll(rules, &data, &meta);
+            for _ in 0..ROLLS {
+                let next = generate(
+                    Some(&prev),
+                    &Locks::default(),
+                    rules,
+                    &data,
+                    equipment(),
+                    &meta,
+                    &mut rand::rng(),
+                );
+                assert!(next.stratagems.iter().all(Option::is_some));
+                assert_nothing_repeats(&prev, &next);
+                // Fugir da repetição não pode furar a regra de balanceado.
+                if rules.balanced {
+                    let ids: Vec<u32> = next.stratagems.iter().flatten().copied().collect();
+                    assert_eq!(ids.iter().filter(|id| meta.is_support(**id)).count(), 1);
+                    assert_eq!(ids.iter().filter(|id| meta.is_backpack(**id)).count(), 1);
+                }
+                prev = next;
+            }
+        }
+    }
+
+    #[test]
+    fn a_locked_item_is_kept_and_the_rest_still_changes() {
+        let data = data();
+        let meta = meta(&data);
+        let rules = no_sets(false, false);
+        let first = roll(rules, &data, &meta);
+        let mut locks = Locks::default();
+        locks.toggle_stratagem(0);
+        locks.toggle_equip(EquipSlot::Booster);
+
+        let next = generate(
+            Some(&first),
+            &locks,
+            rules,
+            &data,
+            equipment(),
+            &meta,
+            &mut rand::rng(),
+        );
+        assert_eq!(next.stratagems[0], first.stratagems[0]);
+        assert_eq!(
+            next.equip(EquipSlot::Booster),
+            first.equip(EquipSlot::Booster)
+        );
+        for index in 1..SLOT_COUNT {
+            assert!(!first.stratagems.contains(&next.stratagems[index]));
+        }
+        assert_ne!(
+            next.equip(EquipSlot::Primary),
+            first.equip(EquipSlot::Primary)
+        );
+    }
+
+    /// Topo de cada lista, como a sub-aba Meta monta: armas reais com peso
+    /// decrescente e as primeiras passivas que alguma armadura usa.
+    fn meta_gear(weapons_per_slot: usize) -> ([Vec<Pick<String>>; 3], Vec<Pick<String>>) {
+        let equipment = equipment();
+        let mut weapons: [Vec<Pick<String>>; 3] = Default::default();
+        for slot in [EquipSlot::Primary, EquipSlot::Secondary, EquipSlot::Grenade] {
+            weapons[slot.index()] = (0..weapons_per_slot)
+                .filter_map(|index| equipment.at(slot, index))
+                .enumerate()
+                .map(|(rank, item)| pick(item.id().to_string(), 40.0 - rank as f64))
+                .collect();
+        }
+        let mut names: Vec<String> = Vec::new();
+        for armor in &equipment.armor {
+            if !names.contains(&armor.passive) {
+                names.push(armor.passive.clone());
+            }
+        }
+        let passives = names
+            .into_iter()
+            .take(META_TOP_PASSIVES)
+            .enumerate()
+            .map(|(rank, name)| pick(name, 30.0 - rank as f64))
+            .collect();
+        (weapons, passives)
+    }
+
+    #[test]
+    fn a_meta_reroll_rotates_through_the_top() {
+        let data = data();
+        let meta = meta(&data);
+        let (weapons, passives) = meta_gear(META_TOP_WEAPONS);
+        let lists = MetaLists {
+            stratagems: lists_of(&plain_ids(&data, META_TOP_STRATS)).stratagems,
+            weapons,
+            passives,
+            games: 1,
+        };
+        let rules = no_sets(false, false);
+
+        let mut prev = roll_meta(&lists, rules, &data, &meta);
+        for _ in 0..ROLLS {
+            let next = generate_meta(
+                Some(&prev),
+                &Locks::default(),
+                rules,
+                &lists,
+                &data,
+                equipment(),
+                &meta,
+                &mut rand::rng(),
+            );
+            assert!(next.stratagems.iter().all(Option::is_some));
+            assert_nothing_repeats(&prev, &next);
+            prev = next;
+        }
+    }
+
+    #[test]
+    fn a_meta_reroll_repeats_only_what_has_no_alternative() {
+        let data = data();
+        let meta = meta(&data);
+        // Topo com exatamente quatro estratagemas e uma arma por categoria: não
+        // há o que variar, e a build sai igual em vez de sair incompleta.
+        let ids = plain_ids(&data, SLOT_COUNT);
+        let (weapons, passives) = meta_gear(1);
+        let lists = MetaLists {
+            stratagems: lists_of(&ids).stratagems,
+            weapons,
+            passives,
+            games: 1,
+        };
+        let rules = no_sets(false, false);
+
+        let mut prev = roll_meta(&lists, rules, &data, &meta);
+        for _ in 0..ROLLS / 4 {
+            let next = generate_meta(
+                Some(&prev),
+                &Locks::default(),
+                rules,
+                &lists,
+                &data,
+                equipment(),
+                &meta,
+                &mut rand::rng(),
+            );
+            let mut rolled: Vec<u32> = next.stratagems.iter().flatten().copied().collect();
+            rolled.sort_unstable();
+            let mut expected = ids.clone();
+            expected.sort_unstable();
+            assert_eq!(rolled, expected);
+            for slot in [EquipSlot::Primary, EquipSlot::Secondary, EquipSlot::Grenade] {
+                assert_eq!(next.equip(slot), prev.equip(slot), "{}", slot.key());
+            }
+            // O que tem alternativa continua variando.
+            assert_ne!(next.equip(EquipSlot::Armor), prev.equip(EquipSlot::Armor));
+            assert_ne!(
+                next.equip(EquipSlot::Booster),
+                prev.equip(EquipSlot::Booster)
+            );
+            prev = next;
+        }
+    }
+
     #[test]
     fn without_lists_no_stratagem_is_picked_but_the_gear_still_rolls() {
         // Resposta vazia, ou `statsMap.json` defasado: a tela nem oferece o
@@ -1491,15 +1884,18 @@ mod tests {
     }
 
     #[test]
-    fn saving_names_overwrites_by_name_and_ignores_an_empty_build() {
+    fn saving_names_the_build_and_ignores_an_empty_one() {
         let data = data();
         let mut loadouts = Vec::new();
         let build = saved_build(&data);
 
-        assert!(!save(&mut loadouts, "", &Build::default()), "build vazia");
+        assert_eq!(
+            save(&mut loadouts, "", &Build::default(), false),
+            Err(SaveError::Empty)
+        );
         assert!(loadouts.is_empty());
 
-        assert!(save(&mut loadouts, "  ", &build));
+        assert_eq!(save(&mut loadouts, "  ", &build, false), Ok(0));
         assert_eq!(loadouts[0].name, "Build 1", "sem nome, o padrão da v1");
         assert_eq!(loadouts[0].slot_ids, build.stratagems.to_vec());
         assert_eq!(
@@ -1507,17 +1903,111 @@ mod tests {
             Some(&"primary-ar-2-coyote".to_string())
         );
 
-        // Mesmo nome com outra caixa sobrescreve em vez de duplicar.
+        assert_eq!(save(&mut loadouts, "Bug Sweep", &build, false), Ok(1));
+        assert_ne!(loadouts[0].id, loadouts[1].id);
+    }
+
+    #[test]
+    fn a_taken_name_is_refused_until_the_replace_is_confirmed() {
+        let data = data();
+        let mut loadouts = Vec::new();
+        let build = saved_build(&data);
+        save(&mut loadouts, "Bug Sweep", &build, false).unwrap();
+        let id = loadouts[0].id.clone();
+
+        // A v1 sobrescrevia em silêncio; agora a tela precisa confirmar.
         let mut other = build.clone();
         other.stratagems[1] = Some(strat(&data, 5).id);
-        save(&mut loadouts, "BUILD 1", &other);
+        assert_eq!(
+            save(&mut loadouts, "BUG SWEEP", &other, false),
+            Err(SaveError::NameTaken(0))
+        );
+        assert_eq!(loadouts[0].slot_ids, build.stratagems.to_vec());
+
+        // Confirmado: grava por cima, sem duplicar e sem trocar id nem nome.
+        assert_eq!(save(&mut loadouts, "BUG SWEEP", &other, true), Ok(0));
         assert_eq!(loadouts.len(), 1);
         assert_eq!(loadouts[0].slot_ids, other.stratagems.to_vec());
-        assert_eq!(loadouts[0].name, "Build 1", "o nome original fica");
+        assert_eq!(loadouts[0].name, "Bug Sweep", "o nome original fica");
+        assert_eq!(loadouts[0].id, id);
+    }
 
-        save(&mut loadouts, "Bug Sweep", &build);
-        assert_eq!(loadouts.len(), 2);
-        assert_ne!(loadouts[0].id, loadouts[1].id);
+    #[test]
+    fn editing_overwrites_by_id_and_can_rename() {
+        let data = data();
+        let mut loadouts = Vec::new();
+        let build = saved_build(&data);
+        save(&mut loadouts, "Bug Sweep", &build, false).unwrap();
+        save(&mut loadouts, "Bot Drop", &build, false).unwrap();
+        let id = loadouts[0].id.clone();
+
+        let mut changed = build.clone();
+        changed.set_equip(EquipSlot::Primary, None);
+        changed.stratagems[1] = Some(strat(&data, 6).id);
+
+        // Campo em branco mantém o nome; o conteúdo troca.
+        assert_eq!(update(&mut loadouts, &id, " ", &changed), Ok(0));
+        assert_eq!(loadouts[0].name, "Bug Sweep");
+        assert!(matches(&loadouts[0], &changed, &data));
+        assert!(!matches(&loadouts[0], &build, &data));
+
+        // Renomear para um nome livre vale; para o de outra build, não.
+        assert_eq!(update(&mut loadouts, &id, "Bug Hunt", &changed), Ok(0));
+        assert_eq!(loadouts[0].name, "Bug Hunt");
+        assert_eq!(loadouts[0].id, id, "o id não muda ao renomear");
+        assert_eq!(
+            update(&mut loadouts, &id, "bot drop", &changed),
+            Err(SaveError::NameTaken(1))
+        );
+        assert_eq!(loadouts[0].name, "Bug Hunt");
+        // Trocar só a caixa do próprio nome não é conflito.
+        assert_eq!(update(&mut loadouts, &id, "BUG HUNT", &changed), Ok(0));
+
+        assert_eq!(
+            update(&mut loadouts, "sumiu", "x", &changed),
+            Err(SaveError::Missing)
+        );
+        assert_eq!(
+            update(&mut loadouts, &id, "x", &Build::default()),
+            Err(SaveError::Empty)
+        );
+    }
+
+    #[test]
+    fn a_copy_gets_a_free_name_within_the_field_limit() {
+        let data = data();
+        let mut loadouts = Vec::new();
+        let build = saved_build(&data);
+        save(&mut loadouts, "Bug Sweep", &build, false).unwrap();
+
+        assert_eq!(copy_name(&loadouts, "Nova", 24), "Nova");
+        assert_eq!(copy_name(&loadouts, "bug sweep", 24), "bug sweep 2");
+        save(&mut loadouts, "Bug Sweep 2", &build, false).unwrap();
+        assert_eq!(copy_name(&loadouts, "Bug Sweep", 24), "Bug Sweep 3");
+        assert_eq!(copy_name(&loadouts, "", 24), "Build 1");
+
+        // Um nome no limite perde o fim para caber o número.
+        let long = "x".repeat(24);
+        save(&mut loadouts, &long, &build, false).unwrap();
+        let copy = copy_name(&loadouts, &long, 24);
+        assert_eq!(copy.chars().count(), 24);
+        assert!(copy.ends_with(" 2"));
+    }
+
+    #[test]
+    fn an_old_build_without_gear_matches_a_screen_without_gear() {
+        let data = data();
+        let mut build = Build::default();
+        build.stratagems[0] = Some(strat(&data, 0).id);
+        let old = Loadout {
+            id: "1".into(),
+            name: "Antiga".into(),
+            slot_ids: vec![Some(strat(&data, 0).id)],
+            equip: None,
+        };
+        assert!(matches(&old, &build, &data), "lista curta da v1 conta");
+        build.set_equip(EquipSlot::Cape, Some("cape-x".into()));
+        assert!(!matches(&old, &build, &data));
     }
 
     #[test]
@@ -1528,7 +2018,7 @@ mod tests {
         let mut build = Build::default();
         build.stratagems[0] = Some(strat(&data, 0).id);
 
-        save(&mut loadouts, "Só estratagemas", &build);
+        save(&mut loadouts, "Só estratagemas", &build, false).unwrap();
         assert_eq!(loadouts[0].equip.as_ref().map(HashMap::len), Some(0));
     }
 
@@ -1537,7 +2027,7 @@ mod tests {
         let data = data();
         let mut loadouts = Vec::new();
         let build = saved_build(&data);
-        save(&mut loadouts, "Bug Sweep", &build);
+        save(&mut loadouts, "Bug Sweep", &build, false).unwrap();
 
         let applied = apply(&loadouts[0], None, &data, Some(equipment()));
         assert_eq!(applied.slots, build.stratagems);
@@ -1604,12 +2094,18 @@ mod tests {
         let data = data();
         let mut loadouts = Vec::new();
         let build = saved_build(&data);
-        save(&mut loadouts, "Bug Sweep", &build);
-        save(&mut loadouts, "Outra", &{
-            let mut other = build.clone();
-            other.stratagems[1] = Some(strat(&data, 9).id);
-            other
-        });
+        save(&mut loadouts, "Bug Sweep", &build, false).unwrap();
+        save(
+            &mut loadouts,
+            "Outra",
+            &{
+                let mut other = build.clone();
+                other.stratagems[1] = Some(strat(&data, 9).id);
+                other
+            },
+            false,
+        )
+        .unwrap();
 
         assert_eq!(active_loadout(&loadouts, build.stratagems, &data), Some(0));
         assert_eq!(active_loadout(&loadouts, Slots::default(), &data), None);
@@ -1639,14 +2135,14 @@ mod tests {
         let data = data();
         let build = saved_build(&data);
         let mut loadouts = Vec::new();
-        save(&mut loadouts, "Build 1", &build);
-        save(&mut loadouts, "Build 2", &build);
+        save(&mut loadouts, "Build 1", &build, false).unwrap();
+        save(&mut loadouts, "Build 2", &build, false).unwrap();
         // "Build 1" foi excluída; o próximo nome em branco era "Build 2" na v1,
         // e sobrescreveria a sobrevivente.
         loadouts.remove(0);
 
         assert_eq!(default_name(&loadouts), "Build 1");
-        save(&mut loadouts, "", &build);
+        save(&mut loadouts, "", &build, false).unwrap();
         assert_eq!(loadouts.len(), 2, "a build nova não engole a existente");
     }
 

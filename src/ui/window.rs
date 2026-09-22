@@ -84,7 +84,7 @@ mod platform {
 
     use anyhow::{Context, Result};
     use crossbeam_channel::Receiver;
-    use windows::core::{w, PCWSTR};
+    use windows::core::{w, HSTRING, PCWSTR};
     use windows::Win32::Foundation::{COLORREF, HWND, LPARAM, LRESULT, POINT, RECT, WPARAM};
     use windows::Win32::Graphics::Gdi::{
         BeginPaint, CreateFontW, CreateSolidBrush, DeleteObject, EndPaint, EnumDisplayMonitors,
@@ -425,10 +425,10 @@ mod platform {
     /// `EN_SETFOCUS`, `EN_KILLFOCUS`) por `SendMessage` **síncrono**: chamá-las
     /// com um `&mut App` vivo reentra no `WndProc` e cria um segundo `&mut App`,
     /// o mesmo UB que o backup e o menu da bandeja já evitam adiando.
-    #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+    #[derive(Debug, Clone, PartialEq, Eq)]
     enum EditOp {
-        /// Esvazia o texto do filho nativo.
-        Clear(Id),
+        /// Troca o texto do filho nativo (vazio esvazia).
+        SetText(Id, String),
         /// Entrega o teclado ao filho nativo.
         Focus(Id),
         /// Devolve o teclado à janela principal.
@@ -859,13 +859,21 @@ mod platform {
                 build_tab::Action::Setting(change) => self.apply_change(change),
                 build_tab::Action::SlotsChanged(slots) => self.update_slots(slots),
                 build_tab::Action::LoadoutsChanged => self.save_loadouts(),
-                build_tab::Action::Saved => {
+                build_tab::Action::Saved(name) => {
                     self.save_loadouts();
-                    // O campo de nome é esvaziado depois de salvar, como na v1.
-                    self.clear_edit(build_tab::name_id());
+                    // O campo passa a mostrar o nome com que a build ficou.
+                    self.set_edit(build_tab::name_id(), name);
+                }
+                build_tab::Action::Applied { slots, name } => {
+                    self.set_edit(build_tab::name_id(), name);
+                    self.update_slots(slots);
                 }
                 build_tab::Action::FocusEdit(id) => self.focus_edit(id),
-                build_tab::Action::ClearEdit(id) => self.clear_edit(id),
+                build_tab::Action::SetEdits(edits) => {
+                    for (id, text) in edits {
+                        self.set_edit(id, text);
+                    }
+                }
             }
         }
 
@@ -1069,13 +1077,27 @@ mod platform {
             self.defer_edit_op(EditOp::Focus(id));
         }
 
-        /// Esvazia um campo de busca: o estado da aba agora, o filho nativo na
-        /// mensagem adiada. Quando o `EN_CHANGE` da escrita chega, a aba já
-        /// está com o mesmo texto vazio e o aviso não muda nada.
+        /// Esvazia um campo de busca.
         fn clear_edit(&mut self, id: Id) {
-            self.defer_edit_op(EditOp::Clear(id));
-            self.set_edit_text(id, String::new());
+            self.set_edit(id, String::new());
+        }
+
+        /// Troca o texto de um campo: o estado da aba agora, o filho nativo na
+        /// mensagem adiada. Quando o `EN_CHANGE` da escrita chega, a aba já
+        /// está com o mesmo texto e o aviso não muda nada.
+        fn set_edit(&mut self, id: Id, text: String) {
+            self.defer_edit_op(EditOp::SetText(id, text.clone()));
+            self.set_edit_text(id, text);
             self.rebuild();
+        }
+
+        /// O texto que a aba dona tem para o campo.
+        fn tab_edit_text(&self, id: Id) -> Option<String> {
+            if id == macro_tab::search_id() {
+                Some(self.macro_tab.search().to_string())
+            } else {
+                self.build_tab.edit_text(id).map(str::to_string)
+            }
         }
 
         /// Agenda uma chamada nativa de `EDIT` para rodar sem `&mut App` vivo
@@ -1127,6 +1149,12 @@ mod platform {
                             continue;
                         };
                         self.edits.push(child);
+                        // O filho nasce vazio, mas a aba pode já ter texto para
+                        // ele (o nome de uma build aberta para edição antes de o
+                        // campo aparecer pela primeira vez).
+                        if let Some(text) = self.tab_edit_text(host.id).filter(|t| !t.is_empty()) {
+                            self.defer_edit_op(EditOp::SetText(host.id, text));
+                        }
                         self.edits.len() - 1
                     }
                 };
@@ -1627,7 +1655,7 @@ mod platform {
     /// e reentra no `WndProc`.
     fn run_pending_edit_ops(hwnd: HWND) {
         enum Native {
-            SetText(HWND),
+            SetText(HWND, String),
             Focus(HWND),
         }
 
@@ -1647,7 +1675,9 @@ mod platform {
                             .map(|edit| edit.hwnd)
                     };
                     match op {
-                        EditOp::Clear(id) => child(id).map(Native::SetText),
+                        EditOp::SetText(id, text) => {
+                            child(id).map(|hwnd| Native::SetText(hwnd, text))
+                        }
                         EditOp::Focus(id) => child(id).map(Native::Focus),
                         EditOp::FocusMain => Some(Native::Focus(hwnd)),
                     }
@@ -1660,8 +1690,8 @@ mod platform {
             // nenhuma referência ao `App` está viva quando o `EN_*` reentra.
             unsafe {
                 match action {
-                    Native::SetText(child) => {
-                        let _ = SetWindowTextW(child, w!(""));
+                    Native::SetText(child, text) => {
+                        let _ = SetWindowTextW(child, &HSTRING::from(text.as_str()));
                     }
                     Native::Focus(target) => {
                         let _ = SetFocus(Some(target));

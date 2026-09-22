@@ -483,6 +483,17 @@ struct ScrollState {
     content: f32,
     view: Rect,
     touched: bool,
+    /// Deslize pedido pela tela ([`Ui::scroll_to`]), ainda em curso.
+    glide: Option<Glide>,
+}
+
+/// Rolagem animada de `from` até `to`, com o ease-out do `animate-enter`.
+#[derive(Debug, Clone, Copy, PartialEq)]
+struct Glide {
+    from: f32,
+    to: f32,
+    start_ms: u64,
+    duration_ms: u32,
 }
 
 /// Valor animado de um widget (fade de hover, flash de disparo).
@@ -851,12 +862,55 @@ impl Ui {
     /// Abre um container rolável e devolve o deslocamento atual em DIP. O
     /// conteúdo deve ser desenhado a partir de `view.y - offset`.
     pub fn scroll_begin(&mut self, id: Id, view: Rect) -> f32 {
+        let now = self.now_ms;
         let state = self.scroll_mut(id);
         state.view = view;
         state.touched = true;
+        let gliding = match state.glide {
+            Some(glide) => {
+                let elapsed = now.saturating_sub(glide.start_ms) as f32;
+                let t = (elapsed / glide.duration_ms.max(1) as f32).min(1.0);
+                state.offset = glide.from + (glide.to - glide.from) * theme::motion::ease_out(t);
+                if t >= 1.0 {
+                    state.glide = None;
+                }
+                t < 1.0
+            }
+            None => false,
+        };
         let offset = state.offset;
+        if gliding {
+            self.wake_in(FRAME_MS);
+        }
         self.push_clip(view);
         offset
+    }
+
+    /// Leva o container até `offset`, deslizando a partir da próxima passagem.
+    /// Pode ser chamado no meio da construção, depois de a tela saber onde está
+    /// o que ela quer mostrar. Com movimento reduzido o salto é seco. A roda do
+    /// mouse interrompe o deslize.
+    ///
+    /// O destino não é preso aqui: o conteúdo desta passagem pode ser maior que
+    /// o da anterior (é justamente o que apareceu que se quer mostrar), e quem
+    /// prende a cada passagem é o [`Ui::scroll_end`].
+    pub fn scroll_to(&mut self, id: Id, offset: f32, duration_ms: u32) {
+        let now = self.now_ms;
+        let instant = self.reduced_motion || duration_ms == 0;
+        let state = self.scroll_mut(id);
+        let to = offset.max(0.0);
+        if instant {
+            state.offset = to;
+            state.glide = None;
+        } else {
+            state.glide = Some(Glide {
+                from: state.offset,
+                to,
+                start_ms: now,
+                duration_ms,
+            });
+        }
+        self.wake_in(FRAME_MS);
     }
 
     /// Fecha o container: prende o deslocamento ao conteúdo real e desenha a
@@ -949,6 +1003,7 @@ impl Ui {
                 };
                 let state = self.scroll_mut(id);
                 let before = state.offset;
+                state.glide = None;
                 state.offset = clamp_offset(state.offset - step, state.view.h, state.content);
                 Response {
                     redraw: state.offset != before,
@@ -1206,6 +1261,71 @@ mod tests {
         ui.begin(0);
         assert_eq!(ui.scroll_begin(id("list"), view), 0.0);
         ui.scroll_end(id("list"), view, 400.0);
+        ui.end();
+    }
+
+    #[test]
+    fn scroll_to_glides_into_place_and_the_wheel_takes_over() {
+        let view = Rect::new(0.0, 0.0, 100.0, 100.0);
+        let mut ui = Ui::new();
+        let pass = |ui: &mut Ui, now: u64| {
+            ui.begin(now);
+            let offset = ui.scroll_begin(id("page"), view);
+            ui.scroll_end(id("page"), view, 1_000.0);
+            ui.end();
+            offset
+        };
+        pass(&mut ui, 0);
+
+        ui.begin(0);
+        ui.scroll_begin(id("page"), view);
+        ui.scroll_to(id("page"), 400.0, 200);
+        ui.scroll_end(id("page"), view, 1_000.0);
+        ui.end();
+        assert!(ui.animating(), "o deslize pede o próximo quadro");
+
+        let middle = pass(&mut ui, 100);
+        assert!(middle > 0.0 && middle < 400.0, "a meio caminho: {middle}");
+        assert!(ui.animating());
+        assert_eq!(pass(&mut ui, 250), 400.0);
+        assert!(!ui.animating(), "no lugar, a rolagem para");
+
+        // Destino além do fim é preso ao conteúdo.
+        ui.begin(300);
+        ui.scroll_begin(id("page"), view);
+        ui.scroll_to(id("page"), 5_000.0, 200);
+        ui.scroll_end(id("page"), view, 1_000.0);
+        ui.end();
+        pass(&mut ui, 350);
+        // A roda no meio do caminho cancela o resto do deslize.
+        ui.input(Input::Wheel {
+            x: 50.0,
+            y: 50.0,
+            delta: 1.0,
+        });
+        let after_wheel = pass(&mut ui, 400);
+        assert_eq!(pass(&mut ui, 1_000), after_wheel);
+        assert!(after_wheel < 900.0);
+    }
+
+    #[test]
+    fn scroll_to_jumps_when_motion_is_reduced() {
+        let view = Rect::new(0.0, 0.0, 100.0, 100.0);
+        let mut ui = Ui::new();
+        ui.set_reduced_motion(true);
+        ui.begin(0);
+        ui.scroll_begin(id("page"), view);
+        ui.scroll_end(id("page"), view, 1_000.0);
+        ui.end();
+
+        ui.begin(0);
+        ui.scroll_begin(id("page"), view);
+        ui.scroll_to(id("page"), 300.0, 200);
+        ui.scroll_end(id("page"), view, 1_000.0);
+        ui.end();
+        ui.begin(1);
+        assert_eq!(ui.scroll_begin(id("page"), view), 300.0);
+        ui.scroll_end(id("page"), view, 1_000.0);
         ui.end();
     }
 
