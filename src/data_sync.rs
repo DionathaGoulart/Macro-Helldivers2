@@ -373,6 +373,9 @@ struct ApiStratagem {
     permit_type: Option<String>,
     #[serde(default)]
     availability: Option<String>,
+    /// Anunciado e ainda fora do jogo: a wiki lista antes do lançamento.
+    #[serde(default)]
+    upcoming: bool,
     #[serde(default)]
     kind: Option<String>,
     #[serde(default)]
@@ -402,9 +405,10 @@ struct ApiMeta {
     data_version: Option<String>,
 }
 
-/// Item de loadout válido, ou `None` (fora do loadout ou com dado estranho).
+/// Item de loadout válido, ou `None` (futuro, fora do loadout ou com dado
+/// estranho).
 fn from_api(item: ApiStratagem) -> Option<RemoteStratagem> {
-    if item.availability.as_deref() != Some("loadout") {
+    if item.upcoming || item.availability.as_deref() != Some("loadout") {
         return None;
     }
     let codex = item
@@ -436,7 +440,8 @@ pub fn parse_api(bytes: &[u8]) -> Result<(Vec<RemoteStratagem>, Option<String>)>
             .map(str::to_owned);
         match serde_json::from_value::<ApiStratagem>(value) {
             Ok(item) => {
-                let loadout = item.availability.as_deref() == Some("loadout");
+                // O futuro pode vir sem codex nem ícone; não é dado quebrado.
+                let loadout = item.availability.as_deref() == Some("loadout") && !item.upcoming;
                 match from_api(item) {
                     Some(remote) => list.push(remote),
                     None if loadout => log::warn!("estratagema recusado: {id:?}"),
@@ -982,6 +987,9 @@ mod tests {
         };
 
         assert!(item(serde_json::json!({})).is_some());
+        assert!(item(serde_json::json!({ "upcoming": false })).is_some());
+        assert!(item(serde_json::json!({ "upcoming": true })).is_none());
+        assert!(item(serde_json::json!({ "image": null })).is_none());
         assert!(item(serde_json::json!({ "availability": "mission" })).is_none());
         assert!(item(serde_json::json!({ "permitType": "mission" })).is_none());
         assert!(item(serde_json::json!({ "code": [] })).is_none());
@@ -1027,6 +1035,23 @@ mod tests {
             .unwrap()
             .push(serde_json::json!({ "id": 42, "name": ["não", "é", "texto"] }));
         let (list, _) = parse_api(json.to_string().as_bytes()).unwrap();
+        assert_eq!(list.len(), api_snapshot().len());
+    }
+
+    #[test]
+    fn an_announced_stratagem_waits_for_its_release() {
+        let mut json: serde_json::Value = serde_json::from_slice(&fixture()).unwrap();
+        json["data"]
+            .as_array_mut()
+            .unwrap()
+            .push(serde_json::json!({
+                "id": "orbital-anunciado", "name": "Orbital Anunciado", "permitType": "offensive",
+                "availability": "loadout", "upcoming": true, "kind": "orbital",
+                "code": ["right", "right", "right", "right", "right", "right", "right", "right"],
+                "image": { "url": "/images/v1/stratagems/orbital-anunciado.abc.webp" }
+            }));
+        let (list, _) = parse_api(json.to_string().as_bytes()).unwrap();
+        assert!(list.iter().all(|r| r.slug != "orbital-anunciado"));
         assert_eq!(list.len(), api_snapshot().len());
     }
 

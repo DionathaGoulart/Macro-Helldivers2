@@ -116,8 +116,10 @@ async function downloadIcon(item, destAbs) {
 async function main() {
   console.log('Lendo estratagemas da API...')
   const { meta, data } = await fetchJson(`${API}/v1/stratagems.json`)
+  // Anunciado (`upcoming`) ainda não está no jogo: entra quando lançar.
   const api = data.filter(s =>
-    s.availability === 'loadout' && PERMIT_TAG[s.permitType] && s.code?.length && s.code.every(d => DIR[d]))
+    !s.upcoming && s.availability === 'loadout' && PERMIT_TAG[s.permitType] &&
+    s.code?.length && s.code.every(d => DIR[d]))
 
   if (api.length < MIN_LOADOUT) {
     console.error(`✖ Só ${api.length} estratagemas de loadout. A API mudou de formato? Abortando sem escrever.`)
@@ -160,8 +162,15 @@ async function main() {
   const known = new Set(current.map(s => s.slug))
   const ids = new Set(current.map(s => s.id))
   const novos = []
+  const semIcone = []
   for (const item of api) {
     if (known.has(item.id)) continue
+    // A wiki ainda não tem a arte (a API manda `image: null`); o app também
+    // espera por ela.
+    if (!item.image?.url) {
+      semIcone.push(item.name)
+      continue
+    }
     const id = stableId(item.id)
     if (ids.has(id)) {
       console.error(`✖ Id ${id} de ${item.id} já está em uso. Abortando sem escrever.`)
@@ -193,6 +202,7 @@ async function main() {
   if (codexMudou.length) console.log('  ⚠ Codex mudou (confira no jogo):\n    ' + codexMudou.join('\n    '))
   if (sumiram.length) console.log('  ⚠ Fora da API (mantidos):', sumiram.join(', '))
   if (nomeDiferente.length) console.log('  Nome diferente na API (mantido o daqui):', nomeDiferente.join(', '))
+  if (semIcone.length) console.log('  ⚠ Novos sem ícone na API (fora até ter):', semIcone.join(', '))
 
   if (novos.length) {
     console.log('Baixando ícones dos novos...')
