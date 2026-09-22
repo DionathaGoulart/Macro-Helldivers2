@@ -41,6 +41,9 @@ O que mudou em cada versão está no [CHANGELOG](CHANGELOG.md).
   chegam pela API de dados, sem precisar de versão nova do app.
 - **Busca sem acento** na grade de estratagemas, na mesma ordem dos menus do jogo.
 - **Backup** de builds, slots e configurações em JSON, no mesmo formato da v1.
+- **Diagnóstico** para estratagema que falha: **Testar digitação** separa PC que come
+  teclas de jogo que não as vê, e o **Modo Debug** registra o tempo real de cada
+  tecla e exporta um relatório (detalhes em **Estratagema que falha**, abaixo).
 - **Bandeja do sistema**: minimizar ou fechar recolhe o app e os macros seguem ativos.
 - **Idiomas**: português e inglês.
 - **Tema escuro e claro**, que segue o Windows até você escolher.
@@ -175,6 +178,11 @@ O app consulta os Releases do GitHub e avisa quando há versão nova.
 4. Com o instalador pronto, o app pergunta se quer reiniciar para instalar agora ou
    deixar para depois (o **Instalar agora** continua no rodapé).
 
+Versões **beta** (tag `vX.Y.Z-beta.N`, marcadas como pré-lançamento no GitHub) não
+são oferecidas pelo aviso: quem quiser testar baixa o instalador na página de
+Releases. Quem está num beta recebe o aviso quando sair a versão estável seguinte; o
+beta seguinte também tem de ser instalado à mão.
+
 ### Estratagemas novos sem atualizar o app
 
 Na mesma hora da checagem (e com a mesma regra: nunca com o jogo em foco), o app
@@ -185,6 +193,8 @@ e **aparece a partir da próxima vez que você abrir o app**.
 - Ele entra no **fim do grupo dele** (as armas descartáveis junto das descartáveis,
   as sentinelas junto das sentinelas…), perto de onde o jogo o mostra. A posição
   exata chega na próxima versão do app.
+- Estratagema **anunciado** que a wiki já lista, mas que ainda não saiu no jogo, fica
+  de fora até o lançamento. O mesmo vale para o equipamento.
 - Se um patch trocar a **sequência** de um estratagema, o app passa a digitar a nova
   sem esperar versão nova. Ordem e nomes continuam os do instalador.
 - Tudo o que vem da API é validado antes de virar atalho. Uma sequência que repita a
@@ -331,7 +341,7 @@ redimensionamento sai do `sharp`, instalado pelo `npm install`.
 │   ├── engine.rs      # motor de macro: thread própria, SendInput por scancode
 │   ├── hooks.rs       # WH_KEYBOARD_LL + SetWinEventHook (atalhos e foco)
 │   ├── focus.rs       # regras de foco do jogo (lógica pura)
-│   ├── game_config.rs # modo de vídeo do jogo (aviso de "Tela Cheia")
+│   ├── game_config.rs # modo de vídeo e limite de FPS do jogo (avisos)
 │   ├── keys.rs        # nomes de tecla e virtual-keys dos atalhos
 │   ├── tray.rs        # ícone e menu da bandeja
 │   ├── data.rs        # estratagemas e arsenal embarcados
@@ -343,9 +353,10 @@ redimensionamento sai do `sharp`, instalado pelo `npm install`.
 │   ├── settings.rs    # preferências, migração da v1, gravação atômica
 │   ├── i18n.rs        # textos da interface em português e inglês
 │   ├── updater.rs     # GitHub Releases + verificação SHA-256
+│   ├── diag/          # modo debug: registro, retrato do PC, relatório, teste de digitação
 │   ├── gfx/           # Direct2D, DirectWrite e decode de imagem
 │   ├── ui/            # janela principal: toolkit de widgets, tema e abas
-│   ├── overlay/       # strip e painel em janelas layered
+│   ├── overlay/       # strip, painel e painel de teclas do modo debug em janelas layered
 │   └── bin/           # bancadas timing_bench e soak
 ├── assets/            # dados, ícones, fontes (JetBrains Mono) e o .ico do exe
 ├── installer/         # script NSIS

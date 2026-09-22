@@ -105,6 +105,10 @@ e o versionamento segue [Semantic Versioning](https://semver.org/lang/pt-BR/).
   armadura só em SVG, que o app não decodifica, e os cards mostravam o quadrado
   vazio. Os 48 ícones agora vêm em WebP da API de dados. As passivas do topo na
   sub-aba Meta também ganharam ícone.
+- **Estratagema anunciado não entra mais na grade antes de sair no jogo.** A API de
+  dados passou a listar o que a wiki já anunciou (o campo `upcoming`), e a
+  sincronização acrescentava um anunciado que já tivesse setas e ícone como se ele
+  estivesse no jogo. Agora ele espera o lançamento, como o equipamento já esperava.
 
 ### Desenvolvimento
 
@@ -121,6 +125,9 @@ e o versionamento segue [Semantic Versioning](https://semver.org/lang/pt-BR/).
   em ordem alfabética (warbonds por data).
 - `InputSink::send` devolve se o `SendInput` aceitou a tecla, e o aviso de recusa no
   `app.log` traz o erro do Windows.
+- `npm run sync-stratagems` ignora estratagema anunciado e deixa de fora, com aviso,
+  estratagema novo que a API ainda manda sem imagem (`image: null`), em vez de
+  morrer no download do ícone.
 
 ## [2.0.0] - 2026-09-19
 

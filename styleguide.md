@@ -630,6 +630,26 @@ algumas adaptações de meio. **Componente novo entra aqui**, como pede o §0.7.
   accent. Disparo inunda de accent; recusa acende uma moldura de erro em volta.
 - **Card de item da build** (`build_item_card`): caixa aninhada com barra da
   categoria e o cadeado (`icon_btn` com `Glyph::Lock`); travado, a barra inunda.
+  No sorteio a imagem vira um rolo (`CardMotion`): desce por alguns itens da mesma
+  lista com o `ease_out` do §4 (480ms, +55ms por card, sem overshoot) e para no item
+  novo; na chegada (220ms) o destaque em accent apaga e o texto entra como o
+  `animate-enter`. É resposta a um clique, não movimento ambiente; com as animações
+  do Windows desligadas a build aparece direto.
+- **Card Build Atual** (`build_tab::current_card`): `card` com header `sys` e as ações
+  no header (Aplicar em accent; Rolar de novo e, com alterações, Descartar em plain).
+  Dentro, a linha de estado (nova, salva ou editando com alterações), os botões de
+  salvar (Salvar, ou Salvar alterações e Salvar como nova) e o campo de nome.
+- **Linha de build salva** (`build_tab::saved_row`): caixa aninhada de 64px com os
+  quatro ícones (40px), o resumo do equipamento e as ações à direita (`icon_btn`). A
+  build que está nos slots leva a etiqueta `NOS SLOTS` em accent. Ação destrutiva é
+  confirmação em dois cliques (§6.8): o botão troca para `Confirmar?`/`Substituir?`
+  por 3s e já reserva a largura do texto maior, para não andar sob o mouse.
+- **Painel de teclas do modo debug** (`overlay/debug_hud.rs`): janela click-through
+  de 330×112 na borda direita, uma caixa por tecla da última sequência. Esperando é
+  moldura `base-300` com texto `muted`; descendo inunda de accent; solta fica com
+  moldura e texto `success`; recusada pelo Windows inunda de `error` e assim fica até
+  a próxima chamada. O hold medido vai embaixo de cada tecla, em `error` quando é
+  menor que um quadro no limite de FPS do jogo.
 
 **Adaptações de meio**
 
