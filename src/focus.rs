@@ -36,6 +36,16 @@ impl Window {
     pub fn arms_macros(self) -> bool {
         !matches!(self, Window::Other)
     }
+
+    /// Nome da classificação no registro do modo debug.
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Window::Game => "game",
+            Window::App => "app",
+            Window::Overlay => "overlay",
+            Window::Other => "other",
+        }
+    }
 }
 
 /// Classifica pelo título da janela em foreground (R10).

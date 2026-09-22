@@ -31,7 +31,7 @@ USO:
 
 OPÇÕES:
     -n <N>              sequências a executar (padrão: 200)
-    --speed <perfil>    normal | fast | turbo (padrão: turbo)
+    --speed <perfil>    potato | low | normal | fast | turbo (padrão: turbo)
     --arrows            usa as setas em vez de WASD
     --no-jitter         desliga o jitter humanizado
     --gap <ms>          pausa entre sequências (padrão: 200)

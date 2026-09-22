@@ -805,6 +805,12 @@ pub fn edit_host(
 
 // --- Banner e toast (§6.8) ---
 
+/// Respiro do banner e a linha do título.
+const ALERT_PADDING_X: f32 = 14.0;
+const ALERT_PADDING_Y: f32 = 8.0;
+const ALERT_TITLE_H: f32 = 14.0;
+const ALERT_TITLE_GAP: f32 = 2.0;
+
 /// Banner de página (`alert`): moldura na cor do status sobre a superfície,
 /// título com o `!` na frente e a mensagem embaixo.
 pub fn alert(ui: &mut Ui, rect: Rect, status: Status, title: &str, message: &str) {
@@ -812,25 +818,37 @@ pub fn alert(ui: &mut Ui, rect: Rect, status: Status, title: &str, message: &str
     ui.fill(rect, palette.base_200);
     ui.stroke(rect, theme::BORDER, status.fill);
 
-    let mut content = rect.inset_xy(14.0, 8.0);
+    let mut content = rect.inset_xy(ALERT_PADDING_X, ALERT_PADDING_Y);
     let title = format!("! {}", title.to_uppercase());
     if message.is_empty() {
         ui.text(content, title, styles::micro_black().middle(), status.text);
         return;
     }
     ui.text(
-        content.cut_top(14.0),
+        content.cut_top(ALERT_TITLE_H),
         title,
         styles::micro_black(),
         status.text,
     );
-    content.skip_top(2.0);
-    ui.text(
-        content,
-        message,
-        TextStyle::new(font::SIZE_LABEL, Weight::Regular).wrap(),
-        palette.content,
-    );
+    content.skip_top(ALERT_TITLE_GAP);
+    ui.text(content, message, alert_message_style(), palette.content);
+}
+
+fn alert_message_style() -> TextStyle {
+    TextStyle::new(font::SIZE_LABEL, Weight::Regular).wrap()
+}
+
+/// Altura que um [`alert`] com esta mensagem ocupa em `width`, para as telas
+/// que o encaixam no fluxo em vez de numa faixa de altura fixa.
+pub fn alert_height(measure: &mut dyn Measure, message: &str, width: f32) -> f32 {
+    let text = measure
+        .text_size(
+            message,
+            alert_message_style(),
+            width - ALERT_PADDING_X * 2.0,
+        )
+        .1;
+    ALERT_PADDING_Y * 2.0 + ALERT_TITLE_H + ALERT_TITLE_GAP + text
 }
 
 /// Largura e altura do toast.

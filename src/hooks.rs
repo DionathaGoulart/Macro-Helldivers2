@@ -225,6 +225,9 @@ struct Runtime {
     /// `RwLock` sai mais barato que trocar um `Arc` inteiro por atalho.
     bindings: RwLock<Bindings>,
     swallowed: KeySet,
+    /// Atalhos que o modo debug já registrou como ignorados nesta pressão: o
+    /// auto-repeat não vira uma linha por repetição.
+    ignored: KeySet,
 }
 
 static RUNTIME: OnceLock<Runtime> = OnceLock::new();
@@ -239,6 +242,7 @@ pub fn init(shared: Arc<Shared>, data: Arc<GameData>) {
         data,
         bindings: RwLock::new(bindings),
         swallowed: KeySet::new(),
+        ignored: KeySet::new(),
     };
     if RUNTIME.set(runtime).is_err() {
         log::warn!("hooks::init chamado mais de uma vez; a tabela original continua valendo");
@@ -517,7 +521,61 @@ fn refresh_focus(hwnd: Option<windows::Win32::Foundation::HWND>) {
 
     let window = focus::classify(&title);
     let effects = WATCHER.with(|watcher| watcher.borrow_mut().observe(window, context));
+    if runtime.shared.diag.enabled() {
+        observe_window(runtime, hwnd, window, &title, effects);
+    }
     apply(runtime, window, &title, effects);
+
+    // Depois do `apply`, que manda o aviso de tela cheia: o painel de teclas
+    // do modo debug já chega sabendo se pode aparecer. A troca do jogo para o
+    // app não gera evento (`SKIPOWNPROCESS`), e é o tique de 5s que a pega.
+    let game = window == focus::Window::Game;
+    if runtime.shared.set_game_in_front(game) {
+        runtime.shared.send_overlay(OverlayCmd::GameInFront);
+    } else if game && !effects.reassert && runtime.shared.diag.enabled() {
+        // O jogo re-agarra o topo do z-order; com o strip escondido ninguém
+        // mais reafirma o overlay, e o painel de teclas ficaria atrás dele.
+        runtime.shared.send_overlay(OverlayCmd::Reassert);
+    }
+}
+
+/// Modo debug: guarda a janela da frente, que o engine anexa a cada chamada, e
+/// registra as trocas que armam ou desarmam os atalhos.
+#[cfg(windows)]
+fn observe_window(
+    runtime: &Runtime,
+    hwnd: windows::Win32::Foundation::HWND,
+    window: focus::Window,
+    title: &str,
+    effects: focus::Effects,
+) {
+    // O timer revalida o foco a cada 5s; o executável só é consultado de novo
+    // quando a janela da frente muda.
+    let exe = LAST_PROCESS.with(|last| {
+        let mut last = last.borrow_mut();
+        if last.0 != hwnd.0 as isize {
+            *last = (hwnd.0 as isize, crate::diag::env::process_name(hwnd));
+        }
+        last.1.clone()
+    });
+    let info = crate::diag::WindowInfo {
+        class: window.as_str(),
+        exe,
+        // Título de terceiros (aba do navegador, conversa do Discord) não sai
+        // do PC; o do jogo e o do app são o que a classificação lê.
+        title: (window != focus::Window::Other).then(|| title.to_string()),
+    };
+    if effects.focus_changed {
+        runtime
+            .shared
+            .diag
+            .record(crate::diag::Event::Focus(crate::diag::Focus {
+                at: crate::util::iso8601_now(),
+                armed: effects.focused,
+                window: info.clone(),
+            }));
+    }
+    runtime.shared.diag.set_window(info);
 }
 
 // A máquina de estados só é tocada pela thread de hooks: o evento de
@@ -526,6 +584,9 @@ fn refresh_focus(hwnd: Option<windows::Win32::Foundation::HWND>) {
 thread_local! {
     static WATCHER: std::cell::RefCell<focus::Watcher> =
         std::cell::RefCell::new(focus::Watcher::new());
+    /// Última janela da frente e o executável dela, para o modo debug.
+    static LAST_PROCESS: std::cell::RefCell<(isize, Option<String>)> =
+        const { std::cell::RefCell::new((0, None)) };
 }
 
 #[cfg(windows)]
@@ -594,14 +655,25 @@ unsafe extern "system" fn keyboard_proc(
             // Nossos próprios `SendInput` passam por aqui: sem este filtro, um
             // slot mapeado em W dispararia a si mesmo.
             if !info.flags.contains(LLKHF_INJECTED) {
+                // Modo debug: quantas teclas o hook vê e quanto ele demora. Só
+                // a contagem; qual tecla foi, não.
+                let started = runtime.shared.diag.enabled().then(std::time::Instant::now);
                 let vk = info.vkCode as Vk;
                 let handled = match wparam.0 as u32 {
                     WM_KEYDOWN | WM_SYSKEYDOWN => on_key_down(runtime, vk),
                     // A subida de uma tecla engolida também não pode vazar, ou o
                     // app em foco vê um KEYUP sem KEYDOWN.
-                    WM_KEYUP | WM_SYSKEYUP => runtime.swallowed.remove(vk),
+                    WM_KEYUP | WM_SYSKEYUP => {
+                        if started.is_some() {
+                            runtime.ignored.remove(vk);
+                        }
+                        runtime.swallowed.remove(vk)
+                    }
                     _ => false,
                 };
+                if let Some(started) = started {
+                    runtime.shared.diag.hook_key(started.elapsed());
+                }
                 if handled {
                     return LRESULT(1);
                 }
@@ -627,7 +699,12 @@ fn on_key_down(runtime: &Runtime, vk: Vk) -> bool {
     };
 
     match decision {
-        Decision::PassThrough => false,
+        Decision::PassThrough => {
+            if !armed && runtime.shared.diag.enabled() {
+                note_ignored(runtime, vk);
+            }
+            false
+        }
         // Segurar a tecla repete o KEYDOWN dezenas de vezes por segundo. Uma
         // pressão física = uma sequência; as repetições só somem do caminho.
         Decision::Run(cmd) => {
@@ -643,6 +720,45 @@ fn on_key_down(runtime: &Runtime, vk: Vk) -> bool {
             true
         }
     }
+}
+
+/// Modo debug: um atalho apertado com os macros desarmados vira registro, mas só
+/// com o processo do jogo na frente (o app não reconheceu a janela) ou com a
+/// aba de configurações esperando um atalho. Fora disso a tecla é do usuário,
+/// e o que ele digita em outro programa não é da conta do registro.
+#[cfg(windows)]
+fn note_ignored(runtime: &Runtime, vk: Vk) {
+    let target = {
+        let bindings = runtime
+            .bindings
+            .read()
+            .unwrap_or_else(|err| err.into_inner());
+        bindings
+            .find(vk)
+            .map(|binding| (binding.slot, binding.support))
+    };
+    let Some((slot, support)) = target else {
+        return;
+    };
+    let recording = runtime.shared.is_recording();
+    let window = runtime.shared.diag.window();
+    if !recording && !window.is_game_process() {
+        return;
+    }
+    if runtime.ignored.insert(vk) {
+        return;
+    }
+    runtime
+        .shared
+        .diag
+        .record(crate::diag::Event::Ignored(crate::diag::Ignored {
+            at: crate::util::iso8601_now(),
+            key: keys::name_from_vk(vk).unwrap_or("?"),
+            slot,
+            support,
+            reason: if recording { "recording" } else { "unfocused" },
+            window,
+        }));
 }
 
 #[cfg(windows)]

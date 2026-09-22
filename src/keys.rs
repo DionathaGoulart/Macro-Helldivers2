@@ -201,6 +201,32 @@ pub fn direction_scan(dir: Dir, use_arrows: bool) -> Scan {
     }
 }
 
+/// Nome curto de um scancode que o engine manda, para o registro do modo debug
+/// e o painel de teclas do overlay. Só existem estes: os quatro modificadores,
+/// WASD e as setas.
+pub fn scan_label(scan: Scan) -> &'static str {
+    if scan.extended {
+        return match ARROWS.iter().position(|arrow| *arrow == scan) {
+            Some(0) => "UP",
+            Some(1) => "DOWN",
+            Some(2) => "LEFT",
+            Some(3) => "RIGHT",
+            _ => "?",
+        };
+    }
+    match scan.code {
+        0x1D => "CTRL",
+        0x38 => "ALT",
+        0x0D => "=",
+        0x0C => "-",
+        0x11 => "W",
+        0x1F => "S",
+        0x1E => "A",
+        0x20 => "D",
+        _ => "?",
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -251,6 +277,25 @@ mod tests {
         for name in MODIFIER_KEYS {
             assert!(vk_from_name(name).is_some(), "{name}");
         }
+    }
+
+    #[test]
+    fn every_scancode_the_engine_sends_has_a_label() {
+        for name in MODIFIER_KEYS {
+            assert_eq!(
+                scan_label(modifier_scan(name)),
+                modifier_label(name),
+                "{name}"
+            );
+        }
+        let labels: Vec<_> = WASD
+            .iter()
+            .chain(ARROWS.iter())
+            .map(|scan| scan_label(*scan))
+            .collect();
+        assert_eq!(labels, ["W", "S", "A", "D", "UP", "DOWN", "LEFT", "RIGHT"]);
+        // O bit estendido separa a seta do numpad de mesmo código.
+        assert_eq!(scan_label(Scan::plain(0x48)), "?");
     }
 
     #[test]

@@ -5,7 +5,11 @@
 //! chaves da intro de boot (a animação foi cortada: o app abre direto) e as do
 //! modificador de corrida (removido junto com a feature).
 
+use std::fmt::Display;
+
 use crate::data::EquipSlot;
+use crate::diag::typing::Summary;
+use crate::diag::{HookHealth, RunOutcome, Spread, Stats};
 use crate::meta_stats::Faction;
 use crate::settings::{Language, Speed};
 
@@ -17,6 +21,7 @@ pub struct Tr {
     pub overlay: Overlay,
     pub update: Update,
     pub tray: Tray,
+    pub debug: DebugText,
 }
 
 pub struct Tabs {
@@ -136,9 +141,15 @@ pub struct SettingsText {
     pub game_inactive: &'static str,
     pub macro_speed: &'static str,
     pub macro_speed_desc: &'static str,
+    pub macro_speed_potato: &'static str,
+    pub macro_speed_low: &'static str,
     pub macro_speed_normal: &'static str,
     pub macro_speed_fast: &'static str,
     pub macro_speed_turbo: &'static str,
+    /// Aviso de limite de FPS do jogo. `{fps}` e `{profile}` são trocados na
+    /// hora (ver [`SettingsText::fps_cap_hint`]).
+    pub fps_cap_title: &'static str,
+    pub fps_cap_hint: &'static str,
     pub arrow_mode: &'static str,
     pub arrow_active: &'static str,
     pub wasd_active: &'static str,
@@ -192,6 +203,48 @@ pub struct Update {
     pub later: &'static str,
 }
 
+/// Card de diagnóstico, painel de teclas do overlay e teste de digitação. Os
+/// textos com `{chave}` são preenchidos pelos métodos de [`DebugText`].
+pub struct DebugText {
+    pub title: &'static str,
+    pub desc: &'static str,
+    pub mode: &'static str,
+    pub mode_on: &'static str,
+    pub mode_on_no_overlay: &'static str,
+    pub mode_off: &'static str,
+    pub typing: &'static str,
+    pub export: &'static str,
+    pub folder: &'static str,
+    pub exported: &'static str,
+    pub export_error: &'static str,
+    pub stat_calls: &'static str,
+    pub stat_rejected: &'static str,
+    pub stat_hold: &'static str,
+    pub stat_gap: &'static str,
+    pub stat_held: &'static str,
+    pub stat_ignored: &'static str,
+    pub stat_hook: &'static str,
+    pub stat_window: &'static str,
+    pub stat_last: &'static str,
+    pub calls_value: &'static str,
+    pub spread_value: &'static str,
+    pub hook_value: &'static str,
+    pub hook_idle: &'static str,
+    pub completed: &'static str,
+    pub aborted: &'static str,
+    pub blocked: &'static str,
+    pub unfocused: &'static str,
+    pub typing_idle: &'static str,
+    pub typing_running: &'static str,
+    pub typing_passed: &'static str,
+    pub typing_failed: &'static str,
+    pub typing_interrupted: &'static str,
+    pub typing_blocked: &'static str,
+    pub typing_holds: &'static str,
+    pub hud_waiting: &'static str,
+    pub hud_min_hold: &'static str,
+}
+
 /// Menu do ícone da bandeja. A v1 escrevia os dois em português direto no
 /// `Menu.buildFromTemplate`; aqui eles seguem o idioma escolhido, como o resto.
 pub struct Tray {
@@ -236,10 +289,29 @@ impl SettingsText {
     /// Rótulo do perfil de velocidade.
     pub fn speed(&self, speed: Speed) -> &'static str {
         match speed {
+            Speed::Potato => self.macro_speed_potato,
+            Speed::Low => self.macro_speed_low,
             Speed::Normal => self.macro_speed_normal,
             Speed::Fast => self.macro_speed_fast,
             Speed::Turbo => self.macro_speed_turbo,
         }
+    }
+
+    /// Só o nome do perfil, sem o FPS: "Baixo FPS".
+    pub fn speed_name(&self, speed: Speed) -> &'static str {
+        let label = self.speed(speed);
+        label
+            .split_once(" \u{00B7} ")
+            .map_or(label, |(name, _)| name)
+    }
+
+    /// Título e texto do aviso de limite de FPS, já com os números.
+    pub fn fps_cap_hint(&self, fps: u32, suggested: Speed) -> (String, String) {
+        (
+            self.fps_cap_title.replace("{fps}", &fps.to_string()),
+            self.fps_cap_hint
+                .replace("{profile}", &format!("\"{}\"", self.speed_name(suggested))),
+        )
     }
 
     /// Rótulo da seção da grade de estratagemas, por tag.
@@ -250,6 +322,117 @@ impl SettingsText {
             "Defensive" => self.tag_defensive,
             _ => fallback,
         }
+    }
+}
+
+/// Troca cada `{chave}` de um texto pelo valor.
+fn fill(template: &str, values: &[(&str, &dyn Display)]) -> String {
+    values
+        .iter()
+        .fold(template.to_string(), |text, (key, value)| {
+            text.replace(&format!("{{{key}}}"), &value.to_string())
+        })
+}
+
+impl DebugText {
+    pub fn outcome(&self, outcome: RunOutcome) -> &'static str {
+        match outcome {
+            RunOutcome::Completed => self.completed,
+            RunOutcome::Aborted => self.aborted,
+            RunOutcome::Blocked => self.blocked,
+            RunOutcome::Unfocused => self.unfocused,
+        }
+    }
+
+    pub fn calls(&self, stats: &Stats) -> String {
+        fill(
+            self.calls_value,
+            &[
+                ("runs", &stats.runs),
+                ("completed", &stats.completed),
+                ("aborted", &stats.aborted),
+                ("blocked", &stats.blocked),
+                ("unfocused", &stats.unfocused),
+            ],
+        )
+    }
+
+    /// Mínimo, média e máximo em milissegundos inteiros; "—" sem amostra.
+    pub fn spread(&self, spread: &Spread) -> String {
+        if spread.count == 0 {
+            return "\u{2014}".to_string();
+        }
+        fill(
+            self.spread_value,
+            &[
+                ("min", &format!("{:.0}", spread.min)),
+                ("mean", &format!("{:.0}", spread.mean)),
+                ("max", &format!("{:.0}", spread.max)),
+            ],
+        )
+    }
+
+    pub fn hook(&self, hook: &HookHealth) -> String {
+        let Some(age) = hook.last_key_age_s else {
+            return self.hook_idle.to_string();
+        };
+        fill(
+            self.hook_value,
+            &[
+                ("keys", &hook.keys),
+                ("age", &format!("{age:.0}")),
+                ("us", &hook.max_callback_us),
+            ],
+        )
+    }
+
+    pub fn typing_running(&self, done: usize, total: usize) -> String {
+        fill(self.typing_running, &[("done", &done), ("total", &total)])
+    }
+
+    /// Linhas do resultado do teste de digitação, da mais importante para a
+    /// menos. `true` na primeira quando tudo chegou.
+    pub fn typing_result(&self, summary: &Summary) -> (bool, Vec<String>) {
+        let passed = summary.passed == summary.runs && summary.runs > 0;
+        let mut lines = vec![if passed {
+            fill(
+                self.typing_passed,
+                &[("passed", &summary.passed), ("runs", &summary.runs)],
+            )
+        } else {
+            fill(
+                self.typing_failed,
+                &[
+                    ("passed", &summary.passed),
+                    ("runs", &summary.runs),
+                    ("missing", &summary.missing_keys),
+                    ("extra", &summary.extra_keys),
+                ],
+            )
+        }];
+        if summary.interrupted > 0 {
+            lines.push(fill(
+                self.typing_interrupted,
+                &[("count", &summary.interrupted)],
+            ));
+        }
+        if summary.blocked > 0 {
+            lines.push(fill(self.typing_blocked, &[("count", &summary.blocked)]));
+        }
+        if summary.sent_hold.count > 0 && summary.received_hold.count > 0 {
+            lines.push(fill(
+                self.typing_holds,
+                &[
+                    ("sent", &format!("{:.0}", summary.sent_hold.mean)),
+                    ("received", &format!("{:.0}", summary.received_hold.mean)),
+                ],
+            ));
+        }
+        (passed, lines)
+    }
+
+    pub fn hud_min_hold(&self, ms: f32) -> String {
+        fill(self.hud_min_hold, &[("ms", &format!("{ms:.0}"))])
     }
 }
 
@@ -386,10 +569,17 @@ pub static PT: Tr = Tr {
         macro_speed: "Velocidade do Macro",
         macro_speed_desc: "O jogo lê o teclado uma vez por quadro, então cada perfil segura a \
                            tecla pelo tempo mínimo do FPS indicado. Se o jogo engolir inputs, \
-                           use um perfil de FPS menor",
-        macro_speed_normal: "Padrão · 30 fps",
+                           use um perfil de FPS menor. Jogo travado em 30 fps, ou caindo \
+                           abaixo disso em combate: Baixo FPS. Abaixo de 30 o tempo todo: \
+                           Batata",
+        macro_speed_potato: "Batata · 15 fps",
+        macro_speed_low: "Baixo FPS · 30 fps",
+        macro_speed_normal: "Padrão · 40 fps",
         macro_speed_fast: "Rápida · 60 fps",
         macro_speed_turbo: "Turbo · 60+ fps",
+        fps_cap_title: "Jogo limitado a {fps} fps",
+        fps_cap_hint: "Nesse FPS o perfil escolhido pode segurar uma tecla por menos de um \
+                       quadro, e o jogo pode perdê-la. Use {profile}.",
         arrow_mode: "Modo Setas",
         arrow_active: "Setas ativas (Recomendado para movimento)",
         wasd_active: "WASD ativo (Pode travar o personagem)",
@@ -444,6 +634,50 @@ pub static PT: Tr = Tr {
     tray: Tray {
         open: "Abrir Macro Helldivers 2",
         exit: "Sair",
+    },
+    debug: DebugText {
+        title: "Diagnóstico",
+        desc: "Para investigar estratagema que falha. Ligado, o app grava o tempo real de cada \
+               tecla, o que você segurava na hora do disparo e um retrato do PC. Só entram as \
+               teclas que o próprio macro manda; o que você digita fora dele, não.",
+        mode: "Modo Debug",
+        mode_on: "Gravando cada disparo, com o painel de teclas no jogo",
+        mode_on_no_overlay: "Gravando cada disparo. Ligue o overlay para ver as teclas no jogo",
+        mode_off: "Desligado: nada é gravado",
+        typing: "Testar digitação",
+        export: "Exportar relatório",
+        folder: "Abrir pasta",
+        exported: "Relatório exportado!",
+        export_error: "Relatório não foi salvo",
+        stat_calls: "Disparos",
+        stat_rejected: "Recusadas pelo Windows",
+        stat_hold: "Tecla segurada",
+        stat_gap: "Intervalo entre teclas",
+        stat_held: "Com movimento segurado",
+        stat_ignored: "Ignorados com o jogo na frente",
+        stat_hook: "Hook de teclado",
+        stat_window: "Janela da frente",
+        stat_last: "Último disparo",
+        calls_value: "{runs} · {completed} ok · {aborted} abortados · {blocked} bloqueados · \
+                      {unfocused} sem foco",
+        spread_value: "mín {min} · média {mean} · máx {max} ms",
+        hook_value: "{keys} teclas · a última há {age}s · pior chamada {us} µs",
+        hook_idle: "Nenhuma tecla desde que o modo ligou",
+        completed: "completo",
+        aborted: "abortado",
+        blocked: "bloqueado",
+        unfocused: "sem foco",
+        typing_idle: "O teste digita 10 sequências nesta janela e confere cada tecla que chega. \
+                      Não toque no teclado até ele terminar.",
+        typing_running: "Testando {done}/{total}... não toque no teclado",
+        typing_passed: "Teclado OK: {passed}/{runs} sequências chegaram completas e na ordem",
+        typing_failed: "Falhou: {passed}/{runs} completas · {missing} teclas perdidas · {extra} \
+                        a mais",
+        typing_interrupted: "{count} rodada(s) interrompida(s): a janela perdeu o foco",
+        typing_blocked: "{count} rodada(s) recusada(s): um atalho disparou durante o teste",
+        typing_holds: "Tecla segurada, em média: {sent} ms mandados, {received} ms recebidos",
+        hud_waiting: "Aguardando disparo",
+        hud_min_hold: "menor {ms} ms",
     },
 };
 
@@ -563,10 +797,16 @@ pub static EN: Tr = Tr {
         macro_speed: "Macro Speed",
         macro_speed_desc: "The game reads the keyboard once per frame, so each profile holds \
                            the key for at least one frame at the listed FPS. If the game drops \
-                           inputs, pick a lower-FPS profile",
-        macro_speed_normal: "Normal · 30 fps",
+                           inputs, pick a lower-FPS profile. Game capped at 30 fps, or dipping \
+                           below that in combat: Low FPS. Below 30 all the time: Potato",
+        macro_speed_potato: "Potato · 15 fps",
+        macro_speed_low: "Low FPS · 30 fps",
+        macro_speed_normal: "Normal · 40 fps",
         macro_speed_fast: "Fast · 60 fps",
         macro_speed_turbo: "Turbo · 60+ fps",
+        fps_cap_title: "Game capped at {fps} fps",
+        fps_cap_hint: "At this frame rate the selected profile can hold a key for less than a \
+                       frame, and the game may miss it. Use {profile}.",
         arrow_mode: "Arrow Mode",
         arrow_active: "Arrows active (Recommended for movement)",
         wasd_active: "WASD active (May lock character movement)",
@@ -622,6 +862,49 @@ pub static EN: Tr = Tr {
         open: "Open Macro Helldivers 2",
         exit: "Exit",
     },
+    debug: DebugText {
+        title: "Diagnostics",
+        desc: "For tracking down stratagems that fail. When on, the app records the real timing \
+               of every key, what you were holding when the call fired and a snapshot of the PC. \
+               Only the keys the macro itself sends are recorded; what you type outside it is not.",
+        mode: "Debug Mode",
+        mode_on: "Recording every call, with the key panel in game",
+        mode_on_no_overlay: "Recording every call. Turn the overlay on to see the keys in game",
+        mode_off: "Off: nothing is recorded",
+        typing: "Typing test",
+        export: "Export report",
+        folder: "Open folder",
+        exported: "Report exported!",
+        export_error: "Report was not saved",
+        stat_calls: "Calls",
+        stat_rejected: "Rejected by Windows",
+        stat_hold: "Key hold",
+        stat_gap: "Gap between keys",
+        stat_held: "While holding movement",
+        stat_ignored: "Ignored with the game in front",
+        stat_hook: "Keyboard hook",
+        stat_window: "Front window",
+        stat_last: "Last call",
+        calls_value: "{runs} · {completed} ok · {aborted} aborted · {blocked} blocked · \
+                      {unfocused} no focus",
+        spread_value: "min {min} · avg {mean} · max {max} ms",
+        hook_value: "{keys} keys · last one {age}s ago · slowest call {us} µs",
+        hook_idle: "No keys since the mode was turned on",
+        completed: "completed",
+        aborted: "aborted",
+        blocked: "blocked",
+        unfocused: "no focus",
+        typing_idle: "The test types 10 sequences into this window and checks every key that \
+                      arrives. Don't touch the keyboard until it finishes.",
+        typing_running: "Testing {done}/{total}... don't touch the keyboard",
+        typing_passed: "Keyboard OK: {passed}/{runs} sequences arrived complete and in order",
+        typing_failed: "Failed: {passed}/{runs} complete · {missing} keys lost · {extra} extra",
+        typing_interrupted: "{count} run(s) interrupted: the window lost focus",
+        typing_blocked: "{count} run(s) refused: a shortcut fired during the test",
+        typing_holds: "Average key hold: {sent} ms sent, {received} ms received",
+        hud_waiting: "Waiting for a call",
+        hud_min_hold: "shortest {ms} ms",
+    },
 };
 
 #[cfg(test)]
@@ -642,8 +925,24 @@ mod tests {
             let text = &tr(language).settings;
             for speed in Speed::ALL {
                 assert!(!text.speed(speed).is_empty(), "{language} {speed}");
+                // O botão quebra o rótulo em nome e FPS; o aviso usa só o nome.
+                assert_ne!(
+                    text.speed_name(speed),
+                    text.speed(speed),
+                    "{language} {speed}"
+                );
             }
         }
+    }
+
+    #[test]
+    fn the_fps_cap_hint_carries_the_numbers() {
+        let (title, body) = tr(Language::Pt).settings.fps_cap_hint(30, Speed::Low);
+        assert_eq!(title, "Jogo limitado a 30 fps");
+        assert!(body.ends_with("Use \"Baixo FPS\"."), "{body}");
+        let (title, body) = tr(Language::En).settings.fps_cap_hint(45, Speed::Normal);
+        assert_eq!(title, "Game capped at 45 fps");
+        assert!(body.ends_with("Use \"Normal\"."), "{body}");
     }
 
     #[test]
@@ -690,7 +989,7 @@ mod tests {
         );
         assert_eq!(
             EN.settings.macro_speed_desc,
-            "The game reads the keyboard once per frame, so each profile holds the key for at least one frame at the listed FPS. If the game drops inputs, pick a lower-FPS profile"
+            "The game reads the keyboard once per frame, so each profile holds the key for at least one frame at the listed FPS. If the game drops inputs, pick a lower-FPS profile. Game capped at 30 fps, or dipping below that in combat: Low FPS. Below 30 all the time: Potato"
         );
     }
 
@@ -728,6 +1027,8 @@ mod tests {
                 t.build.meta_credit,
                 t.settings.keybinding,
                 t.settings.macro_speed_desc,
+                t.settings.fps_cap_title,
+                t.settings.fps_cap_hint,
                 t.settings.backup_desc,
                 t.settings.overlay_shortcut,
                 t.settings.persistent_hud_off,
@@ -749,6 +1050,99 @@ mod tests {
                 t.tray.exit,
             ];
             assert!(strings.iter().all(|s| !s.trim().is_empty()), "{language}");
+
+            let d = &t.debug;
+            let debug = [
+                d.title,
+                d.desc,
+                d.mode,
+                d.mode_on,
+                d.mode_on_no_overlay,
+                d.mode_off,
+                d.typing,
+                d.export,
+                d.folder,
+                d.exported,
+                d.export_error,
+                d.stat_calls,
+                d.stat_rejected,
+                d.stat_hold,
+                d.stat_gap,
+                d.stat_held,
+                d.stat_ignored,
+                d.stat_hook,
+                d.stat_window,
+                d.stat_last,
+                d.calls_value,
+                d.spread_value,
+                d.hook_value,
+                d.hook_idle,
+                d.completed,
+                d.aborted,
+                d.blocked,
+                d.unfocused,
+                d.typing_idle,
+                d.typing_running,
+                d.typing_passed,
+                d.typing_failed,
+                d.typing_interrupted,
+                d.typing_blocked,
+                d.typing_holds,
+                d.hud_waiting,
+                d.hud_min_hold,
+            ];
+            assert!(debug.iter().all(|s| !s.trim().is_empty()), "{language}");
         }
+    }
+
+    #[test]
+    fn debug_templates_are_filled_without_leftover_keys() {
+        use crate::diag::typing::Summary;
+        use crate::diag::{HookHealth, Spread, Stats};
+
+        for language in Language::ALL {
+            let d = &tr(language).debug;
+            let mut spread = Spread::default();
+            spread.add(45.4);
+            spread.add(54.6);
+            let texts = [
+                d.calls(&Stats {
+                    runs: 7,
+                    completed: 5,
+                    aborted: 1,
+                    blocked: 1,
+                    ..Stats::default()
+                }),
+                d.spread(&spread),
+                d.hook(&HookHealth {
+                    keys: 120,
+                    last_key_age_s: Some(2.4),
+                    max_callback_us: 85,
+                }),
+                d.typing_running(3, 10),
+                d.hud_min_hold(47.6),
+            ];
+            for text in texts.iter().chain(&d.typing_result(&Summary::default()).1) {
+                assert!(!text.contains('{'), "{language}: {text}");
+            }
+            assert!(d.spread(&spread).contains("45"), "{language}");
+            assert_eq!(d.spread(&Spread::default()), "\u{2014}");
+            assert_eq!(d.hook(&HookHealth::default()), d.hook_idle);
+        }
+
+        let (passed, lines) = tr(Language::Pt).debug.typing_result(&Summary {
+            runs: 10,
+            passed: 8,
+            missing_keys: 3,
+            extra_keys: 0,
+            interrupted: 1,
+            ..Summary::default()
+        });
+        assert!(!passed);
+        assert_eq!(
+            lines[0],
+            "Falhou: 8/10 completas · 3 teclas perdidas · 0 a mais"
+        );
+        assert_eq!(lines.len(), 2, "a linha da interrupção vem junto");
     }
 }

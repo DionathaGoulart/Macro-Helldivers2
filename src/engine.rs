@@ -25,6 +25,7 @@ use rand::RngExt;
 use spin_sleep::SpinSleeper;
 
 use crate::data::Dir;
+use crate::diag::{self, Probe, RunOutcome};
 use crate::keys::{self, Scan};
 use crate::settings::Speed;
 use crate::shared::{EngineCmd, FlashKind, OverlayCmd, Shared, UiEvent};
@@ -73,7 +74,27 @@ pub struct Profile {
 }
 
 impl Profile {
-    /// ~1 frame a 30fps.
+    /// Para PC que não passa de 30fps nem fora do combate: `hold` e `gap`
+    /// passam de um quadro de 15fps (67ms) mesmo no pior jitter e aguentam
+    /// até ~13fps (`hold`) e ~14fps (`gap`). O `lead` dá ao menu uns quatro
+    /// quadros de 15fps para abrir. Custa ~1,2s num codex de cinco passos.
+    pub const POTATO: Profile = Profile {
+        hold: 80,
+        gap: 75,
+        lead: 250,
+        tail: 150,
+    };
+    /// Para jogo travado em 30fps. `hold` e `gap` passam de um quadro de 30fps
+    /// mesmo no pior jitter; o `hold` aguenta quedas até ~22fps e o `gap` até
+    /// ~25fps no meio do combate. O `lead` dá ao menu tempo de abrir em quadros
+    /// longos. Custa ~0,7s num codex de cinco passos, contra ~0,4s do Padrão.
+    pub const LOW: Profile = Profile {
+        hold: 50,
+        gap: 45,
+        lead: 150,
+        tail: 80,
+    };
+    /// ~1 frame a 30fps sem jitter; com o pior jitter, só acima de ~35fps.
     pub const NORMAL: Profile = Profile {
         hold: 34,
         gap: 20,
@@ -97,11 +118,35 @@ impl Profile {
 
     pub fn of(speed: Speed) -> Profile {
         match speed {
+            Speed::Potato => Profile::POTATO,
+            Speed::Low => Profile::LOW,
             Speed::Normal => Profile::NORMAL,
             Speed::Fast => Profile::FAST,
             Speed::Turbo => Profile::TURBO,
         }
     }
+
+    /// O `hold` mais curto que o jitter pode produzir, já com o piso.
+    pub fn min_hold_ms(self) -> f64 {
+        jittered_ms(self.hold, MIN_HOLD_MS, -JITTER_MS)
+    }
+}
+
+/// O perfil mais rápido cujo `hold` nunca fica abaixo de um quadro no FPS dado:
+/// é o que a aba de configurações sugere quando o jogo tem limite de FPS.
+///
+/// Só o `hold` entra na conta, o mesmo critério do [`MIN_HOLD_MS`]. Um `gap`
+/// menor que um quadro também fundiria duas direções iguais seguidas (↓↓) se o
+/// jogo só olhasse o estado da tecla a cada quadro; se ele olha isso ou a fila
+/// de eventos é o que o modo debug veio medir. Abaixo de ~13fps nem o perfil
+/// mais lento cobre um quadro, e a resposta continua sendo ele.
+pub fn fastest_safe_speed(fps: u32) -> Speed {
+    let frame_ms = 1_000.0 / f64::from(fps.max(1));
+    Speed::ALL
+        .into_iter()
+        .rev()
+        .find(|speed| Profile::of(*speed).min_hold_ms() >= frame_ms)
+        .unwrap_or(Speed::ALL[0])
 }
 
 /// Em que ponto da sequência uma espera acontece. O sink de produção ignora; as
@@ -138,7 +183,9 @@ pub struct KeyEvent {
 /// sequência inteira sem dormir de verdade; nas bancadas, um decorador que
 /// carimba o relógio a cada envio.
 pub trait InputSink {
-    fn send(&mut self, event: KeyEvent);
+    /// `true` quando o sistema aceitou o evento. O engine segue em frente de
+    /// qualquer jeito; quem olha o resultado é o modo debug.
+    fn send(&mut self, event: KeyEvent) -> bool;
     fn wait(&mut self, phase: Phase, duration: Duration);
 }
 
@@ -332,6 +379,177 @@ fn handle<S: InputSink>(
     sink: &mut S,
     cmd: EngineCmd,
 ) -> Outcome {
+    if shared
+        .macro_running
+        .compare_exchange(false, true, Ordering::AcqRel, Ordering::Acquire)
+        .is_err()
+    {
+        reject(shared, &cmd);
+        return Outcome::Aborted;
+    }
+    let _busy = Busy(shared);
+
+    // O foco pode ter caído entre o hook enfileirar e o engine acordar. A v1
+    // também desistia em silêncio nesse caso. O teste de digitação não olha o
+    // jogo: ele precisa é da janela do app na frente, que é onde ele digita.
+    match &cmd {
+        EngineCmd::Run { .. } if !shared.is_game_focused() => {
+            record_skipped(shared, &cmd, RunOutcome::Unfocused);
+            return Outcome::Aborted;
+        }
+        EngineCmd::Test { .. } if !main_window_in_front(shared) => {
+            shared.send_ui(UiEvent::TypingSent {
+                outcome: RunOutcome::Unfocused,
+                stamps: Vec::new(),
+            });
+            return Outcome::Aborted;
+        }
+        _ => {}
+    }
+
+    let outcome = match cmd {
+        EngineCmd::Run {
+            codex,
+            modifier,
+            use_arrows,
+            speed,
+            slot,
+            support,
+        } => {
+            let sequence = Sequence {
+                codex,
+                modifier,
+                use_arrows,
+                speed,
+            };
+            run_shortcut(shared, sink, &sequence, slot, support)
+        }
+        EngineCmd::Test {
+            codex,
+            modifier,
+            use_arrows,
+            speed,
+        } => {
+            let sequence = Sequence {
+                codex,
+                modifier,
+                use_arrows,
+                speed,
+            };
+            run_test(shared, sink, &sequence)
+        }
+    };
+
+    // Atalhos apertados durante a execução esperam no canal; rejeitamos todos
+    // antes de liberar a marca, para que nenhum dispare fora de hora.
+    while let Ok(cmd) = rx.try_recv() {
+        reject(shared, &cmd);
+    }
+
+    outcome
+}
+
+/// Um atalho de verdade: digita, avisa a UI e o overlay e, com o modo debug,
+/// deixa o registro da chamada.
+fn run_shortcut<S: InputSink>(
+    shared: &Shared,
+    sink: &mut S,
+    sequence: &Sequence,
+    slot: usize,
+    support: bool,
+) -> Outcome {
+    let mut hooks = EngineHooks {
+        shared,
+        slot,
+        support,
+    };
+    let outcome = if shared.diag.enabled() {
+        // Com o modo debug, o que o jogador segura é lido antes do modificador,
+        // enquanto o teclado ainda é só dele: uma dúzia de leituras de estado,
+        // microssegundos antes da primeira tecla. Os carimbos só são montados
+        // em registro depois da última.
+        let held = diag::held_keys();
+        let mut probe = Probe::new(sink);
+        // Sem a thread do overlay ninguém drena a fila dele, e os avisos de
+        // tecla só ocupariam o lugar dos comandos que ela lê quando voltar.
+        if shared.overlay_hwnd.load(Ordering::Relaxed) != 0 {
+            probe = probe.live(shared, sequence, slot, support);
+        }
+        let outcome = run_sequence(&mut probe, sequence, Jitter::Humanized, &mut hooks);
+        let stamps = probe.finish(run_outcome(outcome));
+        let run = diag::Run::new(
+            slot,
+            support,
+            &sequence.codex,
+            sequence.speed,
+            sequence.use_arrows,
+            sequence.modifier,
+            run_outcome(outcome),
+            held,
+            shared.diag.window(),
+            stamps,
+        );
+        shared.diag.record(diag::Event::Run(Box::new(run)));
+        outcome
+    } else {
+        run_sequence(sink, sequence, Jitter::Humanized, &mut hooks)
+    };
+    shared.send_ui(UiEvent::MacroStatus {
+        slot,
+        support,
+        running: false,
+    });
+    outcome
+}
+
+/// Uma rodada do teste de digitação: digita na janela do app e devolve os
+/// carimbos para ela conferir o que chegou.
+fn run_test<S: InputSink>(shared: &Shared, sink: &mut S, sequence: &Sequence) -> Outcome {
+    let mut probe = Probe::new(sink);
+    let outcome = run_sequence(
+        &mut probe,
+        sequence,
+        Jitter::Humanized,
+        &mut FocusOnly(shared),
+    );
+    shared.send_ui(UiEvent::TypingSent {
+        outcome: run_outcome(outcome),
+        stamps: probe.finish(run_outcome(outcome)),
+    });
+    outcome
+}
+
+fn run_outcome(outcome: Outcome) -> RunOutcome {
+    match outcome {
+        Outcome::Completed => RunOutcome::Completed,
+        Outcome::Aborted => RunOutcome::Aborted,
+    }
+}
+
+fn reject(shared: &Shared, cmd: &EngineCmd) {
+    match *cmd {
+        EngineCmd::Run { slot, support, .. } => {
+            shared.send_ui(UiEvent::MacroBlocked { slot, support });
+            shared.send_overlay(OverlayCmd::Flash {
+                slot,
+                support,
+                kind: FlashKind::Blocked,
+            });
+            record_skipped(shared, cmd, RunOutcome::Blocked);
+        }
+        // A janela espera a resposta de cada rodada; sem ela o teste pararia.
+        EngineCmd::Test { .. } => shared.send_ui(UiEvent::TypingSent {
+            outcome: RunOutcome::Blocked,
+            stamps: Vec::new(),
+        }),
+    }
+}
+
+/// Registra no modo debug uma chamada que não chegou a digitar nada.
+fn record_skipped(shared: &Shared, cmd: &EngineCmd, outcome: RunOutcome) {
+    if !shared.diag.enabled() {
+        return;
+    }
     let EngineCmd::Run {
         codex,
         modifier,
@@ -339,58 +557,54 @@ fn handle<S: InputSink>(
         speed,
         slot,
         support,
-    } = cmd;
-
-    if shared
-        .macro_running
-        .compare_exchange(false, true, Ordering::AcqRel, Ordering::Acquire)
-        .is_err()
-    {
-        reject(shared, slot, support);
-        return Outcome::Aborted;
-    }
-    let _busy = Busy(shared);
-
-    // O foco pode ter caído entre o hook enfileirar e o engine acordar. A v1
-    // também desistia em silêncio nesse caso.
-    if !shared.is_game_focused() {
-        return Outcome::Aborted;
-    }
-
-    let sequence = Sequence {
+    } = cmd
+    else {
+        return;
+    };
+    let run = diag::Run::new(
+        *slot,
+        *support,
         codex,
-        modifier,
-        use_arrows,
-        speed,
-    };
-    let mut hooks = EngineHooks {
-        shared,
-        slot,
-        support,
-    };
-    let outcome = run_sequence(sink, &sequence, Jitter::Humanized, &mut hooks);
-    shared.send_ui(UiEvent::MacroStatus {
-        slot,
-        support,
-        running: false,
-    });
-
-    // Atalhos apertados durante a execução esperam no canal; rejeitamos todos
-    // antes de liberar a marca, para que nenhum dispare fora de hora.
-    while let Ok(EngineCmd::Run { slot, support, .. }) = rx.try_recv() {
-        reject(shared, slot, support);
-    }
-
-    outcome
+        *speed,
+        *use_arrows,
+        *modifier,
+        outcome,
+        Vec::new(),
+        shared.diag.window(),
+        Vec::new(),
+    );
+    shared.diag.record(diag::Event::Run(Box::new(run)));
 }
 
-fn reject(shared: &Shared, slot: usize, support: bool) {
-    shared.send_ui(UiEvent::MacroBlocked { slot, support });
-    shared.send_overlay(OverlayCmd::Flash {
-        slot,
-        support,
-        kind: FlashKind::Blocked,
-    });
+/// Ganchos do teste de digitação: só o foco da janela do app, sem piscada de
+/// slot nenhum.
+struct FocusOnly<'a>(&'a Shared);
+
+impl Hooks for FocusOnly<'_> {
+    fn aborted(&mut self) -> bool {
+        !main_window_in_front(self.0)
+    }
+}
+
+/// A janela principal está na frente? É para ela que o teste de digitação
+/// manda as teclas.
+///
+/// Pergunta direto ao Windows em vez de usar a flag de foco: a troca do jogo
+/// para o app não gera evento de foreground (a thread de hooks ignora as
+/// janelas do próprio processo), e a flag só se corrige no timer de 5s.
+#[cfg(windows)]
+fn main_window_in_front(shared: &Shared) -> bool {
+    use windows::Win32::UI::WindowsAndMessaging::GetForegroundWindow;
+
+    let main = shared.main_hwnd.load(Ordering::Relaxed);
+    // SAFETY: leitura de estado global, sem ponteiros nossos.
+    main != 0 && unsafe { GetForegroundWindow() }.0 as isize == main
+}
+
+/// Fora do Windows não há janela: os testes do engine exercitam o caminho todo.
+#[cfg(not(windows))]
+fn main_window_in_front(_shared: &Shared) -> bool {
+    true
 }
 
 /// Liga a sequência ao estado compartilhado: foco para abortar, canais para avisar.
@@ -442,8 +656,8 @@ impl Default for SystemInput {
 }
 
 impl InputSink for SystemInput {
-    fn send(&mut self, event: KeyEvent) {
-        send_scan(event.scan, event.up);
+    fn send(&mut self, event: KeyEvent) -> bool {
+        send_scan(event.scan, event.up)
     }
 
     fn wait(&mut self, _phase: Phase, duration: Duration) {
@@ -482,8 +696,9 @@ impl Recorder {
 }
 
 impl InputSink for Recorder {
-    fn send(&mut self, event: KeyEvent) {
+    fn send(&mut self, event: KeyEvent) -> bool {
         self.events.push((self.elapsed, event));
+        true
     }
 
     fn wait(&mut self, phase: Phase, duration: Duration) {
@@ -493,7 +708,7 @@ impl InputSink for Recorder {
 }
 
 #[cfg(windows)]
-fn send_scan(scan: Scan, up: bool) {
+fn send_scan(scan: Scan, up: bool) -> bool {
     use windows::Win32::UI::Input::KeyboardAndMouse::{
         SendInput, INPUT, INPUT_0, INPUT_KEYBOARD, KEYBDINPUT, KEYEVENTF_EXTENDEDKEY,
         KEYEVENTF_KEYUP, KEYEVENTF_SCANCODE, VIRTUAL_KEY,
@@ -526,12 +741,17 @@ fn send_scan(scan: Scan, up: bool) {
     if sent != 1 {
         // Acontece quando outro processo mais privilegiado está em foco: o
         // Windows bloqueia a injeção (UIPI) em vez de falhar visivelmente.
-        log::warn!("SendInput recusado (scancode {:#04X})", scan.code);
+        log::warn!(
+            "SendInput recusado (scancode {:#04X}): {}",
+            scan.code,
+            windows::core::Error::from_thread()
+        );
     }
+    sent == 1
 }
 
 #[cfg(not(windows))]
-fn send_scan(scan: Scan, up: bool) {
+fn send_scan(scan: Scan, up: bool) -> bool {
     // No host de desenvolvimento não há teclado para onde mandar; o resto do
     // motor continua exercitável pelos testes e pelas bancadas em modo seco.
     log::trace!(
@@ -539,6 +759,7 @@ fn send_scan(scan: Scan, up: bool) {
         scan.code,
         if up { "up" } else { "down" }
     );
+    true
 }
 
 #[cfg(windows)]
@@ -638,6 +859,8 @@ mod tests {
 
     #[test]
     fn speed_profiles_match_the_reference_table() {
+        assert_eq!(Profile::of(Speed::Potato), Profile::POTATO);
+        assert_eq!(Profile::of(Speed::Low), Profile::LOW);
         assert_eq!(Profile::of(Speed::Normal), Profile::NORMAL);
         assert_eq!(Profile::of(Speed::Fast), Profile::FAST);
         assert_eq!(Profile::of(Speed::Turbo), Profile::TURBO);
@@ -794,7 +1017,13 @@ mod tests {
     fn hold_never_falls_below_a_frame_even_with_the_worst_jitter() {
         let mut offset = -JITTER_MS;
         while offset <= JITTER_MS {
-            for profile in [Profile::NORMAL, Profile::FAST, Profile::TURBO] {
+            for profile in [
+                Profile::POTATO,
+                Profile::LOW,
+                Profile::NORMAL,
+                Profile::FAST,
+                Profile::TURBO,
+            ] {
                 let hold = jittered_ms(profile.hold, MIN_HOLD_MS, offset);
                 assert!(
                     hold >= f64::from(MIN_HOLD_MS),
@@ -803,6 +1032,48 @@ mod tests {
             }
             offset += 0.25;
         }
+    }
+
+    #[test]
+    fn the_low_fps_profile_covers_a_30fps_frame_even_with_the_worst_jitter() {
+        let frame_30 = 1_000.0 / 30.0;
+        let low = Profile::LOW;
+        assert!(low.min_hold_ms() > frame_30, "hold {}", low.min_hold_ms());
+        // O gap também passa de um quadro: duas direções iguais seguidas
+        // chegam como duas.
+        assert!(jittered_ms(low.gap, MIN_WAIT_MS, -JITTER_MS) > frame_30);
+        // E é o único perfil que faz isso: o Padrão fica no limite de 30fps.
+        assert!(Profile::NORMAL.min_hold_ms() < frame_30);
+    }
+
+    #[test]
+    fn the_potato_profile_covers_a_15fps_frame_even_with_the_worst_jitter() {
+        let frame_15 = 1_000.0 / 15.0;
+        let potato = Profile::POTATO;
+        assert!(
+            potato.min_hold_ms() > frame_15,
+            "hold {}",
+            potato.min_hold_ms()
+        );
+        assert!(jittered_ms(potato.gap, MIN_WAIT_MS, -JITTER_MS) > frame_15);
+        // O Baixo FPS não chega lá: é por isso que ele existe.
+        assert!(Profile::LOW.min_hold_ms() < frame_15);
+    }
+
+    #[test]
+    fn the_suggested_speed_follows_the_frame_time() {
+        assert_eq!(fastest_safe_speed(15), Speed::Potato);
+        assert_eq!(fastest_safe_speed(20), Speed::Potato);
+        assert_eq!(fastest_safe_speed(24), Speed::Low);
+        assert_eq!(fastest_safe_speed(30), Speed::Low);
+        assert_eq!(fastest_safe_speed(40), Speed::Normal);
+        assert_eq!(fastest_safe_speed(45), Speed::Normal);
+        assert_eq!(fastest_safe_speed(60), Speed::Turbo);
+        assert_eq!(fastest_safe_speed(144), Speed::Turbo);
+        // Abaixo do que o perfil mais lento cobre, e um zero que nunca deveria
+        // chegar aqui: o mais lento, sem dividir por zero.
+        assert_eq!(fastest_safe_speed(10), Speed::Potato);
+        assert_eq!(fastest_safe_speed(0), Speed::Potato);
     }
 
     #[test]
@@ -932,6 +1203,106 @@ mod tests {
                 }
             ]
         );
+    }
+
+    /// Os registros de chamada que o modo debug recebeu, sem a abertura de sessão.
+    fn recorded_runs(rx: &Receivers) -> Vec<diag::Run> {
+        rx.diag
+            .try_iter()
+            .filter_map(|event| match event {
+                diag::Event::Run(run) => Some(*run),
+                _ => None,
+            })
+            .collect()
+    }
+
+    #[test]
+    fn with_debug_on_every_call_leaves_a_record() {
+        let (shared, rx) = engine_shared();
+        shared.diag.set_enabled(true);
+        let mut sink = Recorder::new();
+
+        // Uma que roda, e uma que chega enquanto ela roda.
+        shared.send_engine(run_cmd(3));
+        handle(&shared, &rx.engine, &mut sink, run_cmd(1));
+
+        let runs = recorded_runs(&rx);
+        assert_eq!(runs.len(), 2);
+        assert_eq!(runs[0].slot, 1);
+        assert_eq!(runs[0].outcome, RunOutcome::Completed);
+        assert_eq!(
+            runs[0].keys.len(),
+            6,
+            "modificador + duas direções, ida e volta"
+        );
+        assert_eq!(runs[0].timing.holds_ms.len(), 2);
+        assert_eq!(runs[0].modifier, "CTRL");
+        assert_eq!((runs[1].slot, runs[1].outcome), (3, RunOutcome::Blocked));
+        assert!(runs[1].keys.is_empty());
+
+        // O foco caiu antes de o engine acordar: registrado, sem tecla nenhuma.
+        shared.set_game_focused(false);
+        handle(&shared, &rx.engine, &mut sink, run_cmd(0));
+        let runs = recorded_runs(&rx);
+        assert_eq!(runs.len(), 1);
+        assert_eq!(runs[0].outcome, RunOutcome::Unfocused);
+    }
+
+    fn test_cmd() -> EngineCmd {
+        EngineCmd::Test {
+            codex: [Dir::Up, Dir::Up].into(),
+            modifier: CTRL,
+            use_arrows: false,
+            speed: Speed::Normal,
+        }
+    }
+
+    #[test]
+    fn a_typing_round_answers_with_what_it_sent_and_flashes_nothing() {
+        let (shared, rx) = engine_shared();
+        let mut sink = Recorder::new();
+
+        assert_eq!(
+            handle(&shared, &rx.engine, &mut sink, test_cmd()),
+            Outcome::Completed
+        );
+        let events: Vec<UiEvent> = rx.ui.try_iter().collect();
+        assert_eq!(events.len(), 1, "sem piscada de slot: {events:?}");
+        let UiEvent::TypingSent { outcome, stamps } = &events[0] else {
+            panic!("esperava TypingSent: {events:?}");
+        };
+        assert_eq!(*outcome, RunOutcome::Completed);
+        assert_eq!(stamps.len(), 6, "modificador + ↑↑, ida e volta");
+        assert!(rx.overlay.is_empty());
+        // E não conta como chamada no modo debug.
+        assert!(rx.diag.is_empty());
+    }
+
+    #[test]
+    fn a_typing_round_never_goes_unanswered() {
+        // Com o engine ocupado, a rodada é recusada, mas a janela recebe a
+        // resposta: sem ela o teste pararia esperando.
+        let (shared, rx) = engine_shared();
+        let mut sink = Recorder::new();
+        shared.macro_running.store(true, Ordering::Release);
+
+        handle(&shared, &rx.engine, &mut sink, test_cmd());
+        assert_eq!(
+            rx.ui.try_recv().unwrap(),
+            UiEvent::TypingSent {
+                outcome: RunOutcome::Blocked,
+                stamps: Vec::new()
+            }
+        );
+        assert!(sink.events.is_empty());
+    }
+
+    #[test]
+    fn with_debug_off_nothing_is_recorded() {
+        let (shared, rx) = engine_shared();
+        let mut sink = Recorder::new();
+        handle(&shared, &rx.engine, &mut sink, run_cmd(0));
+        assert!(rx.diag.is_empty());
     }
 
     #[test]

@@ -12,11 +12,18 @@
 //! seguro) e a seção do updater, que chega na Fase 10.
 
 use crate::data::SUPPORT_STRATS;
-use crate::i18n::{self, Tr};
+use crate::diag::typing::TypingTest;
+use crate::diag::{HookHealth, LastRun, Stats, WindowInfo};
+use crate::engine;
+use crate::i18n::{self, DebugText, Tr};
 use crate::keys::{self, Vk};
 use crate::settings::{Language, Settings, Speed, Theme, SLOT_COUNT, SUPPORT_COUNT};
+use crate::ui::theme::font;
 use crate::ui::theme::{self, motion};
-use crate::ui::toolkit::{columns, grid_cell, id, id_at, Id, Measure, Rect, TextStyle, Ui};
+use crate::ui::toolkit::Weight;
+use crate::ui::toolkit::{
+    columns, grid_cell, grid_height, id, id_at, Id, Measure, Rect, TextStyle, Ui,
+};
 use crate::ui::widgets::{self, styles, ButtonVariant, CardHeader};
 
 /// `screen-pad` da coluna de conteúdo.
@@ -34,6 +41,9 @@ const LABEL_GAP: f32 = 8.0;
 /// Botões de escolha.
 const CHOICE_H: f32 = 36.0;
 const CHOICE_GAP: f32 = 8.0;
+/// Os cinco perfis de velocidade em três colunas: "Baixo FPS" ainda cabe num
+/// terço da coluna com a janela na largura mínima, e não num quarto.
+const SPEED_COLUMNS: usize = 3;
 /// Botões de atalho.
 const KEY_BUTTON_H: f32 = 40.0;
 /// Caixa aninhada de cada atalho.
@@ -48,6 +58,10 @@ const ROW_GAP: f32 = 20.0;
 const SUPPORT_GAP: f32 = 16.0;
 /// Canto do toast do backup.
 const TOAST_MARGIN: f32 = 20.0;
+/// Linha "rótulo · valor" das estatísticas do modo debug.
+const STAT_ROW_H: f32 = 20.0;
+/// Fração da largura que o rótulo de uma estatística ocupa.
+const STAT_LABEL_SHARE: f32 = 0.34;
 
 /// Quanto tempo o aviso de backup fica na tela (2,5s, como na v1).
 pub const BACKUP_STATUS_MS: u32 = 2_500;
@@ -58,12 +72,14 @@ pub enum Capture {
     Support(usize),
 }
 
-/// Resultado da última operação de backup.
+/// Resultado da última operação de backup ou de relatório.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum BackupStatus {
     Exported,
     Imported,
     Failed,
+    ReportExported,
+    ReportFailed,
 }
 
 /// Uma preferência mudou. A janela aplica, grava e espalha os efeitos.
@@ -90,6 +106,7 @@ pub enum Change {
     BuildMatchSet(bool),
     BuildBalanced(bool),
     BuildMaxOneSentry(bool),
+    DebugMode(bool),
 }
 
 impl Change {
@@ -117,6 +134,7 @@ impl Change {
             Change::BuildMatchSet(on) => settings.build_match_set = *on,
             Change::BuildBalanced(on) => settings.build_balanced = *on,
             Change::BuildMaxOneSentry(on) => settings.build_max_one_sentry = *on,
+            Change::DebugMode(on) => settings.debug_mode = *on,
         }
     }
 }
@@ -130,16 +148,47 @@ pub enum Action {
     Setting(Change),
     ExportBackup,
     ImportBackup,
+    /// Relatório do modo debug, pelo mesmo diálogo adiado do backup.
+    ExportReport,
+    /// Pasta de configuração no Explorer, onde ficam `debug.jsonl` e `app.log`.
+    OpenFolder,
+    TypingTest,
 }
 
 /// O que a aba precisa saber do resto do app.
 pub struct Ctx<'a> {
     pub settings: &'a Settings,
+    /// Limite de FPS do próprio jogo, lido do `user_settings.config`.
+    pub fps_cap: Option<u32>,
+    /// Números do modo debug, montados pela janela só com ele ligado.
+    pub debug: Option<&'a DebugView>,
+    /// Teste de digitação em andamento, ou o último que terminou.
+    pub typing: Option<&'a TypingTest>,
+}
+
+/// O que o card de diagnóstico mostra do modo debug.
+#[derive(Debug, Clone, Default, PartialEq)]
+pub struct DebugView {
+    pub stats: Stats,
+    pub hook: HookHealth,
+    pub window: WindowInfo,
 }
 
 impl Ctx<'_> {
     fn tr(&self) -> &'static Tr {
         i18n::tr(self.settings.language)
+    }
+
+    /// Limite do jogo e o perfil que ele comporta, quando o escolhido é rápido
+    /// demais para ele. Mais lento que o necessário nunca gera aviso.
+    fn fps_warning(&self) -> Option<(u32, Speed)> {
+        let fps = self.fps_cap?;
+        let safe = engine::fastest_safe_speed(fps);
+        (self.settings.macro_speed > safe).then_some((fps, safe))
+    }
+
+    fn typing_running(&self) -> bool {
+        self.typing.is_some_and(|test| !test.done())
     }
 }
 
@@ -210,6 +259,22 @@ fn hud_id() -> Id {
     id("settings.hud")
 }
 
+fn debug_id() -> Id {
+    id("settings.debug")
+}
+
+fn typing_id() -> Id {
+    id("settings.debug.typing")
+}
+
+fn report_id() -> Id {
+    id("settings.debug.report")
+}
+
+fn folder_id() -> Id {
+    id("settings.debug.folder")
+}
+
 // --- Estilos ---
 
 fn label_style() -> TextStyle {
@@ -277,6 +342,10 @@ impl SettingsTab {
 
         let height = backup_height(measure, width, ctx);
         self.backup_card(ui, measure, Rect::new(view.x, y, width, height), ctx);
+        y += height + SECTION_GAP;
+
+        let height = diagnostics_height(measure, width, ctx);
+        self.diagnostics_card(ui, measure, Rect::new(view.x, y, width, height), ctx);
         // A sombra do último painel e um respiro antes do rodapé.
         y += height + theme::SHADOW + PAGE_TOP;
 
@@ -403,7 +472,8 @@ impl SettingsTab {
         }
         content.skip_top(ROW_GAP);
 
-        // Velocidade: rótulo, explicação e os três perfis lado a lado.
+        // Velocidade: rótulo, explicação, os cinco perfis em duas linhas e o
+        // aviso quando o limite de FPS do jogo não comporta o escolhido.
         ui.text(
             content.cut_top(LABEL_H),
             tr.settings.macro_speed.to_uppercase(),
@@ -421,9 +491,15 @@ impl SettingsTab {
             palette.muted,
         );
         content.skip_top(LABEL_GAP);
-        let row = content.cut_top(widgets::CHOICE_SPLIT_HEIGHT);
+        let grid = content.cut_top(speed_grid_height());
         for (index, speed) in Speed::ALL.iter().enumerate() {
-            let cell = grid_cell(row, 3, widgets::CHOICE_SPLIT_HEIGHT, CHOICE_GAP, index);
+            let cell = grid_cell(
+                grid,
+                SPEED_COLUMNS,
+                widgets::CHOICE_SPLIT_HEIGHT,
+                CHOICE_GAP,
+                index,
+            );
             widgets::choice_button(
                 ui,
                 speed_id(index),
@@ -431,6 +507,12 @@ impl SettingsTab {
                 tr.settings.speed(*speed),
                 ctx.settings.macro_speed == *speed,
             );
+        }
+        if let Some((fps, suggested)) = ctx.fps_warning() {
+            let (title, body) = tr.settings.fps_cap_hint(fps, suggested);
+            content.skip_top(LABEL_GAP);
+            let height = widgets::alert_height(measure, &body, content.w);
+            widgets::alert(ui, content.cut_top(height), palette.warning, &title, &body);
         }
         content.skip_top(ROW_GAP);
 
@@ -583,6 +665,83 @@ impl SettingsTab {
         );
     }
 
+    /// Card "Diagnóstico": o modo debug, os três botões, o resultado do teste de
+    /// digitação e, com o modo ligado, os números da sessão.
+    fn diagnostics_card(&self, ui: &mut Ui, measure: &mut dyn Measure, rect: Rect, ctx: &Ctx) {
+        let tr = ctx.tr();
+        let text = &tr.debug;
+        let palette = theme::palette();
+        let mut content = widgets::card(ui, rect, Some(CardHeader::new(text.title, "log")));
+
+        let desc_h = measure.text_size(text.desc, hint_style(), content.w).1;
+        ui.text(
+            content.cut_top(desc_h),
+            text.desc,
+            hint_style(),
+            palette.muted,
+        );
+        content.skip_top(LABEL_GAP + 4.0);
+
+        let mode_desc = match (ctx.settings.debug_mode, ctx.settings.enable_overlay) {
+            (false, _) => text.mode_off,
+            (true, true) => text.mode_on,
+            (true, false) => text.mode_on_no_overlay,
+        };
+        widgets::toggle_row(
+            ui,
+            debug_id(),
+            content.cut_top(TOGGLE_H),
+            text.mode,
+            mode_desc,
+            ctx.settings.debug_mode,
+        );
+        content.skip_top(LABEL_GAP + 4.0);
+
+        let buttons = columns(content.cut_top(CHOICE_H), 3, CHOICE_GAP + 4.0);
+        let typing = if ctx.typing_running() {
+            ButtonVariant::Disabled
+        } else {
+            ButtonVariant::Secondary
+        };
+        widgets::button(ui, typing_id(), buttons[0], text.typing, typing);
+        widgets::button(
+            ui,
+            report_id(),
+            buttons[1],
+            text.export,
+            ButtonVariant::Secondary,
+        );
+        widgets::button(
+            ui,
+            folder_id(),
+            buttons[2],
+            text.folder,
+            ButtonVariant::Secondary,
+        );
+        content.skip_top(LABEL_GAP + 4.0);
+
+        for (line, color) in typing_lines(ctx) {
+            let height = measure.text_size(&line, hint_style(), content.w).1;
+            ui.text(content.cut_top(height), line, hint_style(), color);
+        }
+
+        let Some(view) = ctx.debug else {
+            return;
+        };
+        content.skip_top(LABEL_GAP + 4.0);
+        let label_w = content.w * STAT_LABEL_SHARE;
+        for (label, value) in stat_rows(view, text) {
+            let mut row = content.cut_top(STAT_ROW_H);
+            ui.text(
+                row.cut_left(label_w),
+                label.to_uppercase(),
+                styles::micro().middle(),
+                palette.muted,
+            );
+            ui.text(row, value, stat_value_style(), palette.content);
+        }
+    }
+
     /// Toast do último backup (§6.8), no canto de baixo da aba, apagando com o
     /// pulso disparado pela janela: fica inteiro e some no fade de saída.
     fn backup_toast(&self, ui: &mut Ui, area: Rect, ctx: &Ctx) {
@@ -613,6 +772,14 @@ impl SettingsTab {
             BackupStatus::Failed => (
                 tr.settings.toast_error,
                 tr.settings.backup_error,
+                palette.error,
+            ),
+            BackupStatus::ReportExported => {
+                (tr.settings.toast_done, tr.debug.exported, palette.success)
+            }
+            BackupStatus::ReportFailed => (
+                tr.settings.toast_error,
+                tr.debug.export_error,
                 palette.error,
             ),
         };
@@ -682,6 +849,23 @@ impl SettingsTab {
         if clicked == import_id() {
             return Some(Action::ImportBackup);
         }
+        if clicked == debug_id() {
+            return Some(Action::Setting(Change::DebugMode(!settings.debug_mode)));
+        }
+        if clicked == typing_id() {
+            // Desabilitado no meio de um teste: o clique não reinicia nada.
+            return Some(if ctx.typing_running() {
+                Action::Redraw
+            } else {
+                Action::TypingTest
+            });
+        }
+        if clicked == report_id() {
+            return Some(Action::ExportReport);
+        }
+        if clicked == folder_id() {
+            return Some(Action::OpenFolder);
+        }
         None
     }
 
@@ -734,9 +918,22 @@ fn controls_height(measure: &mut dyn Measure, width: f32, ctx: &Ctx) -> f32 {
         .text_size(ctx.tr().settings.macro_speed_desc, hint_style(), inner)
         .1;
     let modifiers = LABEL_H + LABEL_GAP + CHOICE_H * 2.0 + CHOICE_GAP;
-    let speed = LABEL_H + LABEL_GAP + desc_h + LABEL_GAP + widgets::CHOICE_SPLIT_HEIGHT;
+    let mut speed = LABEL_H + LABEL_GAP + desc_h + LABEL_GAP + speed_grid_height();
+    if let Some((fps, suggested)) = ctx.fps_warning() {
+        let (_, body) = ctx.tr().settings.fps_cap_hint(fps, suggested);
+        speed += LABEL_GAP + widgets::alert_height(measure, &body, inner);
+    }
     let toggles = TOGGLE_H * 3.0 + TOGGLE_GAP * 2.0;
     widgets::card_chrome(true) + modifiers + ROW_GAP + speed + ROW_GAP + toggles
+}
+
+fn speed_grid_height() -> f32 {
+    grid_height(
+        Speed::ALL.len(),
+        SPEED_COLUMNS,
+        widgets::CHOICE_SPLIT_HEIGHT,
+        CHOICE_GAP,
+    )
 }
 
 fn language_height() -> f32 {
@@ -754,6 +951,95 @@ fn backup_height(measure: &mut dyn Measure, width: f32, ctx: &Ctx) -> f32 {
         .text_size(ctx.tr().settings.backup_desc, hint_style(), inner)
         .1;
     widgets::card_chrome(true) + desc_h + LABEL_GAP + 4.0 + CHOICE_H
+}
+
+fn stat_value_style() -> TextStyle {
+    TextStyle::new(font::SIZE_LABEL, Weight::Regular).middle()
+}
+
+/// As linhas "rótulo · valor" das estatísticas do modo debug.
+fn stat_rows(view: &DebugView, text: &DebugText) -> Vec<(&'static str, String)> {
+    let stats = &view.stats;
+    vec![
+        (text.stat_calls, text.calls(stats)),
+        (text.stat_hold, text.spread(&stats.hold)),
+        (text.stat_gap, text.spread(&stats.gap)),
+        (text.stat_rejected, stats.rejected_keys.to_string()),
+        (text.stat_held, stats.with_held_keys.to_string()),
+        (text.stat_ignored, stats.ignored.to_string()),
+        (text.stat_hook, text.hook(&view.hook)),
+        (text.stat_window, window_line(&view.window)),
+        (text.stat_last, last_line(stats.last.as_ref(), text)),
+    ]
+}
+
+fn window_line(window: &WindowInfo) -> String {
+    match (window.class, window.exe.as_deref()) {
+        ("", _) => "\u{2014}".to_string(),
+        (class, Some(exe)) => format!("{class} \u{00B7} {exe}"),
+        (class, None) => class.to_string(),
+    }
+}
+
+fn last_line(last: Option<&LastRun>, text: &DebugText) -> String {
+    let Some(last) = last else {
+        return "\u{2014}".to_string();
+    };
+    let mut parts = vec![
+        last.stratagem.clone().unwrap_or_else(|| "?".to_string()),
+        text.outcome(last.outcome).to_string(),
+    ];
+    if let Some(hold) = last.min_hold_ms {
+        parts.push(text.hud_min_hold(hold));
+    }
+    parts.join(" \u{00B7} ")
+}
+
+/// O que o card diz do teste de digitação: a explicação antes do primeiro, o
+/// andamento durante, o veredito depois.
+fn typing_lines(ctx: &Ctx) -> Vec<(String, crate::ui::theme::Color)> {
+    let text = &ctx.tr().debug;
+    let palette = theme::palette();
+    let Some(test) = ctx.typing else {
+        return vec![(text.typing_idle.to_string(), palette.muted)];
+    };
+    if !test.done() {
+        let (done, total) = test.progress();
+        return vec![(text.typing_running(done, total), palette.accent_text)];
+    }
+    let (passed, lines) = text.typing_result(&test.summary());
+    lines
+        .into_iter()
+        .enumerate()
+        .map(|(index, line)| {
+            let color = match (index, passed) {
+                (0, true) => palette.success.text,
+                (0, false) => palette.error.text,
+                _ => palette.muted,
+            };
+            (line, color)
+        })
+        .collect()
+}
+
+fn diagnostics_height(measure: &mut dyn Measure, width: f32, ctx: &Ctx) -> f32 {
+    let inner = width - widgets::CARD_PADDING * 2.0;
+    let text = &ctx.tr().debug;
+    let desc_h = measure.text_size(text.desc, hint_style(), inner).1;
+    let typing_h: f32 = typing_lines(ctx)
+        .iter()
+        .map(|(line, _)| measure.text_size(line, hint_style(), inner).1)
+        .sum();
+    let stats_h = ctx.debug.map_or(0.0, |view| {
+        LABEL_GAP + 4.0 + STAT_ROW_H * stat_rows(view, text).len() as f32
+    });
+    widgets::card_chrome(true)
+        + desc_h
+        + (LABEL_GAP + 4.0) * 3.0
+        + TOGGLE_H
+        + CHOICE_H
+        + typing_h
+        + stats_h
 }
 
 /// Largura de cada tile de apoio: a coluna inteira até um teto; acima dele o
@@ -797,7 +1083,12 @@ mod tests {
     const AREA: Rect = Rect::new(0.0, 0.0, 820.0, 532.0);
 
     fn ctx(settings: &Settings) -> Ctx<'_> {
-        Ctx { settings }
+        Ctx {
+            settings,
+            fps_cap: None,
+            debug: None,
+            typing: None,
+        }
     }
 
     fn build_at(tab: &mut SettingsTab, ui: &mut Ui, settings: &Settings, now: u64) {
@@ -852,6 +1143,10 @@ mod tests {
             hud_id(),
             export_id(),
             import_id(),
+            debug_id(),
+            typing_id(),
+            report_id(),
+            folder_id(),
         ]);
 
         for id in expected {
@@ -982,7 +1277,15 @@ mod tests {
             Some(Action::Setting(Change::Modifier("LeftAlt".to_string())))
         );
         assert_eq!(
-            tab.on_click(speed_id(2), &ctx(&settings)),
+            tab.on_click(speed_id(0), &ctx(&settings)),
+            Some(Action::Setting(Change::Speed(Speed::Potato)))
+        );
+        assert_eq!(
+            tab.on_click(speed_id(1), &ctx(&settings)),
+            Some(Action::Setting(Change::Speed(Speed::Low)))
+        );
+        assert_eq!(
+            tab.on_click(speed_id(4), &ctx(&settings)),
             Some(Action::Setting(Change::Speed(Speed::Turbo)))
         );
         assert_eq!(
@@ -1161,6 +1464,50 @@ mod tests {
         let after = texts(&ui);
         assert!(after.iter().any(|text| text.contains("COMBAT_SHORTCUTS")));
         assert!(!after.iter().any(|text| text.contains("ATALHOS_DE_COMBATE")));
+    }
+
+    #[test]
+    fn a_game_capped_below_the_profile_suggests_a_slower_one() {
+        let mut tab = SettingsTab::new();
+        let mut ui = Ui::new();
+        let warned = |ui: &Ui| {
+            texts(ui)
+                .iter()
+                .any(|text| text.contains("JOGO LIMITADO A 30 FPS"))
+        };
+        let build_capped = |tab: &mut SettingsTab, ui: &mut Ui, settings: &Settings, cap| {
+            ui.begin(0);
+            let ctx = Ctx {
+                settings,
+                fps_cap: cap,
+                debug: None,
+                typing: None,
+            };
+            tab.build(ui, &mut Fixed, AREA, &ctx);
+            ui.end();
+        };
+
+        // Padrão a 30fps: o hold não cobre um quadro, e a dica aponta o Baixo FPS.
+        let normal = Settings::default();
+        build_capped(&mut tab, &mut ui, &normal, Some(30));
+        assert!(warned(&ui));
+        assert!(texts(&ui).iter().any(|text| text.contains("\"Baixo FPS\"")));
+
+        // Com o perfil certo, sem limite ou com um limite folgado, nada.
+        let low = Settings {
+            macro_speed: Speed::Low,
+            ..Settings::default()
+        };
+        build_capped(&mut tab, &mut ui, &low, Some(30));
+        assert!(!warned(&ui));
+        build_capped(&mut tab, &mut ui, &normal, None);
+        assert!(!warned(&ui));
+        build_capped(&mut tab, &mut ui, &normal, Some(60));
+        assert!(!texts(&ui).iter().any(|text| text.contains("LIMITADO")));
+
+        // Abaixo de 30, nem o Baixo FPS cobre: a dica aponta o Batata.
+        build_capped(&mut tab, &mut ui, &low, Some(20));
+        assert!(texts(&ui).iter().any(|text| text.contains("\"Batata\"")));
     }
 
     #[test]

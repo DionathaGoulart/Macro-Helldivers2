@@ -18,7 +18,7 @@ use anyhow::Result;
 use macro_helldivers2::data::GameData;
 use macro_helldivers2::settings::Settings;
 use macro_helldivers2::shared::Shared;
-use macro_helldivers2::{data, engine, hooks, i18n, loadouts, overlay, ui, util};
+use macro_helldivers2::{data, diag, engine, hooks, i18n, loadouts, overlay, ui, util};
 
 fn main() -> ExitCode {
     util::init_logging();
@@ -79,6 +79,14 @@ fn boot() -> Result<()> {
     // referência ao `Shared`, e com ela o próprio remetente, então nunca se
     // desliga sozinho: a thread morre junto com o processo, como as demais.
     engine::spawn(Arc::clone(&shared), receivers.engine)?;
+
+    // O registro do modo debug tem thread própria: montar o retrato do PC e
+    // gravar em disco nunca pode atrasar o engine nem o hook. Parada no canal,
+    // ela não custa nada com o modo desligado.
+    diag::spawn(Arc::clone(&shared), Arc::clone(&data), receivers.diag)?;
+    if shared.diag.enabled() {
+        shared.diag.begin();
+    }
 
     hooks::init(Arc::clone(&shared), Arc::clone(&data));
     let _hooks = hooks::spawn()?;

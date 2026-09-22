@@ -17,9 +17,16 @@ use crate::util;
 pub const SETTINGS_FILE: &str = "settings.json";
 
 /// Perfil de velocidade do macro. Os números de cada perfil vivem no engine.
-#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize)]
+///
+/// A ordem das variantes é a da velocidade, do mais lento ao mais rápido: é o
+/// que o `Ord` compara quando o app sugere um perfil para o FPS do jogo.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, PartialOrd, Ord, Serialize)]
 #[serde(rename_all = "lowercase")]
 pub enum Speed {
+    /// Para quem roda abaixo de 30 fps o tempo todo: aguenta até ~15 fps.
+    Potato,
+    /// Para quem joga travado em 30 fps ou cai abaixo disso em combate.
+    Low,
     #[default]
     Normal,
     Fast,
@@ -27,10 +34,18 @@ pub enum Speed {
 }
 
 impl Speed {
-    pub const ALL: [Speed; 3] = [Speed::Normal, Speed::Fast, Speed::Turbo];
+    pub const ALL: [Speed; 5] = [
+        Speed::Potato,
+        Speed::Low,
+        Speed::Normal,
+        Speed::Fast,
+        Speed::Turbo,
+    ];
 
     pub fn as_str(self) -> &'static str {
         match self {
+            Speed::Potato => "potato",
+            Speed::Low => "low",
             Speed::Normal => "normal",
             Speed::Fast => "fast",
             Speed::Turbo => "turbo",
@@ -40,6 +55,8 @@ impl Speed {
     /// Valores desconhecidos caem no padrão em vez de invalidar o arquivo inteiro.
     pub fn from_str_or_default(value: &str) -> Speed {
         match value {
+            "potato" => Speed::Potato,
+            "low" => Speed::Low,
             "fast" => Speed::Fast,
             "turbo" => Speed::Turbo,
             _ => Speed::Normal,
@@ -170,6 +187,11 @@ pub struct Settings {
     /// que vale até o primeiro clique no toggle.
     #[serde(deserialize_with = "de_theme", skip_serializing_if = "Option::is_none")]
     pub theme: Option<Theme>,
+    /// Modo debug (`diag`): registra cada disparo para investigar falhas.
+    /// Desligado, nem aparece no arquivo, que continua igual ao de quem nunca
+    /// o usou.
+    #[serde(skip_serializing_if = "std::ops::Not::not")]
+    pub debug_mode: bool,
 }
 
 impl Default for Settings {
@@ -192,6 +214,7 @@ impl Default for Settings {
             build_balanced: false,
             build_max_one_sentry: false,
             theme: None,
+            debug_mode: false,
         }
     }
 }
@@ -361,6 +384,21 @@ mod tests {
 
         let json = serde_json::to_vec(&settings).unwrap();
         assert_eq!(Settings::from_json(&json).unwrap(), settings);
+    }
+
+    #[test]
+    fn every_speed_survives_the_round_trip() {
+        for speed in Speed::ALL {
+            let settings = Settings {
+                macro_speed: speed,
+                ..Settings::default()
+            };
+            let json = serde_json::to_vec(&settings).unwrap();
+            assert_eq!(Settings::from_json(&json).unwrap().macro_speed, speed);
+            assert_eq!(Speed::from_str_or_default(speed.as_str()), speed);
+        }
+        // `ALL` segue a ordem de velocidade, a mesma do `Ord`.
+        assert!(Speed::ALL.windows(2).all(|pair| pair[0] < pair[1]));
     }
 
     #[test]

@@ -411,6 +411,19 @@ pub fn open_dialog(_title: &str, _filter: FileFilter<'_>) -> Result<Option<PathB
     anyhow::bail!("diálogos de arquivo só existem no Windows")
 }
 
+/// Abre uma pasta no Explorer. Um processo à parte, e não `ShellExecuteW`: o
+/// shell pode bombear mensagens dentro da chamada e reentrar no `WndProc` de
+/// quem clicou.
+pub fn open_folder(path: &Path) -> Result<()> {
+    fs::create_dir_all(path).with_context(|| format!("falha ao criar {}", path.display()))?;
+    #[cfg(windows)]
+    std::process::Command::new("explorer.exe")
+        .arg(path)
+        .spawn()
+        .context("explorer.exe não abriu")?;
+    Ok(())
+}
+
 /// Nome do mutex global que marca "já existe um app rodando".
 #[cfg(windows)]
 const INSTANCE_MUTEX: windows::core::PCWSTR = windows::core::w!("Global\\MacroHelldivers2");

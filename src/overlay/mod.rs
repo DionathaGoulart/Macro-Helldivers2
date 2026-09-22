@@ -18,6 +18,7 @@
 //! Este módulo guarda a parte que não depende do Windows (a geometria dos
 //! estados e o que o atalho faz), testada no host.
 
+pub mod debug_hud;
 pub mod panel;
 pub mod strip;
 
@@ -87,6 +88,29 @@ pub fn window_bounds(state: OverlayState, which: Which, monitor: Bounds, scale: 
     }
 }
 
+/// Bounds do painel de teclas do modo debug: encostado na borda direita, no meio
+/// da altura, onde o HUD do jogo não tem nada. Invisível, vai para 1×1 no canto
+/// como as outras janelas.
+pub fn debug_bounds(visible: bool, monitor: Bounds, scale: Scale) -> Bounds {
+    if !visible {
+        return Bounds {
+            x: monitor.x,
+            y: monitor.y,
+            width: 1,
+            height: 1,
+        };
+    }
+    // A janela leva a sombra dura junto do painel.
+    let width = scale.px(debug_hud::WIDTH + crate::ui::theme::SHADOW_SM);
+    let height = scale.px(debug_hud::HEIGHT + crate::ui::theme::SHADOW_SM);
+    Bounds {
+        x: monitor.x + monitor.width - width - scale.px(debug_hud::MARGIN),
+        y: monitor.y + (monitor.height - height) / 2,
+        width,
+        height,
+    }
+}
+
 #[cfg(windows)]
 pub use platform::{init, set_enabled};
 
@@ -126,7 +150,7 @@ mod platform {
     };
     use windows::Win32::UI::WindowsAndMessaging::*;
 
-    use super::{panel, strip, Which};
+    use super::{debug_hud, panel, strip, Which};
     use crate::data::GameData;
     use crate::gfx::d2d::LayeredSurface;
     use crate::gfx::text::Text;
@@ -137,7 +161,7 @@ mod platform {
     use crate::ui::toolkit::{Input, Rect, Ui};
     use crate::ui::widgets;
     use crate::ui::window::Bounds;
-    use crate::{focus, hooks, loadouts};
+    use crate::{focus, game_config, hooks, loadouts};
 
     /// Uma classe só para as duas janelas: o que as diferencia é o estilo
     /// estendido, escolhido na criação.
@@ -582,13 +606,19 @@ mod platform {
         text: Text,
         strip: Window,
         panel: Window,
+        /// Painel de teclas do modo debug, click-through como o strip.
+        debug: Window,
         strip_ui: Ui,
         panel_ui: Ui,
+        debug_ui: Ui,
         panel_state: panel::Panel,
+        hud: debug_hud::Hud,
         state: OverlayState,
         slots: Slots,
         monitor: Bounds,
         scale: Scale,
+        /// Limite de FPS do jogo, relido quando o painel de teclas aparece.
+        fps_cap: Option<u32>,
     }
 
     impl App {
@@ -605,6 +635,7 @@ mod platform {
             let mut app = App {
                 strip: Window::create(true, dpi)?,
                 panel: Window::create(false, dpi)?,
+                debug: Window::create(true, dpi)?,
                 state: shared.overlay_state(),
                 slots: shared.slots(),
                 shared,
@@ -613,9 +644,12 @@ mod platform {
                 text,
                 strip_ui: Ui::new(),
                 panel_ui: Ui::new(),
+                debug_ui: Ui::new(),
                 panel_state,
+                hud: debug_hud::Hud::default(),
                 monitor,
                 scale: Scale::from_dpi(dpi),
+                fps_cap: game_config::max_fps(),
             };
 
             // É o strip que recebe o `WM_APP_OVERLAY`: basta uma das janelas
@@ -672,6 +706,7 @@ mod platform {
         fn drain_commands(&mut self) {
             let mut state = None;
             let (mut strip_dirty, mut panel_dirty) = (false, false);
+            let (mut debug_layout, mut debug_dirty) = (false, false);
 
             while let Ok(cmd) = self.rx.try_recv() {
                 match cmd {
@@ -696,6 +731,8 @@ mod platform {
                     OverlayCmd::SettingsChanged => {
                         strip_dirty = true;
                         panel_dirty = true;
+                        // O modo debug pode ter sido ligado ou desligado.
+                        debug_layout = true;
                     }
                     OverlayCmd::Flash {
                         slot,
@@ -719,13 +756,33 @@ mod platform {
                         self.panel_state.set_warning(warning);
                         panel_dirty = true;
                     }
+                    // Só com o modo debug ligado, ou com o painel ainda na
+                    // tela, a troca mexe em alguma coisa aqui.
+                    OverlayCmd::GameInFront => {
+                        debug_layout |= self.shared.diag.enabled() || !self.debug.is_collapsed();
+                    }
+                    OverlayCmd::DebugKeys(keys) => {
+                        self.hud.apply(keys);
+                        debug_dirty = true;
+                    }
                 }
             }
 
             if let Some(state) = state {
-                // A troca de estado já redesenha as duas janelas.
+                // A troca de estado já refaz a geometria e redesenha tudo.
                 self.set_state(state);
                 return;
+            }
+            if debug_layout {
+                let was_hidden = self.debug.is_collapsed();
+                self.apply_layout();
+                if was_hidden && !self.debug.is_collapsed() {
+                    // O jogador pode ter mudado o limite de FPS no alt-tab; o
+                    // painel pinta de vermelho o hold abaixo de um quadro.
+                    self.fps_cap = game_config::max_fps();
+                    self.debug.reassert();
+                }
+                debug_dirty = true;
             }
             if strip_dirty {
                 self.redraw_strip();
@@ -733,6 +790,23 @@ mod platform {
             if panel_dirty {
                 self.redraw_panel();
             }
+            if debug_dirty {
+                self.redraw_debug();
+            }
+        }
+
+        /// O painel de teclas aparece com o modo debug ligado e a janela do
+        /// jogo na frente (não o app), e nunca sobre a tela cheia exclusiva,
+        /// que se minimizaria. Com o painel do Ctrl+H aberto ele sai: numa
+        /// tela estreita os dois se cobririam.
+        ///
+        /// Tudo relido na hora, sem estado próprio: o modo de vídeo vem do
+        /// arquivo do jogo, com o cache de `mtime` do `game_config`.
+        fn debug_visible(&self) -> bool {
+            self.shared.diag.enabled()
+                && self.shared.is_game_in_front()
+                && self.state != OverlayState::Panel
+                && !game_config::is_exclusive_fullscreen()
         }
 
         fn flash(&mut self, slot: usize, kind: FlashKind) {
@@ -753,6 +827,8 @@ mod platform {
         fn animate(&mut self, hwnd: isize) {
             if hwnd == self.strip.hwnd.0 as isize {
                 self.redraw_strip();
+            } else if hwnd == self.debug.hwnd.0 as isize {
+                self.redraw_debug();
             } else {
                 self.redraw_panel();
             }
@@ -840,6 +916,7 @@ mod platform {
             self.scale = Scale::from_dpi(dpi);
             self.strip.set_dpi(dpi);
             self.panel.set_dpi(dpi);
+            self.debug.set_dpi(dpi);
 
             self.strip.set_bounds(super::window_bounds(
                 self.state,
@@ -856,11 +933,17 @@ mod platform {
             // O painel só é clicável quando é ele que está na tela.
             self.panel
                 .set_click_through(self.state != OverlayState::Panel);
+            self.debug.set_bounds(super::debug_bounds(
+                self.debug_visible(),
+                monitor,
+                self.scale,
+            ));
         }
 
         fn reassert(&self) {
             self.strip.reassert();
             self.panel.reassert();
+            self.debug.reassert();
         }
 
         // --- Desenho ---
@@ -868,6 +951,7 @@ mod platform {
         fn redraw_all(&mut self) {
             self.redraw_strip();
             self.redraw_panel();
+            self.redraw_debug();
         }
 
         fn redraw_strip(&mut self) {
@@ -918,6 +1002,29 @@ mod platform {
 
             self.panel.present(&mut self.text, &self.panel_ui);
             self.panel.sync_anim_timer(self.panel_ui.animating());
+        }
+
+        fn redraw_debug(&mut self) {
+            if self.debug.is_collapsed() {
+                return;
+            }
+            let settings = self.shared.settings_snapshot();
+            let area = self.area(&self.debug);
+
+            self.debug_ui.begin(tick_ms());
+            self.hud.build(
+                &mut self.debug_ui,
+                &mut self.text,
+                area,
+                &debug_hud::Ctx {
+                    data: &self.data,
+                    settings: &settings,
+                    slots: self.slots,
+                    fps_cap: self.fps_cap,
+                },
+            );
+            self.debug_ui.end();
+            self.debug.present(&mut self.text, &self.debug_ui);
         }
 
         /// Área de desenho de uma janela, em DIP.
@@ -1152,6 +1259,21 @@ mod tests {
 
         let strip = window_bounds(OverlayState::Panel, Which::Strip, MONITOR, Scale::ONE);
         assert_eq!((strip.width, strip.height), (1, 1));
+    }
+
+    #[test]
+    fn the_debug_panel_sits_on_the_right_edge_only_when_visible() {
+        let hidden = debug_bounds(false, MONITOR, Scale::ONE);
+        assert_eq!((hidden.width, hidden.height), (1, 1));
+
+        let shown = debug_bounds(true, OFFSET, Scale::ONE);
+        assert_eq!(
+            shown.x + shown.width + debug_hud::MARGIN as i32,
+            OFFSET.x + OFFSET.width,
+            "encostado na direita, com a margem"
+        );
+        assert_eq!(shown.y, OFFSET.y + (OFFSET.height - shown.height) / 2);
+        assert!(shown.width > debug_hud::WIDTH as i32, "cabe a sombra");
     }
 
     #[test]

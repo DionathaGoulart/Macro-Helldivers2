@@ -10,6 +10,7 @@ use std::sync::{Arc, RwLock};
 use crossbeam_channel::{bounded, unbounded, Receiver, Sender};
 
 use crate::data::Dir;
+use crate::diag::{self, Diag};
 use crate::keys::Scan;
 use crate::meta_stats::MetaResult;
 use crate::settings::{Settings, Speed, SLOT_COUNT};
@@ -65,6 +66,15 @@ pub enum EngineCmd {
         slot: usize,
         support: bool,
     },
+    /// Teste de digitação (`diag::typing`): a mesma sequência de um atalho,
+    /// digitada na janela do próprio app, que confere cada tecla que chega.
+    /// Não pisca slot nenhum e responde com [`UiEvent::TypingSent`].
+    Test {
+        codex: Arc<[Dir]>,
+        modifier: Scan,
+        use_arrows: bool,
+        speed: Speed,
+    },
 }
 
 /// Aviso para a janela principal, drenado quando ela recebe o `WM_APP` de UI.
@@ -92,6 +102,13 @@ pub enum UiEvent {
     UpdateStatus(UpdateStatus),
     /// Resposta de uma consulta ao helldive.live, pedida pela aba de builds.
     MetaStats(MetaResult),
+    /// O modo debug gravou um evento novo: o painel de estatísticas se refaz.
+    DiagUpdated,
+    /// Uma rodada do teste de digitação terminou no engine: o que ele mandou.
+    TypingSent {
+        outcome: diag::RunOutcome,
+        stamps: Vec<diag::Stamp>,
+    },
 }
 
 /// Ordem para a thread do overlay.
@@ -114,6 +131,34 @@ pub enum OverlayCmd {
     /// Reafirma o z-order acima do jogo (alt-tab, troca de modo de vídeo).
     Reassert,
     FullscreenWarning(bool),
+    /// A janela do jogo entrou ou saiu da frente. Não carrega o valor: o
+    /// overlay relê [`Shared::is_game_in_front`], e um aviso velho, parado na
+    /// fila com o overlay desligado, não tem como pôr estado velho no lugar.
+    GameInFront,
+    /// Painel de teclas do modo debug.
+    DebugKeys(DebugKeys),
+}
+
+/// O que o engine conta ao painel de teclas do modo debug, ao vivo.
+#[derive(Debug, Clone, PartialEq)]
+pub enum DebugKeys {
+    /// Uma chamada começou. Sai logo depois do press do modificador, nunca
+    /// antes: o aviso não atrasa a tecla.
+    Start {
+        slot: usize,
+        support: bool,
+        modifier: &'static str,
+        codex: Arc<[Dir]>,
+        speed: Speed,
+    },
+    /// Uma tecla desceu ou subiu. O passo 0 é o modificador; as direções vêm
+    /// a partir do 1.
+    Key { step: usize, up: bool, ok: bool },
+    /// Fim: como terminou e quanto cada direção ficou segurada de verdade.
+    End {
+        outcome: diag::RunOutcome,
+        holds_ms: Vec<f32>,
+    },
 }
 
 /// Teto da fila do overlay. Com a thread desligada (`enableOverlay` off)
@@ -128,12 +173,17 @@ pub struct Receivers {
     pub engine: Receiver<EngineCmd>,
     pub overlay: Receiver<OverlayCmd>,
     pub ui: Receiver<UiEvent>,
+    pub diag: Receiver<diag::Event>,
 }
 
 pub struct Shared {
     pub settings: RwLock<Settings>,
     pub slots: RwLock<Slots>,
     pub game_focused: AtomicBool,
+    /// A janela da frente é a do jogo mesmo, e não o app ou o overlay (que
+    /// também armam os atalhos). É o que decide o painel de teclas do modo
+    /// debug.
+    pub game_in_front: AtomicBool,
     /// Capturando um atalho: o hook repassa tudo e não dispara nada.
     pub recording: AtomicBool,
     pub macro_running: AtomicBool,
@@ -144,6 +194,8 @@ pub struct Shared {
     /// HWNDs como `isize` para qualquer thread poder chamar `PostMessageW`.
     pub main_hwnd: AtomicIsize,
     pub overlay_hwnd: AtomicIsize,
+    /// Modo debug: a flag que o caminho quente lê e o canal do registro.
+    pub diag: Diag,
 }
 
 impl Shared {
@@ -151,11 +203,13 @@ impl Shared {
         let (engine_tx, engine_rx) = unbounded();
         let (overlay_tx, overlay_rx) = bounded(OVERLAY_QUEUE);
         let (ui_tx, ui_rx) = unbounded();
+        let (diag, diag_rx) = Diag::new(settings.debug_mode);
 
         let shared = Arc::new(Shared {
             settings: RwLock::new(settings),
             slots: RwLock::new(slots),
             game_focused: AtomicBool::new(false),
+            game_in_front: AtomicBool::new(false),
             recording: AtomicBool::new(false),
             macro_running: AtomicBool::new(false),
             overlay_state: RwLock::new(OverlayState::Hidden),
@@ -164,12 +218,14 @@ impl Shared {
             ui_tx,
             main_hwnd: AtomicIsize::new(0),
             overlay_hwnd: AtomicIsize::new(0),
+            diag,
         });
 
         let receivers = Receivers {
             engine: engine_rx,
             overlay: overlay_rx,
             ui: ui_rx,
+            diag: diag_rx,
         };
         (shared, receivers)
     }
@@ -179,6 +235,15 @@ impl Shared {
 
     pub fn is_game_focused(&self) -> bool {
         self.game_focused.load(Ordering::Relaxed)
+    }
+
+    pub fn is_game_in_front(&self) -> bool {
+        self.game_in_front.load(Ordering::Relaxed)
+    }
+
+    /// Grava e devolve se mudou.
+    pub fn set_game_in_front(&self, in_front: bool) -> bool {
+        self.game_in_front.swap(in_front, Ordering::Relaxed) != in_front
     }
 
     pub fn set_game_focused(&self, focused: bool) {

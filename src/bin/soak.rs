@@ -43,7 +43,7 @@ USO:
 
 OPÇÕES:
     -n <N>              sequências a executar (padrão: 1000)
-    --speed <perfil>    normal | fast | turbo (padrão: turbo)
+    --speed <perfil>    potato | low | normal | fast | turbo (padrão: turbo)
     --arrows            usa as setas em vez de WASD
     --gap <ms>          pausa entre sequências (padrão: 300)
     --codex <passos>    ex.: UP,DOWN,RIGHT,LEFT,UP (padrão: Reforço)

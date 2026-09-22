@@ -107,12 +107,14 @@ mod platform {
 
     use super::{Bounds, DEFAULT_HEIGHT, DEFAULT_WIDTH, MIN_HEIGHT, MIN_WIDTH};
     use crate::data::GameData;
+    use crate::diag::{self, typing::TypingTest};
     use crate::gfx::d2d::{window_dpi, WindowTarget};
     use crate::gfx::text::{register_gdi_fonts, Text};
     use crate::meta_stats::{self, MetaResult};
     use crate::settings::{Language, Settings, Theme};
     use crate::shared::{
-        FlashKind, OverlayCmd, OverlayState, Shared, Slots, UiEvent, UpdateStatus, WM_APP_UI_EVENT,
+        EngineCmd, FlashKind, OverlayCmd, OverlayState, Shared, Slots, UiEvent, UpdateStatus,
+        WM_APP_UI_EVENT,
     };
     use crate::ui::build_tab::{self, BuildTab};
     use crate::ui::chrome::{self, Chrome};
@@ -122,7 +124,7 @@ mod platform {
     use crate::ui::theme::{self, font, Color, Scale};
     use crate::ui::toolkit::{Id, Input, Rect, Ui, FRAME_MS};
     use crate::ui::widgets;
-    use crate::{focus, hooks, i18n, loadouts, overlay, tray, updater, util};
+    use crate::{focus, game_config, hooks, i18n, keys, loadouts, overlay, tray, updater, util};
 
     use tray::Tray;
 
@@ -142,6 +144,12 @@ mod platform {
     /// Fora do caminho crítico do boot, como na v1: rede e disco não competem
     /// com a primeira pintura da janela.
     const UPDATE_CHECK_DELAY_MS: u32 = 1_500;
+    /// Passo do teste de digitação: a primeira rodada sai depois de o foco
+    /// assentar na janela, e cada conferência espera as últimas teclas saírem
+    /// da fila (ver [`TypingTest::on_sent`]).
+    const TIMER_TYPING: usize = 4;
+    const TYPING_START_MS: u32 = 400;
+    const TYPING_SETTLE_MS: u32 = 250;
 
     /// Pedido de backup adiado, na faixa `WM_APP` reservada em `shared.rs`.
     /// É só desta janela: nenhuma outra thread a envia.
@@ -467,6 +475,11 @@ mod platform {
         /// Aba de configurações esperando uma tecla: o hook fica desarmado.
         recording: bool,
         fullscreen_warning: bool,
+        /// Limite de FPS do jogo, relido ao abrir a aba de configurações e a
+        /// cada troca de foco (o jogador ajusta o vídeo e volta para o app).
+        fps_cap: Option<u32>,
+        /// Teste de digitação em andamento, ou o último que terminou.
+        typing: Option<TypingTest>,
         tracking_mouse: bool,
         /// Intervalo do timer de animação armado agora, se houver.
         anim_timer: Option<u32>,
@@ -523,6 +536,8 @@ mod platform {
                 game_focused,
                 recording: false,
                 fullscreen_warning: false,
+                fps_cap: game_config::max_fps(),
+                typing: None,
                 tracking_mouse: false,
                 anim_timer: None,
                 update: UpdateStatus::Idle,
@@ -548,6 +563,7 @@ mod platform {
                     UiEvent::GameFocus(focused) => {
                         changed |= self.game_focused != focused;
                         self.game_focused = focused;
+                        changed |= self.refresh_fps_cap();
                     }
                     // Veio do painel do overlay: o valor já está no `Shared`, e
                     // a tela é montada a partir dele.
@@ -568,6 +584,17 @@ mod platform {
                         self.build_tab.set_meta(result, &self.data);
                         changed = true;
                     }
+                    // O painel de estatísticas só existe na aba de configurações.
+                    UiEvent::DiagUpdated => changed |= self.tab == 2,
+                    UiEvent::TypingSent { outcome, stamps } => {
+                        if let Some(test) = &mut self.typing {
+                            test.on_sent(outcome, stamps);
+                            // SAFETY: timer da própria janela, morto no tique.
+                            unsafe {
+                                SetTimer(Some(self.hwnd), TIMER_TYPING, TYPING_SETTLE_MS, None);
+                            }
+                        }
+                    }
                     UiEvent::UpdateStatus(status) => {
                         if self.update != status {
                             // Estado novo reabre o ciclo: um "Depois" antigo
@@ -585,6 +612,14 @@ mod platform {
             if changed {
                 self.rebuild();
             }
+        }
+
+        /// Relê o limite de FPS do jogo. `true` quando mudou.
+        fn refresh_fps_cap(&mut self) -> bool {
+            let cap = game_config::max_fps();
+            let changed = cap != self.fps_cap;
+            self.fps_cap = cap;
+            changed
         }
 
         /// Acende a piscada de um slot: amarela no disparo, vermelha quando o
@@ -739,6 +774,7 @@ mod platform {
             if let Some(index) = (0..3).find(|index| widgets::tab_id(*index) == clicked) {
                 if self.tab != index {
                     self.tab = index;
+                    self.refresh_fps_cap();
                     // Sair da aba desiste da captura em curso: o hook não pode
                     // ficar desarmado por uma tela que não está mais na frente.
                     self.settings_tab.cancel_capture();
@@ -780,6 +816,9 @@ mod platform {
                     let settings = self.shared.settings_snapshot();
                     let ctx = settings_tab::Ctx {
                         settings: &settings,
+                        fps_cap: self.fps_cap,
+                        debug: None,
+                        typing: self.typing.as_ref(),
                     };
                     if let Some(action) = self.settings_tab.on_click(clicked, &ctx) {
                         self.apply_settings(action);
@@ -891,7 +930,92 @@ mod platform {
                 settings_tab::Action::Setting(change) => self.apply_change(change),
                 settings_tab::Action::ExportBackup => self.request_backup(BackupRequest::Export),
                 settings_tab::Action::ImportBackup => self.request_backup(BackupRequest::Import),
+                settings_tab::Action::ExportReport => self.request_backup(BackupRequest::Report),
+                settings_tab::Action::OpenFolder => {
+                    if let Err(err) = util::open_folder(util::config_dir()) {
+                        log::warn!("pasta de configuração não abriu: {err:#}");
+                    }
+                    self.rebuild();
+                }
+                settings_tab::Action::TypingTest => self.start_typing(),
             }
+        }
+
+        // --- Teste de digitação ---
+
+        fn typing_running(&self) -> bool {
+            self.typing.as_ref().is_some_and(|test| !test.done())
+        }
+
+        /// Começa um teste novo com as preferências de agora. As rodadas saem
+        /// pelo [`TIMER_TYPING`], uma de cada vez.
+        fn start_typing(&mut self) {
+            if self.typing_running() {
+                return;
+            }
+            let settings = self.shared.settings_snapshot();
+            self.typing = Some(TypingTest::new(
+                settings.macro_speed,
+                settings.use_arrows,
+                keys::modifier_scan(&settings.modifier_key),
+            ));
+            // As teclas precisam chegar aqui, e não num `EDIT` com foco.
+            self.defer_edit_op(EditOp::FocusMain);
+            // SAFETY: timer da própria janela, morto no tique.
+            unsafe {
+                SetTimer(Some(self.hwnd), TIMER_TYPING, TYPING_START_MS, None);
+            }
+            self.rebuild();
+        }
+
+        /// Tique do teste: confere a rodada que o engine terminou (se houver) e
+        /// manda a próxima; sem próxima, grava o resultado.
+        fn typing_tick(&mut self) {
+            // SAFETY: timer da própria janela.
+            unsafe {
+                let _ = KillTimer(Some(self.hwnd), TIMER_TYPING);
+            }
+            let Some(test) = &mut self.typing else {
+                return;
+            };
+            test.settle();
+            match test.current() {
+                Some(codex) => self.shared.send_engine(EngineCmd::Test {
+                    codex,
+                    modifier: test.modifier,
+                    use_arrows: test.arrows,
+                    speed: test.speed,
+                }),
+                None => {
+                    let record = diag::TypingRecord {
+                        at: util::iso8601_now(),
+                        speed: test.speed,
+                        arrows: test.arrows,
+                        summary: test.summary(),
+                        runs: test.checks().to_vec(),
+                    };
+                    self.shared
+                        .diag
+                        .record(diag::Event::Typing(Box::new(record)));
+                }
+            }
+            self.rebuild();
+        }
+
+        /// Uma tecla chegou durante o teste. `lParam` traz o scancode (bits
+        /// 16-23), o bit de tecla estendida (24) e o de repetição (30).
+        fn typing_key(&mut self, lparam: LPARAM, up: bool) {
+            let Some(test) = &mut self.typing else {
+                return;
+            };
+            if !up && lparam.0 & (1 << 30) != 0 {
+                return;
+            }
+            let scan = keys::Scan {
+                code: ((lparam.0 >> 16) & 0xFF) as u16,
+                extended: lparam.0 & (1 << 24) != 0,
+            };
+            test.on_key(keys::scan_label(scan), up, std::time::Instant::now());
         }
 
         // --- Backup ---
@@ -915,7 +1039,10 @@ mod platform {
         /// Aplica o que o diálogo deixou pronto.
         fn finish_backup(&mut self, outcome: BackupOutcome) {
             if outcome.imported {
-                self.language = self.shared.settings_snapshot().language;
+                let settings = self.shared.settings_snapshot();
+                self.language = settings.language;
+                // O arquivo pode ligar ou desligar o modo debug.
+                self.shared.diag.set_enabled(settings.debug_mode);
                 // O arquivo pode ter trazido builds salvas, gravadas por fora da
                 // aba: ela precisa reler o que está no disco agora.
                 self.build_tab.reload_loadouts();
@@ -952,6 +1079,9 @@ mod platform {
             }
 
             self.shared.set_settings(settings.clone());
+            // Antes do aviso ao overlay: é a flag que decide se o painel de
+            // teclas aparece.
+            self.shared.diag.set_enabled(settings.debug_mode);
             if let Err(err) = settings.save() {
                 log::warn!("configurações não foram salvas: {err:#}");
             }
@@ -1474,6 +1604,15 @@ mod platform {
             };
             let slots = self.shared.slots();
             let focused_edit = self.focused_edit;
+            let fps_cap = self.fps_cap;
+            // Os números do modo debug só são copiados com a aba na frente.
+            let debug_view =
+                (self.tab == 2 && settings.debug_mode).then(|| settings_tab::DebugView {
+                    stats: self.shared.diag.stats(),
+                    hook: self.shared.diag.hook_health(),
+                    window: self.shared.diag.window(),
+                });
+            let typing = self.typing.as_ref();
             let data = &self.data;
             let (macro_tab, build_tab, settings_tab) = (
                 &mut self.macro_tab,
@@ -1507,6 +1646,9 @@ mod platform {
                     _ => {
                         let ctx = settings_tab::Ctx {
                             settings: &settings,
+                            fps_cap,
+                            debug: debug_view.as_ref(),
+                            typing,
                         };
                         settings_tab.build(ui, measure, body, &ctx);
                     }
@@ -1523,6 +1665,8 @@ mod platform {
     enum BackupRequest {
         Export,
         Import,
+        /// Relatório do modo debug: mesmo diálogo, arquivo diferente.
+        Report,
     }
 
     /// O que sobra para a janela fazer depois que o diálogo fecha.
@@ -1561,6 +1705,32 @@ mod platform {
             Err(err) => {
                 log::warn!("backup não foi exportado: {err:#}");
                 Some(BackupStatus::Failed)
+            }
+        };
+        BackupOutcome {
+            status,
+            ..BackupOutcome::default()
+        }
+    }
+
+    /// Grava o relatório do modo debug no arquivo escolhido.
+    fn export_report(shared: &Shared, data: &GameData, language: Language) -> BackupOutcome {
+        let title = i18n::tr(language).debug.export;
+        let write = || -> Result<bool> {
+            let name = diag::report::file_name(language);
+            let Some(path) = util::save_dialog(title, &name, util::JSON_FILTER)? else {
+                return Ok(false);
+            };
+            diag::report::write(&path, shared, data)?;
+            Ok(true)
+        };
+
+        let status = match write() {
+            Ok(true) => Some(BackupStatus::ReportExported),
+            Ok(false) => None,
+            Err(err) => {
+                log::warn!("relatório não foi exportado: {err:#}");
+                Some(BackupStatus::ReportFailed)
             }
         };
         BackupOutcome {
@@ -1727,6 +1897,7 @@ mod platform {
         let outcome = match request {
             BackupRequest::Export => export_backup(&shared, language),
             BackupRequest::Import => import_backup(&shared, &data, game_focused, language),
+            BackupRequest::Report => export_report(&shared, &data, language),
         };
 
         // SAFETY: o diálogo já fechou; nenhum outro empréstimo está vivo.
@@ -1904,6 +2075,22 @@ mod platform {
                     );
                     LRESULT(0)
                 }
+                // O teste de digitação fica com todas as teclas enquanto roda:
+                // é ele que confere o que chega, e nenhuma pode virar comando
+                // da janela (um Alt solto abriria o menu do sistema, e cada
+                // Alt+letra faria o Windows apitar procurando um mnemônico).
+                WM_KEYDOWN | WM_SYSKEYDOWN | WM_KEYUP | WM_SYSKEYUP | WM_CHAR | WM_SYSCHAR
+                    if app_mut(hwnd).is_some_and(|app| app.typing_running()) =>
+                {
+                    if let Some(app) = app_mut(hwnd) {
+                        match message {
+                            WM_KEYDOWN | WM_SYSKEYDOWN => app.typing_key(lparam, false),
+                            WM_KEYUP | WM_SYSKEYUP => app.typing_key(lparam, true),
+                            _ => {}
+                        }
+                    }
+                    LRESULT(0)
+                }
                 WM_KEYDOWN | WM_SYSKEYDOWN => {
                     // Só a captura de atalho consome tecla; o resto segue para
                     // o tratamento padrão da janela.
@@ -2038,6 +2225,12 @@ mod platform {
                     TIMER_ANIM => {
                         if let Some(app) = app_mut(hwnd) {
                             app.rebuild();
+                        }
+                        LRESULT(0)
+                    }
+                    TIMER_TYPING => {
+                        if let Some(app) = app_mut(hwnd) {
+                            app.typing_tick();
                         }
                         LRESULT(0)
                     }

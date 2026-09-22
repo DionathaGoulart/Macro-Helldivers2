@@ -73,10 +73,10 @@ impl<S: InputSink> Trace<S> {
 }
 
 impl<S: InputSink> InputSink for Trace<S> {
-    fn send(&mut self, event: KeyEvent) {
+    fn send(&mut self, event: KeyEvent) -> bool {
         // Carimbo antes do envio: é o instante em que a tecla é despachada.
         self.steps.push(Step::Sent(Instant::now()));
-        self.inner.send(event);
+        self.inner.send(event)
     }
 
     fn wait(&mut self, phase: Phase, duration: Duration) {
@@ -222,7 +222,9 @@ mod tests {
     struct Instant0;
 
     impl InputSink for Instant0 {
-        fn send(&mut self, _event: KeyEvent) {}
+        fn send(&mut self, _event: KeyEvent) -> bool {
+            true
+        }
         fn wait(&mut self, _phase: Phase, _duration: Duration) {}
     }
 

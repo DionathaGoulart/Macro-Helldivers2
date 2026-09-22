@@ -7,6 +7,7 @@ pub mod bench;
 pub mod builds;
 pub mod data;
 pub mod data_sync;
+pub mod diag;
 pub mod engine;
 pub mod equipment_sync;
 pub mod focus;
