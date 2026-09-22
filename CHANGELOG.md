@@ -5,7 +5,7 @@ Todas as mudanças relevantes deste projeto são documentadas aqui.
 O formato segue [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/)
 e o versionamento segue [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
-## [Unreleased]
+## [Não lançado]
 
 ### Adicionado
 
@@ -38,6 +38,51 @@ e o versionamento segue [Semantic Versioning](https://semver.org/lang/pt-BR/).
   Windows" desligado a build aparece direto.
 - Depois de sortear, a página desliza até a build quando ela está fora de vista.
 - Toast de confirmação ao salvar, aplicar e excluir uma build.
+- **Perfil de velocidade Batata**, para PC que roda abaixo de 30 fps o tempo todo.
+  Cada tecla fica segurada 75–85 ms e o intervalo entre direções é de 70–80 ms: os
+  dois passam de um quadro de 15 fps mesmo no pior jitter e aguentam até ~13 fps
+  (hold) e ~14 fps (intervalo); o menu ganha 250 ms para abrir. Um codex de cinco
+  passos leva ~1,2 s.
+- **Perfil de velocidade Baixo FPS**, para quem joga travado em 30 fps ou cai abaixo
+  disso em combate. Cada tecla fica segurada 45–55 ms e o intervalo entre direções é
+  de 40–50 ms: os dois passam de um quadro de 30 fps mesmo no pior jitter, e aguentam
+  quedas até ~22 fps (hold) e ~25 fps (intervalo). Um codex de cinco passos leva
+  ~0,7 s, contra ~0,4 s do Padrão.
+- **Aviso de limite de FPS** em Configurações: o app lê o `max_fps` do
+  `user_settings.config` do jogo e, quando o perfil escolhido solta a tecla antes de
+  um quadro nesse FPS, sugere o perfil que cobre. Limite imposto por fora do jogo
+  (painel da NVIDIA, RivaTuner) não aparece ali. A chave `max_fps` foi lida de
+  trechos do arquivo; falta conferir num `user_settings.config` real.
+- **Modo Debug** (Configurações → Diagnóstico), desligado por padrão, para
+  investigar estratagema que falha num PC que não é o nosso. Ligado, ele grava em
+  `debug.jsonl`, uma linha por evento:
+  - cada chamada de atalho, com o tempo real de cada tecla contra o planejado
+    (lead, hold, intervalo e tail), as teclas que o Windows recusou, as teclas de
+    movimento e modificadores que o jogador segurava no disparo e a janela da
+    frente; chamadas bloqueadas e sem foco também entram;
+  - trocas de foco que armam ou desarmam os atalhos;
+  - atalho apertado com o processo do jogo na frente mas com os macros
+    desarmados (o "apertei e não veio nada");
+  - um retrato do PC a cada sessão: Windows, monitor, layout de teclado, RAM,
+    elevação, `LowLevelHooksTimeout`, vídeo e limite de FPS do jogo e quais
+    programas conhecidos por mexer em teclado, FPS ou overlay estão rodando.
+
+  O card mostra os números da sessão (disparos, hold e intervalo medidos, teclas
+  recusadas, saúde do hook). **Exportar relatório** junta retrato, números, eventos e
+  o fim do `app.log` (sem o nome do usuário do Windows) num JSON só, para o
+  testador mandar; **Abrir pasta** abre a
+  pasta de configuração. O registro não é keylogger: entram só as teclas que o
+  próprio macro manda, e título de janela só do jogo ou do app (das outras, o nome
+  do executável). O arquivo gira em 4 MB para `debug.old.jsonl`.
+- **Painel de teclas no overlay** com o modo debug ligado: a última sequência acende
+  tecla a tecla enquanto sai, com o hold real de cada direção embaixo (em vermelho
+  quando fica abaixo de um quadro no limite de FPS do jogo). Pensado para gravar a
+  tela e comparar, quadro a quadro, com as setas que o jogo acende. Fica na borda
+  direita da tela, só com o jogo na frente e nunca sobre a tela cheia exclusiva.
+- **Teste de digitação**: o app digita 10 sequências (Reforço e Rearmar Eagle, que
+  tem ↑↑) na própria janela, com o perfil, o modo de setas e a tecla de menu
+  escolhidos, e confere se cada tecla chegou e na ordem. Separa "o PC come as
+  teclas" de "o jogo não as vê".
 
 ### Alterado
 
@@ -50,6 +95,9 @@ e o versionamento segue [Semantic Versioning](https://semver.org/lang/pt-BR/).
 - Excluir uma build pede um segundo clique (**Confirmar?**, por 3s). O botão fica à
   vista, e não só sob o mouse.
 - Depois de salvar, o campo de nome continua com o nome da build.
+- O perfil **Padrão** agora diz **40 fps**: com o pior jitter o hold dele cai a
+  29 ms, abaixo de um quadro de 30 fps. Os números não mudaram.
+- Os cinco perfis de velocidade ficam em duas linhas, três por linha.
 
 ### Corrigido
 
@@ -71,6 +119,8 @@ e o versionamento segue [Semantic Versioning](https://semver.org/lang/pt-BR/).
   de equipamento passam de 200px para até 256px, o tamanho que o app guarda, e as
   fichas de arma perdem os restos de marcação da wiki no dano. Todas as listas ficam
   em ordem alfabética (warbonds por data).
+- `InputSink::send` devolve se o `SendInput` aceitou a tecla, e o aviso de recusa no
+  `app.log` traz o erro do Windows.
 
 ## [2.0.0] - 2026-09-19
 
@@ -441,6 +491,7 @@ Primeira versão funcional.
 - **Controle de foco**: os macros só disparam com a janela do jogo ativa.
 - **Instalador NSIS** para Windows.
 
+[Não lançado]: https://github.com/DionathaGoulart/Macro-Helldivers2/compare/v2.0.0...HEAD
 [2.0.0]: https://github.com/DionathaGoulart/Macro-Helldivers2/compare/v1.0.0...v2.0.0
 [1.0.0]: https://github.com/DionathaGoulart/Macro-Helldivers2/compare/v0.3.0-(unstable)...v1.0.0
 [0.3.0]: https://github.com/DionathaGoulart/Macro-Helldivers2/compare/v0.2.0...v0.3.0-(unstable)

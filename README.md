@@ -13,7 +13,9 @@ O que mudou em cada versão está no [CHANGELOG](CHANGELOG.md).
 ## 🚀 Funcionalidades
 
 - **4 slots de macro** com atalho configurável (F1 a F12, numpad, setas, letras…),
-  em três perfis de velocidade (Padrão, Rápida e Turbo).
+  em cinco perfis de velocidade (Batata, Baixo FPS, Padrão, Rápida e Turbo). Com o
+  jogo travado em 30 fps, use **Baixo FPS**; abaixo de 30 o tempo todo, **Batata**.
+  O app avisa quando o limite de FPS do jogo não comporta o perfil escolhido.
 - **Estratagemas de apoio fixos**: Reforço, Ressuprimento e Rearmar Eagle em
   atalhos próprios, fora dos 4 slots.
 - **Timing à prova de frame**: as teclas são enviadas por scancode via `SendInput`,
@@ -223,10 +225,25 @@ Tudo fica em `%APPDATA%\Macro Helldivers 2`, que o desinstalador preserva:
 | `meta-cache.json` | estatísticas do helldive.live (valem 6 h) |
 | `stratagems-remote.json`, `equipment-remote.json` e `remote-icons\` | estratagemas, equipamento e ícones baixados da API de dados |
 | `app.log` | log da sessão atual, recriado a cada abertura |
+| `debug.jsonl` e `debug.old.jsonl` | registro do Modo Debug, só com ele ligado |
+| `debug-id.txt` | id anônimo que agrupa os relatórios do mesmo PC |
 
 Se um desses arquivos estiver ilegível, o app o renomeia para `<nome>.bad` e segue
 com os padrões; o original não é sobrescrito. Ao relatar um problema, anexe o
 `app.log`.
+
+### Estratagema que falha
+
+Em **Configurações → Diagnóstico**:
+
+1. Rode o **Testar digitação**. Se ele falhar, algum programa no PC está comendo ou
+   reordenando as teclas antes de qualquer jogo.
+2. Ligue o **Modo Debug** e jogue normalmente. Com o overlay ligado, o painel de
+   teclas mostra cada sequência na borda direita da tela; gravar a tela ajuda a
+   comparar com as setas que o jogo acende.
+3. Clique em **Exportar relatório** e mande o arquivo. Ele traz o tempo real de cada
+   tecla, o retrato do PC e o `app.log`; só entram as teclas que o próprio macro
+   manda.
 
 ---
 
