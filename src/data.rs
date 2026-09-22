@@ -7,6 +7,7 @@
 
 use std::collections::{HashMap, HashSet};
 use std::path::Path;
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::OnceLock;
 
 use anyhow::{Context, Result};
@@ -614,26 +615,98 @@ impl StatsMap {
             .filter(|strat| !mapped.contains(&strat.id))
             .map(|strat| (strat.id, match_key(&strat.nome)))
             .collect();
-
-        let mut ids = HashMap::new();
-        let mut guesses: Vec<(&str, u32)> = Vec::new();
-        for slug in slugs {
-            if let Some(&id) = self.strategem.get(slug) {
-                ids.insert(slug, id);
-                continue;
-            }
-            let mut hits = candidates.iter().filter(|(_, key)| slug_matches(slug, key));
-            if let (Some((id, _)), None) = (hits.next(), hits.next()) {
-                guesses.push((slug, *id));
-            }
-        }
-        for &(slug, id) in &guesses {
-            if guesses.iter().filter(|(_, other)| *other == id).count() == 1 {
-                ids.insert(slug, id);
-            }
-        }
-        ids
+        resolve_slugs(
+            slugs,
+            |slug| self.strategem.get(slug).copied(),
+            &candidates,
+            slug_matches,
+        )
     }
+
+    /// Arma de cada slug de arma das estatísticas, com a regra do
+    /// [`StatsMap::stratagem_ids`]. As que concorrem ao casamento são as que o
+    /// mapa não cobre: na prática, as que chegaram pela API depois do release
+    /// (`equipment_sync`).
+    pub fn weapon_refs<'a>(
+        &self,
+        slugs: impl IntoIterator<Item = &'a str>,
+        equipment: &Equipment,
+    ) -> HashMap<&'a str, WeaponRef> {
+        let mapped: HashSet<&str> = self.weapons.values().map(|w| w.id.as_str()).collect();
+        let candidates: Vec<(WeaponRef, String)> =
+            [EquipSlot::Primary, EquipSlot::Secondary, EquipSlot::Grenade]
+                .into_iter()
+                .flat_map(|slot| {
+                    (0..equipment.count(slot)).filter_map(move |index| {
+                        let item = equipment.at(slot, index)?;
+                        let reference = WeaponRef {
+                            cat: slot.key().to_string(),
+                            id: item.id().to_string(),
+                        };
+                        Some((reference, match_key(item.nome())))
+                    })
+                })
+                .filter(|(reference, _)| !mapped.contains(reference.id.as_str()))
+                .collect();
+        resolve_slugs(
+            slugs,
+            |slug| self.weapons.get(slug).cloned(),
+            &candidates,
+            slug_matches,
+        )
+    }
+
+    /// Passiva de cada chave de armadura das estatísticas (`SIEGE-READY`),
+    /// com a mesma regra: só concorrem as passivas que o mapa não cobre.
+    pub fn passive_names<'a>(
+        &self,
+        keys: impl IntoIterator<Item = &'a str>,
+        equipment: &Equipment,
+    ) -> HashMap<&'a str, String> {
+        let mapped: HashSet<&str> = self.armor.values().map(String::as_str).collect();
+        let candidates: Vec<(String, String)> = equipment
+            .passives
+            .iter()
+            .filter(|passive| !mapped.contains(passive.nome.as_str()))
+            .map(|passive| (passive.nome.clone(), match_key(&passive.nome)))
+            .collect();
+        resolve_slugs(
+            keys,
+            |key| self.armor.get(key).cloned(),
+            &candidates,
+            // As chaves vêm em caixa alta e separadas por hífen.
+            |key, name| slug_matches(&key.to_ascii_lowercase().replace('-', "_"), name),
+        )
+    }
+}
+
+/// Resolve cada slug pelo mapa ou, na falta dele, pelo único candidato que
+/// casa, desde que nenhum outro slug tenha casado com o mesmo candidato. Na
+/// dúvida o slug fica sem par: melhor que mostrar o número de outro item.
+fn resolve_slugs<'a, T: Clone + PartialEq>(
+    slugs: impl IntoIterator<Item = &'a str>,
+    known: impl Fn(&str) -> Option<T>,
+    candidates: &[(T, String)],
+    matches: impl Fn(&str, &str) -> bool,
+) -> HashMap<&'a str, T> {
+    let mut resolved = HashMap::new();
+    let mut guesses: Vec<(&str, &T)> = Vec::new();
+    for slug in slugs {
+        if let Some(value) = known(slug) {
+            resolved.insert(slug, value);
+            continue;
+        }
+        let mut hits = candidates.iter().filter(|(_, key)| matches(slug, key));
+        if let (Some((value, _)), None) = (hits.next(), hits.next()) {
+            guesses.push((slug, value));
+        }
+    }
+    for &(slug, value) in &guesses {
+        if guesses.iter().filter(|(_, other)| *other == value).count() == 1 {
+            resolved.insert(slug, value.clone());
+        }
+    }
+    resolved
 }
 
 /// Todo pedaço do slug (`eagle_gas`) aparece no nome reduzido do item.
@@ -649,12 +722,35 @@ fn slug_matches(slug: &str, name_key: &str) -> bool {
 
 static EQUIPMENT: OnceLock<Option<Equipment>> = OnceLock::new();
 static STATS_MAP: OnceLock<Option<StatsMap>> = OnceLock::new();
+/// O app pediu os itens novos da API junto com o JSON embarcado.
+static EQUIPMENT_UPDATES: AtomicBool = AtomicBool::new(false);
+
+/// Liga, para o resto da sessão, a mistura do equipamento embarcado com os
+/// itens novos que a última sincronização com a API trouxe
+/// ([`crate::equipment_sync`]). O boot chama antes da primeira visita à aba de
+/// builds; os testes não chamam e ficam só com o JSON do repositório, que não
+/// depende do que houver em `config_dir`. É o par do
+/// [`GameData::load_with_updates`].
+pub fn use_equipment_updates() {
+    EQUIPMENT_UPDATES.store(true, Ordering::Relaxed);
+}
 
 /// Equipamento completo, carregado na primeira chamada. `None` se o asset faltar.
 pub fn equipment() -> Option<&'static Equipment> {
     EQUIPMENT
-        .get_or_init(|| load_asset("data/equipment.json"))
+        .get_or_init(|| {
+            let mut equipment = bundled_equipment()?;
+            if EQUIPMENT_UPDATES.load(Ordering::Relaxed) {
+                crate::equipment_sync::merge(&mut equipment, &crate::equipment_sync::load_cache());
+            }
+            Some(equipment)
+        })
         .as_ref()
+}
+
+/// Só o `equipment.json` do instalador, lido do disco a cada chamada.
+pub fn bundled_equipment() -> Option<Equipment> {
+    load_asset("data/equipment.json")
 }
 
 /// Mapa de slugs das estatísticas, carregado na primeira chamada.
@@ -806,6 +902,40 @@ mod tests {
             ids["frv_incinerator"],
             id_named(&data, "M-104 Incinerator FRV")
         );
+    }
+
+    #[test]
+    fn a_weapon_or_passive_the_map_lacks_matches_its_slug() {
+        let mut equipment = bundled_equipment().unwrap();
+        equipment.primary.push(Weapon {
+            nome: "AR-99 Teste".into(),
+            tipo: "Assault Rifles".into(),
+            dano: String::new(),
+            capacidade: None,
+            cadencia: None,
+            id: "primary-ar-99-teste".into(),
+            imagem: "remote/equipment/x.webp".into(),
+        });
+        equipment.passives.push(Described {
+            nome: "Passiva De Teste".into(),
+            descricao: String::new(),
+            id: "passives-passiva-de-teste".into(),
+            imagem: "remote/equipment/y.webp".into(),
+        });
+        let map = stats_map().unwrap();
+
+        let refs = map.weapon_refs(["ar_99_teste", "spray_n_pray"], &equipment);
+        assert_eq!(refs["ar_99_teste"].id, "primary-ar-99-teste");
+        assert_eq!(refs["ar_99_teste"].cat, "primary");
+        assert_eq!(refs["spray_n_pray"], map.weapons["spray_n_pray"]);
+
+        let names = map.passive_names(["PASSIVA-DE-TESTE", "SIEGE-READY"], &equipment);
+        assert_eq!(names["PASSIVA-DE-TESTE"], "Passiva De Teste");
+        assert_eq!(names["SIEGE-READY"], "Siege-Ready");
+        // Slug sem par nenhum fica de fora.
+        assert!(!map
+            .weapon_refs(["nao_existe_mesmo"], &equipment)
+            .contains_key("nao_existe_mesmo"));
     }
 
     #[test]

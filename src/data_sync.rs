@@ -17,6 +17,8 @@
 //!
 //! O codex vira `SendInput`, então tudo o que vem de fora é validado: na
 //! chegada e de novo ao ler o cache, que fica numa pasta gravável pelo usuário.
+//!
+//! O mesmo worker traz o equipamento novo ([`crate::equipment_sync`]).
 
 use std::collections::{HashMap, HashSet};
 use std::path::Path;
@@ -69,7 +71,7 @@ const MAX_CODEX: usize = 12;
 /// vale.
 const MAX_CODEX_CHANGES: usize = 5;
 
-const USER_AGENT: &str = concat!("macro-helldivers2/", env!("CARGO_PKG_VERSION"));
+pub(crate) const USER_AGENT: &str = concat!("macro-helldivers2/", env!("CARGO_PKG_VERSION"));
 
 /// Um estratagema de loadout vindo da API, já validado. É também o formato do
 /// cache.
@@ -319,7 +321,7 @@ fn insertion_point(
 
 /// Formato que a API usa para ids. Ele vira parte de caminho no disco (nome do
 /// ícone), então nada de `/`, `\`, `.` ou maiúsculas.
-fn valid_slug(slug: &str) -> bool {
+pub(crate) fn valid_slug(slug: &str) -> bool {
     (1..=80).contains(&slug.len())
         && !slug.starts_with('-')
         && slug
@@ -327,7 +329,7 @@ fn valid_slug(slug: &str) -> bool {
             .all(|b| b.is_ascii_lowercase() || b.is_ascii_digit() || b == b'-')
 }
 
-fn valid_icon_file(file: &str) -> bool {
+pub(crate) fn valid_icon_file(file: &str) -> bool {
     let Some(stem) = file.strip_suffix(".webp") else {
         return false;
     };
@@ -526,12 +528,25 @@ pub fn auto_sync(shared: &Arc<Shared>) {
     }
     let spawned = std::thread::Builder::new()
         .name("data-sync".to_string())
-        .spawn(|| match sync() {
-            Ok(0) => log::info!("dados da API conferidos: nada novo"),
-            Ok(fresh) => {
-                log::info!("{fresh} estratagema(s) novo(s) da API; entram no próximo boot")
+        .spawn(|| {
+            let agent = util::http_agent(Some(TIMEOUT));
+            // Independentes: uma lista quebrada não segura a outra.
+            match sync(&agent) {
+                Ok(0) => log::info!("estratagemas da API conferidos: nada novo"),
+                Ok(fresh) => {
+                    log::info!("{fresh} estratagema(s) novo(s) da API; entram no próximo boot")
+                }
+                Err(err) => log::warn!("sincronização de estratagemas falhou: {err:#}"),
             }
-            Err(err) => log::warn!("sincronização com a API falhou: {err:#}"),
+            match crate::equipment_sync::sync(&agent) {
+                Ok(0) => log::info!("equipamento da API conferido: nada novo"),
+                Ok(fresh) => {
+                    log::info!(
+                        "{fresh} item(ns) de equipamento novo(s) da API; entram no próximo boot"
+                    )
+                }
+                Err(err) => log::warn!("sincronização de equipamento falhou: {err:#}"),
+            }
         });
     if let Err(err) = spawned {
         log::warn!("worker de sincronização não subiu: {err}");
@@ -540,9 +555,8 @@ pub fn auto_sync(shared: &Arc<Shared>) {
 
 /// Baixa a lista, garante os ícones dos novos e grava o cache. Devolve quantos
 /// estratagemas a API tem que o JSON embarcado não tem.
-fn sync() -> Result<usize> {
-    let agent = util::http_agent(Some(TIMEOUT));
-    let (list, data_version) = fetch_list(&agent)?;
+fn sync(agent: &ureq::Agent) -> Result<usize> {
+    let (list, data_version) = fetch_list(agent)?;
 
     let bundled: HashSet<String> = crate::data::GameData::load()?
         .all()
@@ -559,7 +573,7 @@ fn sync() -> Result<usize> {
         }
         // Sem ícone o estratagema ainda funciona (o card sai sem imagem), então
         // uma falha aqui não derruba a sincronização.
-        if let Err(err) = download_icon(&agent, item, &path) {
+        if let Err(err) = download_icon(agent, item, &path) {
             log::warn!("ícone de {} não baixou: {err:#}", item.slug);
         }
     }
@@ -571,32 +585,32 @@ fn sync() -> Result<usize> {
 
 /// A lista de estratagemas de loadout da API, validada.
 fn fetch_list(agent: &ureq::Agent) -> Result<(Vec<RemoteStratagem>, Option<String>)> {
-    let url = format!("{API_BASE}{STRATAGEMS_PATH}");
-    let bytes = agent
-        .get(&url)
-        .header("User-Agent", USER_AGENT)
-        .call()
-        .with_context(|| format!("GET {url}"))?
-        .body_mut()
-        .with_config()
-        .limit(MAX_LIST_BYTES)
-        .read_to_vec()
-        .context("falha ao ler a lista de estratagemas")?;
+    let bytes = get_bytes(agent, STRATAGEMS_PATH, MAX_LIST_BYTES)?;
     parse_api(&bytes)
 }
 
-fn download_icon(agent: &ureq::Agent, item: &RemoteStratagem, path: &Path) -> Result<()> {
-    let url = format!("{API_BASE}{}", item.image);
-    let bytes = agent
+/// `GET` de um caminho da API, com teto no tamanho do corpo.
+pub(crate) fn get_bytes(agent: &ureq::Agent, path: &str, limit: u64) -> Result<Vec<u8>> {
+    let url = format!("{API_BASE}{path}");
+    agent
         .get(&url)
         .header("User-Agent", USER_AGENT)
         .call()
         .with_context(|| format!("GET {url}"))?
         .body_mut()
         .with_config()
-        .limit(MAX_ICON_BYTES)
+        .limit(limit)
         .read_to_vec()
-        .context("falha ao ler o ícone")?;
+        .with_context(|| format!("falha ao ler {url}"))
+}
+
+fn download_icon(agent: &ureq::Agent, item: &RemoteStratagem, path: &Path) -> Result<()> {
+    download_image(agent, &item.image, path)
+}
+
+/// Baixa uma imagem da API para `path`, só se ela decodificar.
+pub(crate) fn download_image(agent: &ureq::Agent, image: &str, path: &Path) -> Result<()> {
+    let bytes = get_bytes(agent, image, MAX_ICON_BYTES)?;
 
     // Só vira ícone o que decodifica: um arquivo que o decoder recusa ficaria
     // marcado como quebrado no cache de bitmaps e nunca seria baixado de novo.

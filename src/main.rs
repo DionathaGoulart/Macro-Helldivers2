@@ -18,7 +18,7 @@ use anyhow::Result;
 use macro_helldivers2::data::GameData;
 use macro_helldivers2::settings::Settings;
 use macro_helldivers2::shared::Shared;
-use macro_helldivers2::{engine, hooks, i18n, loadouts, overlay, ui, util};
+use macro_helldivers2::{data, engine, hooks, i18n, loadouts, overlay, ui, util};
 
 fn main() -> ExitCode {
     util::init_logging();
@@ -54,9 +54,10 @@ fn boot() -> Result<()> {
 
     let settings = Settings::load();
     let text = i18n::tr(settings.language);
-    // O JSON do instalador mais os estratagemas novos que a última
-    // sincronização com a API trouxe (`data_sync`).
+    // O JSON do instalador mais os estratagemas e o equipamento novos que a
+    // última sincronização com a API trouxe (`data_sync`, `equipment_sync`).
     let data = Arc::new(GameData::load_with_updates()?);
+    data::use_equipment_updates();
 
     // Os slots são resolvidos contra os dados atuais já na leitura: id que sumiu
     // do jogo e conflito de exclusividade herdado saem antes de virarem atalho.
