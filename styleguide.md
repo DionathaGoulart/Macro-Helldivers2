@@ -1,8 +1,9 @@
 # Goodbot: Style Guide do painel (skin `retro`, temas `crimson` e `rose`)
 
 **Origem:** portado de `GoodChat/.harness/styleguides/retro.md` + os tokens de
-`palettes.css`/`themes.css` daquele projeto. Os hex, a fonte e a identidade dos
-dois temas foram copiados **sem alteração**. O que mudou é só o vocabulário de
+`palettes.css`/`themes.css` daquele projeto. A fonte e a geometria foram copiadas
+**sem alteração**; a paleta foi trocada pela do logo do app (amarelo `#fbee23` e
+preto `#000000`, §2.1). Fora isso, o que mudou é só o vocabulário de
 componentes: o GoodChat é um chat (balão, composer, tile de conversa); o Goodbot é
 um painel de administração (tabela, formulário, gráfico, estados de
 loading/erro/vazio). §6 e §8 são a adaptação; §1 a §5 são o original.
@@ -68,26 +69,26 @@ do texto. Borda forte e visível nos dois temas, nunca cinza sutil.
 
 ### 2.1 Paleta bruta (`--palette-*`, hex existe uma única vez)
 
-Somente as famílias usadas pelos dois temas + status + overlay. Copiadas do
-`palettes.css` do GoodChat.
+A identidade vem do logo (`good.jpg`): amarelo `#fbee23` e preto `#000000`.
+O claro é amarelo na frente e preto de apoio; o escuro, o contrário. Os ids
+`crimson` (claro) e `rose` (escuro) ficaram só como nome do tema, para não
+invalidar a escolha já salva nas configurações.
 
 | Token                      | Hex                | Papel                                              |
 | -------------------------- | ------------------ | -------------------------------------------------- |
-| `--palette-cream`          | `#f2efe7`          | fundo de página (claro) / texto e borda (escuro)   |
-| `--palette-white`          | `#ffffff`          | superfície elevada (claro) / conteúdo sobre accent (só no `crimson`) |
-| `--palette-ink`            | `#1a0a0a`          | texto e borda (claro)                              |
-| `--palette-noir`           | `#121212`          | fundo de página (escuro)                           |
-| `--palette-noir-raised`    | `#1a1a1a`          | superfície elevada (escuro)                        |
-| `--palette-near-black`     | `#0d0d0d`          | texto sobre status suavizado (escuro)              |
-| `--palette-crimson`        | `#dc143c`          | accent no tema claro (só como **fill**)            |
-| `--palette-crimson-deep`   | `#c8102e`          | accent como **texto** no tema claro (§2.4)         |
-| `--palette-rose`           | `#e8729a`          | accent no tema escuro                              |
+| `--palette-yellow`         | `#fbee23`          | fundo e conteúdo sobre accent (claro) / texto, borda, accent e sombra (escuro) |
+| `--palette-yellow-raised`  | `#fdf699`          | superfície elevada (claro)                         |
+| `--palette-black`          | `#000000`          | texto, borda, accent e sombra (claro) / fundo e conteúdo sobre fill (escuro) |
+| `--palette-black-raised`   | `#141414`          | superfície elevada (escuro)                        |
+| `--palette-white`          | `#ffffff`          | conteúdo sobre info e error (claro)                |
 | `--palette-info`           | `#2563eb`          | status cheio (claro)                               |
 | `--palette-success`        | `#16a34a`          | status cheio (claro)                               |
 | `--palette-warning`        | `#d97706`          | status cheio (claro)                               |
 | `--palette-error`          | `#dc2626`          | status cheio (claro)                               |
-| `--palette-success-deep`   | `#15803d`          | success como **texto** no tema claro (§2.4)        |
-| `--palette-warning-deep`   | `#b45309`          | warning como **texto** no tema claro (§2.4)        |
+| `--palette-info-deep`      | `#1d4ed8`          | info como **texto** no tema claro (§2.4)           |
+| `--palette-success-deep`   | `#166534`          | success como **texto** no tema claro (§2.4)        |
+| `--palette-warning-deep`   | `#92400e`          | warning como **texto** no tema claro (§2.4)        |
+| `--palette-error-deep`     | `#b91c1c`          | error como **texto** no tema claro (§2.4)          |
 | `--palette-info-soft`      | `#60a5fa`          | status suavizado (escuro)                          |
 | `--palette-success-soft`   | `#4ade80`          | status suavizado (escuro)                          |
 | `--palette-warning-soft`   | `#fbbf24`          | status suavizado (escuro)                          |
@@ -97,27 +98,26 @@ Somente as famílias usadas pelos dois temas + status + overlay. Copiadas do
 
 ### 2.2 Os dois temas (tokens semânticos)
 
-Copiados de `themes.css` (`goodchat-crimson` → `crimson`, `goodchat-rose` →
-`rose`). Nomes daisyUI mantidos como nomes semânticos internos; o mapeamento
-para shadcn está em §7.
+Nomes daisyUI mantidos como nomes semânticos internos; o mapeamento para
+shadcn está em §7.
 
-| Token                                | `crimson` (claro, `color-scheme: light`) | `rose` (escuro, `color-scheme: dark`)  |
-| ------------------------------------ | ---------------------------------------- | -------------------------------------- |
-| `base-100` (fundo de página)         | cream                                    | noir                                   |
-| `base-200` (superfície elevada)      | white                                    | noir-raised                            |
-| `base-300` (toda moldura)            | ink                                      | cream                                  |
-| `base-content` (texto)               | ink                                      | cream                                  |
-| `primary` / `accent`                 | crimson                                  | rose                                   |
-| `primary-content` / `accent-content` | white                                    | **near-black** (§2.4)                  |
-| `secondary`                          | ink                                      | cream                                  |
-| `secondary-content`                  | white                                    | noir                                   |
-| `neutral` / `neutral-content`        | ink / white                              | cream / noir                           |
-| `info` / `-content`                  | info / white                             | info-soft / near-black                 |
-| `success` / `-content`               | success / **ink** (§2.4)                 | success-soft / near-black              |
-| `warning` / `-content`               | warning / **ink** (§2.4)                 | warning-soft / near-black              |
-| `error` / `-content`                 | error / white                            | error-soft / near-black                |
-| `--shadow` (cor da sombra dura)      | ink                                      | **rose** (a sombra é accent no escuro) |
-| `--scanline-color`                   | scanline-light                           | scanline-dark                          |
+| Token                                | `crimson` (claro, `color-scheme: light`) | `rose` (escuro, `color-scheme: dark`)     |
+| ------------------------------------ | ---------------------------------------- | ----------------------------------------- |
+| `base-100` (fundo de página)         | yellow                                   | black                                     |
+| `base-200` (superfície elevada)      | yellow-raised                            | black-raised                              |
+| `base-300` (toda moldura)            | black                                    | yellow                                    |
+| `base-content` (texto)               | black                                    | yellow                                    |
+| `primary` / `accent`                 | black                                    | yellow                                    |
+| `primary-content` / `accent-content` | yellow                                   | black                                     |
+| `secondary`                          | black                                    | yellow                                    |
+| `secondary-content`                  | yellow                                   | black                                     |
+| `neutral` / `neutral-content`        | black / yellow                           | yellow / black                            |
+| `info` / `-content`                  | info / white                             | info-soft / black                         |
+| `success` / `-content`               | success / black                          | success-soft / black                      |
+| `warning` / `-content`               | warning / black                          | warning-soft / black                      |
+| `error` / `-content`                 | error / white                            | error-soft / black                        |
+| `--shadow` (cor da sombra dura)      | black                                    | **yellow** (a sombra é accent no escuro)  |
+| `--scanline-color`                   | scanline-light                           | scanline-dark                             |
 
 Geometria igual nos dois: `--radius-*: 0rem`, `--border: 2px`, `--depth: 0`,
 `--noise: 0`.
@@ -149,24 +149,19 @@ existem só para quando a cor é a do glifo:
 
 | Token         | `crimson`                | `rose`               | Por quê                                                                    |
 | ------------- | ------------------------ | -------------------- | -------------------------------------------------------------------------- |
-| `accent-text` | crimson-deep `#c8102e`   | rose                 | crimson sobre cream dá 4.34:1; crimson-deep dá 5.12:1                      |
-| `success-text`| success-deep `#15803d`   | success-soft         | success sobre white dá 3.30:1                                              |
-| `warning-text`| warning-deep `#b45309`   | warning-soft         | warning sobre white dá 3.19:1                                              |
-| `info-text`   | info                     | info-soft            | já passa; existe para a regra ser uma só                                   |
-| `error-text`  | error                    | error-soft           | já passa; idem                                                             |
+| `accent-text` | black                    | yellow               | o accent já é a cor do texto; 17.36:1 nos dois                             |
+| `success-text`| success-deep `#166534`   | success-soft         | success sobre yellow-raised dá 2.95:1; success-deep dá 6.39:1              |
+| `warning-text`| warning-deep `#92400e`   | warning-soft         | warning sobre yellow-raised dá 2.85:1; warning-deep dá 6.35:1              |
+| `info-text`   | info-deep `#1d4ed8`      | info-soft            | info sobre yellow dá 4.27:1; info-deep dá 6.01:1                           |
+| `error-text`  | error-deep `#b91c1c`     | error-soft           | error sobre yellow-raised dá 4.33:1; error-deep dá 5.80:1                  |
 
 Regra prática: **`bg-accent` usa `accent`; `text-accent-text` usa o `-text`.**
 O mesmo vale para os quatro status. Moldura (`border-accent`, `border-warning`)
 continua no token base; 3:1 basta.
 
-Duas correções de `-content` vieram da mesma conferência:
-
-- `rose`/`accent-content` era white sobre rose: **2.87:1**, reprovado. Passou a
-  near-black (**6.76:1**), que é o mesmo conteúdo que os status suavizados já
-  usavam neste tema. Todo fill accent do escuro (CTA, item de nav ativo, linha
-  selecionada, `tag-accent`, `avatar-sq`) mudou junto.
-- `crimson`/`success-content` e `warning-content` eram white sobre verde e
-  âmbar: **3.30:1** e **3.19:1**. Passaram a ink (**5.84:1** e **6.04:1**).
+Conteúdo sobre fill: success e warning levam black (**6.37:1** e **6.59:1**);
+info e error levam white (**5.17:1** e **4.83:1**). No escuro todo fill
+suavizado e o accent amarelo levam black.
 
 **Apagar é `color`, nunca `opacity`.** `opacity` cria um grupo de composição:
 tudo que está dentro apaga junto e **nenhum filho consegue escapar**. Foi
@@ -545,7 +540,7 @@ componente combina com variante. Mirar na hook class.
 
 Não é UI web, mas é a única "tela" do bot e deve parecer da mesma família:
 
-- Cor da barra lateral do embed: `crimson` `#dc143c` para ações do bot em
+- Cor da barra lateral do embed: yellow `#fbee23` para ações do bot em
   geral; status de moderação usa os hex de status **cheios** (§2.1):
   ban `#dc2626`, kick/timeout `#d97706`, warn `#2563eb`, unban `#16a34a`.
 - Título em caixa alta com prefixo `>`; campos curtos; IDs sempre em
@@ -559,9 +554,9 @@ Não é UI web, mas é a única "tela" do bot e deve parecer da mesma família:
 ## 10. Origem e decisões
 
 Portado de `GoodChat/.harness/styleguides/retro.md` (skin `retro` do
-Portfolio → GoodChat → Goodbot). Decisões mantidas: par cream/crimson ·
-noir/rose; `font-black` sobre face 800; scanline na força base; foco sólido
-2px; zero radius sem exceção.
+Portfolio → GoodChat → Goodbot). Decisões mantidas: `font-black` sobre face 800;
+scanline na força base; foco sólido 2px; zero radius sem exceção. O par
+cream/crimson · noir/rose original foi substituído pela paleta do logo (item 8).
 
 Decisões novas do Goodbot:
 
@@ -579,6 +574,13 @@ Decisões novas do Goodbot:
    porque uma cor de fill não passa AA como cor de texto. Vieram da conferência
    de contraste da Etapa 26, que também trocou `accent-content` do `rose` e
    `success-content`/`warning-content` do `crimson`.
+8. **Paleta do logo.** As cores saem do logo (`assets/icons/icon.png`): amarelo
+   `#fbee23` e preto `#000000`, só esses dois como identidade. O claro
+   (`crimson`) é amarelo na frente e preto de apoio; o escuro (`rose`), o
+   contrário. Os ids dos temas ficaram para não invalidar a escolha já salva.
+   Como o accent passou a ser a própria cor do texto, `accent-text` é igual a
+   `content` nos dois temas; os `-text` de status do claro desceram um tom
+   (`*-deep`) para passar 4.5:1 sobre o amarelo.
 
 ---
 
@@ -657,9 +659,9 @@ algumas adaptações de meio. **Componente novo entra aqui**, como pede o §0.7.
   proíbe não tem como ser pedido. As pontas dos traços são quadradas.
 - Caixa aninhada num painel é moldura sobre `base-100`, sem sombra; painel de topo
   é `base-200` com a sombra padrão. Os clicáveis descansam com `sm`.
-- A página (`base-100`) nunca recebe texto de status: no `crimson` o verde e o âmbar
-  escuros ficam abaixo de 4.5:1 sobre o creme. Lá o status vai num quadrado de cor
-  com moldura (`status_square`) e o rótulo em `content`.
+- A página (`base-100`) nunca recebe texto de status: os `-text` são conferidos só
+  sobre a superfície elevada. Lá o status vai num quadrado de cor com moldura
+  (`status_square`) e o rótulo em `content`.
 - `prefers-reduced-motion` é a opção "Mostrar animações no Windows".
 - A scanline é da janela principal; o overlay, por cima do jogo, não a tem.
 - O caret não mantém timer de 16ms: a janela só acorda na troca de fase (500ms).

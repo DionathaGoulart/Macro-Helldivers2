@@ -89,6 +89,10 @@ instalador deste release. Quem ficar nela recebe o aviso da próxima versão est
 
 ### Alterado
 
+- **Logo e cores novos.** O ícone do app, da bandeja e do instalador passou a ser a
+  caveira amarela, e os dois temas usam as cores dela: o claro é amarelo com preto
+  de apoio e o escuro, preto com amarelo. O layout não mudou, e o tema já escolhido
+  nas configurações continua valendo.
 - **Rolar de novo não repete o item da rodada anterior** enquanto houver outra
   opção, em todas as categorias e nas duas sub-abas de sorteio. Na Meta, com só três
   armas no topo de cada categoria, a primeira colocada saía várias vezes seguidas.
