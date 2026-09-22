@@ -5,7 +5,10 @@ Todas as mudanças relevantes deste projeto são documentadas aqui.
 O formato segue [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/)
 e o versionamento segue [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
-## [Não lançado]
+## [2.1.0-beta.1] - 2026-09-22 (instável)
+
+**Versão de teste.** O aviso de atualização da 2.0.0 não a oferece: instale pelo
+instalador deste release. Quem ficar nela recebe o aviso da próxima versão estável.
 
 ### Adicionado
 
@@ -498,7 +501,7 @@ Primeira versão funcional.
 - **Controle de foco**: os macros só disparam com a janela do jogo ativa.
 - **Instalador NSIS** para Windows.
 
-[Não lançado]: https://github.com/DionathaGoulart/Macro-Helldivers2/compare/v2.0.0...HEAD
+[2.1.0-beta.1]: https://github.com/DionathaGoulart/Macro-Helldivers2/compare/v2.0.0...v2.1.0-beta.1
 [2.0.0]: https://github.com/DionathaGoulart/Macro-Helldivers2/compare/v1.0.0...v2.0.0
 [1.0.0]: https://github.com/DionathaGoulart/Macro-Helldivers2/compare/v0.3.0-(unstable)...v1.0.0
 [0.3.0]: https://github.com/DionathaGoulart/Macro-Helldivers2/compare/v0.2.0...v0.3.0-(unstable)
