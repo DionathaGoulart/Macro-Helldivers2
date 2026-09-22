@@ -30,10 +30,13 @@ O que mudou em cada versão está no [CHANGELOG](CHANGELOG.md).
 - **Central de Builds** em três modos: **Meta**, com pick rates reais da comunidade
   (helldive.live) por facção e dificuldade; **Aleatória**, com regras (sets de
   armadura, loadout balanceado, máximo de 1 torreta) e cadeados por item; e
-  **Personalizada**, montada na mão.
-- **Builds salvas**: nomeie e aplique nos slots com um clique, inclusive pelo overlay.
+  **Personalizada**, montada na mão. Rolar de novo nunca repete o item anterior
+  quando há outra opção.
+- **Builds salvas**: salve, edite, renomeie e exclua pela sub-aba **Salvas**, e
+  aplique nos slots com um clique, inclusive pelo overlay.
 - **Arsenal completo** offline: 92 estratagemas, armas, armaduras, capacetes, capas,
-  boosters, passivas e warbonds, com ícones locais.
+  boosters, passivas e warbonds, com ícones locais. Estratagema e equipamento novos
+  chegam pela API de dados, sem precisar de versão nova do app.
 - **Busca sem acento** na grade de estratagemas, na mesma ordem dos menus do jogo.
 - **Backup** de builds, slots e configurações em JSON, no mesmo formato da v1.
 - **Bandeja do sistema**: minimizar ou fechar recolhe o app e os macros seguem ativos.
@@ -123,14 +126,20 @@ Na aba **Builds → Personalizada** você monta o loadout na mão, sem depender 
    busca filtra por nome, sem acento.
 3. Opcionalmente escolha primária, secundária, granada, armadura, capacete, capa e
    booster nas listas.
-4. Dê um nome em **Builds Salvas** e clique em **Salvar**.
+4. Dê um nome no card **Build Atual**, logo abaixo, e clique em **Salvar**.
 
 Atalhos úteis:
 
 - **Usar slots atuais**: puxa os 4 estratagemas que já estão nos slots do macro.
 - **Limpar tudo**: zera a build em edição.
-- Clicar em uma build salva aplica os estratagemas direto nos slots de macro
-  (funciona também pelo overlay).
+
+Na sub-aba **Salvas** fica a lista das builds, cada uma com três ações:
+
+- **Aplicar**: põe os estratagemas nos slots de macro (funciona também pelo overlay).
+- **Editar**: abre a build aqui, na Personalizada. Mude o que quiser e use **Salvar
+  alterações** (trocar o nome no campo renomeia), **Salvar como nova** para uma
+  cópia ou **Descartar** para voltar à versão salva.
+- **Excluir**: pede um segundo clique para confirmar.
 
 As mesmas regras de exclusividade dos sorteios valem aqui: nada de estratagema
 repetido nem dois exoesqueletos/veículos na mesma build.
@@ -184,6 +193,21 @@ e **aparece a partir da próxima vez que você abrir o app**.
 - O modo **Meta** da aba Builds acompanha o patch mais novo do helldive.live e
   reconhece os estratagemas novos assim que o site os registrar.
 
+### Armas e equipamento novos sem atualizar o app
+
+A mesma consulta traz o equipamento: **armas, armaduras, capacetes, capas, boosters e
+passivas** que saíram depois da sua versão entram nas listas da aba Builds (sorteio,
+dropdowns e builds salvas) a partir da próxima abertura, com o ícone.
+
+- O que o instalador já tem continua como está; da API só entra o que falta, na
+  ordem alfabética da categoria (o booster vai para o fim, como no jogo).
+- A capa nova casa com a armadura nova da mesma warbond no sorteio de sets, e a
+  armadura nova traz a passiva dela, mesmo que a passiva também seja nova.
+- Se a API trouxer mais de 12 itens novos de uma categoria de uma vez, nenhum deles
+  entra: isso é dado quebrado, não patch.
+- No modo **Meta**, arma e passiva novas aparecem nos tops assim que o helldive.live
+  as registrar.
+
 ---
 
 ## 📂 Seus Dados
@@ -197,7 +221,7 @@ Tudo fica em `%APPDATA%\Macro Helldivers 2`, que o desinstalador preserva:
 | `loadouts.json` | builds salvas |
 | `window-bounds.json` | posição e tamanho da janela |
 | `meta-cache.json` | estatísticas do helldive.live (valem 6 h) |
-| `stratagems-remote.json` e `remote-icons\` | estratagemas e ícones baixados da API de dados |
+| `stratagems-remote.json`, `equipment-remote.json` e `remote-icons\` | estratagemas, equipamento e ícones baixados da API de dados |
 | `app.log` | log da sessão atual, recriado a cada abertura |
 
 Se um desses arquivos estiver ilegível, o app o renomeia para `<nome>.bad` e segue
@@ -240,28 +264,36 @@ junto com o `.sha256`; as notas do release saem da seção da versão no
 
 ### Pipeline de dados (dev-only)
 
-`assets/data/*.json` e `assets/icons/**` são gerados a partir da wiki da comunidade
-por scripts Node; os estratagemas vêm da [API de dados](https://helldivers-api.dionatha.com.br),
-que já entrega a wiki em JSON. Eles não fazem parte do build do app:
+`assets/data/*.json` e `assets/icons/**` são gerados por scripts Node a partir da
+[API de dados](https://helldivers-api.dionatha.com.br), que raspa a wiki da comunidade
+uma vez por dia e entrega tudo em JSON. É a mesma API que o app consulta sozinho entre
+um release e outro. Os scripts não fazem parte do build do app:
 
 ```bash
 cd scripts
 npm install               # sharp (só aqui; o app não depende de Node)
 
-npm run scrape            # equipment.json + imagens (--refresh ignora o cache)
-npm run optimize-images   # PNG → WebP + reescrita das referências
-npm run sync-stratagems   # stratagems.json + ícones (API de dados)
+npm run scrape            # equipment.json + ícones de equipamento (API de dados)
+npm run sync-stratagems   # stratagems.json + ícones de estratagema (API de dados)
 npm run stats-map         # statsMap.json (slugs do helldive.live)
+npm run optimize-images   # PNG soltos em assets/icons → WebP (ícone do app, bandeja)
 ```
+
+**A cada release**, rode `scrape` e `sync-stratagems`, depois `stats-map`. Entre um
+release e outro o app já traz sozinho o que for novo; o release é o que atualiza tudo
+o resto (stats de patch, nomes, descrições, item que saiu do jogo, a posição exata do
+estratagema novo).
+
+> O `scrape` leva poucos segundos. Id de item que já existe nunca muda (builds salvas e
+> `statsMap.json` apontam para ele): item renomeado na wiki troca só o nome. Item novo
+> ganha o mesmo id que o app deu a ele quando o baixou antes do release. Ele mostra o
+> que entrou (`+`), saiu (`-`) e mudou de nome (`~`) em cada categoria, e não grava
+> nada se uma categoria perder mais de 10% dos itens (`--force` grava assim mesmo).
 
 > A ordem de `stratagems.json` é a do jogo, curada à mão (a wiki não a tem). O
 > `sync-stratagems` nunca reordena o que existe: estratagema novo entra no fim do
 > subgrupo dele (a mesma regra que o app usa em runtime) e o script diz onde ficou,
 > para você mover a entrada para a posição exata.
-
-> A ordem importa: `scrape` deixa `equipment.json` apontando para os `.png` que
-> acabou de baixar, e é o `optimize-images` que os converte para WebP e reescreve
-> as referências. Rodar um sem o outro deixa o repositório inconsistente.
 
 > Depois de rodar `scrape` ou `sync-stratagems`, rode `stats-map`: ele valida se os
 > nomes ainda casam com os slugs do helldive.live e avisa o que ficou sem par. Ao
@@ -269,8 +301,8 @@ npm run stats-map         # statsMap.json (slugs do helldive.live)
 > do site (a lista fica no JavaScript do helldive.live). O app descobre sozinho os
 > patches seguintes; o número só evita sondagem extra.
 
-Nenhum binário externo é necessário: a conversão para WebP sai do `sharp`, instalado
-pelo `npm install`, e os ícones de estratagema já chegam em WebP da API de dados.
+Nenhum binário externo é necessário: os ícones já chegam em WebP da API de dados, e o
+redimensionamento sai do `sharp`, instalado pelo `npm install`.
 
 ---
 
@@ -290,6 +322,7 @@ pelo `npm install`, e os ícones de estratagema já chegam em WebP da API de dad
 │   ├── loadouts.rs    # slots, builds salvas e backup JSON
 │   ├── meta_stats.rs  # cliente do helldive.live com cache em disco
 │   ├── data_sync.rs   # estratagemas novos da API de dados, sem release
+│   ├── equipment_sync.rs # armas e equipamento novos da API de dados, sem release
 │   ├── settings.rs    # preferências, migração da v1, gravação atômica
 │   ├── i18n.rs        # textos da interface em português e inglês
 │   ├── updater.rs     # GitHub Releases + verificação SHA-256
@@ -299,7 +332,7 @@ pelo `npm install`, e os ícones de estratagema já chegam em WebP da API de dad
 │   └── bin/           # bancadas timing_bench e soak
 ├── assets/            # dados, ícones, fontes (JetBrains Mono) e o .ico do exe
 ├── installer/         # script NSIS
-├── scripts/           # pipeline de dados da wiki (Node, dev-only)
+├── scripts/           # pipeline de dados da API (Node, dev-only)
 ├── tests/fixtures/    # backup da v1, configs do jogo e resposta da API usados nos testes
 └── styleguide.md      # fonte de verdade do visual (tokens, componentes, temas)
 ```

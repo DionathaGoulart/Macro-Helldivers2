@@ -5,6 +5,73 @@ Todas as mudanças relevantes deste projeto são documentadas aqui.
 O formato segue [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/)
 e o versionamento segue [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
+## [Unreleased]
+
+### Adicionado
+
+- **Armas e equipamento novos sem atualizar o app.** A mesma consulta que já trazia
+  os estratagemas novos agora traz também armas, armaduras, capacetes, capas,
+  boosters e passivas que a [API de dados](https://helldivers-api.dionatha.com.br)
+  tem e a versão instalada não. Eles entram nas listas da aba Builds a partir da
+  próxima abertura do app, com o ícone e na ordem alfabética da categoria. Mais de
+  12 itens novos numa categoria de uma vez é tratado como dado quebrado, e nenhum
+  deles entra. Na sub-aba Meta, arma e passiva novas aparecem nos tops assim que o
+  helldive.live as registrar.
+- **Armas AR-11 Arbitrator, GL-15 Evictor, P-34 Breacher, G-60 Anti-Tank Seeker e
+  G-8 Immolation**; armaduras e capacetes **BFM-16 Tanker** e **BFM-220 Ironclad**,
+  com a passiva nova **Blunt-Force Mitigation**; capas **Shroud of the Juggernaut** e
+  **Standard of Rapid Evacuation**; e a warbond **Ironclad Democracy**.
+- **Sub-aba Salvas** na aba de builds. Cada build salva vira uma linha com os quatro
+  estratagemas, o equipamento resumido e três ações à vista: **Aplicar** (põe os
+  estratagemas nos slots de macro), **Editar** (abre a build na sub-aba
+  Personalizada) e **Excluir**. A build que está nos slots ganha a etiqueta
+  **Nos slots**.
+- **Card Build Atual** em cima da build exibida, com o salvar e o estado dela: nova,
+  salva como "X", ou editando "X" com alterações não salvas. Uma build aplicada ou
+  aberta para edição fica vinculada à salva: **Salvar alterações** grava por cima
+  (trocar o nome no campo renomeia), **Salvar como nova** cria uma cópia e
+  **Descartar** volta à versão salva.
+- **Rolar de novo** na barra da build atual, nas sub-abas Meta e Aleatória: dá para
+  sortear outra vez sem subir até o botão do topo.
+- **Animação do sorteio.** Cada card gira como um rolo, passando por outros itens da
+  mesma lista, e para no item novo, um depois do outro. Com "Mostrar animações no
+  Windows" desligado a build aparece direto.
+- Depois de sortear, a página desliza até a build quando ela está fora de vista.
+- Toast de confirmação ao salvar, aplicar e excluir uma build.
+
+### Alterado
+
+- **Rolar de novo não repete o item da rodada anterior** enquanto houver outra
+  opção, em todas as categorias e nas duas sub-abas de sorteio. Na Meta, com só três
+  armas no topo de cada categoria, a primeira colocada saía várias vezes seguidas.
+  Item travado continua no lugar, e uma categoria com um item só repete.
+- Salvar com o nome de uma build que já existe pergunta antes (**Substituir?**, por
+  3s) em vez de sobrescrever em silêncio.
+- Excluir uma build pede um segundo clique (**Confirmar?**, por 3s). O botão fica à
+  vista, e não só sob o mouse.
+- Depois de salvar, o campo de nome continua com o nome da build.
+
+### Corrigido
+
+- **Ícones dos boosters.** A wiki publica os ícones de booster e de passiva de
+  armadura só em SVG, que o app não decodifica, e os cards mostravam o quadrado
+  vazio. Os 48 ícones agora vêm em WebP da API de dados. As passivas do topo na
+  sub-aba Meta também ganharam ícone.
+
+### Desenvolvimento
+
+- **`npm run scrape` lê da API de dados, não mais da wiki.** O novo
+  `scripts/sync-equipment.mjs` monta o `equipment.json` inteiro e os ícones a partir
+  da API em poucos segundos, sem o rate-limit da wiki e sem o passo de
+  `optimize-images`. As regras de conversão são as mesmas que o app usa em runtime,
+  então um item baixado entre releases entra no release seguinte com o mesmo id. Id
+  de item existente nunca muda, e o script não grava nada se uma categoria perder
+  mais de 10% dos itens. O `scripts/scrape-wiki.mjs` saiu.
+- `equipment.json` regenerado pela API, com os itens novos listados acima. Os ícones
+  de equipamento passam de 200px para até 256px, o tamanho que o app guarda, e as
+  fichas de arma perdem os restos de marcação da wiki no dano. Todas as listas ficam
+  em ordem alfabética (warbonds por data).
+
 ## [2.0.0] - 2026-09-19
 
 **Reescrita completa.** O app deixou de ser um Electron com React e virou um binário
