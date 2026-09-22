@@ -334,9 +334,9 @@ mod tests {
         let mut ui = Ui::new();
         build_with(&mut ui, &chrome(&idle), 0);
         let texts = texts(&ui);
-        assert!(texts
-            .iter()
-            .any(|text| text == &format!("VERSÃO V{}", env!("CARGO_PKG_VERSION"))));
+        // O rodapé vai em caixa alta, e a tag de um beta junto: `V2.1.0-BETA.1`.
+        let version = format!("VERSÃO V{}", env!("CARGO_PKG_VERSION")).to_uppercase();
+        assert!(texts.contains(&version), "{texts:?}");
         assert!(texts.iter().any(|text| text == "JOGO AUSENTE"));
         assert!(texts.iter().any(|text| text == "ATUALIZADO"));
         assert!(!ui.animating(), "rodapé em repouso não pede quadros");

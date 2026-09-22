@@ -592,7 +592,7 @@ impl Hooks for FocusOnly<'_> {
 /// Pergunta direto ao Windows em vez de usar a flag de foco: a troca do jogo
 /// para o app não gera evento de foreground (a thread de hooks ignora as
 /// janelas do próprio processo), e a flag só se corrige no timer de 5s.
-#[cfg(windows)]
+#[cfg(all(windows, not(test)))]
 fn main_window_in_front(shared: &Shared) -> bool {
     use windows::Win32::UI::WindowsAndMessaging::GetForegroundWindow;
 
@@ -601,8 +601,9 @@ fn main_window_in_front(shared: &Shared) -> bool {
     main != 0 && unsafe { GetForegroundWindow() }.0 as isize == main
 }
 
-/// Fora do Windows não há janela: os testes do engine exercitam o caminho todo.
-#[cfg(not(windows))]
+/// Fora do Windows, e nos testes, não há janela: eles exercitam o caminho todo,
+/// no host e no CI do Windows.
+#[cfg(any(not(windows), test))]
 fn main_window_in_front(_shared: &Shared) -> bool {
     true
 }
