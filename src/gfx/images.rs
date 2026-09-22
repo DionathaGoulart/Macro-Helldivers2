@@ -314,6 +314,63 @@ mod tests {
         );
     }
 
+    /// Todo ícone citado no `equipment.json` existe e está num formato que o
+    /// decodificador lê. Booster e passiva vinham da wiki em SVG, que o `image`
+    /// não lê, e o card saía com o marcador vazio sem erro nenhum na tela.
+    #[test]
+    fn every_equipment_icon_is_a_raster_on_disk() {
+        let equipment = crate::data::equipment().expect("equipment.json do repositório");
+        let weapons = equipment
+            .primary
+            .iter()
+            .chain(&equipment.secondary)
+            .chain(&equipment.grenade)
+            .map(|item| &item.imagem);
+        let cosmetics = equipment
+            .helmet
+            .iter()
+            .chain(&equipment.cape)
+            .map(|item| &item.imagem);
+        let described = equipment
+            .booster
+            .iter()
+            .chain(&equipment.passives)
+            .map(|item| &item.imagem);
+        let paths: Vec<&String> = weapons
+            .chain(equipment.armor.iter().map(|item| &item.imagem))
+            .chain(cosmetics)
+            .chain(described)
+            .chain(equipment.warbond.iter().map(|item| &item.imagem))
+            .collect();
+
+        assert!(paths.len() > 400, "só {} ícones", paths.len());
+        for rel in paths {
+            assert!(
+                rel.ends_with(".webp") || rel.ends_with(".png"),
+                "{rel} não é WebP nem PNG"
+            );
+            assert!(
+                util::asset_path(&format!("icons/{rel}")).is_file(),
+                "{rel} não está em assets/icons/"
+            );
+        }
+    }
+
+    /// Decodificar de verdade os ~50 de booster e passiva pega um arquivo que
+    /// chegou corrompido (os ~480 juntos custariam segundos no build de teste,
+    /// que não otimiza o `image`).
+    #[test]
+    fn booster_and_passive_icons_decode() {
+        let equipment = crate::data::equipment().expect("equipment.json do repositório");
+        for item in equipment.booster.iter().chain(&equipment.passives) {
+            let decoded = decode(&util::asset_path(&format!("icons/{}", item.imagem)))
+                .unwrap_or_else(|err| panic!("{} não decodifica: {err:#}", item.imagem));
+            // Cabem em 256px; a arte de uma passiva nova pode vir menor.
+            assert!(decoded.width.max(decoded.height) <= MAX_EDGE_PX);
+            assert!(decoded.width > 0 && decoded.height > 0);
+        }
+    }
+
     #[test]
     fn a_missing_file_is_an_error_not_a_panic() {
         assert!(decode(&util::asset_path("icons/nao-existe.webp")).is_err());

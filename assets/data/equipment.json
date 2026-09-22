@@ -1,6 +1,15 @@
 {
   "primary": [
     {
+      "nome": "AR-11 Arbitrator",
+      "tipo": "Assault Rifles",
+      "dano": "",
+      "capacidade": "45 (4mm) / 4 (10g)",
+      "cadencia": null,
+      "id": "primary-ar-11-arbitrator",
+      "imagem": "equipment/primary-ar-11-arbitrator.webp"
+    },
+    {
       "nome": "AR-2 Coyote",
       "tipo": "Assault Rifles",
       "dano": "75 Ballistic",
@@ -68,14 +77,14 @@
       "tipo": "Assault Rifles",
       "dano": "105 Ballistic",
       "capacidade": "35",
-      "cadencia": "600 rpm &bull; 850 rpm",
+      "cadencia": "600 rpm • 850 rpm",
       "id": "primary-ar-61-tenderizer",
       "imagem": "equipment/primary-ar-61-tenderizer.webp"
     },
     {
       "nome": "AR/GL-21 One-Two",
       "tipo": "Assault Rifles",
-      "dano": "95 Ballistic (8mm) [[File:Damage Ballistic Icon.svg|20px|li",
+      "dano": "95 Ballistic (8mm) 250 Ballistic (40mm) / 400 Explosion",
       "capacidade": "40",
       "cadencia": "650 rpm",
       "id": "primary-ar-gl-21-one-two",
@@ -102,7 +111,7 @@
     {
       "nome": "CB-9 Exploding Crossbow",
       "tipo": "Explosives",
-      "dano": "270 Projectile [[File:Damage Explosion Icon.svg|20px|link=",
+      "dano": "270 Projectile / 350 Explosion",
       "capacidade": "5",
       "cadencia": "50 rpm",
       "id": "primary-cb-9-exploding-crossbow",
@@ -125,6 +134,15 @@
       "cadencia": null,
       "id": "primary-flam-66-torcher",
       "imagem": "equipment/primary-flam-66-torcher.webp"
+    },
+    {
+      "nome": "GL-15 Evictor",
+      "tipo": "Explosives",
+      "dano": "",
+      "capacidade": "4",
+      "cadencia": null,
+      "id": "primary-gl-15-evictor",
+      "imagem": "equipment/primary-gl-15-evictor.webp"
     },
     {
       "nome": "JAR-5 Dominator",
@@ -165,7 +183,7 @@
     {
       "nome": "LAS-5 Scythe",
       "tipo": "Energy-Based",
-      "dano": "350 DPS Laser &nb",
+      "dano": "350 DPS Laser 100 DPS Fire",
       "capacidade": "8s",
       "cadencia": null,
       "id": "primary-las-5-scythe",
@@ -203,14 +221,14 @@
       "tipo": "Submachine Guns",
       "dano": "90 Ballistic",
       "capacidade": "50",
-      "cadencia": "1380 rpm",
+      "cadencia": "1,380 rpm",
       "id": "primary-mp-98-knight",
       "imagem": "equipment/primary-mp-98-knight.webp"
     },
     {
       "nome": "PLAS-1 Scorcher",
       "tipo": "Energy-Based",
-      "dano": "100 Ballistic [[File:Damage Explosion Icon.svg|20px|link=Dam",
+      "dano": "100 Ballistic / 100 Explosion",
       "capacidade": "20",
       "cadencia": "350 rpm",
       "id": "primary-plas-1-scorcher",
@@ -219,7 +237,7 @@
     {
       "nome": "PLAS-101 Purifier",
       "tipo": "Energy-Based",
-      "dano": "100-200 Ballistic [[File:Damage Explosion Icon.svg|20px|lin",
+      "dano": "100 Uncharged Bolt / 75 Uncharged Explosion / 200 Charged Bolt / 300 Charged Explosion",
       "capacidade": "15",
       "cadencia": "1,000 rpm",
       "id": "primary-plas-101-purifier",
@@ -228,7 +246,7 @@
     {
       "nome": "PLAS-39 Accelerator Rifle",
       "tipo": "Energy-Based",
-      "dano": "250 Ballistic [[File:Damage Explosion Icon.svg|20px|link=Da",
+      "dano": "250 Ballistic / 100 Explosion",
       "capacidade": "9",
       "cadencia": "550 rpm",
       "id": "primary-plas-39-accelerator-rifle",
@@ -255,7 +273,7 @@
     {
       "nome": "R-36 Eruptor",
       "tipo": "Explosives",
-      "dano": "230 Projectile [[File:Damage Explosion Icon.",
+      "dano": "230 Impact / 225 Explosion 110 Shrapnel (x30)",
       "capacidade": "5",
       "cadencia": "32 rpm",
       "id": "primary-r-36-eruptor",
@@ -264,7 +282,7 @@
     {
       "nome": "R-4 Hyena",
       "tipo": "Marksman Rifles",
-      "dano": "220 Ballistic",
+      "dano": "220 Ballistic / 100 DPS Fire",
       "capacidade": "15",
       "cadencia": "190 rpm",
       "id": "primary-r-4-hyena",
@@ -275,7 +293,7 @@
       "tipo": "Marksman Rifles",
       "dano": "300 Ballistic",
       "capacidade": "8",
-      "cadencia": "100",
+      "cadencia": "100 rpm",
       "id": "primary-r-6-deadeye",
       "imagem": "equipment/primary-r-6-deadeye.webp"
     },
@@ -311,14 +329,14 @@
       "tipo": "Energy-Based",
       "dano": "275 Ballistic",
       "capacidade": "12",
-      "cadencia": "210",
+      "cadencia": "210 rpm",
       "id": "primary-r-40-k-hot-shot-marksman-rifle",
       "imagem": "equipment/primary-r-40-k-hot-shot-marksman-rifle.webp"
     },
     {
       "nome": "SG-20 Halt",
       "tipo": "Shotguns",
-      "dano": "385 Ballistic (Flechette) [[File:Damage Ballistic Icon.svg",
+      "dano": "385 Ballistic (Flechette) / 120 Ballistic (Stun)",
       "capacidade": "8 (x2)",
       "cadencia": "80 rpm",
       "id": "primary-sg-20-halt",
@@ -336,7 +354,7 @@
     {
       "nome": "SG-225IE Breaker Incendiary",
       "tipo": "Shotguns",
-      "dano": "240 Ballistic [[File:Damage Fire Icon.svg|20px|link=Dam",
+      "dano": "240 Ballistic / 100 DPS Fire",
       "capacidade": "26",
       "cadencia": "300 rpm",
       "id": "primary-sg-225ie-breaker-incendiary",
@@ -401,7 +419,7 @@
       "tipo": "Submachine Guns",
       "dano": "65 Ballistic",
       "capacidade": "50",
-      "cadencia": "1380 rpm",
+      "cadencia": "1,380 rpm",
       "id": "primary-smg-203-gallant",
       "imagem": "equipment/primary-smg-203-gallant.webp"
     },
@@ -435,7 +453,7 @@
     {
       "nome": "SMG/FLAM-34 Stoker",
       "tipo": "Submachine Guns",
-      "dano": "130 Ballistic",
+      "dano": "130 Ballistic / 150 DPS Fire",
       "capacidade": "45",
       "cadencia": "420 rpm",
       "id": "primary-smg-flam-34-stoker",
@@ -464,7 +482,7 @@
       "tipo": "Special",
       "dano": "85 Ballistic",
       "capacidade": "49",
-      "cadencia": "300 rpm &bull; 550 rpm &bull; 750rpm",
+      "cadencia": "300 rpm • 550 rpm • 750rpm",
       "id": "primary-vg-70-variable",
       "imagem": "equipment/primary-vg-70-variable.webp"
     }
@@ -475,7 +493,7 @@
       "tipo": "Melee",
       "dano": "165 Melee",
       "capacidade": null,
-      "cadencia": null,
+      "cadencia": "117",
       "id": "secondary-cqc-19-stun-lance",
       "imagem": "equipment/secondary-cqc-19-stun-lance.webp"
     },
@@ -527,18 +545,18 @@
     {
       "nome": "GP-20 Ultimatum",
       "tipo": "Special",
-      "dano": "1,000 Projectile [[File:Damage Explosion Icon.svg|20px|link",
+      "dano": "1,000 Projectile / 2,000 Explosion",
       "capacidade": "1",
-      "cadencia": "20 rpm",
+      "cadencia": "900 rpm",
       "id": "secondary-gp-20-ultimatum",
       "imagem": "equipment/secondary-gp-20-ultimatum.webp"
     },
     {
       "nome": "GP-31 Grenade Pistol",
       "tipo": "Special",
-      "dano": "250 Projectile [[File:Damage Explosion Icon.svg|20px|link=D",
+      "dano": "250 Projectile / 400 Explosion",
       "capacidade": "1",
-      "cadencia": "35",
+      "cadencia": "900 rpm",
       "id": "secondary-gp-31-grenade-pistol",
       "imagem": "equipment/secondary-gp-31-grenade-pistol.webp"
     },
@@ -554,7 +572,7 @@
     {
       "nome": "LAS-7 Dagger",
       "tipo": "Special",
-      "dano": "250 DPS Laser &nb",
+      "dano": "250 DPS Laser 100 DPS Fire",
       "capacidade": "6.67s",
       "cadencia": null,
       "id": "secondary-las-7-dagger",
@@ -583,7 +601,7 @@
       "tipo": "Pistols",
       "dano": "140 Ballistic",
       "capacidade": "10",
-      "cadencia": "450",
+      "cadencia": "450 rpm",
       "id": "secondary-p-113-verdict",
       "imagem": "equipment/secondary-p-113-verdict.webp"
     },
@@ -592,7 +610,7 @@
       "tipo": "Pistols",
       "dano": "70 Ballistic",
       "capacidade": "31",
-      "cadencia": "1100 rpm",
+      "cadencia": "1,100 rpm",
       "id": "secondary-p-19-redeemer",
       "imagem": "equipment/secondary-p-19-redeemer.webp"
     },
@@ -601,18 +619,27 @@
       "tipo": "Pistols",
       "dano": "100 Ballistic",
       "capacidade": "15",
-      "cadencia": "900",
+      "cadencia": "900 rpm",
       "id": "secondary-p-2-peacemaker",
       "imagem": "equipment/secondary-p-2-peacemaker.webp"
     },
     {
       "nome": "P-33 Missile Pistol",
       "tipo": "Special",
-      "dano": "1,000 Projectile [[File:Damage Explosion Icon.svg|20px|link",
+      "dano": "1,000 Projectile / 300 Explosion",
       "capacidade": "1",
       "cadencia": "60 rpm",
       "id": "secondary-p-33-missile-pistol",
       "imagem": "equipment/secondary-p-33-missile-pistol.webp"
+    },
+    {
+      "nome": "P-34 Breacher",
+      "tipo": "Special",
+      "dano": "",
+      "capacidade": "1",
+      "cadencia": null,
+      "id": "secondary-p-34-breacher",
+      "imagem": "equipment/secondary-p-34-breacher.webp"
     },
     {
       "nome": "P-35 Re-Educator",
@@ -662,16 +689,16 @@
     {
       "nome": "P/40-K Bolt Pistol",
       "tipo": "Special",
-      "dano": "500",
+      "dano": "325 Ballistic / 175 Explosion",
       "capacidade": "6",
-      "cadencia": "150",
+      "cadencia": "150 rpm",
       "id": "secondary-p-40-k-bolt-pistol",
       "imagem": "equipment/secondary-p-40-k-bolt-pistol.webp"
     },
     {
       "nome": "PLAS-15 Loyalist",
       "tipo": "Special",
-      "dano": "75-150 Ballistic [[File:Damage Explosion Icon.svg|20px|link",
+      "dano": "75-150 Ballistic / 75-225 Explosion",
       "capacidade": "8",
       "cadencia": "1000 rpm",
       "id": "secondary-plas-15-loyalist",
@@ -691,7 +718,7 @@
     {
       "nome": "G-10 Incendiary",
       "tipo": "Standard",
-      "dano": "300 Explosion [[File:Damage Fire Icon.svg|20px|link=Damage]",
+      "dano": "300 Explosion / 100 Fire DPS",
       "capacidade": "5",
       "cadencia": null,
       "id": "grenade-g-10-incendiary",
@@ -718,7 +745,7 @@
     {
       "nome": "G-123 Thermite",
       "tipo": "Special",
-      "dano": "150/s over 6.5s Fire [[File:Damage Explosion Icon.svg|20px|lin",
+      "dano": "150/s over 6.5s Fire / 2000 Explosion",
       "capacidade": "3",
       "cadencia": null,
       "id": "grenade-g-123-thermite",
@@ -727,7 +754,7 @@
     {
       "nome": "G-13 Incendiary Impact",
       "tipo": "Special",
-      "dano": "150 Explosion",
+      "dano": "150 Explosion / 100 Fire DPS",
       "capacidade": "5",
       "cadencia": null,
       "id": "grenade-g-13-incendiary-impact",
@@ -736,7 +763,7 @@
     {
       "nome": "G-142 Pyrotech",
       "tipo": "Special",
-      "dano": "20 DPS Fire",
+      "dano": "20 DPS Fire / 50 Explosion",
       "capacidade": "6",
       "cadencia": null,
       "id": "grenade-g-142-pyrotech",
@@ -772,7 +799,7 @@
     {
       "nome": "G-31 Arc",
       "tipo": "Special",
-      "dano": "100 Arc",
+      "dano": "100 Arc (x10)",
       "capacidade": "5",
       "cadencia": null,
       "id": "grenade-g-31-arc",
@@ -781,7 +808,7 @@
     {
       "nome": "G-4 Gas",
       "tipo": "Special",
-      "dano": "3 Gas (Explosion) </sp",
+      "dano": "3 Gas (Explosion) / 25 DPS Gas",
       "capacidade": "4",
       "cadencia": null,
       "id": "grenade-g-4-gas",
@@ -808,20 +835,38 @@
     {
       "nome": "G-6 Frag",
       "tipo": "Standard",
-      "dano": "500 Explosion [[File:Damage Ballistic Icon.svg|20px|link=Dam",
+      "dano": "500 Explosion / 110 Shrapnel (x35)",
       "capacidade": "6",
       "cadencia": null,
       "id": "grenade-g-6-frag",
       "imagem": "equipment/grenade-g-6-frag.webp"
     },
     {
+      "nome": "G-60 Anti-Tank Seeker",
+      "tipo": "Special",
+      "dano": "",
+      "capacidade": null,
+      "cadencia": null,
+      "id": "grenade-g-60-anti-tank-seeker",
+      "imagem": "equipment/grenade-g-60-anti-tank-seeker.webp"
+    },
+    {
       "nome": "G-7 Pineapple",
       "tipo": "Standard",
-      "dano": "300 Explosion (Grenade) [[File:Damage Ballistic Icon.svg|20p",
+      "dano": "300 Explosion (Grenade) / 300 Ballistic (Bomblets / 100 Explosion x18)",
       "capacidade": "5",
       "cadencia": null,
       "id": "grenade-g-7-pineapple",
       "imagem": "equipment/grenade-g-7-pineapple.webp"
+    },
+    {
+      "nome": "G-8 Immolation",
+      "tipo": "Special",
+      "dano": "",
+      "capacidade": null,
+      "cadencia": null,
+      "id": "grenade-g-8-immolation",
+      "imagem": "equipment/grenade-g-8-immolation.webp"
     },
     {
       "nome": "G-89 Smokescreen",
@@ -835,7 +880,7 @@
     {
       "nome": "G/40-K Melta Mine",
       "tipo": "Special",
-      "dano": "2,000 Explosion",
+      "dano": "2,000 Explosion / 600 Flamewall (x2)",
       "capacidade": "4",
       "cadencia": null,
       "id": "grenade-g-40-k-melta-mine",
@@ -871,7 +916,7 @@
     {
       "nome": "TM-1 Lure Mine",
       "tipo": "Special",
-      "dano": "1,000 Explosion",
+      "dano": "1,000 Explosion / 110 Shrapnel (x35)",
       "capacidade": "4",
       "cadencia": null,
       "id": "grenade-tm-1-lure-mine",
@@ -1054,6 +1099,28 @@
       "warbond": "Superstore",
       "id": "armor-b-27-fortified-commando",
       "imagem": "equipment/armor-b-27-fortified-commando.webp"
+    },
+    {
+      "nome": "BFM-16 Tanker",
+      "peso": "Light",
+      "armor": 50,
+      "speed": 550,
+      "stamina": 125,
+      "passive": "Blunt-Force Mitigation",
+      "warbond": "Ironclad Democracy",
+      "id": "armor-bfm-16-tanker",
+      "imagem": "equipment/armor-bfm-16-tanker.webp"
+    },
+    {
+      "nome": "BFM-220 Ironclad",
+      "peso": "Heavy",
+      "armor": 150,
+      "speed": 450,
+      "stamina": 50,
+      "passive": "Blunt-Force Mitigation",
+      "warbond": "Ironclad Democracy",
+      "id": "armor-bfm-220-ironclad",
+      "imagem": "equipment/armor-bfm-220-ironclad.webp"
     },
     {
       "nome": "BP-20 Correct Officer",
@@ -1243,7 +1310,7 @@
       "imagem": "equipment/armor-cpg-48-sapper.webp"
     },
     {
-      "nome": "CPH-26 Commandant (Armor)",
+      "nome": "CPH-26 Commandant",
       "peso": "Light",
       "armor": 50,
       "speed": 550,
@@ -1953,7 +2020,7 @@
       "speed": 450,
       "stamina": 50,
       "passive": "True Grit",
-      "warbond": "Castellan’s Creed",
+      "warbond": "Castellan's Creed",
       "id": "armor-tg-122-demo-trooper",
       "imagem": "equipment/armor-tg-122-demo-trooper.webp"
     },
@@ -1964,7 +2031,7 @@
       "speed": 500,
       "stamina": 100,
       "passive": "True Grit",
-      "warbond": "Castellan’s Creed",
+      "warbond": "Castellan's Creed",
       "id": "armor-tg-8-sharpshooter",
       "imagem": "equipment/armor-tg-8-sharpshooter.webp"
     },
@@ -2155,6 +2222,18 @@
       "imagem": "equipment/helmet-b-27-fortified-commando.webp"
     },
     {
+      "nome": "BFM-16 Tanker",
+      "warbond": "Ironclad Democracy",
+      "id": "helmet-bfm-16-tanker",
+      "imagem": "equipment/helmet-bfm-16-tanker.webp"
+    },
+    {
+      "nome": "BFM-220 Ironclad",
+      "warbond": "Ironclad Democracy",
+      "id": "helmet-bfm-220-ironclad",
+      "imagem": "equipment/helmet-bfm-220-ironclad.webp"
+    },
+    {
       "nome": "BP-20 Correct Officer",
       "warbond": "Force of Law",
       "id": "helmet-bp-20-correct-officer",
@@ -2257,7 +2336,7 @@
       "imagem": "equipment/helmet-cpg-48-sapper.webp"
     },
     {
-      "nome": "CPH-26 Commandant (Armor)",
+      "nome": "CPH-26 Commandant",
       "warbond": "Entrenched Division",
       "id": "helmet-cph-26-commandant-armor",
       "imagem": "equipment/helmet-cph-26-commandant-armor.webp"
@@ -2648,13 +2727,13 @@
     },
     {
       "nome": "TG-122 Demo-Trooper",
-      "warbond": "Castellan’s Creed",
+      "warbond": "Castellan's Creed",
       "id": "helmet-tg-122-demo-trooper",
       "imagem": "equipment/helmet-tg-122-demo-trooper.webp"
     },
     {
       "nome": "TG-8 Sharpshooter",
-      "warbond": "Castellan’s Creed",
+      "warbond": "Castellan's Creed",
       "id": "helmet-tg-8-sharpshooter",
       "imagem": "equipment/helmet-tg-8-sharpshooter.webp"
     },
@@ -2746,18 +2825,18 @@
     },
     {
       "nome": "Camo Cloak",
-      "warbond": "Castellan’s Creed",
+      "warbond": "Castellan's Creed",
       "id": "cape-camo-cloak",
       "imagem": "equipment/cape-camo-cloak.webp"
     },
     {
       "nome": "City Fighter's Resolve",
-      "warbond": "Castellan’s Creed",
+      "warbond": "Castellan's Creed",
       "id": "cape-city-fighter-s-resolve",
       "imagem": "equipment/cape-city-fighter-s-resolve.webp"
     },
     {
-      "nome": "Cloak of Posterity's Gratitude (Cape)",
+      "nome": "Cloak of Posterity's Gratitude",
       "warbond": "Steeled Veterans",
       "id": "cape-cloak-of-posterity-s-gratitude-cape",
       "imagem": "equipment/cape-cloak-of-posterity-s-gratitude-cape.webp"
@@ -3111,6 +3190,18 @@
       "imagem": "equipment/cape-seal-of-general-consensus.webp"
     },
     {
+      "nome": "Shroud of the Juggernaut",
+      "warbond": "Ironclad Democracy",
+      "id": "cape-shroud-of-the-juggernaut",
+      "imagem": "equipment/cape-shroud-of-the-juggernaut.webp"
+    },
+    {
+      "nome": "Standard of Rapid Evacuation",
+      "warbond": "Ironclad Democracy",
+      "id": "cape-standard-of-rapid-evacuation",
+      "imagem": "equipment/cape-standard-of-rapid-evacuation.webp"
+    },
+    {
       "nome": "Standard of Safe Distance",
       "warbond": "Chemical Agents",
       "id": "cape-standard-of-safe-distance",
@@ -3233,112 +3324,112 @@
   ],
   "booster": [
     {
-      "nome": "Hellpod Space Optimization",
-      "descricao": "Helldivers come out of the Hellpod fully stocked on Ammo, Grenades and Stims.",
-      "id": "booster-hellpod-space-optimization",
-      "imagem": "equipment/booster-hellpod-space-optimization.svg"
-    },
-    {
-      "nome": "Vitality Enhancement",
-      "descricao": "Provides minor damage reduction from all sources for all Helldivers",
-      "id": "booster-vitality-enhancement",
-      "imagem": "equipment/booster-vitality-enhancement.svg"
-    },
-    {
-      "nome": "UAV Recon Booster",
-      "descricao": "Increases all Helldivers' effective radar range.",
-      "id": "booster-uav-recon-booster",
-      "imagem": "equipment/booster-uav-recon-booster.svg"
-    },
-    {
-      "nome": "Stamina Enhancement",
-      "descricao": "Increases all Helldivers' stamina capacity and recovery.",
-      "id": "booster-stamina-enhancement",
-      "imagem": "equipment/booster-stamina-enhancement.svg"
-    },
-    {
-      "nome": "Muscle Enhancement",
-      "descricao": "Allows Helldivers to traverse difficult terrain with ease.",
-      "id": "booster-muscle-enhancement",
-      "imagem": "equipment/booster-muscle-enhancement.svg"
-    },
-    {
-      "nome": "Increased Reinforcement Budget",
-      "descricao": "Increases the number of available reinforcements.",
-      "id": "booster-increased-reinforcement-budget",
-      "imagem": "equipment/booster-increased-reinforcement-budget.svg"
-    },
-    {
-      "nome": "Flexible Reinforcement Budget",
-      "descricao": "Reduces time until new reinforcements are granted once they've been depleted.",
-      "id": "booster-flexible-reinforcement-budget",
-      "imagem": "equipment/booster-flexible-reinforcement-budget.svg"
-    },
-    {
-      "nome": "Localization Confusion",
-      "descricao": "Increases the time between enemy encounters.",
-      "id": "booster-localization-confusion",
-      "imagem": "equipment/booster-localization-confusion.svg"
-    },
-    {
-      "nome": "Expert Extraction Pilot",
-      "descricao": "Lowers the time it takes for the extraction shuttle to reach the extraction beacon.",
-      "id": "booster-expert-extraction-pilot",
-      "imagem": "equipment/booster-expert-extraction-pilot.svg"
-    },
-    {
-      "nome": "Motivational Shocks",
-      "descricao": "Allows all Helldivers to recover faster after being slowed by an attack, such as acid. Does not mitigate “area effects,” such as EMS strikes.",
-      "id": "booster-motivational-shocks",
-      "imagem": "equipment/booster-motivational-shocks.svg"
-    },
-    {
-      "nome": "Experimental Infusion",
-      "descricao": "In addition to restoring health, Stims temporarily increase movement speed and damage reduction.",
-      "id": "booster-experimental-infusion",
-      "imagem": "equipment/booster-experimental-infusion.svg"
-    },
-    {
-      "nome": "Firebomb Hellpods",
-      "descricao": "Lines all Hellpods with volatile incendiaries that detonate upon impact, igniting any units in vicinity of the drop site.",
-      "id": "booster-firebomb-hellpods",
-      "imagem": "equipment/booster-firebomb-hellpods.svg"
-    },
-    {
-      "nome": "Dead Sprint",
-      "descricao": "Allows Helldivers to keep sprinting even when they are out of stamina, draining their health instead.",
-      "id": "booster-dead-sprint",
-      "imagem": "equipment/booster-dead-sprint.svg"
-    },
-    {
       "nome": "Armed Resupply Pods",
       "descricao": "Mounts a modified AR-23 Liberator to all resupply pods, allowing them to double as automatic turrets.",
       "id": "booster-armed-resupply-pods",
-      "imagem": "equipment/booster-armed-resupply-pods.svg"
-    },
-    {
-      "nome": "Sample Extricator",
-      "descricao": "Large enemies now have a chance of dropping Samples on death. Capped at 10 drops per mission.",
-      "id": "booster-sample-extricator",
-      "imagem": "equipment/booster-sample-extricator.svg"
-    },
-    {
-      "nome": "Sample Scanner",
-      "descricao": "The Sample scanner gives you a 15% chance to receive twice the Samples on sample pick up.",
-      "id": "booster-sample-scanner",
-      "imagem": "equipment/booster-sample-scanner.svg"
-    },
-    {
-      "nome": "Stun Pods",
-      "descricao": "Exposes Hellpod wiring upon surface contact, stunning any units in the vicinity of the drop site.",
-      "id": "booster-stun-pods",
-      "imagem": "equipment/booster-stun-pods.svg"
+      "imagem": "equipment/booster-armed-resupply-pods.webp"
     },
     {
       "nome": "Concealed Insertion",
       "descricao": "Equips Hellpods to deploy smokescreens on impact, obscuring Helldiver deployment.",
       "id": "booster-concealed-insertion",
-      "imagem": "equipment/booster-concealed-insertion.svg"
+      "imagem": "equipment/booster-concealed-insertion.webp"
+    },
+    {
+      "nome": "Dead Sprint",
+      "descricao": "Allows Helldivers to keep sprinting even when they are out of stamina, draining their health instead.",
+      "id": "booster-dead-sprint",
+      "imagem": "equipment/booster-dead-sprint.webp"
+    },
+    {
+      "nome": "Experimental Infusion",
+      "descricao": "In addition to restoring health, Stims temporarily increase movement speed and damage reduction.",
+      "id": "booster-experimental-infusion",
+      "imagem": "equipment/booster-experimental-infusion.webp"
+    },
+    {
+      "nome": "Expert Extraction Pilot",
+      "descricao": "Lowers the time it takes for the extraction shuttle to reach the extraction beacon.",
+      "id": "booster-expert-extraction-pilot",
+      "imagem": "equipment/booster-expert-extraction-pilot.webp"
+    },
+    {
+      "nome": "Firebomb Hellpods",
+      "descricao": "Lines all Hellpods with volatile incendiaries that detonate upon impact, igniting any units in vicinity of the drop site.",
+      "id": "booster-firebomb-hellpods",
+      "imagem": "equipment/booster-firebomb-hellpods.webp"
+    },
+    {
+      "nome": "Flexible Reinforcement Budget",
+      "descricao": "Reduces time until new reinforcements are granted once they've been depleted.",
+      "id": "booster-flexible-reinforcement-budget",
+      "imagem": "equipment/booster-flexible-reinforcement-budget.webp"
+    },
+    {
+      "nome": "Hellpod Space Optimization",
+      "descricao": "Helldivers come out of the Hellpod fully stocked on Ammo, Grenades and Stims.",
+      "id": "booster-hellpod-space-optimization",
+      "imagem": "equipment/booster-hellpod-space-optimization.webp"
+    },
+    {
+      "nome": "Increased Reinforcement Budget",
+      "descricao": "Increases the number of available reinforcements.",
+      "id": "booster-increased-reinforcement-budget",
+      "imagem": "equipment/booster-increased-reinforcement-budget.webp"
+    },
+    {
+      "nome": "Localization Confusion",
+      "descricao": "Increases the time between enemy encounters.",
+      "id": "booster-localization-confusion",
+      "imagem": "equipment/booster-localization-confusion.webp"
+    },
+    {
+      "nome": "Motivational Shocks",
+      "descricao": "Allows all Helldivers to recover faster after being slowed by an attack, such as acid. Does not mitigate “area effects,” such as EMS strikes.",
+      "id": "booster-motivational-shocks",
+      "imagem": "equipment/booster-motivational-shocks.webp"
+    },
+    {
+      "nome": "Muscle Enhancement",
+      "descricao": "Allows Helldivers to traverse difficult terrain with ease.",
+      "id": "booster-muscle-enhancement",
+      "imagem": "equipment/booster-muscle-enhancement.webp"
+    },
+    {
+      "nome": "Sample Extricator",
+      "descricao": "Large enemies now have a chance of dropping Samples on death. Capped at 10 drops per mission.",
+      "id": "booster-sample-extricator",
+      "imagem": "equipment/booster-sample-extricator.webp"
+    },
+    {
+      "nome": "Sample Scanner",
+      "descricao": "The Sample scanner gives you a 15% chance to receive twice the Samples on sample pick up.",
+      "id": "booster-sample-scanner",
+      "imagem": "equipment/booster-sample-scanner.webp"
+    },
+    {
+      "nome": "Stamina Enhancement",
+      "descricao": "Increases all Helldivers' stamina capacity and recovery.",
+      "id": "booster-stamina-enhancement",
+      "imagem": "equipment/booster-stamina-enhancement.webp"
+    },
+    {
+      "nome": "Stun Pods",
+      "descricao": "Exposes Hellpod wiring upon surface contact, stunning any units in the vicinity of the drop site.",
+      "id": "booster-stun-pods",
+      "imagem": "equipment/booster-stun-pods.webp"
+    },
+    {
+      "nome": "UAV Recon Booster",
+      "descricao": "Increases all Helldivers' effective radar range.",
+      "id": "booster-uav-recon-booster",
+      "imagem": "equipment/booster-uav-recon-booster.webp"
+    },
+    {
+      "nome": "Vitality Enhancement",
+      "descricao": "Provides minor damage reduction from all sources for all Helldivers",
+      "id": "booster-vitality-enhancement",
+      "imagem": "equipment/booster-vitality-enhancement.webp"
     }
   ],
   "passives": [
@@ -3346,169 +3437,175 @@
       "nome": "Acclimated",
       "descricao": "Provides 50% resistance to fire, gas, acid, and electrical damage.",
       "id": "passives-acclimated",
-      "imagem": "equipment/passives-acclimated.svg"
+      "imagem": "equipment/passives-acclimated.webp"
     },
     {
       "nome": "Adreno-Defibrillator",
       "descricao": "Provides one-time, short-lived resuscitation upon death, given that the Helldiver's body is still intact. Increases stim effect duration by 2.0s. Provides 50% resistance to arc damage.",
       "id": "passives-adreno-defibrillator",
-      "imagem": "equipment/passives-adreno-defibrillator.svg"
+      "imagem": "equipment/passives-adreno-defibrillator.webp"
     },
     {
       "nome": "Advanced Filtration",
       "descricao": "Provides 80% resistance to gas damage and effects.",
       "id": "passives-advanced-filtration",
-      "imagem": "equipment/passives-advanced-filtration.svg"
+      "imagem": "equipment/passives-advanced-filtration.webp"
     },
     {
       "nome": "Ballistic Padding",
       "descricao": "Provides 25% resistance to chest damage. Provides 25% resistance to explosive damage. Prevents all damage from bleeding if chest hemorrhages.",
       "id": "passives-ballistic-padding",
-      "imagem": "equipment/passives-ballistic-padding.svg"
+      "imagem": "equipment/passives-ballistic-padding.webp"
+    },
+    {
+      "nome": "Blunt-Force Mitigation",
+      "descricao": "Makes Helldivers more resistant to being knocked off their feet when under attack and reduces any damage taken from impact and collisions by 30%, while also providing a higher armor rating.",
+      "id": "passives-blunt-force-mitigation",
+      "imagem": "equipment/passives-blunt-force-mitigation.webp"
     },
     {
       "nome": "Concussive Padding, Grenadier",
       "descricao": "Provides 50% resistance to explosive damage. Increases initial inventory and holding capacity of throwables by +2.",
       "id": "passives-concussive-padding-grenadier",
-      "imagem": "equipment/passives-concussive-padding-grenadier.svg"
+      "imagem": "equipment/passives-concussive-padding-grenadier.webp"
     },
     {
       "nome": "Concussive Padding, Hazmat",
       "descricao": "Provides 50% resistance to explosive damage. Provides 25% resistance to gas damage and effects. Sidearm recoil reduced by 30%.",
       "id": "passives-concussive-padding-hazmat",
-      "imagem": "equipment/passives-concussive-padding-hazmat.svg"
+      "imagem": "equipment/passives-concussive-padding-hazmat.webp"
     },
     {
       "nome": "Concussive Padding, Reinforced",
       "descricao": "Provides 50% resistance to explosive damage. Provides a higher armor rating.",
       "id": "passives-concussive-padding-reinforced",
-      "imagem": "equipment/passives-concussive-padding-reinforced.svg"
+      "imagem": "equipment/passives-concussive-padding-reinforced.webp"
     },
     {
       "nome": "Democracy Protects",
       "descricao": "50% chance to not die when taking lethal damage. Prevents all damage from bleeding if chest hemorrhages.",
       "id": "passives-democracy-protects",
-      "imagem": "equipment/passives-democracy-protects.svg"
+      "imagem": "equipment/passives-democracy-protects.webp"
     },
     {
       "nome": "Desert Stormer",
       "descricao": "Provides 40% resistance to fire, gas, acid, and electrical damage. Increases throwing range by 20%.",
       "id": "passives-desert-stormer",
-      "imagem": "equipment/passives-desert-stormer.svg"
+      "imagem": "equipment/passives-desert-stormer.webp"
     },
     {
       "nome": "Electrical Conduit",
       "descricao": "Provides 95% resistance to arc damage.",
       "id": "passives-electrical-conduit",
-      "imagem": "equipment/passives-electrical-conduit.svg"
+      "imagem": "equipment/passives-electrical-conduit.webp"
     },
     {
       "nome": "Engineering Kit",
       "descricao": "Further reduces recoil when crouching or prone by 30%. Increases initial inventory and holding capacity of throwables by +2.",
       "id": "passives-engineering-kit",
-      "imagem": "equipment/passives-engineering-kit.svg"
+      "imagem": "equipment/passives-engineering-kit.webp"
     },
     {
       "nome": "Extra Padding",
       "descricao": "Provides a higher armor rating.",
       "id": "passives-extra-padding",
-      "imagem": "equipment/passives-extra-padding.svg"
+      "imagem": "equipment/passives-extra-padding.webp"
     },
     {
       "nome": "Feet First",
       "descricao": "Wearer makes 50% less noise when moving. Increases point-of-interest identification range by 30%. Provides immunity to leg injuries.",
       "id": "passives-feet-first",
-      "imagem": "equipment/passives-feet-first.svg"
+      "imagem": "equipment/passives-feet-first.webp"
     },
     {
       "nome": "Fortified",
       "descricao": "Further reduces recoil when crouching or prone by 30%. Provides 50% resistance to explosive damage.",
       "id": "passives-fortified",
-      "imagem": "equipment/passives-fortified.svg"
+      "imagem": "equipment/passives-fortified.webp"
     },
     {
       "nome": "Gunslinger",
       "descricao": "Increases sidearms reload speed by 40%. Sidearm draw/holster speed increased by 50%. Sidearm recoil reduced by 70%.",
       "id": "passives-gunslinger",
-      "imagem": "equipment/passives-gunslinger.svg"
+      "imagem": "equipment/passives-gunslinger.webp"
     },
     {
       "nome": "Inflammable",
       "descricao": "Provides 75% damage resistance to fire, allowing bearer to rest assured in their inflammability.",
       "id": "passives-inflammable",
-      "imagem": "equipment/passives-inflammable.svg"
+      "imagem": "equipment/passives-inflammable.webp"
     },
     {
       "nome": "Integrated Explosives",
       "descricao": "Armor explodes 1.5s after the wearer dies. Increases initial inventory and holding capacity of throwables by +2.",
       "id": "passives-integrated-explosives",
-      "imagem": "equipment/passives-integrated-explosives.svg"
+      "imagem": "equipment/passives-integrated-explosives.webp"
     },
     {
       "nome": "Kinetic Displacement Mitigation",
       "descricao": "Provides 50% damage resistance to fire, allowing bearer to rest assured in their inflammability. Gives the wearer a 50% chance to avoid grievous limb injury. Reduces damage taken from impact and collisions by 30%.",
       "id": "passives-kinetic-displacement-mitigation",
-      "imagem": "equipment/passives-kinetic-displacement-mitigation.svg"
+      "imagem": "equipment/passives-kinetic-displacement-mitigation.webp"
     },
     {
       "nome": "Med-Kit",
       "descricao": "Increases initial inventory and holding capacity of stims by +2. Increases stim effect duration by 2.0s.",
       "id": "passives-med-kit",
-      "imagem": "equipment/passives-med-kit.svg"
+      "imagem": "equipment/passives-med-kit.webp"
     },
     {
       "nome": "Oxygenator",
       "descricao": "Increases the wearer's walking speed and running speed. Increases the speed and duration of slides.",
       "id": "passives-oxygenator",
-      "imagem": "equipment/passives-oxygenator.svg"
+      "imagem": "equipment/passives-oxygenator.webp"
     },
     {
       "nome": "Peak Physique",
       "descricao": "Increases melee damage by 40%. Improves weapons handling with less drag on weapon movement.",
       "id": "passives-peak-physique",
-      "imagem": "equipment/passives-peak-physique.svg"
+      "imagem": "equipment/passives-peak-physique.webp"
     },
     {
       "nome": "Reduced Signature",
       "descricao": "Wearer makes 50% less noise when moving. Reduces range at which enemies can detect the wearer by 40%.",
       "id": "passives-reduced-signature",
-      "imagem": "equipment/passives-reduced-signature.svg"
+      "imagem": "equipment/passives-reduced-signature.webp"
     },
     {
       "nome": "Reinforced Epaulettes",
       "descricao": "Increases reload speed of primary weapons by 30%. Gives wearer a 50% chance to avoid grievous limb injury. Increases melee damage by 20%.",
       "id": "passives-reinforced-epaulettes",
-      "imagem": "equipment/passives-reinforced-epaulettes.svg"
+      "imagem": "equipment/passives-reinforced-epaulettes.webp"
     },
     {
       "nome": "Rock Solid",
       "descricao": "Increases melee damage by 40%. Bearer is more resistant to being knocked prone.",
       "id": "passives-rock-solid",
-      "imagem": "equipment/passives-rock-solid.svg"
+      "imagem": "equipment/passives-rock-solid.webp"
     },
     {
       "nome": "Scout",
       "descricao": "Markers placed on the map will generate radar scans every 2.0s. Reduces range at which enemies can detect the wearer by 30%.",
       "id": "passives-scout",
-      "imagem": "equipment/passives-scout.svg"
+      "imagem": "equipment/passives-scout.webp"
     },
     {
       "nome": "Servo-Assisted",
       "descricao": "Increases throwing range by 30%. Provides +50% limb health.",
       "id": "passives-servo-assisted",
-      "imagem": "equipment/passives-servo-assisted.svg"
+      "imagem": "equipment/passives-servo-assisted.webp"
     },
     {
       "nome": "Siege-Ready",
       "descricao": "Increases reload speed of primary weapons by 30%. Increases ammo capacity of all weapons by 20%. Does not affect weapon backpacks.",
       "id": "passives-siege-ready",
-      "imagem": "equipment/passives-siege-ready.svg"
+      "imagem": "equipment/passives-siege-ready.webp"
     },
     {
       "nome": "Supplementary Adrenaline",
       "descricao": "When the wearer takes damage, they regain some stamina. Provides a higher armor rating.",
       "id": "passives-supplementary-adrenaline",
-      "imagem": "equipment/passives-supplementary-adrenaline.svg"
+      "imagem": "equipment/passives-supplementary-adrenaline.webp"
     },
     {
       "nome": "True Grit",
@@ -3520,7 +3617,7 @@
       "nome": "Unflinching",
       "descricao": "Helps prevent Helldivers from flinching when hit. Provides a higher armor rating. Markers placed on the map will generate radar scans every 2.0s.",
       "id": "passives-unflinching",
-      "imagem": "equipment/passives-unflinching.svg"
+      "imagem": "equipment/passives-unflinching.webp"
     }
   ],
   "warbond": [
@@ -3709,12 +3806,20 @@
       "imagem": "equipment/warbond-exo-experts.webp"
     },
     {
-      "nome": "Castellan’s Creed",
+      "nome": "Castellan's Creed",
       "tipo": "Legendary",
       "data": "2026-08-12",
-      "custo": "1500 Super Credits",
+      "custo": "1,500 Super Credits",
       "id": "warbond-castellan-s-creed",
       "imagem": "equipment/warbond-castellan-s-creed.webp"
+    },
+    {
+      "nome": "Ironclad Democracy",
+      "tipo": "Premium",
+      "data": "2026-09-22",
+      "custo": "1,000 Super Credits",
+      "id": "warbond-ironclad-democracy",
+      "imagem": "equipment/warbond-ironclad-democracy.webp"
     }
   ],
   "stratagemInfo": [
@@ -3834,16 +3939,6 @@
       "backpack": true
     },
     {
-      "nome": "Call In Super Destroyer",
-      "type": "Ship",
-      "backpack": false
-    },
-    {
-      "nome": "Cargo Container",
-      "type": "Objective",
-      "backpack": false
-    },
-    {
       "nome": "CQC-1 One True Flag",
       "type": "Support Weapon",
       "backpack": false
@@ -3859,11 +3954,6 @@
       "backpack": false
     },
     {
-      "nome": "Dark Fluid Vessel",
-      "type": "Objective",
-      "backpack": true
-    },
-    {
       "nome": "E/AT-12 Anti-Tank Emplacement",
       "type": "Emplacement",
       "backpack": false
@@ -3876,51 +3966,6 @@
     {
       "nome": "E/MG-101 HMG Emplacement",
       "type": "Emplacement",
-      "backpack": false
-    },
-    {
-      "nome": "Eagle 110mm Rocket Pods",
-      "type": "Eagle",
-      "backpack": false
-    },
-    {
-      "nome": "Eagle 500kg Bomb",
-      "type": "Eagle",
-      "backpack": false
-    },
-    {
-      "nome": "Eagle Airstrike",
-      "type": "Eagle",
-      "backpack": false
-    },
-    {
-      "nome": "Eagle Cluster Bomb",
-      "type": "Eagle",
-      "backpack": false
-    },
-    {
-      "nome": "Eagle Gas Airstrike",
-      "type": "Eagle",
-      "backpack": false
-    },
-    {
-      "nome": "Eagle Napalm Airstrike",
-      "type": "Eagle",
-      "backpack": false
-    },
-    {
-      "nome": "Eagle Rearm",
-      "type": "Ship",
-      "backpack": false
-    },
-    {
-      "nome": "Eagle Smoke Strike",
-      "type": "Eagle",
-      "backpack": false
-    },
-    {
-      "nome": "Eagle Strafing Run",
-      "type": "Eagle",
       "backpack": false
     },
     {
@@ -3959,6 +4004,46 @@
       "backpack": false
     },
     {
+      "nome": "Eagle 110mm Rocket Pods",
+      "type": "Eagle",
+      "backpack": false
+    },
+    {
+      "nome": "Eagle 500kg Bomb",
+      "type": "Eagle",
+      "backpack": false
+    },
+    {
+      "nome": "Eagle Airstrike",
+      "type": "Eagle",
+      "backpack": false
+    },
+    {
+      "nome": "Eagle Cluster Bomb",
+      "type": "Eagle",
+      "backpack": false
+    },
+    {
+      "nome": "Eagle Gas Airstrike",
+      "type": "Eagle",
+      "backpack": false
+    },
+    {
+      "nome": "Eagle Napalm Airstrike",
+      "type": "Eagle",
+      "backpack": false
+    },
+    {
+      "nome": "Eagle Smoke Strike",
+      "type": "Eagle",
+      "backpack": false
+    },
+    {
+      "nome": "Eagle Strafing Run",
+      "type": "Eagle",
+      "backpack": false
+    },
+    {
       "nome": "FAF-14 Spear",
       "type": "Support Weapon",
       "backpack": true
@@ -3994,9 +4079,9 @@
       "backpack": true
     },
     {
-      "nome": "Hive Breaker Drill",
-      "type": "Objective",
-      "backpack": false
+      "nome": "Hover Pack",
+      "type": "Backpack",
+      "backpack": true
     },
     {
       "nome": "LAS-98 Laser Cannon",
@@ -4019,11 +4104,6 @@
       "backpack": true
     },
     {
-      "nome": "Hover Pack",
-      "type": "Backpack",
-      "backpack": true
-    },
-    {
       "nome": "M-1000 Maxigun",
       "type": "Support Weapon",
       "backpack": true
@@ -4034,7 +4114,7 @@
       "backpack": false
     },
     {
-      "nome": "Supply FRV",
+      "nome": "M-103 Supply FRV",
       "type": "Vehicle",
       "backpack": false
     },
@@ -4094,11 +4174,6 @@
       "backpack": false
     },
     {
-      "nome": "Hellbomb",
-      "type": "Objective",
-      "backpack": false
-    },
-    {
       "nome": "Orbital 120mm HE Barrage",
       "type": "Orbital",
       "backpack": false
@@ -4126,11 +4201,6 @@
     {
       "nome": "Orbital Gatling Barrage",
       "type": "Orbital",
-      "backpack": false
-    },
-    {
-      "nome": "Orbital Illumination Flare",
-      "type": "Other",
       "backpack": false
     },
     {
@@ -4169,26 +4239,6 @@
       "backpack": false
     },
     {
-      "nome": "Prospecting Drill",
-      "type": "Objective",
-      "backpack": false
-    },
-    {
-      "nome": "Reinforce",
-      "type": "Ship",
-      "backpack": false
-    },
-    {
-      "nome": "Link Hellpods to Destroyer",
-      "type": "Objective",
-      "backpack": false
-    },
-    {
-      "nome": "Resupply",
-      "type": "Ship",
-      "backpack": false
-    },
-    {
       "nome": "RL-77 Airburst Rocket Launcher",
       "type": "Support Weapon",
       "backpack": true
@@ -4201,26 +4251,6 @@
     {
       "nome": "S-11 Speargun",
       "type": "Support Weapon",
-      "backpack": false
-    },
-    {
-      "nome": "SEAF Artillery",
-      "type": "Objective",
-      "backpack": false
-    },
-    {
-      "nome": "Seismic Probe",
-      "type": "Objective",
-      "backpack": false
-    },
-    {
-      "nome": "SSSD Delivery",
-      "type": null,
-      "backpack": false
-    },
-    {
-      "nome": "Super Earth Flag",
-      "type": null,
       "backpack": false
     },
     {
@@ -4239,11 +4269,6 @@
       "backpack": true
     },
     {
-      "nome": "SoS Beacon",
-      "type": "Ship",
-      "backpack": false
-    },
-    {
       "nome": "StA-X3 W.A.S.P. Launcher",
       "type": "Support Weapon",
       "backpack": true
@@ -4254,18 +4279,8 @@
       "backpack": false
     },
     {
-      "nome": "Tectonic Drill",
-      "type": "Objective",
-      "backpack": false
-    },
-    {
       "nome": "TX-41 Sterilizer",
       "type": "Support Weapon",
-      "backpack": false
-    },
-    {
-      "nome": "Upload Data",
-      "type": "Objective",
       "backpack": false
     }
   ]
