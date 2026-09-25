@@ -84,6 +84,9 @@ VIAddVersionKey "LegalCopyright" "${PUBLISHER}"
 !define MUI_ABORTWARNING
 !define MUI_ICON "..\assets\icon.ico"
 !define MUI_UNICON "..\assets\icon.ico"
+;; Faixa lateral das páginas de boas-vindas e de conclusão: o logo sobre o
+;; amarelo dele, em BMP de 24 bits e no 164x314 que o MUI espera.
+!define MUI_WELCOMEFINISHPAGE_BITMAP "welcome.bmp"
 
 !define MUI_FINISHPAGE_RUN "$INSTDIR\${EXE_NAME}"
 !define MUI_FINISHPAGE_RUN_TEXT $(RunAppText)
