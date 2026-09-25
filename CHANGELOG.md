@@ -5,12 +5,26 @@ Todas as mudanças relevantes deste projeto são documentadas aqui.
 O formato segue [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/)
 e o versionamento segue [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
-## [2.1.0-beta.1] - 2026-09-22 (instável)
+## [0.1.0] - 2026-09-25 (instável)
+
+**Numeração reiniciada.** O app ainda não está estável o bastante para uma 1.0.0,
+então a versão voltou para 0.1.0 e só sobe para 1.0.0 quando estiver. Os releases
+anteriores (0.1.0 a 2.1.0-beta.1) foram retirados do GitHub; o que entrou em cada
+um continua no histórico do `CHANGELOG.md`. Esta versão tem tudo da antiga
+2.1.0-beta.1.
+
+**Quem tem uma versão anterior instalada** não recebe o aviso de atualização, porque
+0.1.0 é menor que 1.x e 2.x: desinstale a antiga e instale pelo instalador deste
+release. As configurações ficam em `%APPDATA%` e continuam valendo.
+
+## [Histórico] Numeração anterior, retirada em 2026-09-25
+
+### 2.1.0-beta.1 - 2026-09-22 (instável)
 
 **Versão de teste.** O aviso de atualização da 2.0.0 não a oferece: instale pelo
 instalador deste release. Quem ficar nela recebe o aviso da próxima versão estável.
 
-### Adicionado
+#### Adicionado
 
 - **Armas e equipamento novos sem atualizar o app.** A mesma consulta que já trazia
   os estratagemas novos agora traz também armas, armaduras, capacetes, capas,
@@ -87,7 +101,7 @@ instalador deste release. Quem ficar nela recebe o aviso da próxima versão est
   escolhidos, e confere se cada tecla chegou e na ordem. Separa "o PC come as
   teclas" de "o jogo não as vê".
 
-### Alterado
+#### Alterado
 
 - **Logo e cores novos.** O ícone do app, da bandeja e do instalador passou a ser a
   caveira amarela, e os dois temas usam as cores dela: o claro é amarelo com preto
@@ -106,7 +120,7 @@ instalador deste release. Quem ficar nela recebe o aviso da próxima versão est
   29 ms, abaixo de um quadro de 30 fps. Os números não mudaram.
 - Os cinco perfis de velocidade ficam em duas linhas, três por linha.
 
-### Corrigido
+#### Corrigido
 
 - **Ícones dos boosters.** A wiki publica os ícones de booster e de passiva de
   armadura só em SVG, que o app não decodifica, e os cards mostravam o quadrado
@@ -117,7 +131,7 @@ instalador deste release. Quem ficar nela recebe o aviso da próxima versão est
   sincronização acrescentava um anunciado que já tivesse setas e ícone como se ele
   estivesse no jogo. Agora ele espera o lançamento, como o equipamento já esperava.
 
-### Desenvolvimento
+#### Desenvolvimento
 
 - **`npm run scrape` lê da API de dados, não mais da wiki.** O novo
   `scripts/sync-equipment.mjs` monta o `equipment.json` inteiro e os ícones a partir
@@ -136,7 +150,7 @@ instalador deste release. Quem ficar nela recebe o aviso da próxima versão est
   estratagema novo que a API ainda manda sem imagem (`image: null`), em vez de
   morrer no download do ícone.
 
-## [2.0.0] - 2026-09-19
+### 2.0.0 - 2026-09-19
 
 **Reescrita completa.** O app deixou de ser um Electron com React e virou um binário
 nativo em **Rust sobre Win32 puro**: um processo, janela e overlay desenhados em
@@ -156,7 +170,7 @@ sem precisar de versão nova do app.
 > v2. As configurações migram sozinhas; slots e builds salvas vêm pelo backup JSON
 > (veja **Migração da v1**, abaixo).
 
-### Adicionado
+#### Adicionado
 
 - **Estratagemas novos sem atualizar o app.** Junto com a checagem de atualização
   (nunca com o jogo em foco), o app consulta a
@@ -197,7 +211,7 @@ sem precisar de versão nova do app.
   vídeos e posts exige crédito ao autor. Até aqui o repositório não tinha arquivo de
   licença; só o `Cargo.toml` declarava MIT.
 
-### Alterado
+#### Alterado
 
 #### Macro e atalhos
 
@@ -283,7 +297,7 @@ sem precisar de versão nova do app.
   ser sobrescrito pelo próximo save, e assim um bloqueio momentâneo de antivírus não
   custa as builds salvas.
 
-### Removido
+#### Removido
 
 Decisões da reescrita, não regressões:
 
@@ -296,7 +310,7 @@ Decisões da reescrita, não regressões:
   vive na janela principal, que é onde o teclado chega: o overlay não recebe teclado
   por design, e é isso que garante que ele nunca roube o foco do jogo.
 
-### Corrigido
+#### Corrigido
 
 - **Perfis de velocidade que perdiam input.** O jogo lê o teclado uma vez por quadro
   (16,7 ms a 60 fps), e os perfis Rápida e Turbo seguravam a tecla por 15 ms e 10 ms;
@@ -332,13 +346,13 @@ overlay que só se reposicionava segundos depois de uma mudança de resolução 
 estatísticas duplicadas ao alternar facção (e o cache perdendo entradas em escrita
 concorrente); e um console preto aberto junto com o exe de release.
 
-### Segurança
+#### Segurança
 
 - **O updater verifica o SHA-256 do instalador** contra o `.sha256` publicado no
   release, e de novo na hora de executar, porque o exe espera em `%TEMP%` (gravável
   por qualquer processo do usuário) e roda com o token elevado do app.
 
-### Migração da v1
+#### Migração da v1
 
 - **O auto-update da v1 não chega na v2**: o electron-updater procura um
   `latest.yml` que o release novo não publica. A atualização é pelo instalador
@@ -353,7 +367,7 @@ concorrente); e um console preto aberto junto com o exe de release.
   (**Configurações → Backup → Exportar**) e importá-lo na v2; o formato do arquivo é
   o mesmo.
 
-### Desempenho
+#### Desempenho
 
 Metas de projeto da reescrita, e como cada uma é verificada:
 
@@ -368,7 +382,7 @@ Metas de projeto da reescrita, e como cada uma é verificada:
 | Impacto no frametime do jogo (HUD ligado) | < 0,2 ms médio | PresentMon, com e sem overlay |
 | Tamanho do instalador | < 5 MB | artefato do release |
 
-### Desenvolvimento
+#### Desenvolvimento
 
 Nada aqui muda o app instalado:
 
@@ -395,14 +409,14 @@ Nada aqui muda o app instalado:
     para não perder o par de um item que ninguém usou no último.
   - O cache de download nunca serve SVG velho, e o `optimize-images` reescreve os
     ícones dos apoios fixos em `src/data.rs`.
-- **App Electron removido** depois da validação de paridade. A v1 continua acessível
-  pela tag [`v1.0.0`](https://github.com/DionathaGoulart/Macro-Helldivers2/releases/tag/v1.0.0).
+- **App Electron removido** depois da validação de paridade. A tag `v1.0.0`, que
+  guardava a versão em Electron, foi retirada com a renumeração.
 
-## [1.0.0] - 2026-08-08 (pré-release)
+### 1.0.0 - 2026-08-08 (pré-release)
 
 Primeira versão 1.x, e a última sobre Electron.
 
-### Adicionado
+#### Adicionado
 
 - **Perfis de velocidade** (Padrão, Rápida e Turbo) com intervalos humanizados: um
   jitter aleatório de ±5 ms em cada espera.
@@ -434,7 +448,7 @@ Primeira versão 1.x, e a última sobre Electron.
 - **Estratagemas M-103 Supply FRV e M-104 Incinerator FRV**, com a tag de
   exclusividade `Vehicle`: só um veículo por loadout, como já valia para exotrajes.
 
-### Alterado
+#### Alterado
 
 - **Boot mais rápido**: o polling de foco (que carrega os módulos nativos do `nut.js` e
   bloqueia o processo principal por cerca de 1s) e a criação da janela de overlay agora
@@ -446,7 +460,7 @@ Primeira versão 1.x, e a última sobre Electron.
 - **Um macro por vez**: disparos simultâneos são recusados com aviso, em vez de
   descartados em silêncio.
 
-### Corrigido
+#### Corrigido
 
 - **Estratagemas falhando no meio da sequência** em máquinas mais lentas: o atraso
   automático do `nut.js` subiu de 1 ms para 10 ms.
@@ -456,9 +470,9 @@ Primeira versão 1.x, e a última sobre Electron.
   fechar ficava inalcançável. O ícone agora é copiado para o caminho esperado, com
   fallbacks na resolução, e fechar só esconde a janela quando existe bandeja.
 
-## [0.3.0] - 2026-04-28 (instável)
+### 0.3.0 - 2026-04-28 (instável)
 
-### Adicionado
+#### Adicionado
 
 - **Overlay in-game** (`Ctrl + H`), com modo minimalista para ver e configurar os
   macros por cima do jogo.
@@ -467,7 +481,7 @@ Primeira versão 1.x, e a última sobre Electron.
 - **Animação de abertura**, com as frases traduzidas.
 - **Versão do app** exibida no rodapé.
 
-### Alterado
+#### Alterado
 
 - **IDs dos estratagemas reindexados** em ordem crescente; os exotrajes ocupam os IDs
   66 a 69.
@@ -475,29 +489,29 @@ Primeira versão 1.x, e a última sobre Electron.
   robusta a variações do título.
 - **Electron atualizado**, fechando vulnerabilidades conhecidas das dependências.
 
-### Corrigido
+#### Corrigido
 
 - Ícones dos estratagemas de apoio que não carregavam no app instalado.
 - Ponte do auto-update entre o processo principal e a interface.
 
-## [0.2.0] - 2026-04-25
+### 0.2.0 - 2026-04-25
 
-### Adicionado
+#### Adicionado
 
 - **Idiomas**: português e inglês.
 - **HUD tático**: visual novo com cores por categoria (vermelho ofensivo, verde
   defensivo) para reconhecer os estratagemas de relance.
 
-### Alterado
+#### Alterado
 
 - **Ícones em WebP**, redimensionados para 256 px.
 - Transições e animações com aceleração por GPU.
 
-## [0.1.0] - 2026-04-25
+### 0.1.0 - 2026-04-25
 
 Primeira versão funcional.
 
-### Adicionado
+#### Adicionado
 
 - **4 slots de macro** configuráveis, executados por emulação de teclado (`nut.js`)
   com o app elevado.
@@ -505,9 +519,4 @@ Primeira versão funcional.
 - **Controle de foco**: os macros só disparam com a janela do jogo ativa.
 - **Instalador NSIS** para Windows.
 
-[2.1.0-beta.1]: https://github.com/DionathaGoulart/Macro-Helldivers2/compare/v2.0.0...v2.1.0-beta.1
-[2.0.0]: https://github.com/DionathaGoulart/Macro-Helldivers2/compare/v1.0.0...v2.0.0
-[1.0.0]: https://github.com/DionathaGoulart/Macro-Helldivers2/compare/v0.3.0-(unstable)...v1.0.0
-[0.3.0]: https://github.com/DionathaGoulart/Macro-Helldivers2/compare/v0.2.0...v0.3.0-(unstable)
-[0.2.0]: https://github.com/DionathaGoulart/Macro-Helldivers2/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/DionathaGoulart/Macro-Helldivers2/releases/tag/v0.1.0

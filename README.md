@@ -1,7 +1,7 @@
-# 🛡️ Macro Helldivers 2 v2.0.0
+# 🛡️ Macro Helldivers 2 v0.1.0 (instável)
 
-Ferramenta de macros para os Estratagemas do Helldivers 2. A v2 é uma reescrita
-completa: **binário nativo em Rust sobre Win32 puro**, sem Electron, sem Chromium,
+Ferramenta de macros para os Estratagemas do Helldivers 2. Esta versão é uma
+reescrita completa do app antigo em Electron: **binário nativo em Rust sobre Win32 puro**, sem Electron, sem Chromium,
 sem runtime de JavaScript. Um processo só, e nada rodando enquanto você não aperta
 nada: a interface só repinta quando algo muda e a detecção de foco é por evento do
 sistema, não por polling.
@@ -40,7 +40,7 @@ O que mudou em cada versão está no [CHANGELOG](CHANGELOG.md).
   boosters, passivas e warbonds, com ícones locais. Estratagema e equipamento novos
   chegam pela API de dados, sem precisar de versão nova do app.
 - **Busca sem acento** na grade de estratagemas, na mesma ordem dos menus do jogo.
-- **Backup** de builds, slots e configurações em JSON, no mesmo formato da v1.
+- **Backup** de builds, slots e configurações em JSON, no mesmo formato do app antigo.
 - **Diagnóstico** para estratagema que falha: **Testar digitação** separa PC que come
   teclas de jogo que não as vê, e o **Modo Debug** registra o tempo real de cada
   tecla e exporta um relatório (detalhes em **Estratagema que falha**, abaixo).
@@ -59,7 +59,7 @@ O que mudou em cada versão está no [CHANGELOG](CHANGELOG.md).
 
 ## 📥 Como Instalar e Usar
 
-1. Baixe o instalador `Macro-Helldivers-2-Setup-2.0.0.exe` na aba
+1. Baixe o instalador `Macro-Helldivers-2-Setup-0.1.0.exe` na aba
    **[Releases](https://github.com/DionathaGoulart/Macro-Helldivers2/releases)**.
 2. Execute o instalador e abra o app.
 3. Configure seus 4 slots de estratagemas favoritos.
@@ -76,25 +76,28 @@ O que mudou em cada versão está no [CHANGELOG](CHANGELOG.md).
 > que o arquivo é o publicado, compare o hash com o `.sha256` do mesmo release:
 >
 > ```powershell
-> Get-FileHash .\Macro-Helldivers-2-Setup-2.0.0.exe -Algorithm SHA256
+> Get-FileHash .\Macro-Helldivers-2-Setup-0.1.0.exe -Algorithm SHA256
 > ```
 
-### Vindo da v1
+### Vindo de uma versão anterior
 
-O auto-update da v1 não enxerga a v2 (o formato do instalador mudou), então baixe o
-instalador novo pela aba Releases. Ele desinstala a v1 antes de instalar, e suas
+A numeração recomeçou em 0.1.0, então o aviso de atualização de uma versão antiga
+(1.x ou 2.x) não oferece esta: desinstale a antiga e instale pelo instalador da aba
+Releases. As configurações ficam em `%APPDATA%` e continuam valendo.
+
+Do app antigo em Electron, o instalador novo desinstala o antigo antes de instalar, e suas
 **configurações são migradas automaticamente** (atalhos, tecla do menu, modo setas,
 velocidade, idioma, overlay e HUD). **Slots e builds salvas não migram sozinhos**: eles viviam no
 armazenamento interno do Chromium, que não existe mais. O caminho:
 
-1. Na v1, aba **Configurações → Backup → Exportar**.
-2. Instale a v2 e importe o mesmo arquivo em **Configurações → Backup → Importar**.
+1. No app antigo, aba **Configurações → Backup → Exportar**.
+2. Instale o app novo e importe o mesmo arquivo em **Configurações → Backup → Importar**.
 
-## 🔄 Mudanças deliberadas em relação à v1
+## 🔄 Mudanças deliberadas em relação ao app em Electron
 
 Não são regressões, são decisões da reescrita:
 
-- **"Modificador de sprint" removido.** O hook de teclado da v2 dispara com qualquer
+- **"Modificador de sprint" removido.** O hook de teclado do app novo dispara com qualquer
   modificador pressionado, então a opção não tinha mais o que resolver.
 - **Animação de abertura removida.** O app abre direto na interface; boot instantâneo
   vale mais que a intro.
@@ -350,7 +353,7 @@ redimensionamento sai do `sharp`, instalado pelo `npm install`.
 │   ├── meta_stats.rs  # cliente do helldive.live com cache em disco
 │   ├── data_sync.rs   # estratagemas novos da API de dados, sem release
 │   ├── equipment_sync.rs # armas e equipamento novos da API de dados, sem release
-│   ├── settings.rs    # preferências, migração da v1, gravação atômica
+│   ├── settings.rs    # preferências, migração do app em Electron, gravação atômica
 │   ├── i18n.rs        # textos da interface em português e inglês
 │   ├── updater.rs     # GitHub Releases + verificação SHA-256
 │   ├── diag/          # modo debug: registro, retrato do PC, relatório, teste de digitação
@@ -361,7 +364,7 @@ redimensionamento sai do `sharp`, instalado pelo `npm install`.
 ├── assets/            # dados, ícones, fontes (JetBrains Mono) e o .ico do exe
 ├── installer/         # script NSIS
 ├── scripts/           # pipeline de dados da API (Node, dev-only)
-├── tests/fixtures/    # backup da v1, configs do jogo e resposta da API usados nos testes
+├── tests/fixtures/    # backup do app em Electron, configs do jogo e resposta da API usados nos testes
 └── styleguide.md      # fonte de verdade do visual (tokens, componentes, temas)
 ```
 
