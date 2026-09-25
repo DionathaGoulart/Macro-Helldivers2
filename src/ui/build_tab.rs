@@ -14,8 +14,9 @@
 //!
 //! [`set_meta`]: BuildTab::set_meta
 
+use rand::rngs::StdRng;
 use rand::seq::IndexedRandom;
-use rand::Rng;
+use rand::{Rng, SeedableRng};
 
 use crate::builds::{self, Build, Locks, MetaLists, Rules, SaveError};
 use crate::data::{self, EquipSlot, Equipment, GameData, Item, StratMeta, Stratagem};
@@ -491,6 +492,9 @@ pub struct BuildTab {
     roll: Option<Roll>,
     /// Levar a página até a build na próxima construção.
     reveal: bool,
+    /// Gerador dos sorteios. Vem do sistema no app; os testes trocam por um
+    /// com semente fixa para que o sorteio (e o rolo) seja sempre o mesmo.
+    rng: StdRng,
 }
 
 impl Default for BuildTab {
@@ -524,6 +528,7 @@ impl BuildTab {
             notice_pending: false,
             roll: None,
             reveal: false,
+            rng: StdRng::from_rng(&mut rand::rng()),
         }
     }
 
@@ -2287,7 +2292,7 @@ impl BuildTab {
         let meta = self
             .meta
             .get_or_insert_with(|| StratMeta::build(ctx.data, equipment));
-        let mut rng = rand::rng();
+        let rng = &mut self.rng;
         let prev = self.build.take();
         let next = builds::generate(
             prev.as_ref(),
@@ -2296,7 +2301,7 @@ impl BuildTab {
             ctx.data,
             equipment,
             meta,
-            &mut rng,
+            rng,
         );
         let pool: Vec<u32> = ctx.data.all().iter().map(|strat| strat.id).collect();
         let reels = roll_reels(
@@ -2309,7 +2314,7 @@ impl BuildTab {
                 stratagems: &pool,
                 weapons: None,
             },
-            &mut rng,
+            rng,
         );
         self.start_roll(next, reels)
     }
@@ -2326,7 +2331,7 @@ impl BuildTab {
         let kinds = self
             .meta
             .get_or_insert_with(|| StratMeta::build(ctx.data, equipment));
-        let mut rng = rand::rng();
+        let rng = &mut self.rng;
         let prev = self.build.take();
         let next = builds::generate_meta(
             prev.as_ref(),
@@ -2336,7 +2341,7 @@ impl BuildTab {
             ctx.data,
             equipment,
             kinds,
-            &mut rng,
+            rng,
         );
         let pool: Vec<u32> = lists
             .stratagems
@@ -2354,7 +2359,7 @@ impl BuildTab {
                 stratagems: &pool,
                 weapons: Some(lists),
             },
-            &mut rng,
+            rng,
         );
         self.start_roll(next, reels)
     }
@@ -3965,6 +3970,7 @@ mod tests {
         let data = data();
         let settings = Settings::default();
         let mut tab = BuildTab::new();
+        tab.rng = StdRng::seed_from_u64(7);
         tab.loaded = true;
         tab.sub = SubTab::Random;
         let mut ui = Ui::new();
