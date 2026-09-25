@@ -3990,8 +3990,19 @@ mod tests {
         assert_eq!(frames.first().unwrap().name, name_of(first.stratagems[1]));
         assert_eq!(frames.last().unwrap().name, name_of(second.stratagems[1]));
         assert!(frames.len() <= REEL_FRAMES);
-        // Enquanto gira, o nome do item sorteado ainda não está no card.
-        let rolled = name_of(second.stratagems[3]).to_uppercase();
+        // Enquanto gira, o nome do item sorteado ainda não está no card. As
+        // amostras só evitam os itens do próprio card, então outro rolo pode
+        // passar pelo mesmo nome: a checagem usa um sorteado que só o rolo dele
+        // contém.
+        let rolled = (1..4)
+            .map(|slot| (slot, name_of(second.stratagems[slot])))
+            .find(|(slot, name)| {
+                reel.reels.iter().enumerate().all(|(other, frames)| {
+                    other == *slot || frames.iter().all(|frame| frame.name != *name)
+                })
+            })
+            .map(|(_, name)| name.to_uppercase())
+            .expect("algum sorteado só aparece no próprio rolo");
         assert!(!texts(&ui).contains(&rolled));
 
         build_tall(&mut tab, &mut ui, &ctx(&data, &settings), 5_000);
