@@ -7,15 +7,44 @@ e o versionamento segue [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 ## [0.1.0] - 2026-09-25 (instável)
 
-**Numeração reiniciada.** O app ainda não está estável o bastante para uma 1.0.0,
-então a versão voltou para 0.1.0 e só sobe para 1.0.0 quando estiver. Os releases
-anteriores (0.1.0 a 2.1.0-beta.1) foram retirados do GitHub; o que entrou em cada
-um continua no histórico do `CHANGELOG.md`. Esta versão tem tudo da antiga
-2.1.0-beta.1.
+Ferramenta de macros para os Estratagemas do Helldivers 2: binário nativo em Rust
+sobre Win32 puro, sem Electron nem Chromium, que só roda enquanto você usa. Versão
+ainda instável: a 1.0.0 sai quando estiver.
 
-**Quem tem uma versão anterior instalada** não recebe o aviso de atualização, porque
-0.1.0 é menor que 1.x e 2.x: desinstale a antiga e instale pelo instalador deste
-release. As configurações ficam em `%APPDATA%` e continuam valendo.
+### Funcionalidades
+
+- **4 slots de macro** com atalho configurável (F1 a F12, numpad, setas, letras…),
+  em cinco perfis de velocidade: Batata, Baixo FPS, Padrão, Rápida e Turbo. O app
+  avisa quando o limite de FPS do jogo não comporta o perfil escolhido.
+- **Estratagemas de apoio fixos**: Reforço, Ressuprimento e Rearmar Eagle em
+  atalhos próprios, fora dos 4 slots.
+- **Timing à prova de frame**: teclas por scancode via `SendInput`, com intervalos
+  humanizados e um piso de tempo de tecla que o jogo sempre enxerga.
+- **Dispara enquanto você corre**: correr e chamar um estratagema funciona.
+- **Só com o jogo em foco**: alt-tab desarma os atalhos na hora e aborta uma
+  sequência em andamento, soltando todas as teclas.
+- **Overlay in-game** (`Ctrl + H`) que nunca rouba o foco, com strip de slots
+  opcional e um painel para atribuir estratagemas e aplicar builds com o mouse.
+- **Central de Builds** em três modos: **Meta**, com pick rates reais da comunidade
+  (helldive.live) por facção e dificuldade; **Aleatória**, com regras e cadeados por
+  item; e **Personalizada**, montada na mão.
+- **Builds salvas**: salve, edite, renomeie, exclua e aplique nos slots com um
+  clique, inclusive pelo overlay.
+- **Arsenal completo** offline: 92 estratagemas, armas, armaduras, capacetes, capas,
+  boosters, passivas e warbonds, com ícones locais. Itens novos chegam pela API de
+  dados, sem precisar de versão nova do app.
+- **Busca sem acento** na grade de estratagemas, na mesma ordem dos menus do jogo.
+- **Backup** de builds, slots e configurações em JSON.
+- **Diagnóstico** para estratagema que falha: **Testar digitação** e **Modo Debug**,
+  que registra o tempo real de cada tecla e exporta um relatório.
+- **Bandeja do sistema**: minimizar ou fechar recolhe o app e os macros seguem ativos.
+- **Português e inglês**, **tema escuro e claro** e aviso de atualização no app.
+
+### Requisitos
+
+- Windows 10 ou 11, 64 bits, com permissão de administrador (o app pede elevação).
+- Helldivers 2 em "Tela Cheia sem Borda" para usar o overlay; os macros funcionam
+  em qualquer modo de vídeo.
 
 ## [Histórico] Numeração anterior, retirada em 2026-09-25
 
