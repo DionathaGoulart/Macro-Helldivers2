@@ -3,8 +3,8 @@
 //! A v1 usava o `electron-updater` (`legacy/src/main/index.js` ~588-663), que
 //! arrastava js-yaml, semver e lodash só para ler um JSON e baixar um arquivo.
 //! Aqui o ciclo é o mesmo, escrito à mão: consulta o release mais recente,
-//! compara versões e, **só quando o usuário manda**, baixa o instalador e o
-//! executa.
+//! compara versões, baixa o instalador, confere o SHA-256 e executa a instalação
+//! silenciosa. O processo encerra para o instalador substituir o executável.
 //!
 //! Duas regras vêm inteiras da v1:
 //!
@@ -12,8 +12,8 @@
 //!   valem a pena. Se o app sobe com o jogo na frente, o check fica adiado e
 //!   dispara na primeira perda de foco (o `hasCheckedUpdates` de lá é o
 //!   [`State::auto_checked`] daqui).
-//! - **Download manual.** Puxar o instalador sozinho é o que a v1 desligou com
-//!   `autoDownload = false`.
+//! - **Instalação automática.** O check roda fora do foco do jogo; falha de rede
+//!   ou de checksum não executa o arquivo.
 //!
 //! Todo o trabalho de rede roda em worker efêmero; o resultado volta para a
 //! janela por [`UiEvent::UpdateStatus`].
@@ -197,7 +197,49 @@ pub fn check(shared: &Arc<Shared>) {
     spawn(shared, "updater-check", |shared| {
         shared.send_ui(UiEvent::UpdateStatus(UpdateStatus::Checking));
         let status = match fetch_latest() {
-            Ok(release) => available_status(release),
+            Ok(release) => {
+                let status = available_status(release);
+                if matches!(&status, UpdateStatus::Available { .. }) {
+                    let Some(release) = lock(&STATE.latest).clone() else {
+                        shared.send_ui(UiEvent::UpdateStatus(UpdateStatus::UpToDate));
+                        return;
+                    };
+                    shared.send_ui(UiEvent::UpdateStatus(UpdateStatus::Downloading {
+                        percent: 0.0,
+                    }));
+                    let progress_shared = Arc::clone(&shared);
+                    match download_installer(&release, move |percent| {
+                        progress_shared.send_ui(UiEvent::UpdateStatus(
+                            UpdateStatus::Downloading { percent },
+                        ));
+                    }) {
+                        Ok(installer) => {
+                            *lock(&STATE.installer) = Some(installer);
+                            match install_silently() {
+                                Ok(()) => {
+                                    log::info!(
+                                        "atualização {} iniciada automaticamente",
+                                        release.tag_name
+                                    );
+                                    shared.send_ui(UiEvent::QuitApp);
+                                    return;
+                                }
+                                Err(err) => UpdateStatus::Error {
+                                    message: err.to_string(),
+                                },
+                            }
+                        }
+                        Err(err) => {
+                            log::warn!("download automático falhou: {err:#}");
+                            UpdateStatus::Error {
+                                message: err.to_string(),
+                            }
+                        }
+                    }
+                } else {
+                    status
+                }
+            }
             Err(err) => {
                 log::warn!("check de atualização falhou: {err:#}");
                 UpdateStatus::Error {
@@ -284,6 +326,23 @@ pub fn install() -> Result<()> {
         anyhow::bail!("o instalador em disco não é o que foi baixado; baixe a atualização de novo");
     }
     std::process::Command::new(&installer.path)
+        .spawn()
+        .with_context(|| format!("não foi possível executar {}", installer.path.display()))?;
+    Ok(())
+}
+
+/// Inicia a instalação silenciosa de um release validado pelo SHA-256.
+fn install_silently() -> Result<()> {
+    let installer = lock(&STATE.installer)
+        .clone()
+        .context("nenhum instalador baixado")?;
+    let actual = file_sha256(&installer.path)?;
+    if actual != installer.sha256 {
+        *lock(&STATE.installer) = None;
+        anyhow::bail!("o instalador em disco não é o que foi baixado; baixe a atualização de novo");
+    }
+    std::process::Command::new(&installer.path)
+        .arg("/S")
         .spawn()
         .with_context(|| format!("não foi possível executar {}", installer.path.display()))?;
     Ok(())

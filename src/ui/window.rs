@@ -485,6 +485,8 @@ mod platform {
         anim_timer: Option<u32>,
         /// Andamento do ciclo de atualização, mostrado no rodapé.
         update: UpdateStatus,
+        /// Número de itens novos da API que aguardam a próxima inicialização.
+        data_updates: usize,
         /// O usuário clicou "Depois" no modal: o instalador continua pronto e o
         /// botão do rodapé continua instalando, só o modal não volta.
         update_deferred: bool,
@@ -541,6 +543,7 @@ mod platform {
                 tracking_mouse: false,
                 anim_timer: None,
                 update: UpdateStatus::Idle,
+                data_updates: 0,
                 update_deferred: false,
                 tray: Tray::new(hwnd, WM_APP_TRAY, focus::APP_WINDOW_TITLE),
                 quitting: false,
@@ -604,6 +607,13 @@ mod platform {
                         }
                         self.update = status;
                     }
+                    UiEvent::DataUpdated(count) => {
+                        self.data_updates = count;
+                        changed = true;
+                    }
+                    UiEvent::QuitApp => unsafe {
+                        let _ = PostMessageW(Some(self.hwnd), WM_APP_QUIT, WPARAM(0), LPARAM(0));
+                    },
                     // O estado do overlay é dele; o andamento de uma sequência
                     // não tem indicador próprio na v1.
                     other => log::debug!("evento de UI sem tela na janela principal: {other:?}"),
@@ -833,6 +843,10 @@ mod platform {
         /// Cliques do updater: o botão do rodapé e os do modal. `true` quando o
         /// clique era de lá e as abas não devem vê-lo.
         fn on_update_click(&mut self, clicked: Id) -> bool {
+            if clicked == chrome::reopen_id() {
+                self.restart_app();
+                return true;
+            }
             if clicked == chrome::update_action_id() || clicked == modal::primary_id() {
                 match &self.update {
                     UpdateStatus::Available { .. } => updater::download(&self.shared),
@@ -878,6 +892,28 @@ mod platform {
             }
             // SAFETY: `PostMessageW` é assíncrono; a mensagem cai na fila desta
             // própria janela.
+            unsafe {
+                let _ = PostMessageW(Some(self.hwnd), WM_APP_QUIT, WPARAM(0), LPARAM(0));
+            }
+        }
+
+        /// Fecha e abre o mesmo executável depois que o mutex da instância sair.
+        fn restart_app(&mut self) {
+            let exe = match std::env::current_exe() {
+                Ok(exe) => exe,
+                Err(err) => {
+                    log::error!("não foi possível localizar o executável para reabrir: {err}");
+                    return;
+                }
+            };
+            let _ = std::thread::Builder::new()
+                .name("app-restart".into())
+                .spawn(move || {
+                    std::thread::sleep(std::time::Duration::from_millis(900));
+                    if let Err(err) = std::process::Command::new(exe).spawn() {
+                        log::error!("não foi possível reabrir o app: {err}");
+                    }
+                });
             unsafe {
                 let _ = PostMessageW(Some(self.hwnd), WM_APP_QUIT, WPARAM(0), LPARAM(0));
             }
@@ -1600,6 +1636,7 @@ mod platform {
                 fullscreen_warning: self.fullscreen_warning,
                 update: &self.update,
                 update_deferred: self.update_deferred,
+                data_updates: self.data_updates,
                 scanlines: !self.ui.reduced_motion(),
             };
             let slots = self.shared.slots();

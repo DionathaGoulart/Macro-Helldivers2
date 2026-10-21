@@ -170,21 +170,17 @@ O overlay troca junto, e a escolha vai no backup.
 
 ## 🔄 Atualizações
 
-O app consulta os Releases do GitHub e avisa quando há versão nova.
+O app consulta os Releases do GitHub e instala a versão nova automaticamente.
 
 1. A checagem **nunca acontece com o jogo em foco**: ela fica adiada até você sair
    da partida.
-2. O download só começa quando você clica em **Baixar**.
+2. Se houver versão nova, o app baixa o instalador e fecha para atualizar. Abra o
+   app novamente após a instalação.
 3. Antes de instalar, o app confere o **SHA-256** do instalador contra o `.sha256`
    publicado no release, e confere de novo na hora de executar. Arquivo que não
    bate não é executado.
-4. Com o instalador pronto, o app pergunta se quer reiniciar para instalar agora ou
-   deixar para depois (o **Instalar agora** continua no rodapé).
-
-Versões **beta** (tag `vX.Y.Z-beta.N`, marcadas como pré-lançamento no GitHub) não
-são oferecidas pelo aviso: quem quiser testar baixa o instalador na página de
-Releases. Quem está num beta recebe o aviso quando sair a versão estável seguinte; o
-beta seguinte também tem de ser instalado à mão.
+4. Versões beta (tag `vX.Y.Z-beta.N`) não são oferecidas pelo aviso; o app instala
+   releases estáveis publicados no GitHub.
 
 ### Estratagemas novos sem atualizar o app
 

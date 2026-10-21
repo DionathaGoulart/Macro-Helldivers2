@@ -5,6 +5,12 @@ Todas as mudanças relevantes deste projeto são documentadas aqui.
 O formato segue [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/)
 e o versionamento segue [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
+## [0.1.1] - 2026-10-21
+
+### Corrigido
+
+- Atualização automática para releases do GitHub, incluindo download e instalação silenciosos.
+
 ## [0.1.0] - 2026-09-25 (instável)
 
 Ferramenta de macros para os Estratagemas do Helldivers 2: binário nativo em Rust

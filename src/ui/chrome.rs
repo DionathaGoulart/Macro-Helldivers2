@@ -33,6 +33,8 @@ pub struct Chrome<'a> {
     pub update: &'a UpdateStatus,
     /// O usuário clicou "Depois": o diálogo não volta, o rodapé assume.
     pub update_deferred: bool,
+    /// Quantos registros novos da API aguardam a próxima inicialização.
+    pub data_updates: usize,
     /// Textura de scanline (§4.4). Some com o movimento reduzido do sistema.
     pub scanlines: bool,
 }
@@ -41,6 +43,10 @@ pub struct Chrome<'a> {
 /// arquivo já está no disco, tenta de novo depois de um erro.
 pub fn update_action_id() -> Id {
     id("footer.update")
+}
+
+pub fn reopen_id() -> Id {
+    id("data.reopen")
 }
 
 /// Monta a tela inteira em `size` (DIP). A moldura vem por fora e `content`
@@ -78,8 +84,41 @@ pub fn build(
         );
     }
 
+    let data_banner = if chrome.data_updates > 0 {
+        Some(body.cut_top(78.0).inset_xy(PAGE_PADDING, 10.0))
+    } else {
+        None
+    };
+
     content(ui, measure, body);
     self::footer(ui, measure, footer, chrome);
+
+    if let Some(banner) = data_banner {
+        let mut row = banner;
+        let button = row
+            .cut_right(widgets::icon_btn_width(measure, chrome.tr.settings.reopen))
+            .middle_row(widgets::ICON_BTN_HEIGHT);
+        row.cut_right(12.0);
+        let message = chrome
+            .tr
+            .settings
+            .data_updated_message
+            .replace("{count}", &chrome.data_updates.to_string());
+        widgets::alert(
+            ui,
+            row,
+            palette.success,
+            chrome.tr.settings.data_updated_title,
+            &message,
+        );
+        widgets::icon_btn(
+            ui,
+            reopen_id(),
+            button,
+            Glyph::Text(chrome.tr.settings.reopen),
+            Tone::Accent,
+        );
+    }
 
     // Por último, sobre tudo: enquanto o diálogo está aberto, o véu é quem
     // responde a qualquer clique fora dele. Depois do "Depois" ele não volta;

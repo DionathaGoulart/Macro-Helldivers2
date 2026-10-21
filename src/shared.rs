@@ -100,6 +100,10 @@ pub enum UiEvent {
     FullscreenWarning(bool),
     OverlayState(OverlayState),
     UpdateStatus(UpdateStatus),
+    /// Há dados novos da API no cache, disponíveis depois de reabrir o app.
+    DataUpdated(usize),
+    /// O instalador automático já iniciou e a janela deve encerrar.
+    QuitApp,
     /// Resposta de uma consulta ao helldive.live, pedida pela aba de builds.
     MetaStats(MetaResult),
     /// O modo debug gravou um evento novo: o painel de estatísticas se refaz.

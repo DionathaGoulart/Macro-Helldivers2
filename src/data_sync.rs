@@ -531,10 +531,14 @@ pub fn auto_sync(shared: &Arc<Shared>) {
     if AUTO_SYNCED.swap(true, Ordering::Relaxed) {
         return;
     }
+    let shared = Arc::clone(shared);
     let spawned = std::thread::Builder::new()
         .name("data-sync".to_string())
-        .spawn(|| {
+        .spawn(move || {
             let agent = util::http_agent(Some(TIMEOUT));
+            let old_stratagems = load_cache();
+            let old_equipment = crate::equipment_sync::load_cache();
+            let mut changed_items = 0;
             // Independentes: uma lista quebrada não segura a outra.
             match sync(&agent) {
                 Ok(0) => log::info!("estratagemas da API conferidos: nada novo"),
@@ -543,6 +547,15 @@ pub fn auto_sync(shared: &Arc<Shared>) {
                 }
                 Err(err) => log::warn!("sincronização de estratagemas falhou: {err:#}"),
             }
+            let new_stratagems = load_cache();
+            changed_items += new_stratagems
+                .iter()
+                .filter(|item| {
+                    !old_stratagems
+                        .iter()
+                        .any(|old| old.slug == item.slug && old == *item)
+                })
+                .count();
             match crate::equipment_sync::sync(&agent) {
                 Ok(0) => log::info!("equipamento da API conferido: nada novo"),
                 Ok(fresh) => {
@@ -551,6 +564,18 @@ pub fn auto_sync(shared: &Arc<Shared>) {
                     )
                 }
                 Err(err) => log::warn!("sincronização de equipamento falhou: {err:#}"),
+            }
+            let new_equipment = crate::equipment_sync::load_cache();
+            changed_items += new_equipment
+                .iter()
+                .filter(|item| {
+                    !old_equipment
+                        .iter()
+                        .any(|old| old.slug == item.slug && old == *item)
+                })
+                .count();
+            if changed_items > 0 {
+                shared.send_ui(crate::shared::UiEvent::DataUpdated(changed_items));
             }
         });
     if let Err(err) = spawned {
