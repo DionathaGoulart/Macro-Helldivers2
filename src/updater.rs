@@ -209,9 +209,8 @@ pub fn check(shared: &Arc<Shared>) {
                     }));
                     let progress_shared = Arc::clone(&shared);
                     match download_installer(&release, move |percent| {
-                        progress_shared.send_ui(UiEvent::UpdateStatus(
-                            UpdateStatus::Downloading { percent },
-                        ));
+                        progress_shared
+                            .send_ui(UiEvent::UpdateStatus(UpdateStatus::Downloading { percent }));
                     }) {
                         Ok(installer) => {
                             *lock(&STATE.installer) = Some(installer);
