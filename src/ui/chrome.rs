@@ -310,6 +310,7 @@ mod tests {
             fullscreen_warning: false,
             update,
             update_deferred: false,
+            data_updates: 0,
             scanlines: true,
         }
     }
